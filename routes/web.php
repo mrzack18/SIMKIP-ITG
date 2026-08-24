@@ -6,12 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
 });
 
 Route::middleware([])->group(function () {
@@ -47,54 +42,28 @@ Route::middleware([])->group(function () {
 
     // Admin Routes
     Route::prefix('admin')->group(function () {
-        Route::get('/students', function () {
-            return Inertia::render('Admin/Student/Index', [
-                'students' => [
-                    ['id' => 1, 'nim' => '2406001', 'name' => 'Budi Santoso', 'angkatan' => '2024', 'category' => 'Reguler'],
-                    ['id' => 2, 'nim' => '2406002', 'name' => 'Siti Aminah', 'angkatan' => '2024', 'category' => 'Aspirasi'],
-                ]
-            ]);
-        });
+        Route::get('/mahasiswa', function () { return \Inertia\Inertia::render('Admin/Student/Index'); });
+        Route::get('/mahasiswa/tambah', function () { return \Inertia\Inertia::render('Admin/Student/Create'); });
+        Route::get('/mahasiswa/{id}', function () { return \Inertia\Inertia::render('Admin/Student/Detail'); });
         
-        Route::get('/documents', function () {
-            return Inertia::render('Admin/Document/Validation', [
-                'documents' => [
-                    ['id' => 1, 'nim' => '2406001', 'name' => 'Budi Santoso', 'type' => 'Sertifikat MABIM', 'status' => 'pending', 'file_url' => '#'],
-                ]
-            ]);
-        });
+        Route::get('/akademik', function () { return \Inertia\Inertia::render('Admin/Academic/Index'); });
         
-        Route::get('/warnings', function () {
-            return Inertia::render('Admin/WarningLetter/Index', [
-                'students' => [
-                    ['id' => 1, 'nim' => '2406002', 'name' => 'Siti Aminah', 'ipk' => 2.8, 'sp_level' => null],
-                ],
-                'warnings' => [
-                    ['id' => 1, 'nim' => '2406005', 'name' => 'Agus', 'level' => 1, 'reason' => 'IPK < 3.0', 'date' => '2025-01-15']
-                ]
-            ]);
-        });
+        Route::get('/dokumen', function () { return \Inertia\Inertia::render('Admin/Document/Validation'); });
         
-        Route::get('/reports', function () {
-            return Inertia::render('Admin/Report/Index', [
-                'reports' => [
-                    ['id' => 1, 'semester' => 'Ganjil 2024/2025', 'status' => 'approved_by_warek3'],
-                ],
-                'clearances' => [
-                    ['id' => 1, 'nim' => '2006001', 'name' => 'Mahasiswa Tua', 'status' => 'pending']
-                ]
-            ]);
-        });
+        Route::get('/sp', function () { return \Inertia\Inertia::render('Admin/WarningLetter/Index'); });
+        Route::get('/sp/terbitkan', function () { return \Inertia\Inertia::render('Admin/WarningLetter/Create'); });
+        Route::get('/sp/{id}', function () { return \Inertia\Inertia::render('Admin/WarningLetter/Detail'); });
         
-        Route::get('/settings', function () {
-            return Inertia::render('Admin/Settings/Index', [
-                'settings' => [
-                    'ipk_threshold' => 3.0,
-                    'input_start' => '2025-02-01',
-                    'input_end' => '2025-02-14'
-                ]
-            ]);
-        });
+        Route::get('/bebas-tanggungan', function () { return \Inertia\Inertia::render('Admin/Clearance/Index'); });
+        Route::get('/bebas-tanggungan/{id}', function () { return \Inertia\Inertia::render('Admin/Clearance/Detail'); });
+        
+        Route::get('/laporan', function () { return \Inertia\Inertia::render('Admin/Report/Index'); });
+        Route::get('/laporan/susun', function () { return \Inertia\Inertia::render('Admin/Report/Create'); });
+        Route::get('/laporan/{id}', function () { return \Inertia\Inertia::render('Admin/Report/Detail'); });
+        
+        Route::get('/konfigurasi', function () { return \Inertia\Inertia::render('Admin/Settings/Index'); });
+        
+        Route::get('/audit', function () { return \Inertia\Inertia::render('Admin/Audit/Index'); });
     });
 
     // Student Routes

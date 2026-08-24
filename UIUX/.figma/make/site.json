@@ -1,0 +1,11 @@
+{
+  "title": "SIMKIP-ITG",
+  "description": "Generates tailored content or solutions quickly to meet user requests, enhancing productivity and creativity for diverse professional needs.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
