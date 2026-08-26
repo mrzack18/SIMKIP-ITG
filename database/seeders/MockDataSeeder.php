@@ -91,25 +91,20 @@ class MockDataSeeder extends Seeder
                 'status' => rand(0, 2) === 0 ? 'Disetujui' : (rand(0, 2) === 1 ? 'Ditolak' : 'Menunggu')
             ]);
 
-            // C. SURAT PERINGATAN (Sebagian saja)
-            if ($index % 5 === 0) {
-                SuratPeringatan::factory()->create([
-                    'mahasiswa_id' => $mhs->id,
-                    'level' => 'SP1',
-                    'status' => 'Selesai'
-                ]);
-            } elseif ($index % 7 === 0) {
-                SuratPeringatan::factory()->create([
-                    'mahasiswa_id' => $mhs->id,
-                    'level' => 'SP2',
-                    'status' => 'Aktif'
-                ]);
-            } elseif ($index % 11 === 0) {
-                SuratPeringatan::factory()->create([
-                    'mahasiswa_id' => $mhs->id,
-                    'level' => 'SP3',
-                    'status' => 'Masa Tenggang'
-                ]);
+            // C. SURAT PERINGATAN (Skenario Khusus)
+            if ($index === 5) {
+                SuratPeringatan::factory()->create(['mahasiswa_id' => $mhs->id, 'level' => 'SP1', 'status' => 'Aktif']);
+            } elseif ($index === 6) {
+                SuratPeringatan::factory()->create(['mahasiswa_id' => $mhs->id, 'level' => 'SP2', 'status' => 'Aktif']);
+            } elseif ($index === 7) {
+                SuratPeringatan::factory()->create(['mahasiswa_id' => $mhs->id, 'level' => 'SP3', 'status' => 'Aktif']);
+            } elseif ($index === 8) {
+                SuratPeringatan::factory()->create(['mahasiswa_id' => $mhs->id, 'level' => 'SP3', 'status' => 'Masa Tenggang']);
+            } elseif ($index === 9) {
+                SuratPeringatan::factory()->create(['mahasiswa_id' => $mhs->id, 'level' => 'SP1', 'status' => 'Selesai']);
+                // Selesai artinya Tanpa SP aktif
+            } elseif ($index === 10) {
+                SuratPeringatan::factory()->create(['mahasiswa_id' => $mhs->id, 'level' => 'SP2', 'status' => 'Masa Tenggang']);
             }
         }
     }

@@ -1,5 +1,8 @@
 <?php
 
+$routes = '
+<?php
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
@@ -49,7 +52,6 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::post("/mahasiswa",                 [MahasiswaController::class, "store"]);
     Route::get("/mahasiswa/check-nim/{nim}",  [MahasiswaController::class, "checkNim"]);
     Route::get("/mahasiswa/{id}",             [MahasiswaController::class, "show"]);
-    Route::get("/mahasiswa/{id}/ipk",         [MahasiswaController::class, "ipk"]);
     Route::delete("/mahasiswa/{id}",          [MahasiswaController::class, "destroy"]);
 
     Route::get("/ipk",  [IPKController::class, "index"]);
@@ -136,3 +138,7 @@ Route::middleware("auth:sanctum")->group(function () {
     });
 
 });
+';
+
+file_put_contents(__DIR__ . '/routes/api.php', trim($routes));
+echo "api.php generated.\n";

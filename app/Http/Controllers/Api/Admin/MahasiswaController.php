@@ -16,8 +16,7 @@ class MahasiswaController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Mahasiswa::with('prodi')
-            ->withCount(['suratPeringatans as sp_count' => fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang'])]);
+        $query = Mahasiswa::withDetails();
 
         if ($request->search) {
             $q = $request->search;
@@ -33,50 +32,70 @@ class MahasiswaController extends Controller
         if ($request->kategori && $request->kategori !== 'Semua') {
             $query->where('kategori', $request->kategori);
         }
-        if ($request->status && $request->status !== 'Semua') {
+        if ($request->status && $request->status !== 'Semua Status') {
             $query->where('status', $request->status);
         }
-        if ($request->sp && $request->sp !== 'Semua') {
-            if ($request->sp === 'Tanpa SP') {
+        if ($request->kipFilter && $request->kipFilter !== 'Semua') {
+            $kategori = $request->kipFilter === 'KIP-K Reguler' ? 'Reguler' : 'Aspirasi';
+            $query->where('kategori', $kategori);
+        }
+
+        // Apply SP Filter
+        if ($request->spFilter && $request->spFilter !== 'Semua') {
+            if ($request->spFilter === 'Tanpa SP') {
                 $query->whereDoesntHave('suratPeringatans', fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']));
             } else {
-                $query->whereHas('suratPeringatans', fn($q) => $q->where('level', $request->sp)->whereIn('status', ['Aktif', 'Masa Tenggang']));
+                $query->whereHas('suratPeringatans', fn($q) => $q->where('level', $request->spFilter)->whereIn('status', ['Aktif', 'Masa Tenggang']));
             }
+        }
+
+        // We calculate IPK via subquery, so to filter by IPK we can use having or where with the subquery.
+        // Easiest is to add a having clause since we added it via addSelect
+        if ($request->ipkFilter && $request->ipkFilter !== 'Semua') {
+            if ($request->ipkFilter === 'Di Bawah Standar (< 3.0)') {
+                $query->having('ipk_calc', '<', 3.0);
+            } else if ($request->ipkFilter === 'Di Atas Standar (≥ 3.0)') {
+                $query->having('ipk_calc', '>=', 3.0);
+            }
+        }
+
+        // Sorting
+        if ($request->sortBy) {
+            switch ($request->sortBy) {
+                case 'IPK Tertinggi → Terendah':
+                    $query->orderByDesc('ipk_calc');
+                    break;
+                case 'IPK Terendah → Tertinggi':
+                    $query->orderBy('ipk_calc');
+                    break;
+                case 'Nama A–Z':
+                    $query->orderBy('nama');
+                    break;
+                case 'Angkatan Terbaru':
+                    $query->orderByDesc('angkatan');
+                    break;
+                default:
+                    $query->orderByDesc('ipk_calc');
+                    break;
+            }
+        } else {
+            $query->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 10);
         $page  = (int) ($request->page ?? 1);
-        $total = $query->count();
+        
+        // Count total for pagination (for having clauses, we need to count manually via get or use a subquery count)
+        $total = $query->count(); // If this fails with having, we may need a workaround
+        
         $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
 
-        $result = $data->map(function ($m) {
-            $ipkSemesters = $m->ipkSemestrs()->orderBy('semester')->get();
-            $ipkTerakhir  = $ipkSemesters->last()?->ipk ?? 0;
-            $prevIPK      = $ipkSemesters->count() > 1 ? $ipkSemesters->nth($ipkSemesters->count() - 1)?->ipk ?? null : null;
-            $spAktif      = $m->suratPeringatans()->whereIn('status', ['Aktif', 'Masa Tenggang'])->orderByDesc('level')->first();
-
-            return [
-                'id'       => $m->id,
-                'nim'      => $m->nim,
-                'nama'     => $m->nama,
-                'prodi'    => $m->prodi?->nama,
-                'angkatan' => $m->angkatan,
-                'kategori' => $m->kategori,
-                'status'   => $m->status,
-                'ipk'      => (float) $ipkTerakhir,
-                'ipk_delta'=> $prevIPK !== null ? round($ipkTerakhir - $prevIPK, 2) : null,
-                'semester' => $ipkSemesters->count(),
-                'sp'       => $spAktif?->level,
-            ];
-        });
-
         return response()->json([
-            'success'     => true,
-            'data'        => $result,
+            'data'        => \App\Http\Resources\MahasiswaResource::collection($data),
             'total'       => $total,
             'page'        => $page,
             'limit'       => $limit,
-            'total_pages' => (int) ceil($total / $limit),
+            'totalPages'  => (int) ceil($total / $limit),
         ]);
     }
 
@@ -149,18 +168,9 @@ class MahasiswaController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $m = Mahasiswa::with([
-            'prodi', 'user',
-            'ipkSemestrs.mataKuliahs',
-            'dokumens.jenis',
-            'suratPeringatans.diterbitkanOleh',
-            'prestasis',
-            'organisasis',
-            'pelatihans',
-            'bebasTanggungan',
-        ])->findOrFail($id);
+        $m = Mahasiswa::withDetails()->findOrFail($id);
 
-        return response()->json(['success' => true, 'data' => $this->formatMahasiswaDetail($m)]);
+        return response()->json(['data' => new \App\Http\Resources\MahasiswaResource($m)]);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
@@ -183,59 +193,5 @@ class MahasiswaController extends Controller
         return response()->json(['success' => true, 'message' => 'Mahasiswa berhasil dihapus.']);
     }
 
-    private function formatMahasiswaDetail(Mahasiswa $m): array
-    {
-        $ipkHistory = $m->ipkSemestrs->map(fn($s) => [
-            'id'           => $s->id,
-            'semester'     => $s->semester,
-            'tahun_ajaran' => $s->tahun_ajaran,
-            'ipk'          => (float) $s->ipk,
-            'is_verified'  => $s->is_verified,
-            'mata_kuliah'  => $s->mataKuliahs->map(fn($mk) => [
-                'kode'        => $mk->kode,
-                'nama'        => $mk->nama,
-                'sks'         => $mk->sks,
-                'nilai_huruf' => $mk->nilai_huruf,
-                'nilai_mutu'  => (float) $mk->nilai_mutu,
-                'lulus'       => (bool) $mk->lulus,
-            ]),
-        ]);
 
-        $spAktif = $m->suratPeringatans->where('status', 'Aktif')->sortByDesc('level')->first();
-
-        return [
-            'id'        => $m->id,
-            'nim'       => $m->nim,
-            'nama'      => $m->nama,
-            'prodi'     => $m->prodi?->nama,
-            'angkatan'  => $m->angkatan,
-            'kategori'  => $m->kategori,
-            'status'    => $m->status,
-            'nomor_sk'  => $m->nomor_sk,
-            'tanggal_sk'=> $m->tanggal_sk?->format('d M Y'),
-            'sp_aktif'  => $spAktif?->level,
-            'ipk_history' => $ipkHistory,
-            'dokumens'  => $m->dokumens->map(fn($d) => [
-                'id'           => $d->id,
-                'jenis'        => $d->jenis->nama,
-                'status'       => $d->status,
-                'catatan_admin'=> $d->catatan_admin,
-                'tanggal_upload'=> $d->created_at->format('d M Y'),
-                'path_file'    => $d->path_file ? asset('storage/' . $d->path_file) : null,
-            ]),
-            'surat_peringatans' => $m->suratPeringatans->map(fn($sp) => [
-                'id'             => $sp->id,
-                'level'          => $sp->level,
-                'jenis'          => $sp->jenis_pelanggaran,
-                'deskripsi'      => $sp->deskripsi,
-                'tanggal_terbit' => $sp->tanggal_terbit?->format('d M Y'),
-                'batas_evaluasi' => $sp->batas_evaluasi?->format('d M Y'),
-                'status'         => $sp->status,
-                'sisa_hari'      => $sp->sisa_hari,
-            ]),
-            'prestasis'  => $m->prestasis,
-            'organisasis'=> $m->organisasis,
-            'pelatihans' => $m->pelatihans,
-        ];
-    }
 }

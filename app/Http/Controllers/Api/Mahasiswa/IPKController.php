@@ -14,8 +14,12 @@ class IPKController extends Controller
     public function index(Request $request): JsonResponse
     {
         $m    = $request->user()->mahasiswa;
-        $data = $m->ipkSemestrs()->with('mataKuliahs')->orderBy('semester')->get();
-        return response()->json(['success' => true, 'data' => $data]);
+        if (!$m) return response()->json(['data' => []]);
+
+        $data = $m->ipkSemestrs()->with('mataKuliahs')->orderByDesc('semester')->get();
+        return response()->json([
+            'data' => \App\Http\Resources\SemesterDetailResource::collection($data)
+        ]);
     }
 
     public function store(Request $request): JsonResponse
