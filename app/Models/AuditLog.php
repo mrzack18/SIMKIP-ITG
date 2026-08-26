@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AuditLog extends Model
 {
+    use HasFactory;
+
     public $timestamps = false;
     protected $table = 'audit_logs';
     protected $fillable = ['user_id', 'jenis', 'aktivitas', 'deskripsi', 'terkait_nim', 'terkait_nama', 'ip_address'];

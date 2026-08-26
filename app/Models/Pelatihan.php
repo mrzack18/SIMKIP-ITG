@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Pelatihan extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'mahasiswa_id', 'nama', 'jenis', 'penyelenggara',
         'tanggal_mulai', 'tanggal_selesai', 'tempat', 'deskripsi',

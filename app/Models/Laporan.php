@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Laporan extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'nomor_surat', 'judul', 'periode', 'tahun_akademik', 'semester',
         'tanggal_laporan', 'catatan_laporan', 'status', 'dibuat_oleh', 'submitted_at',

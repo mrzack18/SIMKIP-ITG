@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('semester', ['Ganjil', 'Genap']);
             $table->date('tanggal_laporan');
             $table->text('catatan_laporan')->nullable();
-            $table->enum('status', ['Draft', 'Diajukan', 'Disetujui', 'Dikembalikan'])->default('Draft');
+            $table->enum('status', ['Draft', 'Diajukan', 'Disetujui', 'Ditolak'])->default('Draft');
             $table->foreignId('dibuat_oleh')->constrained('users');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('laporan_id')->constrained('laporans')->cascadeOnDelete();
             $table->foreignId('warek_id')->constrained('users');
-            $table->enum('aksi', ['Disetujui', 'Dikembalikan']);
+            $table->enum('aksi', ['Disetujui', 'Ditolak']);
             $table->text('catatan')->nullable();
             $table->timestamp('reviewed_at')->useCurrent();
             $table->timestamps();

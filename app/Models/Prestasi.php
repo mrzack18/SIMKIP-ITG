@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Prestasi extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'mahasiswa_id', 'nama_prestasi', 'tingkat', 'pencapaian', 'penyelenggara',
         'tanggal_mulai', 'tanggal_selesai', 'tempat', 'deskripsi', 'link_penyelenggara',

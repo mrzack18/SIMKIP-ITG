@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Organisasi extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'mahasiswa_id', 'nama', 'jabatan', 'periode_mulai', 'periode_selesai',
         'deskripsi', 'file_sk', 'status', 'catatan_admin', 'validated_by', 'validated_at',

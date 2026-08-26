@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('mahasiswa_id')->constrained('mahasiswas')->cascadeOnDelete();
             $table->date('tanggal_ajukan');
-            $table->enum('status', ['Menunggu', 'Diterbitkan', 'Ditolak'])->default('Menunggu');
+            $table->enum('status', ['Menunggu', 'Diproses', 'Disetujui', 'Ditolak'])->default('Menunggu');
             $table->text('catatan_admin')->nullable();
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable();

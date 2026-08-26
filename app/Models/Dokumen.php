@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Dokumen extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'mahasiswa_id', 'dokumen_jenis_id', 'nama_file', 'path_file',
         'ukuran', 'status', 'catatan_admin', 'approved_by', 'approved_at',

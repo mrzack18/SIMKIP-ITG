@@ -16,7 +16,13 @@ return new class extends Migration
             $table->foreignId('prodi_id')->constrained('prodis');
             $table->year('angkatan');
             $table->enum('kategori', ['Reguler', 'Aspirasi']);
-            $table->enum('status', ['Aktif', 'Lulus', 'Dicabut', 'Cuti'])->default('Aktif');
+            $table->enum('status', ['Aktif', 'Nonaktif', 'Dicabut', 'Lulus'])->default('Aktif');
+            $table->string('alasan_nonaktif')->nullable();
+            $table->date('tanggal_nonaktif')->nullable();
+            $table->string('semester_dicabut')->nullable();
+            $table->date('tanggal_dicabut')->nullable();
+            $table->string('alasan_dicabut')->nullable();
+            $table->string('dicabut_oleh')->nullable();
             $table->string('nomor_sk', 100);
             $table->date('tanggal_sk');
             $table->string('file_sk')->nullable();

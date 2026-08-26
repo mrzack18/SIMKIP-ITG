@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SuratPeringatan extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'mahasiswa_id', 'level', 'jenis_pelanggaran', 'deskripsi',
         'tanggal_terbit', 'batas_evaluasi', 'status', 'diterbitkan_oleh', 'catatan',

@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             KonfigurasiSeeder::class,
             DokumenJenisSeeder::class,
             SuperAdminSeeder::class, // UserSeeder
+            MockDataSeeder::class, // Testing UI Data
         ]);
     }
 }

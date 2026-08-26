@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\UserResource;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -38,20 +39,12 @@ class AuthController extends Controller
             'warek'     => '/warek',
         ];
 
-        $userData = [
-            'id'    => (string) $user->id,
-            'nama'  => $user->name,
-            'nim'   => $user->mahasiswa?->nim,
-            'role'  => $user->role,
-            'prodi' => $user->prodi?->nama ?? $user->mahasiswa?->prodi?->nama,
-        ];
-
         return response()->json([
-            'success'              => true,
-            'user'                 => $userData,
-            'token'                => $token,
-            'redirect_path'        => $redirectMap[$user->role] ?? '/',
-            'must_change_password' => ! $user->is_password_changed,
+            'success'            => true,
+            'user'               => new UserResource($user),
+            'token'              => $token,
+            'redirectPath'       => $redirectMap[$user->role] ?? '/',
+            'mustChangePassword' => ! $user->is_password_changed,
         ]);
     }
 
@@ -61,14 +54,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => [
-                'id'    => (string) $user->id,
-                'nama'  => $user->name,
-                'nim'   => $user->mahasiswa?->nim,
-                'role'  => $user->role,
-                'prodi' => $user->prodi?->nama ?? $user->mahasiswa?->prodi?->nama,
-                'foto'  => $user->foto_profil ? asset('storage/' . $user->foto_profil) : null,
-            ],
+            'user'    => new UserResource($user),
         ]);
     }
 

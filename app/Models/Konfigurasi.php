@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Konfigurasi extends Model
 {
+    use HasFactory;
+
     protected $table = 'konfigurasis';
     protected $fillable = ['key', 'value', 'label', 'tipe'];
 
