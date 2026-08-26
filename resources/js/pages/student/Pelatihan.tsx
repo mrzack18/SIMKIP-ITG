@@ -12,6 +12,7 @@ interface PelatihanItem {
   deskripsi: string;
   status: "Disetujui" | "Menunggu";
   sertifikat?: string;
+  fotoKegiatan?: string;
 }
 
 const MOCK_DATA: PelatihanItem[] = [
@@ -38,6 +39,7 @@ const MOCK_DATA: PelatihanItem[] = [
     deskripsi: "Program pengembangan kepemimpinan bagi mahasiswa penerima beasiswa KIP-K tingkat nasional. Mencakup public speaking, manajemen konflik, dan dinamika kelompok.",
     status: "Disetujui",
     sertifikat: "sertifikat-kepemimpinan.pdf",
+    fotoKegiatan: "foto-kepemimpinan.jpg",
   },
   {
     id: 3,
@@ -62,6 +64,7 @@ const emptyForm = {
   tempat: "",
   deskripsi: "",
   sertifikat: null as File | null,
+  fotoKegiatan: null as File | null,
 };
 
 function formatDate(d: string) {
@@ -76,6 +79,7 @@ export default function Pelatihan() {
   const [form, setForm] = useState({ ...emptyForm });
   const [detail, setDetail] = useState<PelatihanItem | null>(null);
   const [fileLabel, setFileLabel] = useState("Pilih file PDF / gambar");
+  const [fotoLabel, setFotoLabel] = useState("Pilih file gambar");
 
   const handleFormChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -85,6 +89,12 @@ export default function Pelatihan() {
     const file = e.target.files?.[0] ?? null;
     setForm(prev => ({ ...prev, sertifikat: file }));
     setFileLabel(file ? file.name : "Pilih file PDF / gambar");
+  };
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setForm(prev => ({ ...prev, fotoKegiatan: file }));
+    setFotoLabel(file ? file.name : "Pilih file gambar");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -100,10 +110,12 @@ export default function Pelatihan() {
       deskripsi: form.deskripsi,
       status: "Menunggu",
       sertifikat: form.sertifikat?.name,
+      fotoKegiatan: form.fotoKegiatan?.name,
     };
     setItems(prev => [newItem, ...prev]);
     setForm({ ...emptyForm });
     setFileLabel("Pilih file PDF / gambar");
+    setFotoLabel("Pilih file gambar");
     setShowForm(false);
   };
 
@@ -137,8 +149,13 @@ export default function Pelatihan() {
       <div className="space-y-3">
         {items.map(item => (
           <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col sm:flex-row sm:items-start gap-4">
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "#EEF1FB" }}>
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
               <BookOpen size={20} style={{ color: "#263F93" }} />
+              {item.fotoKegiatan && (
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                  <span className="text-[8px] text-white font-bold">✓</span>
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -203,8 +220,8 @@ export default function Pelatihan() {
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
               {/* Jenis */}
               <div>
-                <label className="block text-xs font-500 text-gray-600 mb-2">
-                  <Tag size={12} className="inline mr-1" />Jenis Pelatihan
+                <label className="block text-sm font-500 text-gray-700 mb-2">
+                  <Tag size={14} className="inline mr-1.5" />Jenis Pelatihan
                 </label>
                 <div className="flex gap-4">
                   {(["Akademik", "Non-Akademik"] as const).map(j => (
@@ -225,8 +242,8 @@ export default function Pelatihan() {
 
               {/* Nama */}
               <div>
-                <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                  <BookOpen size={12} className="inline mr-1" />Nama Pelatihan <span className="text-red-400">*</span>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <BookOpen size={14} className="inline mr-1.5" />Nama Pelatihan <span className="text-red-400">*</span>
                 </label>
                 <input
                   required
@@ -239,8 +256,8 @@ export default function Pelatihan() {
 
               {/* Penyelenggara */}
               <div>
-                <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                  <Building2 size={12} className="inline mr-1" />Penyelenggara <span className="text-red-400">*</span>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <Building2 size={14} className="inline mr-1.5" />Penyelenggara <span className="text-red-400">*</span>
                 </label>
                 <input
                   required
@@ -254,8 +271,8 @@ export default function Pelatihan() {
               {/* Tanggal */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                    <Calendar size={12} className="inline mr-1" />Tanggal Mulai
+                  <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                    <Calendar size={14} className="inline mr-1.5" />Tanggal Mulai
                   </label>
                   <input
                     type="date"
@@ -265,8 +282,8 @@ export default function Pelatihan() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                    <Calendar size={12} className="inline mr-1" />Tanggal Selesai
+                  <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                    <Calendar size={14} className="inline mr-1.5" />Tanggal Selesai
                   </label>
                   <input
                     type="date"
@@ -279,8 +296,8 @@ export default function Pelatihan() {
 
               {/* Tempat */}
               <div>
-                <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                  <MapPin size={12} className="inline mr-1" />Tempat
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <MapPin size={14} className="inline mr-1.5" />Tempat
                 </label>
                 <input
                   value={form.tempat}
@@ -292,8 +309,8 @@ export default function Pelatihan() {
 
               {/* Deskripsi */}
               <div>
-                <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                  <AlignLeft size={12} className="inline mr-1" />Deskripsi
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <AlignLeft size={14} className="inline mr-1.5" />Deskripsi
                 </label>
                 <textarea
                   rows={3}
@@ -306,8 +323,8 @@ export default function Pelatihan() {
 
               {/* Upload Sertifikat */}
               <div>
-                <label className="block text-xs font-500 text-gray-600 mb-1.5">
-                  <Upload size={12} className="inline mr-1" />Upload Sertifikat
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <Upload size={14} className="inline mr-1.5" />Upload Sertifikat
                 </label>
                 <label className="flex items-center gap-3 px-3 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#263F93]/40 hover:bg-[#EEF1FB]/30 transition-colors">
                   <FileText size={18} className="text-gray-300 flex-shrink-0" />
@@ -320,6 +337,24 @@ export default function Pelatihan() {
                   />
                 </label>
                 <p className="text-xs text-gray-400 mt-1">Format: PDF, JPG, PNG. Maks 5 MB.</p>
+              </div>
+
+              {/* Upload Foto Kegiatan */}
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <Upload size={14} className="inline mr-1.5" />Foto Saat Kegiatan
+                </label>
+                <label className="flex items-center gap-3 px-3 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#263F93]/40 hover:bg-[#EEF1FB]/30 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 flex-shrink-0"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                  <span className="text-xs text-gray-500 truncate">{fotoLabel}</span>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={handleFotoChange}
+                  />
+                </label>
+                <p className="text-xs text-gray-400 mt-1">Format: JPG, PNG. Maks 5 MB.</p>
               </div>
 
               <div className="pt-2">
@@ -383,20 +418,35 @@ export default function Pelatihan() {
                 )}
               </div>
 
-              {/* File preview placeholder */}
-              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center">
-                {detail.sertifikat ? (
-                  <>
-                    <FileText size={36} className="text-gray-300" />
-                    <p className="text-xs font-500 text-gray-500">{detail.sertifikat}</p>
-                    <p className="text-xs text-gray-400">Pratinjau dokumen tidak tersedia. Gunakan tombol Unduh.</p>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-3xl">📎</span>
-                    <p className="text-xs text-gray-400">Belum ada sertifikat yang diunggah.</p>
-                  </>
-                )}
+              {/* File preview */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center">
+                  {detail.sertifikat ? (
+                    <>
+                      <FileText size={36} className="text-gray-300" />
+                      <p className="text-xs font-500 text-gray-500">{detail.sertifikat}</p>
+                      <p className="text-xs text-gray-400">Pratinjau dokumen tidak tersedia. Gunakan tombol Unduh.</p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl">📎</span>
+                      <p className="text-xs text-gray-400">Belum ada sertifikat yang diunggah.</p>
+                    </>
+                  )}
+                </div>
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center">
+                  {detail.fotoKegiatan ? (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                      <p className="text-xs font-500 text-gray-500">{detail.fotoKegiatan}</p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl">📷</span>
+                      <p className="text-xs text-gray-400">Belum ada foto kegiatan.</p>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-1">

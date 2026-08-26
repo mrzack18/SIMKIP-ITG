@@ -47,6 +47,8 @@ export default function SusunLaporan() {
     prodi: "Teknik Informatika",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [tujuanWarek, setTujuanWarek] = useState(true);
+  const [tujuanProdi, setTujuanProdi] = useState(false);
 
   const set = (k: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -540,6 +542,42 @@ export default function SusunLaporan() {
                 </div>
 
               </div>
+            </div>
+          </div>
+
+          {/* Tujuan Pengiriman */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="font-600 text-gray-800 text-sm">Tujuan Pengiriman</h3>
+            </div>
+            <div className="p-5 space-y-3">
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={tujuanWarek} onChange={e => setTujuanWarek(e.target.checked)} className="accent-[#263F93]" />
+                <div>
+                  <p className="text-sm font-500 text-gray-800">Wakil Rektor III (Kemahasiswaan)</p>
+                  <p className="text-xs text-gray-400">Laporan akan dikirim untuk review dan persetujuan Warek III</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={tujuanProdi} onChange={e => setTujuanProdi(e.target.checked)} className="accent-[#263F93]" />
+                <div>
+                  <p className="text-sm font-500 text-gray-800">Program Studi</p>
+                  <p className="text-xs text-gray-400">Laporan akan dikirim ke Kaprodi sebagai informasi monitoring</p>
+                </div>
+              </label>
+              {tujuanProdi && (
+                <div className="ml-9">
+                  <label className="block text-sm font-500 text-gray-700 mb-1.5">Pilih Prodi Tujuan</label>
+                  <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 bg-white">
+                    <option>Semua Program Studi</option>
+                    <option>Teknik Informatika</option>
+                    <option>Sistem Informasi</option>
+                    <option>Teknik Industri</option>
+                    <option>Teknik Sipil</option>
+                    <option>Arsitektur</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -31,6 +31,8 @@ import Profil from "./pages/student/Profil";
 import ProdiDashboard from "./pages/prodi/Dashboard";
 import ProdiMahasiswaList from "./pages/prodi/MahasiswaList";
 import ProdiMahasiswaDetail from "./pages/prodi/MahasiswaDetail";
+import ProdiLaporanList from "./pages/prodi/LaporanList";
+import ProdiLaporanDetail from "./pages/prodi/LaporanDetail";
 import EksporLaporan from "./pages/prodi/EksporLaporan";
 import WarekDashboard from "./pages/warek/Dashboard";
 import WarekLaporanList from "./pages/warek/LaporanList";
@@ -95,6 +97,8 @@ export default function App() {
             <Route index element={<ProdiDashboard />} />
             <Route path="mahasiswa" element={<ProdiMahasiswaList />} />
             <Route path="mahasiswa/:id" element={<ProdiMahasiswaDetail />} />
+            <Route path="laporan" element={<ProdiLaporanList />} />
+            <Route path="laporan/:id" element={<ProdiLaporanDetail />} />
             <Route path="ekspor" element={<EksporLaporan />} />
             <Route path="profil" element={<Profil role="prodi" user={prodiUser} />} />
           </Route>

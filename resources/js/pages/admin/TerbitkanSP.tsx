@@ -102,8 +102,8 @@ export default function TerbitkanSP() {
       </div>
 
       {/* Section 1: Pilih Mahasiswa */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
           <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-700">1</div>
           <h2 className="font-600 text-gray-800 text-sm">Pilih Mahasiswa</h2>
         </div>
@@ -118,7 +118,7 @@ export default function TerbitkanSP() {
               className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]/40"
             />
             {showDropdown && query && results.length > 0 && (
-              <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+              <div className="absolute top-full mt-1 left-0 right-0 bg-white bg-opacity-100 border border-gray-200 rounded-xl shadow-xl z-50 overflow-y-auto max-h-64">
                 {results.map(m => (
                   <button key={m.id} onClick={() => selectStudent(m)}
                     className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0">

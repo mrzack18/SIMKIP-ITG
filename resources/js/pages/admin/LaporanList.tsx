@@ -18,6 +18,7 @@ const laporan = [
     approvedDate: "20 Agu 2026",
     cakupan: "Seluruh Mahasiswa" as Cakupan,
     cakupanDetail: null as string | null,
+    tujuan: ["Warek III", "Prodi"],
   },
   {
     id: 2,
@@ -32,6 +33,7 @@ const laporan = [
     approvedDate: null as string | null,
     cakupan: "Per Angkatan" as Cakupan,
     cakupanDetail: "Angkatan 2022",
+    tujuan: ["Warek III"],
   },
   {
     id: 3,
@@ -46,6 +48,7 @@ const laporan = [
     approvedDate: "22 Agu 2025",
     cakupan: "Per Program Studi" as Cakupan,
     cakupanDetail: "Teknik Informatika",
+    tujuan: ["Prodi"],
   },
   {
     id: 4,
@@ -61,6 +64,7 @@ const laporan = [
     approvedDate: null as string | null,
     cakupan: "Per Angkatan + Prodi" as Cakupan,
     cakupanDetail: "Angkatan 2023 — Sistem Informasi",
+    tujuan: ["Warek III", "Prodi"],
   },
 ]
 
@@ -212,6 +216,12 @@ export default function LaporanList() {
                         ? `${l.cakupan} — ${l.cakupanDetail}`
                         : l.cakupan}
                     </span>
+                    {l.tujuan.includes("Warek III") && (
+                      <span className="px-2 py-0.5 rounded text-xs font-500 bg-[#263F93] text-white">Warek III</span>
+                    )}
+                    {l.tujuan.includes("Prodi") && (
+                      <span className="px-2 py-0.5 rounded text-xs font-500 bg-purple-600 text-white">Prodi</span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-1">

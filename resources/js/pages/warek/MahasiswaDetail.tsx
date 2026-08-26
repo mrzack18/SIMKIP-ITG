@@ -2041,7 +2041,7 @@ const TAB_LABELS = [
   "Surat Penyelesaian",
 ]
 
-export default function MahasiswaDetail() {
+export default function WarekMahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState(0)
 

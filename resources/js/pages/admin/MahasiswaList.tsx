@@ -12,6 +12,10 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  ShieldOff,
+  UserMinus,
+  UserX,
+  UserCheck,
 } from "lucide-react";
 import { mahasiswaList } from "@/data/mockData";
 
@@ -22,15 +26,22 @@ const enriched: Record<string, {
   semester: number;
   kategori: "Reguler" | "Aspirasi";
   sp: "SP1" | "SP2" | "SP3" | null;
+  status?: string;
+  semesterDicabut?: string;
+  tanggalDicabut?: string;
+  alasanDicabut?: string;
+  dicabutOleh?: string;
+  alasanNonaktif?: string;
+  tanggalNonaktif?: string;
 }> = {
   "2206001": { ipk: 3.35, trendDelta: +0.10, semester: 7,  kategori: "Reguler",  sp: null  },
   "2206002": { ipk: 2.85, trendDelta: -0.22, semester: 7,  kategori: "Aspirasi", sp: "SP2" },
   "2303001": { ipk: 3.12, trendDelta: +0.05, semester: 5,  kategori: "Reguler",  sp: "SP1" },
-  "2211001": { ipk: 3.45, trendDelta: +0.15, semester: 7,  kategori: "Reguler",  sp: null  },
-  "2420001": { ipk: 3.78, trendDelta: +0.20, semester: 3,  kategori: "Aspirasi", sp: null  },
+  "2211001": { ipk: 3.45, trendDelta: +0.15, semester: 7,  kategori: "Reguler",  sp: null, status: "Nonaktif", alasanNonaktif: "Cuti Akademik", tanggalNonaktif: "15 Jan 2026"  },
+  "2420001": { ipk: 3.78, trendDelta: +0.20, semester: 3,  kategori: "Aspirasi", sp: null, status: "Nonaktif", alasanNonaktif: "Masalah Administrasi", tanggalNonaktif: "20 Jan 2026"  },
   "2307001": { ipk: 3.92, trendDelta: +0.08, semester: 5,  kategori: "Reguler",  sp: null  },
-  "2106001": { ipk: 2.95, trendDelta: -0.10, semester: 9,  kategori: "Reguler",  sp: null  },
-  "2303002": { ipk: 2.70, trendDelta: -0.30, semester: 5,  kategori: "Aspirasi", sp: "SP3" },
+  "2106001": { ipk: 2.95, trendDelta: -0.10, semester: 9,  kategori: "Reguler",  sp: null, status: "Dicabut", semesterDicabut: "Ganjil 2025/2026", tanggalDicabut: "10 Feb 2026", alasanDicabut: "IPK di Bawah Standar", dicabutOleh: "Admin Pusat"  },
+  "2303002": { ipk: 2.70, trendDelta: -0.30, semester: 5,  kategori: "Aspirasi", sp: "SP3", status: "Dicabut", semesterDicabut: "Genap 2025/2026", tanggalDicabut: "12 Mar 2026", alasanDicabut: "SP3 Otomatis", dicabutOleh: "Sistem" },
   "2211002": { ipk: 2.88, trendDelta: -0.05, semester: 7,  kategori: "Reguler",  sp: "SP1" },
   "2207001": { ipk: 3.20, trendDelta: +0.12, semester: 7,  kategori: "Reguler",  sp: null  },
   "2306001": { ipk: 3.55, trendDelta: +0.18, semester: 5,  kategori: "Aspirasi", sp: null  },
@@ -47,6 +58,13 @@ const students = mahasiswaList.map((m) => {
     semester:  e?.semester   ?? m.semester,
     kategori:  (e?.kategori  ?? m.kategori) as "Reguler" | "Aspirasi",
     sp:        (e?.sp !== undefined ? e.sp : m.sp) as "SP1" | "SP2" | "SP3" | null,
+    status:    e?.status ?? m.status,
+    semesterDicabut: e?.semesterDicabut ?? m.semesterDicabut,
+    tanggalDicabut: e?.tanggalDicabut ?? m.tanggalDicabut,
+    alasanDicabut: e?.alasanDicabut ?? m.alasanDicabut,
+    dicabutOleh: e?.dicabutOleh ?? m.dicabutOleh,
+    alasanNonaktif: e?.alasanNonaktif ?? m.alasanNonaktif,
+    tanggalNonaktif: e?.tanggalNonaktif ?? m.tanggalNonaktif,
   };
 });
 
@@ -114,6 +132,7 @@ export default function MahasiswaList() {
   const [prodiFilter,   setProdiFilter]   = useState("Semua");
   const [angkatanFilter, setAngkatanFilter] = useState("Semua");
   const [spFilter,      setSpFilter]      = useState("Semua");
+  const [statusFilter,  setStatusFilter]  = useState("Semua Status");
   const [kipFilter,     setKipFilter]     = useState("Semua");
   const [ipkFilter,     setIpkFilter]     = useState("Semua");
   const [sortBy,        setSortBy]        = useState("IPK Tertinggi → Terendah");
@@ -123,15 +142,19 @@ export default function MahasiswaList() {
   const [openMenu,         setOpenMenu]         = useState<number | null>(null);
   const [deleteModal,      setDeleteModal]      = useState<typeof students[0] | null>(null);
   const [deleteConfirmNim, setDeleteConfirmNim] = useState("");
+  
+  const [nonaktifModal, setNonaktifModal] = useState<typeof students[0] | null>(null);
+  const [cabutModal, setCabutModal] = useState<typeof students[0] | null>(null);
+  const [cabutConfirmNim, setCabutConfirmNim] = useState("");
 
   const isFiltered =
     search || prodiFilter !== "Semua" || angkatanFilter !== "Semua" ||
-    spFilter !== "Semua" || kipFilter !== "Semua" || ipkFilter !== "Semua" ||
+    spFilter !== "Semua" || statusFilter !== "Semua Status" || kipFilter !== "Semua" || ipkFilter !== "Semua" ||
     sortBy !== "IPK Tertinggi → Terendah";
 
   function resetFilters() {
     setSearch(""); setProdiFilter("Semua"); setAngkatanFilter("Semua");
-    setSpFilter("Semua"); setKipFilter("Semua"); setIpkFilter("Semua");
+    setSpFilter("Semua"); setStatusFilter("Semua Status"); setKipFilter("Semua"); setIpkFilter("Semua");
     setSortBy("IPK Tertinggi → Terendah"); setPage(1);
   }
 
@@ -145,6 +168,7 @@ export default function MahasiswaList() {
       if (spFilter === "SP1" && m.sp !== "SP1") return false;
       if (spFilter === "SP2" && m.sp !== "SP2") return false;
       if (spFilter === "SP3" && m.sp !== "SP3") return false;
+      if (statusFilter !== "Semua Status" && m.status !== statusFilter) return false;
       if (kipFilter === "KIP-K Reguler" && m.kategori !== "Reguler") return false;
       if (kipFilter === "KIP-K Aspirasi" && m.kategori !== "Aspirasi") return false;
       if (ipkFilter === "Di Bawah Standar (< 3.0)" && m.ipk >= 3.0) return false;
@@ -163,7 +187,7 @@ export default function MahasiswaList() {
     });
 
     return list;
-  }, [search, prodiFilter, angkatanFilter, spFilter, kipFilter, ipkFilter, sortBy]);
+  }, [search, prodiFilter, angkatanFilter, spFilter, statusFilter, kipFilter, ipkFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -224,6 +248,12 @@ export default function MahasiswaList() {
             value={spFilter}
             onChange={(v) => { setSpFilter(v); setPage(1); }}
             options={["Semua", "Tanpa SP", "SP1", "SP2", "SP3"]}
+          />
+
+          <FilterSelect
+            value={statusFilter}
+            onChange={(v) => { setStatusFilter(v); setPage(1); }}
+            options={["Semua Status", "Aktif", "Nonaktif", "Dicabut", "Lulus"]}
           />
 
           <FilterSelect
@@ -378,6 +408,28 @@ export default function MahasiswaList() {
                             >
                               <Eye size={14} /> Lihat Detail
                             </Link>
+                            {(m.status === "Aktif" || m.status === "Nonaktif") && (
+                              <button
+                                onClick={() => { setNonaktifModal(m); setOpenMenu(null); }}
+                                className={`flex items-center gap-2 px-4 py-2.5 text-sm w-full transition-colors border-t border-[#E2E8F0] ${
+                                  m.status === "Aktif" ? "text-amber-600 hover:bg-amber-50" : "text-green-600 hover:bg-green-50"
+                                }`}
+                              >
+                                {m.status === "Aktif" ? (
+                                  <><UserMinus size={14} /> Nonaktifkan</>
+                                ) : (
+                                  <><UserCheck size={14} /> Aktifkan</>
+                                )}
+                              </button>
+                            )}
+                            {(m.status === "Aktif" || m.status === "Nonaktif") && (
+                              <button
+                                onClick={() => { setCabutModal(m); setOpenMenu(null); }}
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full transition-colors border-t border-[#E2E8F0]"
+                              >
+                                <UserX size={14} /> Cabut KIP-K
+                              </button>
+                            )}
                             <button
                               onClick={() => { setDeleteModal(m); setOpenMenu(null); }}
                               className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full transition-colors border-t border-[#E2E8F0]"
@@ -471,6 +523,120 @@ export default function MahasiswaList() {
                 style={{ background: "#DC2626" }}
               >
                 Hapus Permanen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nonaktif/Aktif confirmation modal */}
+      {nonaktifModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${nonaktifModal.status === "Aktif" ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600"}`}>
+              {nonaktifModal.status === "Aktif" ? <UserMinus size={20} /> : <UserCheck size={20} />}
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg text-center mb-2">
+              {nonaktifModal.status === "Aktif" ? "Nonaktifkan Mahasiswa" : "Aktifkan Mahasiswa"}
+            </h3>
+            <p className="text-gray-500 text-sm text-center mb-4">
+              Mahasiswa: <strong>{nonaktifModal.nama}</strong>
+            </p>
+            {nonaktifModal.status === "Aktif" ? (
+              <div className="mb-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Alasan Nonaktif</label>
+                  <select className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200">
+                    <option>Cuti Akademik</option>
+                    <option>Masalah Administrasi</option>
+                    <option>Permintaan Sendiri</option>
+                    <option>Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
+                  <textarea rows={3} className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 resize-none"></textarea>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4 space-y-4 text-center text-sm text-gray-600">
+                Apakah Anda yakin ingin mengaktifkan kembali status mahasiswa ini?
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNonaktifModal(null)}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                style={{ background: nonaktifModal.status === "Aktif" ? "#F59E0B" : "#10B981" }}
+                onClick={() => setNonaktifModal(null)}
+              >
+                {nonaktifModal.status === "Aktif" ? "Nonaktifkan" : "Aktifkan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cabut KIP-K confirmation modal */}
+      {cabutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <UserX size={20} className="text-red-600" />
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg text-center mb-2">Cabut KIP-K Mahasiswa</h3>
+            <p className="text-gray-500 text-sm text-center mb-2">
+              Mahasiswa: <strong>{cabutModal.nama}</strong>
+            </p>
+            <p className="text-gray-600 text-xs text-center font-medium mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
+              Semester saat pencabutan: Ganjil 2026/2027
+            </p>
+            <div className="mb-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Alasan Pencabutan</label>
+                <select className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-200">
+                  <option>IPK di Bawah Standar</option>
+                  <option>Cuti Tanpa Izin</option>
+                  <option>Pelanggaran Berat</option>
+                  <option>SP3 Otomatis</option>
+                  <option>Lainnya</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
+                <textarea rows={2} className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Ketik NIM untuk konfirmasi pencabutan:
+                </label>
+                <input
+                  value={cabutConfirmNim}
+                  onChange={(e) => setCabutConfirmNim(e.target.value)}
+                  placeholder={cabutModal.nim}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setCabutModal(null); setCabutConfirmNim(""); }}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                disabled={cabutConfirmNim !== cabutModal.nim}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                style={{ background: "#DC2626" }}
+                onClick={() => { setCabutModal(null); setCabutConfirmNim(""); }}
+              >
+                Cabut Permanen
               </button>
             </div>
           </div>

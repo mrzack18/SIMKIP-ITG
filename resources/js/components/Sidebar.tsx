@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Users, FileCheck, AlertTriangle, Award,
   BarChart3, Settings, History, ChevronLeft, ChevronRight,
   Upload, Folder, Bell, User, LogOut, GraduationCap, BookOpen,
+  FileText,
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
@@ -14,7 +15,7 @@ const adminNav = [
   { to: "/admin/akademik", icon: BookOpen, label: "Data Akademik" },
   { to: "/admin/dokumen", icon: FileCheck, label: "Validasi Dokumen", badge: 5 },
   { to: "/admin/sp", icon: AlertTriangle, label: "Surat Peringatan" },
-  { to: "/admin/bebas-tanggungan", icon: Award, label: "Surat Penyelesaian" },
+  { to: "/admin/bebas-tanggungan", icon: Award, label: "Surat Penyelesaian", badge: 5 },
   { to: "/admin/laporan", icon: BarChart3, label: "Laporan Semester" },
   { to: "/admin/konfigurasi", icon: Settings, label: "Konfigurasi" },
   { to: "/admin/audit", icon: History, label: "Audit Log" },
@@ -36,6 +37,7 @@ const mahasiswaNav = [
 const prodiNav = [
   { to: "/prodi", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/prodi/mahasiswa", icon: Users, label: "Daftar Mahasiswa" },
+  { to: "/prodi/laporan", icon: FileText, label: "Laporan Semester" },
   { to: "/prodi/ekspor", icon: BarChart3, label: "Ekspor Laporan" },
   { to: "/prodi/profil", icon: User, label: "Profil" },
 ];

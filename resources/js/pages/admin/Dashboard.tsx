@@ -17,69 +17,70 @@ import {
   Clock,
   ArrowRight,
   TrendingUp,
+  UserX,
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
 // ── Summary chart data (Reguler vs Aspirasi) ─────────────────────────────────
 const prodiSebaranData = [
-  { name: "Teknik Informatika", Reguler: 26, Aspirasi: 16 },
-  { name: "Sistem Informasi",   Reguler: 20, Aspirasi: 11 },
-  { name: "Teknik Industri",    Reguler: 12, Aspirasi: 8  },
-  { name: "Teknik Sipil",       Reguler: 10, Aspirasi: 6  },
-  { name: "Arsitektur",         Reguler: 8,  Aspirasi: 4  },
+  { name: "Teknik Informatika", Reguler: 26, Aspirasi: 16, Dicabut: 3 },
+  { name: "Sistem Informasi",   Reguler: 20, Aspirasi: 11, Dicabut: 2 },
+  { name: "Teknik Industri",    Reguler: 12, Aspirasi: 8,  Dicabut: 1 },
+  { name: "Teknik Sipil",       Reguler: 10, Aspirasi: 6,  Dicabut: 1 },
+  { name: "Arsitektur",         Reguler: 8,  Aspirasi: 4,  Dicabut: 1 },
 ];
 
 const angkatanSebaranData = [
-  { name: "2022", Reguler: 22, Aspirasi: 13 },
-  { name: "2023", Reguler: 19, Aspirasi: 12 },
-  { name: "2024", Reguler: 15, Aspirasi: 9  },
-  { name: "2025", Reguler: 11, Aspirasi: 7  },
-  { name: "2026", Reguler: 8,  Aspirasi: 5  },
+  { name: "2022", Reguler: 22, Aspirasi: 13, Dicabut: 3 },
+  { name: "2023", Reguler: 19, Aspirasi: 12, Dicabut: 2 },
+  { name: "2024", Reguler: 15, Aspirasi: 9,  Dicabut: 1 },
+  { name: "2025", Reguler: 11, Aspirasi: 7,  Dicabut: 1 },
+  { name: "2026", Reguler: 8,  Aspirasi: 5,  Dicabut: 1 },
 ];
 
 // ── Per-prodi per-angkatan data ───────────────────────────────────────────────
-const sebaranPerProdiAngkatan: Record<string, { name: string; Reguler: number; Aspirasi: number }[]> = {
+const sebaranPerProdiAngkatan: Record<string, { name: string; Reguler: number; Aspirasi: number; Dicabut?: number }[]> = {
   "Semua": [
-    { name: "Teknik Informatika", Reguler: 26, Aspirasi: 16 },
-    { name: "Sistem Informasi",   Reguler: 20, Aspirasi: 11 },
-    { name: "Teknik Industri",    Reguler: 12, Aspirasi: 8  },
-    { name: "Teknik Sipil",       Reguler: 10, Aspirasi: 6  },
-    { name: "Arsitektur",         Reguler: 8,  Aspirasi: 4  },
+    { name: "Teknik Informatika", Reguler: 26, Aspirasi: 16, Dicabut: 3 },
+    { name: "Sistem Informasi",   Reguler: 20, Aspirasi: 11, Dicabut: 2 },
+    { name: "Teknik Industri",    Reguler: 12, Aspirasi: 8,  Dicabut: 1 },
+    { name: "Teknik Sipil",       Reguler: 10, Aspirasi: 6,  Dicabut: 1 },
+    { name: "Arsitektur",         Reguler: 8,  Aspirasi: 4,  Dicabut: 1 },
   ],
   "2022": [
-    { name: "Teknik Informatika", Reguler: 8, Aspirasi: 4 },
-    { name: "Sistem Informasi",   Reguler: 6, Aspirasi: 2 },
-    { name: "Teknik Industri",    Reguler: 4, Aspirasi: 2 },
-    { name: "Teknik Sipil",       Reguler: 3, Aspirasi: 2 },
-    { name: "Arsitektur",         Reguler: 2, Aspirasi: 2 },
+    { name: "Teknik Informatika", Reguler: 8, Aspirasi: 4, Dicabut: 1 },
+    { name: "Sistem Informasi",   Reguler: 6, Aspirasi: 2, Dicabut: 1 },
+    { name: "Teknik Industri",    Reguler: 4, Aspirasi: 2, Dicabut: 0 },
+    { name: "Teknik Sipil",       Reguler: 3, Aspirasi: 2, Dicabut: 1 },
+    { name: "Arsitektur",         Reguler: 2, Aspirasi: 2, Dicabut: 0 },
   ],
   "2023": [
-    { name: "Teknik Informatika", Reguler: 7, Aspirasi: 3 },
-    { name: "Sistem Informasi",   Reguler: 5, Aspirasi: 3 },
-    { name: "Teknik Industri",    Reguler: 3, Aspirasi: 2 },
-    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 2 },
-    { name: "Arsitektur",         Reguler: 2, Aspirasi: 1 },
+    { name: "Teknik Informatika", Reguler: 7, Aspirasi: 3, Dicabut: 1 },
+    { name: "Sistem Informasi",   Reguler: 5, Aspirasi: 3, Dicabut: 1 },
+    { name: "Teknik Industri",    Reguler: 3, Aspirasi: 2, Dicabut: 0 },
+    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 2, Dicabut: 0 },
+    { name: "Arsitektur",         Reguler: 2, Aspirasi: 1, Dicabut: 0 },
   ],
   "2024": [
-    { name: "Teknik Informatika", Reguler: 5, Aspirasi: 3 },
-    { name: "Sistem Informasi",   Reguler: 4, Aspirasi: 3 },
-    { name: "Teknik Industri",    Reguler: 3, Aspirasi: 2 },
-    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 1 },
-    { name: "Arsitektur",         Reguler: 2, Aspirasi: 1 },
+    { name: "Teknik Informatika", Reguler: 5, Aspirasi: 3, Dicabut: 1 },
+    { name: "Sistem Informasi",   Reguler: 4, Aspirasi: 3, Dicabut: 0 },
+    { name: "Teknik Industri",    Reguler: 3, Aspirasi: 2, Dicabut: 0 },
+    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 1, Dicabut: 0 },
+    { name: "Arsitektur",         Reguler: 2, Aspirasi: 1, Dicabut: 0 },
   ],
   "2025": [
-    { name: "Teknik Informatika", Reguler: 4, Aspirasi: 3 },
-    { name: "Sistem Informasi",   Reguler: 3, Aspirasi: 2 },
-    { name: "Teknik Industri",    Reguler: 1, Aspirasi: 1 },
-    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 1 },
-    { name: "Arsitektur",         Reguler: 1, Aspirasi: 0 },
+    { name: "Teknik Informatika", Reguler: 4, Aspirasi: 3, Dicabut: 0 },
+    { name: "Sistem Informasi",   Reguler: 3, Aspirasi: 2, Dicabut: 0 },
+    { name: "Teknik Industri",    Reguler: 1, Aspirasi: 1, Dicabut: 1 },
+    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 1, Dicabut: 0 },
+    { name: "Arsitektur",         Reguler: 1, Aspirasi: 0, Dicabut: 0 },
   ],
   "2026": [
-    { name: "Teknik Informatika", Reguler: 2, Aspirasi: 3 },
-    { name: "Sistem Informasi",   Reguler: 2, Aspirasi: 1 },
-    { name: "Teknik Industri",    Reguler: 1, Aspirasi: 1 },
-    { name: "Teknik Sipil",       Reguler: 1, Aspirasi: 0 },
-    { name: "Arsitektur",         Reguler: 1, Aspirasi: 0 },
+    { name: "Teknik Informatika", Reguler: 2, Aspirasi: 3, Dicabut: 0 },
+    { name: "Sistem Informasi",   Reguler: 2, Aspirasi: 1, Dicabut: 0 },
+    { name: "Teknik Industri",    Reguler: 1, Aspirasi: 1, Dicabut: 0 },
+    { name: "Teknik Sipil",       Reguler: 1, Aspirasi: 0, Dicabut: 0 },
+    { name: "Arsitektur",         Reguler: 1, Aspirasi: 0, Dicabut: 1 },
   ],
 };
 
@@ -185,7 +186,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center">
@@ -225,6 +226,24 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
           <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+              <UserX size={18} className="text-red-500" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">
+              Mahasiswa Dicabut
+            </p>
+          </div>
+          <p className="text-3xl font-bold text-red-600">8</p>
+          <Link
+            to="/admin/mahasiswa?status=dicabut"
+            className="inline-flex items-center gap-1 mt-2 text-xs text-[#263F93] hover:underline font-medium"
+          >
+            Lihat Detail <ArrowRight size={11} />
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
               <FileText size={18} className="text-amber-600" />
             </div>
@@ -254,13 +273,15 @@ export default function Dashboard() {
               <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} cursor={{ fill: "#F8FAFC" }} />
-              <Bar dataKey="Reguler" fill="#263F93" radius={[0, 3, 3, 0]} maxBarSize={12} stackId="a" />
-              <Bar dataKey="Aspirasi" fill="#D4A72C" radius={[0, 3, 3, 0]} maxBarSize={12} stackId="a" />
+              <Bar dataKey="Reguler" fill="#263F93" radius={[0, 0, 0, 0]} stackId="a" />
+              <Bar dataKey="Aspirasi" fill="#D4A72C" radius={[0, 0, 0, 0]} stackId="a" />
+              <Bar dataKey="Dicabut" fill="#DC2626" radius={[0, 3, 3, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-center gap-6 mt-2">
             <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#263F93]" /><span className="text-xs text-[#64748B]">Reguler</span></div>
             <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#D4A72C]" /><span className="text-xs text-[#64748B]">Aspirasi</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#DC2626]" /><span className="text-xs text-[#64748B]">Dicabut</span></div>
           </div>
         </div>
 
@@ -275,12 +296,14 @@ export default function Dashboard() {
               <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={24} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} cursor={{ fill: "#F8FAFC" }} />
               <Bar dataKey="Reguler" fill="#263F93" radius={[0, 0, 0, 0]} stackId="b" />
-              <Bar dataKey="Aspirasi" fill="#D4A72C" radius={[3, 3, 0, 0]} stackId="b" />
+              <Bar dataKey="Aspirasi" fill="#D4A72C" radius={[0, 0, 0, 0]} stackId="b" />
+              <Bar dataKey="Dicabut" fill="#DC2626" radius={[3, 3, 0, 0]} stackId="b" />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center justify-center gap-6 mt-2">
             <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#263F93]" /><span className="text-xs text-[#64748B]">Reguler</span></div>
             <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#D4A72C]" /><span className="text-xs text-[#64748B]">Aspirasi</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#DC2626]" /><span className="text-xs text-[#64748B]">Dicabut</span></div>
           </div>
         </div>
       </div>
@@ -311,14 +334,16 @@ export default function Dashboard() {
             <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
             <Tooltip content={<ProdiChartTooltip />} cursor={{ fill: "#F8FAFC" }} />
-            <Bar dataKey="Reguler" fill="#263F93" stackId="c" radius={[0, 0, 0, 0]} maxBarSize={14} />
-            <Bar dataKey="Aspirasi" fill="#D4A72C" stackId="c" radius={[0, 3, 3, 0]} maxBarSize={14} />
+            <Bar dataKey="Reguler" fill="#263F93" stackId="c" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Aspirasi" fill="#D4A72C" stackId="c" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="Dicabut" fill="#DC2626" stackId="c" radius={[0, 3, 3, 0]} />
           </BarChart>
         </ResponsiveContainer>
 
         <div className="flex items-center justify-center gap-6 mt-3">
           <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#263F93]" /><span className="text-xs text-[#64748B]">Reguler</span></div>
           <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#D4A72C]" /><span className="text-xs text-[#64748B]">Aspirasi</span></div>
+          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#DC2626]" /><span className="text-xs text-[#64748B]">Dicabut</span></div>
         </div>
       </div>
 

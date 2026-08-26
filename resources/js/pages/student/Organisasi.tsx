@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download } from "lucide-react";
+import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download, Image } from "lucide-react";
 
 type OStatus = "Disetujui" | "Menunggu" | "Ditolak";
 
 interface Org {
   id: number;
+  jenis: "Organisasi" | "Kepanitiaan" | "Kegiatan";
   nama: string;
   jabatan: string;
   mulai: string;
@@ -12,6 +13,7 @@ interface Org {
   deskripsi: string;
   status: OStatus;
   catatanAdmin?: string;
+  fotoKegiatan?: string;
 }
 
 const statusStyle: Record<OStatus, { badge: string; icon: React.ReactNode; dot: string }> = {
@@ -39,10 +41,10 @@ function fmtMonth(ym: string) {
 }
 
 const INITIAL: Org[] = [
-  { id: 1, nama: "BEM ITG", jabatan: "Ketua Divisi Pendidikan", mulai: "2025-09", selesai: "2026-08", deskripsi: "Mengelola program kerja divisi pendidikan mahasiswa.", status: "Disetujui" },
-  { id: 2, nama: "HIMA Teknik Informatika", jabatan: "Sekretaris Umum", mulai: "2024-09", selesai: "2025-08", deskripsi: "Mengurus administrasi himpunan mahasiswa prodi.", status: "Disetujui" },
-  { id: 3, nama: "UKM Robotika ITG", jabatan: "Anggota Aktif", mulai: "2026-02", selesai: "2026-08", deskripsi: "Berpartisipasi dalam pengembangan robot.", status: "Menunggu" },
-  { id: 4, nama: "UKM Fotografi", jabatan: "Ketua", mulai: "2023-09", selesai: "2024-08", deskripsi: "", status: "Ditolak", catatanAdmin: "SK Kepengurusan tidak terlihat jelas, mohon upload ulang." },
+  { id: 1, jenis: "Organisasi", nama: "BEM ITG", jabatan: "Ketua Divisi Pendidikan", mulai: "2025-09", selesai: "2026-08", deskripsi: "Mengelola program kerja divisi pendidikan mahasiswa.", status: "Disetujui" },
+  { id: 2, jenis: "Organisasi", nama: "HIMA Teknik Informatika", jabatan: "Sekretaris Umum", mulai: "2024-09", selesai: "2025-08", deskripsi: "Mengurus administrasi himpunan mahasiswa prodi.", status: "Disetujui" },
+  { id: 3, jenis: "Kepanitiaan", nama: "Seminar Nasional", jabatan: "Ketua Pelaksana", mulai: "2026-02", selesai: "2026-08", deskripsi: "Mengadakan seminar.", status: "Menunggu", fotoKegiatan: "foto-seminar.jpg" },
+  { id: 4, jenis: "Kegiatan", nama: "UKM Fotografi", jabatan: "Ketua", mulai: "2023-09", selesai: "2024-08", deskripsi: "", status: "Ditolak", catatanAdmin: "SK Kepengurusan tidak terlihat jelas, mohon upload ulang." },
 ];
 
 // Mock student name for SK preview
@@ -54,8 +56,10 @@ export default function Organisasi() {
   const [detail, setDetail] = useState<Org | null>(null);
   const [skOrg, setSkOrg] = useState<Org | null>(null);
   const [fileName, setFileName] = useState("");
-  const [form, setForm] = useState({ nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+  const [fotoName, setFotoName] = useState("");
+  const [form, setForm] = useState({ jenis: "Organisasi" as "Organisasi" | "Kepanitiaan" | "Kegiatan", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
   const fileRef = useRef<HTMLInputElement>(null);
+  const fotoRef = useRef<HTMLInputElement>(null);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -63,8 +67,9 @@ export default function Organisasi() {
   const handleSubmit = () => {
     if (!form.nama.trim() || !form.jabatan.trim()) return;
     setList(prev => [{ id: Date.now(), ...form, status: "Menunggu" as OStatus }, ...prev]);
-    setForm({ nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+    setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
     setFileName("");
+    setFotoName("");
     setOpen(false);
   };
 
@@ -72,13 +77,13 @@ export default function Organisasi() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Keaktifan Organisasi Saya</h1>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Keaktifan Organisasi & Kepanitiaan</h1>
           <p className="text-gray-500 text-sm mt-0.5">{list.length} organisasi tercatat</p>
         </div>
         <button onClick={() => setOpen(true)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
           style={{ background: "#263F93" }}>
-          <Plus size={15} /> Tambah Organisasi
+          <Plus size={15} /> Tambah Data
         </button>
       </div>
 
@@ -100,6 +105,11 @@ export default function Organisasi() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-0.5">
                         <h3 className="font-600 text-gray-800 text-sm">{org.nama}</h3>
+                        <span className={`px-2 py-0.5 rounded text-xs font-500 ${
+                          org.jenis === "Organisasi" ? "bg-blue-100 text-blue-700" :
+                          org.jenis === "Kepanitiaan" ? "bg-purple-100 text-purple-700" :
+                          "bg-teal-100 text-teal-700"
+                        }`}>{org.jenis}</span>
                         <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 ${ss.badge}`}>
                           {ss.icon} {org.status}
                         </span>
@@ -194,12 +204,18 @@ export default function Organisasi() {
               )}
               <div>
                 <p className="text-xs text-gray-400 mb-2">Bukti Dokumen</p>
-                <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2">
-                  <FileText size={28} className="text-gray-300" />
-                  <p className="text-xs text-gray-400">sk-kepengurusan.pdf</p>
-                  <button className="mt-1 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
-                    <Eye size={11} /> Lihat Dokumen
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2">
+                    <FileText size={28} className="text-gray-300" />
+                    <p className="text-xs text-gray-400">sk-kepengurusan.pdf</p>
+                    <button className="mt-1 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
+                      <Eye size={11} /> Lihat Dokumen
+                    </button>
+                  </div>
+                  <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2">
+                    <Image size={28} className="text-gray-300" />
+                    <p className="text-xs text-gray-400 text-center px-2">{detail.fotoKegiatan || "Belum ada foto"}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -294,13 +310,31 @@ export default function Organisasi() {
           <div className="flex-1 bg-black/40" onClick={() => setOpen(false)} />
           <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
             <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-              <h2 className="font-display font-700 text-gray-800">Tambah Organisasi</h2>
+              <h2 className="font-display font-700 text-gray-800">Tambah Data</h2>
               <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"><X size={18} /></button>
             </div>
 
             <div className="flex-1 px-5 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-500 text-gray-700 mb-1.5">Nama Organisasi <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Jenis <span className="text-red-500">*</span></label>
+                <div className="flex gap-4">
+                  {(["Organisasi", "Kepanitiaan", "Kegiatan"] as const).map(j => (
+                    <label key={j} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="jenis"
+                        value={j}
+                        checked={form.jenis === j}
+                        onChange={() => setForm(f => ({ ...f, jenis: j }))}
+                        className="accent-[#263F93]"
+                      />
+                      <span className="text-sm text-gray-700">{j}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Nama Organisasi / Kegiatan <span className="text-red-500">*</span></label>
                 <input value={form.nama} onChange={set("nama")} placeholder="BEM ITG, HIMA, UKM..."
                   className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
               </div>
@@ -330,7 +364,7 @@ export default function Organisasi() {
                   className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none resize-none" />
               </div>
               <div>
-                <label className="block text-sm font-500 text-gray-700 mb-1.5">Upload Bukti (SK Kepengurusan/Sertifikat)</label>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Sertifikat / SK Pengurus</label>
                 <div onClick={() => fileRef.current?.click()}
                   className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-6 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-[#F8FAFC] transition-colors">
                   {fileName ? (
@@ -345,6 +379,23 @@ export default function Organisasi() {
                 </div>
                 <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
                   onChange={e => setFileName(e.target.files?.[0]?.name || "")} />
+              </div>
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Foto Dokumentasi Kegiatan</label>
+                <div onClick={() => fotoRef.current?.click()}
+                  className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-6 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-[#F8FAFC] transition-colors">
+                  {fotoName ? (
+                    <div className="text-sm text-[#263F93] font-500">📎 {fotoName}</div>
+                  ) : (
+                    <>
+                      <Upload size={24} className="text-gray-300 mx-auto mb-2" />
+                      <div className="text-sm text-gray-400">Seret foto ke sini atau klik untuk memilih</div>
+                      <div className="text-xs text-gray-300 mt-1">JPG, PNG — maks. 10MB</div>
+                    </>
+                  )}
+                </div>
+                <input ref={fotoRef} type="file" accept=".jpg,.jpeg,.png" className="hidden"
+                  onChange={e => setFotoName(e.target.files?.[0]?.name || "")} />
               </div>
             </div>
 

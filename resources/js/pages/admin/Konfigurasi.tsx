@@ -102,6 +102,30 @@ export default function Konfigurasi() {
     lulus: boolean
   } | null>(null)
 
+  // Section 7 State: Regulasi & Aturan
+  const [regulasi, setRegulasi] = useState([
+    { id: 1, nama: "IPK Minimum", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester", nilai: "3.00", tipe: "number", aktif: true },
+    { id: 2, nama: "Masa Tenggang SP", deskripsi: "Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan", nilai: "90", tipe: "number", aktif: true },
+    { id: 3, nama: "Batas Semester Studi", deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K", nilai: "8", tipe: "number", aktif: true },
+    { id: 4, nama: "Minimum SKS per Semester", deskripsi: "Jumlah SKS minimum yang harus diambil mahasiswa per semester", nilai: "18", tipe: "number", aktif: true },
+    { id: 5, nama: "Total SKS Kelulusan", deskripsi: "Total SKS minimum untuk syarat kelulusan", nilai: "144", tipe: "number", aktif: true },
+  ])
+  const [showAddRegulasi, setShowAddRegulasi] = useState(false)
+  const [editRegulasi, setEditRegulasi] = useState<number | null>(null)
+  const [regulasiForm, setRegulasiForm] = useState({ nama: "", deskripsi: "", nilai: "", tipe: "number" as "number" | "text" })
+  const [editRegulasiRow, setEditRegulasiRow] = useState<{nama: string, deskripsi: string, nilai: string, tipe: "number" | "text"} | null>(null)
+
+  // Section 8 State: Jenis Pelanggaran
+  const [jenisPelanggaran, setJenisPelanggaran] = useState([
+    { id: 1, nama: "Akademik", deskripsi: "IPK di bawah standar minimum yang ditetapkan", eskalasi: "normal", aktif: true },
+    { id: 2, nama: "Non-Akademik", deskripsi: "Pelanggaran kode etik atau tata tertib kampus", eskalasi: "normal", aktif: true },
+    { id: 3, nama: "Cuti Tanpa Izin", deskripsi: "Tidak melakukan registrasi ulang tanpa keterangan", eskalasi: "langsung_sp3", aktif: true },
+  ])
+  const [showAddPelanggaran, setShowAddPelanggaran] = useState(false)
+  const [pelanggaranForm, setPelanggaranForm] = useState({ nama: "", deskripsi: "", eskalasi: "normal" as "normal" | "langsung_sp3" })
+  const [editPelanggaran, setEditPelanggaran] = useState<number | null>(null)
+  const [editPelanggaranRow, setEditPelanggaranRow] = useState<{nama: string, deskripsi: string, eskalasi: "normal" | "langsung_sp3"} | null>(null)
+
   const showToast = (msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(""), 3000)
@@ -782,6 +806,290 @@ export default function Konfigurasi() {
               real-time.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Section 7: Regulasi & Aturan */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <SectionHeader
+          num={7}
+          title="Regulasi & Aturan"
+          onSave={() => showToast("Regulasi berhasil disimpan")}
+        />
+        <div className="p-5 space-y-4">
+          <div className="overflow-x-auto rounded-xl border border-gray-100">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {["Nama Aturan", "Deskripsi", "Nilai", "Status", "Aksi"].map((h) => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {regulasi.map((r) => (
+                  <tr key={r.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="px-4 py-3 align-top">
+                      {editRegulasi === r.id && editRegulasiRow ? (
+                        <input
+                          type="text"
+                          value={editRegulasiRow.nama}
+                          onChange={(e) => setEditRegulasiRow({ ...editRegulasiRow, nama: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                        />
+                      ) : (
+                        <span className="font-600 text-gray-800">{r.nama}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top min-w-[250px]">
+                      {editRegulasi === r.id && editRegulasiRow ? (
+                        <textarea
+                          value={editRegulasiRow.deskripsi}
+                          onChange={(e) => setEditRegulasiRow({ ...editRegulasiRow, deskripsi: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                          rows={2}
+                        />
+                      ) : (
+                        <span className="text-gray-500 text-xs">{r.deskripsi}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {editRegulasi === r.id && editRegulasiRow ? (
+                        <input
+                          type={editRegulasiRow.tipe}
+                          value={editRegulasiRow.nilai}
+                          onChange={(e) => setEditRegulasiRow({ ...editRegulasiRow, nilai: e.target.value })}
+                          className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                        />
+                      ) : (
+                        <span className="font-mono font-600 text-[#263F93] bg-blue-50 px-2 py-1 rounded">
+                          {r.nilai}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <button onClick={() => setRegulasi(prev => prev.map(x => x.id === r.id ? { ...x, aktif: !x.aktif } : x))}>
+                        {r.aktif ? <ToggleRight size={22} className="text-green-500" /> : <ToggleLeft size={22} className="text-gray-400" />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {editRegulasi === r.id && editRegulasiRow ? (
+                        <div className="flex gap-1.5">
+                          <button onClick={() => {
+                            if (editRegulasiRow) {
+                              setRegulasi(prev => prev.map(x => x.id === r.id ? { ...x, ...editRegulasiRow } : x))
+                              showToast(`Aturan berhasil diperbarui`)
+                            }
+                            setEditRegulasi(null)
+                            setEditRegulasiRow(null)
+                          }} className="px-2.5 py-1 rounded-lg text-xs font-500 text-white bg-[#263F93]">Simpan</button>
+                          <button onClick={() => { setEditRegulasi(null); setEditRegulasiRow(null) }} className="p-1.5 text-gray-400"><X size={13} /></button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => { setEditRegulasi(r.id); setEditRegulasiRow({ nama: r.nama, deskripsi: r.deskripsi, nilai: r.nilai, tipe: r.tipe as any }) }} className="text-xs text-[#263F93] hover:underline font-500">Edit</button>
+                          <button onClick={() => {
+                            if (window.confirm("Hapus regulasi ini?")) {
+                              setRegulasi(prev => prev.filter(x => x.id !== r.id))
+                              showToast("Regulasi dihapus")
+                            }
+                          }} className="text-xs text-red-500 hover:underline font-500">Hapus</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {showAddRegulasi ? (
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mt-4 space-y-3">
+              <h3 className="text-sm font-600 text-gray-800 border-b border-gray-200 pb-2">Tambah Regulasi Baru</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Nama Aturan</label>
+                  <input type="text" value={regulasiForm.nama} onChange={(e) => setRegulasiForm({ ...regulasiForm, nama: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Tipe Nilai</label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" checked={regulasiForm.tipe === "number"} onChange={() => setRegulasiForm({ ...regulasiForm, tipe: "number" })} className="text-[#263F93]" /> Angka</label>
+                    <label className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" checked={regulasiForm.tipe === "text"} onChange={() => setRegulasiForm({ ...regulasiForm, tipe: "text" })} className="text-[#263F93]" /> Teks</label>
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Deskripsi</label>
+                  <textarea value={regulasiForm.deskripsi} onChange={(e) => setRegulasiForm({ ...regulasiForm, deskripsi: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" rows={2} />
+                </div>
+                <div>
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Nilai/Parameter</label>
+                  <input type={regulasiForm.tipe} value={regulasiForm.nilai} onChange={(e) => setRegulasiForm({ ...regulasiForm, nilai: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-2">
+                <button onClick={() => setShowAddRegulasi(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg">Batal</button>
+                <button onClick={() => {
+                  setRegulasi(prev => [...prev, { id: Date.now(), ...regulasiForm, aktif: true }]);
+                  setShowAddRegulasi(false);
+                  setRegulasiForm({ nama: "", deskripsi: "", nilai: "", tipe: "number" });
+                  showToast("Regulasi baru ditambahkan");
+                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg" style={{ background: "#263F93" }}>Simpan</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowAddRegulasi(true)} className="flex items-center gap-2 text-sm text-[#263F93] hover:underline mt-2">
+              <Plus size={14} /> Tambah Regulasi Baru
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Section 8: Jenis Pelanggaran */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <SectionHeader
+          num={8}
+          title="Jenis Pelanggaran"
+          onSave={() => showToast("Jenis pelanggaran disimpan")}
+        />
+        <div className="p-5 space-y-4">
+          <div className="overflow-x-auto rounded-xl border border-gray-100">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  {["Nama Jenis", "Deskripsi", "Eskalasi", "Status", "Aksi"].map((h) => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {jenisPelanggaran.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="px-4 py-3 align-top font-600 text-gray-800">
+                      {editPelanggaran === p.id && editPelanggaranRow ? (
+                        <input
+                          type="text"
+                          value={editPelanggaranRow.nama}
+                          onChange={(e) => setEditPelanggaranRow({ ...editPelanggaranRow, nama: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                        />
+                      ) : p.nama}
+                    </td>
+                    <td className="px-4 py-3 align-top text-gray-500 text-xs min-w-[200px]">
+                      {editPelanggaran === p.id && editPelanggaranRow ? (
+                        <textarea
+                          value={editPelanggaranRow.deskripsi}
+                          onChange={(e) => setEditPelanggaranRow({ ...editPelanggaranRow, deskripsi: e.target.value })}
+                          className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                          rows={2}
+                        />
+                      ) : p.deskripsi}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {editPelanggaran === p.id && editPelanggaranRow ? (
+                        <select
+                          value={editPelanggaranRow.eskalasi}
+                          onChange={(e) => setEditPelanggaranRow({ ...editPelanggaranRow, eskalasi: e.target.value as any })}
+                          className="px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                        >
+                          <option value="normal">Normal (SP1→SP2→SP3)</option>
+                          <option value="langsung_sp3">Langsung SP3</option>
+                        </select>
+                      ) : (
+                        <span className={`px-2 py-1 rounded text-[10px] font-700 uppercase tracking-wide ${p.eskalasi === 'langsung_sp3' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {p.eskalasi === 'langsung_sp3' ? 'Langsung SP3' : 'Normal (SP1→SP2→SP3)'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <button onClick={() => setJenisPelanggaran(prev => prev.map(x => x.id === p.id ? { ...x, aktif: !x.aktif } : x))}>
+                        {p.aktif ? <ToggleRight size={22} className="text-green-500" /> : <ToggleLeft size={22} className="text-gray-400" />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {editPelanggaran === p.id && editPelanggaranRow ? (
+                        <div className="flex gap-1.5">
+                          <button onClick={() => {
+                            if (editPelanggaranRow) {
+                              setJenisPelanggaran(prev => prev.map(x => x.id === p.id ? { ...x, ...editPelanggaranRow } : x))
+                              showToast(`Pelanggaran berhasil diperbarui`)
+                            }
+                            setEditPelanggaran(null)
+                            setEditPelanggaranRow(null)
+                          }} className="px-2.5 py-1 rounded-lg text-xs font-500 text-white bg-[#263F93]">Simpan</button>
+                          <button onClick={() => { setEditPelanggaran(null); setEditPelanggaranRow(null) }} className="p-1.5 text-gray-400"><X size={13} /></button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => { setEditPelanggaran(p.id); setEditPelanggaranRow({ nama: p.nama, deskripsi: p.deskripsi, eskalasi: p.eskalasi as any }) }} className="text-xs text-[#263F93] hover:underline font-500">Edit</button>
+                          <button onClick={() => {
+                            if ([1, 2, 3].includes(p.id)) {
+                              showToast("Jenis pelanggaran bawaan tidak dapat dihapus");
+                            } else if (window.confirm("Hapus jenis pelanggaran ini?")) {
+                              setJenisPelanggaran(prev => prev.filter(x => x.id !== p.id))
+                              showToast("Jenis pelanggaran dihapus")
+                            }
+                          }} className="text-xs text-red-500 hover:underline font-500">Hapus</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {showAddPelanggaran ? (
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mt-4 space-y-3">
+              <h3 className="text-sm font-600 text-gray-800 border-b border-gray-200 pb-2">Tambah Jenis Pelanggaran</h3>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Nama</label>
+                  <input type="text" value={pelanggaranForm.nama} onChange={(e) => setPelanggaranForm({ ...pelanggaranForm, nama: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Deskripsi</label>
+                  <textarea value={pelanggaranForm.deskripsi} onChange={(e) => setPelanggaranForm({ ...pelanggaranForm, deskripsi: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" rows={2} />
+                </div>
+                <div>
+                  <label className="block text-xs font-500 text-gray-600 mb-1">Eskalasi</label>
+                  <div className="flex flex-col gap-2 mt-1">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={pelanggaranForm.eskalasi === "normal"} onChange={() => setPelanggaranForm({ ...pelanggaranForm, eskalasi: "normal" })} className="text-[#263F93]" />
+                      Normal (urut SP1→SP2→SP3)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={pelanggaranForm.eskalasi === "langsung_sp3"} onChange={() => setPelanggaranForm({ ...pelanggaranForm, eskalasi: "langsung_sp3" })} className="text-red-600" />
+                      Langsung SP3
+                    </label>
+                  </div>
+                  {pelanggaranForm.eskalasi === "langsung_sp3" && (
+                    <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      <AlertTriangle size={14} className="text-red-600 mt-0.5" />
+                      <p className="text-xs text-red-700">Peringatan: Mahasiswa yang melakukan pelanggaran ini akan langsung diberikan SP3 tanpa melalui SP1 dan SP2.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-2">
+                <button onClick={() => setShowAddPelanggaran(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg">Batal</button>
+                <button onClick={() => {
+                  setJenisPelanggaran(prev => [...prev, { id: Date.now(), ...pelanggaranForm, aktif: true }]);
+                  setShowAddPelanggaran(false);
+                  setPelanggaranForm({ nama: "", deskripsi: "", eskalasi: "normal" });
+                  showToast("Jenis pelanggaran baru ditambahkan");
+                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg" style={{ background: "#263F93" }}>Simpan</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowAddPelanggaran(true)} className="flex items-center gap-2 text-sm text-[#263F93] hover:underline mt-2">
+              <Plus size={14} /> Tambah Jenis Pelanggaran
+            </button>
+          )}
         </div>
       </div>
 

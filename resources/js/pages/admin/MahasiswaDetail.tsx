@@ -38,6 +38,9 @@ import {
   Building2,
   Award,
   Download,
+  UserMinus,
+  UserX,
+  UserCheck,
 } from "lucide-react"
 import { mahasiswaList, ipkHistory } from "@/data/mockData"
 import {
@@ -465,9 +468,7 @@ function TabRiwayatAkademik() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mkBelumLulus
-                .filter((mk) => mk.statusPerbaikan === "belum")
-                .map((mk) => (
+              {belumLulus.map((mk) => (
                   <tr
                     key={mk.kode}
                     className="hover:bg-gray-50/60 transition-colors"
@@ -798,7 +799,7 @@ function TabPrestasi() {
               {/* File placeholders */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Sertifikat</p>
+                  <p className="text-xs text-gray-400 mb-1.5">Foto Sertifikat</p>
                   <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
                     <FileText size={22} className="text-gray-300" />
                     <p className="text-xs text-gray-400 text-center px-2">
@@ -810,7 +811,7 @@ function TabPrestasi() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Foto Bukti</p>
+                  <p className="text-xs text-gray-400 mb-1.5">Foto Podium</p>
                   <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
                     <Image size={22} className="text-gray-300" />
                     <p className="text-xs text-gray-400 text-center px-2">
@@ -921,7 +922,15 @@ function TabOrganisasi() {
                   <h4 className="font-bold text-gray-800 leading-snug">
                     {selectedOrg.nama}
                   </h4>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                      {(selectedOrg as any).jenis || "Organisasi"}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${statusBadge(selectedOrg.status)}`}>
+                      <StatusIcon status={selectedOrg.status} /> {selectedOrg.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
                     {selectedOrg.jabatan}
                   </p>
                 </div>
@@ -939,15 +948,27 @@ function TabOrganisasi() {
                 <p className="text-xs text-gray-400 mb-0.5">Deskripsi</p>
                 <p className="text-sm text-gray-700">{selectedOrg.deskripsi}</p>
               </div>
-              {/* SK Kepengurusan */}
-              <div>
-                <p className="text-xs text-gray-400 mb-1.5">SK Kepengurusan</p>
-                <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-5">
-                  <FileText size={22} className="text-gray-300" />
-                  <p className="text-xs text-gray-400">sk_kepengurusan.pdf</p>
-                  <button className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
-                    <Download size={11} /> Unduh
-                  </button>
+              {/* Dokumen */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-400 mb-1.5">SK Kepengurusan</p>
+                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
+                    <FileText size={22} className="text-gray-300" />
+                    <p className="text-xs text-gray-400 text-center px-2">sk_kepengurusan.pdf</p>
+                    <button className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
+                      <Download size={11} /> Unduh
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
+                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
+                    <Image size={22} className="text-gray-300" />
+                    <p className="text-xs text-gray-400 text-center px-2">foto_kegiatan.jpg</p>
+                    <button className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
+                      <Download size={11} /> Unduh
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1128,17 +1149,31 @@ function TabPelatihan() {
                   {selectedPelatihan.deskripsi}
                 </p>
               </div>
-              {/* Sertifikat */}
-              <div>
-                <p className="text-xs text-gray-400 mb-1.5">Sertifikat</p>
-                <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-5">
-                  <FileText size={22} className="text-gray-300" />
-                  <p className="text-xs text-gray-400">
-                    sertifikat_pelatihan.pdf
-                  </p>
-                  <button className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
-                    <Download size={11} /> Unduh
-                  </button>
+              {/* File placeholders */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-400 mb-1.5">Sertifikat</p>
+                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
+                    <FileText size={22} className="text-gray-300" />
+                    <p className="text-xs text-gray-400 text-center px-2">
+                      sertifikat_pelatihan.pdf
+                    </p>
+                    <button className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
+                      <Download size={11} /> Unduh
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
+                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
+                    <Image size={22} className="text-gray-300" />
+                    <p className="text-xs text-gray-400 text-center px-2">
+                      foto_pelatihan.jpg
+                    </p>
+                    <button className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
+                      <Download size={11} /> Unduh
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1750,11 +1785,27 @@ export default function MahasiswaDetail() {
   const [selectedSpLevel, setSelectedSpLevel] = useState<"SP1" | "SP2" | "SP3">(
     "SP1",
   )
+  const [nonaktifModal, setNonaktifModal] = useState(false)
+  const [cabutModal, setCabutModal] = useState(false)
+  const [cabutConfirmNim, setCabutConfirmNim] = useState("")
 
   const mhs = mahasiswaList.find((m) => m.id === Number(id)) ?? mahasiswaList[0]
-  const hasSP2 = mhs.sp === "SP2" || mhs.sp === "SP3"
 
-  const semesterNum = mhs.semester ?? 6
+  // Mock enrichment specifically for the banners since mhs comes from un-enriched mock data
+  const enrichedMhs = {
+    ...mhs,
+    status: (mhs as any).status || (mhs.nim === "2106001" || mhs.nim === "2303002" ? "Dicabut" : (mhs.nim === "2211001" || mhs.nim === "2420001" ? "Nonaktif" : "Aktif")),
+    alasanNonaktif: mhs.nim === "2211001" ? "Cuti Akademik" : mhs.nim === "2420001" ? "Masalah Administrasi" : "",
+    tanggalNonaktif: mhs.nim === "2211001" ? "15 Jan 2026" : mhs.nim === "2420001" ? "20 Jan 2026" : "",
+    semesterDicabut: mhs.nim === "2106001" ? "Ganjil 2025/2026" : mhs.nim === "2303002" ? "Genap 2025/2026" : "",
+    tanggalDicabut: mhs.nim === "2106001" ? "10 Feb 2026" : mhs.nim === "2303002" ? "12 Mar 2026" : "",
+    alasanDicabut: mhs.nim === "2106001" ? "IPK di Bawah Standar" : mhs.nim === "2303002" ? "SP3 Otomatis" : "",
+    dicabutOleh: mhs.nim === "2106001" ? "Admin Pusat" : mhs.nim === "2303002" ? "Sistem" : ""
+  }
+
+  const hasSP2 = enrichedMhs.sp === "SP2" || enrichedMhs.sp === "SP3"
+  
+  const semesterNum = enrichedMhs.semester ?? 6
   const totalSem = 8
   const progressPct = Math.round((semesterNum / totalSem) * 100)
 
@@ -1768,6 +1819,34 @@ export default function MahasiswaDetail() {
         <ChevronLeft size={16} /> Manajemen Mahasiswa
       </Link>
 
+      {/* Status Banner */}
+      {enrichedMhs.status === "Nonaktif" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <UserMinus size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-amber-800">Mahasiswa ini berstatus NONAKTIF</h3>
+            <p className="text-sm text-amber-700 mt-1">
+              Alasan: <strong>{enrichedMhs.alasanNonaktif}</strong><br />
+              Tanggal: <strong>{enrichedMhs.tanggalNonaktif}</strong>
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {enrichedMhs.status === "Dicabut" && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+          <UserX size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-red-800">KIP-K mahasiswa ini telah DICABUT</h3>
+            <p className="text-sm text-red-700 mt-1">
+              Dicabut pada Semester {enrichedMhs.semesterDicabut} oleh {enrichedMhs.dicabutOleh}<br />
+              Alasan: <strong>{enrichedMhs.alasanDicabut}</strong><br />
+              Tanggal: <strong>{enrichedMhs.tanggalDicabut}</strong>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Profile Header Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">
         <div className="flex flex-wrap items-start gap-5">
@@ -1779,9 +1858,9 @@ export default function MahasiswaDetail() {
           {/* Identity */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h2 className="font-bold text-xl text-gray-900">{mhs.nama}</h2>
+              <h2 className="font-bold text-xl text-gray-900">{enrichedMhs.nama}</h2>
               {/* SP Badges */}
-              {mhs.sp && (
+              {enrichedMhs.sp && (
                 <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full flex items-center gap-1">
                   <AlertTriangle size={11} /> SP1
                 </span>
@@ -1793,26 +1872,28 @@ export default function MahasiswaDetail() {
               )}
             </div>
             <p className="text-gray-500 text-sm mb-3">
-              {mhs.nim} · {mhs.prodi} · Angkatan {mhs.angkatan}
+              {enrichedMhs.nim} · {enrichedMhs.prodi} · Angkatan {enrichedMhs.angkatan}
             </p>
             <div className="flex flex-wrap gap-2">
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  mhs.kategori === "Reguler"
+                  enrichedMhs.kategori === "Reguler"
                     ? "bg-blue-100 text-blue-700"
                     : "bg-purple-100 text-purple-700"
                 }`}
               >
-                {mhs.kategori}
+                {enrichedMhs.kategori}
               </span>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  mhs.status === "Aktif"
+                  enrichedMhs.status === "Aktif"
                     ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
+                    : enrichedMhs.status === "Dicabut"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-gray-100 text-gray-600"
                 }`}
               >
-                {mhs.status}
+                {enrichedMhs.status}
               </span>
             </div>
           </div>
@@ -1837,13 +1918,39 @@ export default function MahasiswaDetail() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowSpModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <AlertTriangle size={14} /> Terbitkan SP
-            </button>
+          <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+            {(enrichedMhs.status === "Aktif" || enrichedMhs.status === "Nonaktif") && (
+              <button
+                onClick={() => setNonaktifModal(true)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                  enrichedMhs.status === "Aktif"
+                    ? "border-amber-400 text-amber-600 hover:bg-amber-50"
+                    : "border-green-400 text-green-600 hover:bg-green-50"
+                }`}
+              >
+                {enrichedMhs.status === "Aktif" ? (
+                  <><UserMinus size={14} /> Nonaktifkan</>
+                ) : (
+                  <><UserCheck size={14} /> Aktifkan</>
+                )}
+              </button>
+            )}
+            {(enrichedMhs.status === "Aktif" || enrichedMhs.status === "Nonaktif") && (
+              <button
+                onClick={() => setCabutModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-red-400 text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                <UserX size={14} /> Cabut KIP-K
+              </button>
+            )}
+            {enrichedMhs.status === "Aktif" && (
+              <button
+                onClick={() => setShowSpModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <AlertTriangle size={14} /> Terbitkan SP
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1952,6 +2059,120 @@ export default function MahasiswaDetail() {
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors"
               >
                 Terbitkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nonaktif/Aktif confirmation modal */}
+      {nonaktifModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${enrichedMhs.status === "Aktif" ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600"}`}>
+              {enrichedMhs.status === "Aktif" ? <UserMinus size={20} /> : <UserCheck size={20} />}
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg text-center mb-2">
+              {enrichedMhs.status === "Aktif" ? "Nonaktifkan Mahasiswa" : "Aktifkan Mahasiswa"}
+            </h3>
+            <p className="text-gray-500 text-sm text-center mb-4">
+              Mahasiswa: <strong>{enrichedMhs.nama}</strong>
+            </p>
+            {enrichedMhs.status === "Aktif" ? (
+              <div className="mb-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Alasan Nonaktif</label>
+                  <select className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200">
+                    <option>Cuti Akademik</option>
+                    <option>Masalah Administrasi</option>
+                    <option>Permintaan Sendiri</option>
+                    <option>Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
+                  <textarea rows={3} className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 resize-none"></textarea>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4 space-y-4 text-center text-sm text-gray-600">
+                Apakah Anda yakin ingin mengaktifkan kembali status mahasiswa ini?
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNonaktifModal(false)}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                style={{ background: enrichedMhs.status === "Aktif" ? "#F59E0B" : "#10B981" }}
+                onClick={() => setNonaktifModal(false)}
+              >
+                {enrichedMhs.status === "Aktif" ? "Nonaktifkan" : "Aktifkan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cabut KIP-K confirmation modal */}
+      {cabutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <UserX size={20} className="text-red-600" />
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg text-center mb-2">Cabut KIP-K Mahasiswa</h3>
+            <p className="text-gray-500 text-sm text-center mb-2">
+              Mahasiswa: <strong>{enrichedMhs.nama}</strong>
+            </p>
+            <p className="text-gray-600 text-xs text-center font-medium mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
+              Semester saat pencabutan: Ganjil 2026/2027
+            </p>
+            <div className="mb-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Alasan Pencabutan</label>
+                <select className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-200">
+                  <option>IPK di Bawah Standar</option>
+                  <option>Cuti Tanpa Izin</option>
+                  <option>Pelanggaran Berat</option>
+                  <option>SP3 Otomatis</option>
+                  <option>Lainnya</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
+                <textarea rows={2} className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Ketik NIM untuk konfirmasi pencabutan:
+                </label>
+                <input
+                  value={cabutConfirmNim}
+                  onChange={(e) => setCabutConfirmNim(e.target.value)}
+                  placeholder={enrichedMhs.nim}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setCabutModal(false); setCabutConfirmNim(""); }}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                disabled={cabutConfirmNim !== enrichedMhs.nim}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                style={{ background: "#DC2626" }}
+                onClick={() => { setCabutModal(false); setCabutConfirmNim(""); }}
+              >
+                Cabut Permanen
               </button>
             </div>
           </div>

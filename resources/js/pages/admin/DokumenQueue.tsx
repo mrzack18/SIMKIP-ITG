@@ -39,6 +39,8 @@ const mockPrestasiData: Record<number, {
   tempat: string;
   deskripsi: string;
   link: string;
+  fotoSerti?: string;
+  fotoPodium?: string;
 }> = {
   5: {
     namaPrestasi: "Olimpiade Teknologi Informasi Nasional 2025",
@@ -50,23 +52,31 @@ const mockPrestasiData: Record<number, {
     tempat: "Jakarta",
     deskripsi: "Kompetisi teknologi informasi tingkat nasional yang diselenggarakan oleh Kemendikbudristek, diikuti 150 tim dari 80 perguruan tinggi seluruh Indonesia.",
     link: "https://kemendikbud.go.id/olimpiade-ti-2025",
+    fotoSerti: "sertifikat-olim.pdf",
+    fotoPodium: "podium-juara2.jpg",
   },
 };
 
 // Mock organisasi data keyed by doc id
 const mockOrganisasiData: Record<number, {
   organisasi: string;
+  jenis: string;
   jabatan: string;
   periodeMulai: string;
   periodeSelesai: string;
   deskripsi: string;
+  skPengurus?: string;
+  fotoDokumentasi?: string;
 }> = {
   3: {
     organisasi: "Himpunan Mahasiswa Teknik Informatika (HMTI)",
+    jenis: "Organisasi",
     jabatan: "Sekretaris Umum",
     periodeMulai: "September 2025",
     periodeSelesai: "September 2026",
     deskripsi: "Bertanggung jawab atas dokumentasi dan administrasi himpunan, koordinasi dengan departemen lain, dan pengelolaan arsip surat-menyurat.",
+    skPengurus: "sk-hmti-2025.pdf",
+    fotoDokumentasi: "rapat-hmti.jpg",
   },
 };
 
@@ -79,6 +89,8 @@ const mockPelatihanData: Record<number, {
   tanggalSelesai: string;
   tempat: string;
   deskripsi: string;
+  sertifikat?: string;
+  fotoKegiatan?: string;
 }> = {
   20: {
     namaPelatihan: "Pelatihan Machine Learning Dasar",
@@ -88,6 +100,8 @@ const mockPelatihanData: Record<number, {
     tanggalSelesai: "12 Agustus 2026",
     tempat: "Garut",
     deskripsi: "Pelatihan pengenalan machine learning menggunakan Python dan TensorFlow untuk mahasiswa tingkat 3 ke atas.",
+    sertifikat: "serti-ml.pdf",
+    fotoKegiatan: "pelatihan-ml.jpg",
   },
 };
 
@@ -232,12 +246,8 @@ function PrestasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
           </div>
           <InfoRow label="Pencapaian / Juara" value={data?.pencapaian ?? "—"} />
           <InfoRow label="Penyelenggara" value={data?.penyelenggara ?? "—"} colSpan={2} />
-          <div className="col-span-2">
-            <span className="text-gray-400 text-xs">Tanggal Pelaksanaan</span>
-            <div className="font-semibold text-gray-800 text-xs mt-0.5">
-              {data ? `${data.tanggalMulai} → ${data.tanggalSelesai}` : "—"}
-            </div>
-          </div>
+          <InfoRow label="Tanggal Mulai" value={data?.tanggalMulai ?? "—"} />
+          <InfoRow label="Tanggal Selesai" value={data?.tanggalSelesai ?? "—"} />
           <InfoRow label="Tempat Pelaksanaan" value={data?.tempat ?? "—"} colSpan={2} />
           <InfoRow label="Deskripsi" value={data?.deskripsi ?? "—"} colSpan={2} />
           <div className="col-span-2">
@@ -268,8 +278,8 @@ function PrestasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
         <div className="p-4 flex gap-3 bg-white">
-          <DocPlaceholderCard icon={<Trophy size={32} className="text-gray-400" />} label="Sertifikat" />
-          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Bukti" />
+          <DocPlaceholderCard icon={<Trophy size={32} className="text-gray-400" />} label="Foto Sertifikat" />
+          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Saat Podium" />
         </div>
       </div>
     </div>
@@ -289,7 +299,8 @@ function OrganisasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
             value={data?.organisasi ?? "Unit Kegiatan Mahasiswa (placeholder)"}
             colSpan={2}
           />
-          <InfoRow label="Jabatan" value={data?.jabatan ?? "—"} colSpan={2} />
+          <InfoRow label="Jenis" value={data?.jenis ?? "—"} />
+          <InfoRow label="Jabatan" value={data?.jabatan ?? "—"} />
           <InfoRow label="Periode Mulai" value={data?.periodeMulai ?? "—"} />
           <InfoRow label="Periode Selesai" value={data?.periodeSelesai ?? "—"} />
           <InfoRow label="Deskripsi Kegiatan" value={data?.deskripsi ?? "—"} colSpan={2} />
@@ -302,8 +313,9 @@ function OrganisasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
       {/* Section 3: Bukti Dokumen */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
-        <div className="p-4 bg-white">
-          <DocPlaceholderCard icon={<FileText size={32} className="text-gray-400" />} label="SK Kepengurusan" />
+        <div className="p-4 flex gap-3 bg-white">
+          <DocPlaceholderCard icon={<FileText size={32} className="text-gray-400" />} label="Serti/SK Pengurus" />
+          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Dokumentasi Kegiatan" />
         </div>
       </div>
     </div>
@@ -333,13 +345,9 @@ function PelatihanPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
               )}
             </div>
           </div>
-          <InfoRow label="Penyelenggara" value={data?.penyelenggara ?? "—"} />
-          <div className="col-span-2">
-            <span className="text-gray-400 text-xs">Tanggal Pelaksanaan</span>
-            <div className="font-semibold text-gray-800 text-xs mt-0.5">
-              {data ? `${data.tanggalMulai} → ${data.tanggalSelesai}` : "—"}
-            </div>
-          </div>
+          <InfoRow label="Penyelenggara" value={data?.penyelenggara ?? "—"} colSpan={2} />
+          <InfoRow label="Tanggal Mulai" value={data?.tanggalMulai ?? "—"} />
+          <InfoRow label="Tanggal Selesai" value={data?.tanggalSelesai ?? "—"} />
           <InfoRow label="Tempat" value={data?.tempat ?? "—"} colSpan={2} />
           <InfoRow label="Deskripsi" value={data?.deskripsi ?? "—"} colSpan={2} />
         </div>
@@ -351,8 +359,9 @@ function PelatihanPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
       {/* Section 3: Bukti Dokumen */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
-        <div className="p-4 bg-white">
-          <DocPlaceholderCard icon={<FileText size={32} className="text-gray-400" />} label="Sertifikat Pelatihan" />
+        <div className="p-4 flex gap-3 bg-white">
+          <DocPlaceholderCard icon={<FileText size={32} className="text-gray-400" />} label="Sertifikat" />
+          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Saat Kegiatan" />
         </div>
       </div>
     </div>

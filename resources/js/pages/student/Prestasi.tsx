@@ -462,7 +462,7 @@ export default function Prestasi() {
             <div className="flex-1 px-5 py-4 space-y-4">
               {/* Kategori */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategori Tingkat</label>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Kategori Tingkat</label>
                 <div className="flex gap-2">
                   {TABS.map((t) => (
                     <button
@@ -483,7 +483,7 @@ export default function Prestasi() {
 
               {/* Nama prestasi */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   Nama Prestasi / Penghargaan <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -496,7 +496,7 @@ export default function Prestasi() {
 
               {/* Penyelenggara */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   Penyelenggara <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -509,7 +509,7 @@ export default function Prestasi() {
 
               {/* Pencapaian */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Pencapaian / Juara ke-</label>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Pencapaian / Juara ke-</label>
                 <input
                   value={form.pencapaian}
                   onChange={set("pencapaian")}
@@ -521,7 +521,7 @@ export default function Prestasi() {
               {/* Tanggal */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Mulai</label>
+                  <label className="block text-sm font-500 text-gray-700 mb-1.5">Tanggal Mulai</label>
                   <input
                     type="date"
                     value={form.tanggalMulai}
@@ -530,7 +530,7 @@ export default function Prestasi() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Selesai</label>
+                  <label className="block text-sm font-500 text-gray-700 mb-1.5">Tanggal Selesai</label>
                   <input
                     type="date"
                     value={form.tanggalSelesai}
@@ -542,7 +542,7 @@ export default function Prestasi() {
 
               {/* Tempat */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tempat Pelaksanaan</label>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Tempat Pelaksanaan</label>
                 <input
                   value={form.tempat}
                   onChange={set("tempat")}
@@ -553,7 +553,7 @@ export default function Prestasi() {
 
               {/* Deskripsi */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   Deskripsi <span className="text-gray-400 text-xs">(opsional)</span>
                 </label>
                 <textarea
@@ -567,7 +567,7 @@ export default function Prestasi() {
 
               {/* Link Penyelenggara */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Link Penyelenggara</label>
+                <label className="block text-sm font-500 text-gray-700 mb-1">Link Penyelenggara</label>
                 <p className="text-xs text-gray-400 mb-1.5">Untuk pelaporan Simkat Mawa</p>
                 <input
                   type="url"
@@ -580,7 +580,7 @@ export default function Prestasi() {
 
               {/* Upload Sertifikat */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Sertifikat atau Piagam</label>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Sertifikat atau Piagam</label>
                 <div
                   onClick={() => sertifikatRef.current?.click()}
                   className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-gray-50/50 transition-colors"
@@ -609,7 +609,7 @@ export default function Prestasi() {
 
               {/* Upload Foto Kegiatan */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   Foto saat di podium atau kegiatan berlangsung
                 </label>
                 <div

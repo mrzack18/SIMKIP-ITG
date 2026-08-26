@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Eye, ChevronDown, ChevronUp, FileText, Search, Filter, X, Calendar, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Folder, CheckCircle, Image as ImageIcon } from "lucide-react";
+import { Download, Eye, ChevronDown, ChevronUp, FileText, Search, Filter, X, Calendar, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Folder, CheckCircle, Image as ImageIcon, ExternalLink, Award } from "lucide-react";
 
 interface FileItem {
   id: number;
@@ -11,11 +11,15 @@ interface FileItem {
   tingkat?: string;
   namaKejuaraan?: string;
   penyelenggara?: string;
+  pencapaian?: string;
+  link?: string;
   // Organisasi
   namaOrganisasi?: string;
   jabatan?: string;
   periode?: string;
   // Pelatihan
+  namaPelatihan?: string;
+  // Common / Shared
   jenis?: string;
   tempat?: string;
   deskripsi?: string;
@@ -40,6 +44,12 @@ const FILES: FileItem[] = [
     tingkat: "Nasional",
     namaKejuaraan: "Lomba Coding Nasional 2026",
     penyelenggara: "Kemendikbudristek",
+    pencapaian: "Juara 2",
+    tanggalMulai: "18 Mei 2026",
+    tanggalSelesai: "20 Mei 2026",
+    tempat: "Jakarta Convention Center, Jakarta",
+    deskripsi: "Kompetisi pemrograman tingkat nasional yang diselenggarakan oleh Kemendikbudristek.",
+    link: "https://pusatprestasinasional.kemdikbud.go.id/lcn-2026",
   },
   {
     id: 9,
@@ -50,6 +60,12 @@ const FILES: FileItem[] = [
     tingkat: "Institusi",
     namaKejuaraan: "Hackathon ITG 2025",
     penyelenggara: "Institut Teknologi Garut",
+    pencapaian: "Juara 1",
+    tanggalMulai: "4 Nov 2025",
+    tanggalSelesai: "5 Nov 2025",
+    tempat: "Auditorium ITG, Garut",
+    deskripsi: "Kompetisi pengembangan solusi teknologi digital berkelanjutan kampus selama 24 jam non-stop.",
+    link: "https://itg.ac.id/hackathon-2025",
   },
   {
     id: 10,
@@ -57,9 +73,13 @@ const FILES: FileItem[] = [
     kategori: "Bukti Keaktifan Organisasi",
     tanggal: "1 Sep 2025",
     tipe: "pdf",
+    jenis: "Organisasi",
     namaOrganisasi: "Badan Eksekutif Mahasiswa ITG",
     jabatan: "Kepala Departemen Akademik",
     periode: "2025 — 2026",
+    tanggalMulai: "1 Sep 2025",
+    tanggalSelesai: "31 Agu 2026",
+    deskripsi: "Memimpin divisi akademik dalam menyelenggarakan program mentoring, workshop beasiswa KIP-K, dan pelatihan kepemimpinan mahasiswa.",
   },
   {
     id: 11,
@@ -67,9 +87,13 @@ const FILES: FileItem[] = [
     kategori: "Bukti Keaktifan Organisasi",
     tanggal: "2 Sep 2024",
     tipe: "pdf",
+    jenis: "Organisasi",
     namaOrganisasi: "Himpunan Mahasiswa Teknik Informatika",
     jabatan: "Sekretaris Umum",
     periode: "2024 — 2025",
+    tanggalMulai: "2 Sep 2024",
+    tanggalSelesai: "31 Agu 2025",
+    deskripsi: "Mengelola administrasi persuratan, pengarsipan berkas kegiatan organisasi, serta notulensi rapat evaluasi bulanan.",
   },
   { id: 12, nama: "Sertifikat PKKMB 2022", kategori: "Dokumen Kewajiban", tanggal: "20 Sep 2022", tipe: "pdf" },
   { id: 13, nama: "Sertifikat Bela Negara 2022", kategori: "Dokumen Kewajiban", tanggal: "15 Nov 2022", tipe: "pdf" },
@@ -79,6 +103,7 @@ const FILES: FileItem[] = [
     kategori: "Sertifikat Pelatihan",
     tanggal: "12 Nov 2025",
     tipe: "pdf",
+    namaPelatihan: "Workshop Machine Learning",
     jenis: "Akademik",
     penyelenggara: "Dicoding Indonesia",
     tanggalMulai: "10 Nov 2025",
@@ -92,6 +117,7 @@ const FILES: FileItem[] = [
     kategori: "Sertifikat Pelatihan",
     tanggal: "9 Agu 2025",
     tipe: "pdf",
+    namaPelatihan: "Pelatihan Kepemimpinan Nasional Pemuda",
     jenis: "Non-Akademik",
     penyelenggara: "Kemendikbudristek",
     tanggalMulai: "5 Agu 2025",
@@ -171,6 +197,23 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
   );
 }
 
+function FilePlaceholderCard({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-xl">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+          <FileText size={14} className="text-gray-500" />
+        </div>
+        <span className="text-sm text-gray-700 font-500">{label}</span>
+      </div>
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-500 text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
+        <Download size={12} />
+        Unduh
+      </button>
+    </div>
+  );
+}
+
 function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => void }) {
   const isOrganisasi = preview.kategori === "Bukti Keaktifan Organisasi";
   const isPrestasi = preview.kategori === "Sertifikat Prestasi";
@@ -188,7 +231,7 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
           <div className="space-y-3">
             <DetailRow icon={<FileText size={14} />} label="Nama File" value={preview.nama} />
             <DetailRow icon={<Tag size={14} />} label="Kategori" value={preview.kategori} />
-            <DetailRow icon={<Calendar size={14} />} label="Tanggal" value={preview.tanggal} />
+            <DetailRow icon={<Calendar size={14} />} label="Tanggal Upload" value={preview.tanggal} />
             <div className="flex gap-2">
               <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 bg-green-100 text-green-700">
                 <CheckCircle size={14} /> Disetujui
@@ -200,10 +243,51 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
           {isPrestasi && (
             <div className="border-t border-gray-100 pt-4 space-y-3">
               <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">Detail Prestasi</p>
-              {preview.tingkat && <DetailRow icon={<Tag size={14} />} label="Tingkat" value={preview.tingkat} />}
-              {preview.namaKejuaraan && <DetailRow icon={<FileText size={14} />} label="Nama Kejuaraan" value={preview.namaKejuaraan} />}
-              {preview.penyelenggara && <DetailRow icon={<Building2 size={14} />} label="Penyelenggara" value={preview.penyelenggara} />}
-              <DetailRow icon={<Calendar size={14} />} label="Tanggal" value={preview.tanggal} />
+              {preview.tingkat && (
+                <DetailRow icon={<Tag size={14} />} label="Kategori Tingkat" value={preview.tingkat} />
+              )}
+              {(preview.namaKejuaraan || preview.nama) && (
+                <DetailRow icon={<Trophy size={14} />} label="Nama Prestasi / Penghargaan" value={preview.namaKejuaraan || preview.nama} />
+              )}
+              {preview.penyelenggara && (
+                <DetailRow icon={<Building2 size={14} />} label="Penyelenggara" value={preview.penyelenggara} />
+              )}
+              {preview.pencapaian && (
+                <DetailRow icon={<Award size={14} />} label="Pencapaian / Juara ke-" value={preview.pencapaian} />
+              )}
+              {(preview.tanggalMulai || preview.tanggalSelesai) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {preview.tanggalMulai && (
+                    <DetailRow icon={<Calendar size={14} />} label="Tanggal Mulai" value={preview.tanggalMulai} />
+                  )}
+                  {preview.tanggalSelesai && (
+                    <DetailRow icon={<Calendar size={14} />} label="Tanggal Selesai" value={preview.tanggalSelesai} />
+                  )}
+                </div>
+              )}
+              {preview.tempat && (
+                <DetailRow icon={<MapPin size={14} />} label="Tempat Pelaksanaan" value={preview.tempat} />
+              )}
+              {preview.deskripsi && (
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 mt-0.5 text-gray-400"><AlignLeft size={14} /></div>
+                  <div>
+                    <div className="text-xs text-gray-400 font-500 uppercase tracking-wide mb-1">Deskripsi</div>
+                    <p className="text-gray-700 text-sm leading-relaxed">{preview.deskripsi}</p>
+                  </div>
+                </div>
+              )}
+              {preview.link && (
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 mt-0.5 text-gray-400"><ExternalLink size={14} /></div>
+                  <div>
+                    <div className="text-xs text-gray-400 font-500 uppercase tracking-wide mb-1">Link Penyelenggara</div>
+                    <a href={preview.link} target="_blank" rel="noreferrer" className="text-[#263F93] hover:underline text-sm break-all inline-flex items-center gap-1">
+                      {preview.link}
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -211,27 +295,39 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
           {isOrganisasi && (
             <div className="border-t border-gray-100 pt-4 space-y-3">
               <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">Detail Organisasi</p>
-              {preview.namaOrganisasi && <DetailRow icon={<Building2 size={14} />} label="Nama Organisasi" value={preview.namaOrganisasi} />}
-              {preview.jabatan && <DetailRow icon={<User size={14} />} label="Jabatan" value={preview.jabatan} />}
-              {preview.periode && <DetailRow icon={<Calendar size={14} />} label="Periode" value={preview.periode} />}
-            </div>
-          )}
-
-          {/* Pelatihan detail */}
-          {isPelatihan && (
-            <div className="border-t border-gray-100 pt-4 space-y-3">
-              <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">Detail Pelatihan</p>
+              {preview.namaOrganisasi && (
+                <DetailRow icon={<Building2 size={14} />} label="Nama Organisasi / Kegiatan" value={preview.namaOrganisasi} />
+              )}
+              {preview.jabatan && (
+                <DetailRow icon={<User size={14} />} label="Jabatan / Peran" value={preview.jabatan} />
+              )}
               {preview.jenis && (
                 <div className="flex gap-2">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-500 ${preview.jenis === "Akademik" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
-                    {preview.jenis}
-                  </span>
+                  <div className="flex-shrink-0 mt-0.5 text-gray-400"><Tag size={14} /></div>
+                  <div>
+                    <div className="text-xs text-gray-400 font-500 uppercase tracking-wide mb-1">Jenis</div>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 ${
+                      preview.jenis === "Organisasi" ? "bg-blue-100 text-blue-700" :
+                      preview.jenis === "Kepanitiaan" ? "bg-purple-100 text-purple-700" :
+                      "bg-teal-100 text-teal-700"
+                    }`}>
+                      {preview.jenis}
+                    </span>
+                  </div>
                 </div>
               )}
-              {preview.penyelenggara && <DetailRow icon={<Building2 size={14} />} label="Penyelenggara" value={preview.penyelenggara} />}
-              {preview.tanggalMulai && <DetailRow icon={<Calendar size={14} />} label="Tanggal Mulai" value={preview.tanggalMulai} />}
-              {preview.tanggalSelesai && <DetailRow icon={<Calendar size={14} />} label="Tanggal Selesai" value={preview.tanggalSelesai} />}
-              {preview.tempat && <DetailRow icon={<MapPin size={14} />} label="Tempat" value={preview.tempat} />}
+              {(preview.tanggalMulai || preview.tanggalSelesai) ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {preview.tanggalMulai && (
+                    <DetailRow icon={<Calendar size={14} />} label="Periode Mulai" value={preview.tanggalMulai} />
+                  )}
+                  {preview.tanggalSelesai && (
+                    <DetailRow icon={<Calendar size={14} />} label="Periode Selesai" value={preview.tanggalSelesai} />
+                  )}
+                </div>
+              ) : preview.periode ? (
+                <DetailRow icon={<Calendar size={14} />} label="Periode" value={preview.periode} />
+              ) : null}
               {preview.deskripsi && (
                 <div className="flex gap-2">
                   <div className="flex-shrink-0 mt-0.5 text-gray-400"><AlignLeft size={14} /></div>
@@ -244,20 +340,96 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
             </div>
           )}
 
-          {/* File preview placeholder */}
-          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center">
-            {preview.tipe === "img" ? (
-              <><ImageIcon size={40} className="text-blue-400" /></>
-            ) : (
-              <FileText size={40} className="text-gray-300" />
-            )}
-            <p className="text-xs text-gray-400">Pratinjau dokumen tidak tersedia. Gunakan tombol Unduh.</p>
-          </div>
+          {/* Pelatihan detail */}
+          {isPelatihan && (
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">Detail Pelatihan</p>
+              {(preview.namaPelatihan || preview.namaKejuaraan || preview.nama) && (
+                <DetailRow icon={<GraduationCap size={14} />} label="Nama Pelatihan" value={preview.namaPelatihan || preview.namaKejuaraan || preview.nama} />
+              )}
+              {preview.jenis && (
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 mt-0.5 text-gray-400"><Tag size={14} /></div>
+                  <div>
+                    <div className="text-xs text-gray-400 font-500 uppercase tracking-wide mb-1">Jenis</div>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 ${
+                      preview.jenis === "Akademik" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                    }`}>
+                      {preview.jenis}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {preview.penyelenggara && (
+                <DetailRow icon={<Building2 size={14} />} label="Penyelenggara" value={preview.penyelenggara} />
+              )}
+              {(preview.tanggalMulai || preview.tanggalSelesai) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {preview.tanggalMulai && (
+                    <DetailRow icon={<Calendar size={14} />} label="Tanggal Mulai" value={preview.tanggalMulai} />
+                  )}
+                  {preview.tanggalSelesai && (
+                    <DetailRow icon={<Calendar size={14} />} label="Tanggal Selesai" value={preview.tanggalSelesai} />
+                  )}
+                </div>
+              )}
+              {preview.tempat && (
+                <DetailRow icon={<MapPin size={14} />} label="Tempat Pelaksanaan" value={preview.tempat} />
+              )}
+              {preview.deskripsi && (
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 mt-0.5 text-gray-400"><AlignLeft size={14} /></div>
+                  <div>
+                    <div className="text-xs text-gray-400 font-500 uppercase tracking-wide mb-1">Deskripsi</div>
+                    <p className="text-gray-700 text-sm leading-relaxed">{preview.deskripsi}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-          <div className="flex gap-3">
-            <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-              <Download size={14} /> Unduh
-            </button>
+          {/* New 2-column File placeholders specific to category */}
+          {(isPrestasi || isOrganisasi || isPelatihan) ? (
+            <div className="border-t border-gray-100 pt-4 space-y-2">
+              <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">Berkas</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {isPrestasi && (
+                  <>
+                    <FilePlaceholderCard label="Foto Sertifikat" />
+                    <FilePlaceholderCard label="Foto Podium" />
+                  </>
+                )}
+                {isOrganisasi && (
+                  <>
+                    <FilePlaceholderCard label="SK Kepengurusan" />
+                    <FilePlaceholderCard label="Foto Kegiatan" />
+                  </>
+                )}
+                {isPelatihan && (
+                  <>
+                    <FilePlaceholderCard label="Sertifikat" />
+                    <FilePlaceholderCard label="Foto Saat Kegiatan" />
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center mt-4">
+              {preview.tipe === "img" ? (
+                <ImageIcon size={40} className="text-blue-400" />
+              ) : (
+                <FileText size={40} className="text-gray-300" />
+              )}
+              <p className="text-xs text-gray-400">Pratinjau dokumen tidak tersedia. Gunakan tombol Unduh.</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            {!isPrestasi && !isOrganisasi && !isPelatihan && (
+              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                <Download size={14} /> Unduh
+              </button>
+            )}
             <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm text-white font-500" style={{ background: "#263F93" }}>
               Tutup
             </button>

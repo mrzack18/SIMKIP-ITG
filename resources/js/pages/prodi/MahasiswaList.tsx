@@ -9,7 +9,7 @@ interface Mhs {
   kategori: "Reguler" | "Aspirasi";
   ipk: number;
   semester: number;
-  status: "Aktif" | "Lulus" | "Dicabut";
+  status: "Aktif" | "Lulus" | "Dicabut" | "Nonaktif";
   sp: number;
 }
 
@@ -32,6 +32,7 @@ export default function ProdiMahasiswaList() {
   const [filterKategori, setFilterKategori] = useState("Semua");
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("NIM (A-Z)");
 
   const angkatanList = [...new Set(DATA.map(d => d.angkatan))].sort((a, b) => b - a);
 
@@ -42,6 +43,16 @@ export default function ProdiMahasiswaList() {
     const matchKat = filterKategori === "Semua" || m.kategori === filterKategori;
     const matchSt = filterStatus === "Semua" || m.status === filterStatus;
     return matchSearch && matchAng && matchKat && matchSt;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "NIM (A-Z)": return a.nim.localeCompare(b.nim);
+      case "NIM (Z-A)": return b.nim.localeCompare(a.nim);
+      case "Nama (A-Z)": return a.nama.localeCompare(b.nama);
+      case "Nama (Z-A)": return b.nama.localeCompare(a.nama);
+      case "IPK (Tertinggi)": return b.ipk - a.ipk;
+      case "IPK (Terendah)": return a.ipk - b.ipk;
+      default: return 0;
+    }
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -51,6 +62,7 @@ export default function ProdiMahasiswaList() {
     Aktif: "bg-green-100 text-green-700",
     Lulus: "bg-blue-100 text-blue-700",
     Dicabut: "bg-red-100 text-red-700",
+    Nonaktif: "bg-gray-100 text-gray-700",
   };
 
   return (
@@ -75,9 +87,10 @@ export default function ProdiMahasiswaList() {
               className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
           </div>
           {[
+            { label: "Urutkan", value: sortBy, setter: setSortBy, opts: ["NIM (A-Z)", "NIM (Z-A)", "Nama (A-Z)", "Nama (Z-A)", "IPK (Tertinggi)", "IPK (Terendah)"] },
             { label: "Angkatan", value: filterAngkatan, setter: setFilterAngkatan, opts: ["Semua", ...angkatanList.map(String)] },
             { label: "Kategori", value: filterKategori, setter: setFilterKategori, opts: ["Semua", "Reguler", "Aspirasi"] },
-            { label: "Status", value: filterStatus, setter: setFilterStatus, opts: ["Semua", "Aktif", "Lulus", "Dicabut"] },
+            { label: "Status", value: filterStatus, setter: setFilterStatus, opts: ["Semua", "Aktif", "Nonaktif", "Dicabut", "Lulus"] },
           ].map(f => (
             <select key={f.label} value={f.value} onChange={e => { f.setter(e.target.value); setPage(1); }}
               className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none">

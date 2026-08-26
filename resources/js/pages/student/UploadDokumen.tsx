@@ -82,12 +82,7 @@ const INITIAL_DOCS: Doc[] = [
     desc: "Sertifikat profesional/kompetensi (minimal 1 wajib)",
     status: "Belum Diunggah",
   },
-  {
-    id: "bukti_sidang",
-    nama: "Bukti Sidang Skripsi",
-    desc: "Bukti skripsi telah disidangkan dan dinyatakan lulus",
-    status: "Belum Diunggah",
-  },
+
 ];
 
 const borderColor: Record<DocStatus, string> = {

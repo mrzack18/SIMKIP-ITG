@@ -3,11 +3,11 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Users, TrendingUp, ArrowRight } from "lucide-react";
 
 const angkatanData = [
-  { name: "2022", Reguler: 14, Aspirasi: 8 },
-  { name: "2023", Reguler: 12, Aspirasi: 7 },
-  { name: "2024", Reguler: 10, Aspirasi: 5 },
-  { name: "2025", Reguler: 8,  Aspirasi: 4 },
-  { name: "2026", Reguler: 5,  Aspirasi: 3 },
+  { name: "2022", Reguler: 14, Aspirasi: 8, Dicabut: 1 },
+  { name: "2023", Reguler: 12, Aspirasi: 7, Dicabut: 2 },
+  { name: "2024", Reguler: 10, Aspirasi: 5, Dicabut: 1 },
+  { name: "2025", Reguler: 8,  Aspirasi: 4, Dicabut: 0 },
+  { name: "2026", Reguler: 5,  Aspirasi: 3, Dicabut: 0 },
 ];
 
 const trendData = [
@@ -78,7 +78,8 @@ export default function ProdiDashboard() {
                 )}
               />
               <Bar dataKey="Reguler" stackId="a" fill="#263F93" name="Reguler" />
-              <Bar dataKey="Aspirasi" stackId="a" fill="#D4A72C" radius={[4, 4, 0, 0]} name="Aspirasi" />
+              <Bar dataKey="Aspirasi" stackId="a" fill="#D4A72C" name="Aspirasi" />
+              <Bar dataKey="Dicabut" stackId="a" fill="#DC2626" radius={[4, 4, 0, 0]} name="Dicabut" />
             </BarChart>
           </ResponsiveContainer>
         </div>

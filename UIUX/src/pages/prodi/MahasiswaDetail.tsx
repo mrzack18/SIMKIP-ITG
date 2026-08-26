@@ -941,7 +941,7 @@ function TabRiwayatAkademik() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {mkBelumLulus.map((mk) => (
+              {belumLulus.map((mk) => (
                 <tr
                   key={mk.kode}
                   className="hover:bg-gray-50/60 transition-colors"
