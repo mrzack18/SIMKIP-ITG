@@ -57,7 +57,7 @@ class MahasiswaExport implements
         }
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Collection
     {
         $query = Mahasiswa::with([
             'prodi',

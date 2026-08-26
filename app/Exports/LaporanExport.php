@@ -23,7 +23,7 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithSt
         $this->filters = $filters;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Collection
     {
         return Mahasiswa::with(['prodi', 'ipkSemestrs', 'suratPeringatans', 'dokumens'])
             ->when(! empty($this->filters['prodi_id']), fn($q) => $q->where('prodi_id', $this->filters['prodi_id']))

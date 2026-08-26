@@ -118,4 +118,13 @@ class LaporanController extends Controller
 
         return response()->json(['success' => true, 'status' => 'Dikembalikan']);
     }
+
+    public function downloadPdf(int $id)
+    {
+        $l = Laporan::findOrFail($id);
+        if ($l->status !== 'Disetujui' && $l->status !== 'Diajukan') {
+            return response()->json(['success' => false, 'message' => 'Laporan belum diajukan.'], 403);
+        }
+        return \App\Services\PdfGeneratorService::laporanKipK($id);
+    }
 }

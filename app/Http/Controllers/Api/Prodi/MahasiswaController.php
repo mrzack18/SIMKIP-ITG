@@ -79,4 +79,22 @@ class MahasiswaController extends Controller
 
         return response()->json(['success' => true, 'data' => $data, 'total' => $data->count()]);
     }
+
+    public function exportDownload(Request $request)
+    {
+        $prodiId = $request->user()->prodi_id;
+        
+        $filters = [
+            'angkatan' => $request->angkatan,
+            'kategori' => $request->kategori,
+            'tahun_akademik' => $request->tahun_akademik,
+            'semester' => $request->semester,
+            'sertakan_ipk' => filter_var($request->sertakan_ipk, FILTER_VALIDATE_BOOLEAN),
+            'sertakan_dokumen' => filter_var($request->sertakan_dokumen, FILTER_VALIDATE_BOOLEAN),
+            'sertakan_sp' => filter_var($request->sertakan_sp, FILTER_VALIDATE_BOOLEAN),
+            'format' => $request->format ?? 'xlsx',
+        ];
+
+        return \App\Services\ExcelExportService::exportMahasiswaProdi($prodiId, $filters);
+    }
 }

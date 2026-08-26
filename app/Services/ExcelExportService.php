@@ -22,17 +22,28 @@ class ExcelExportService
         $kategori = $filters['kategori'] ?? 'Semua';
         $tahunAk  = str_replace('/', '-', $filters['tahun_akademik'] ?? 'TA');
         $semester = $filters['semester'] ?? '';
+        $format   = strtolower($filters['format'] ?? 'xlsx');
 
         $filename = "KIP-K_{$prodi->kode}_{$tahunAk}_{$semester}";
         if ($angkatan !== 'Semua') $filename .= "_Angkatan{$angkatan}";
         if ($kategori !== 'Semua') $filename .= "_{$kategori}";
-        $filename .= '.xlsx';
+
+        $exportFormat = \Maatwebsite\Excel\Excel::XLSX;
+        $contentType  = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+        if ($format === 'pdf') {
+            $filename .= '.pdf';
+            $exportFormat = \Maatwebsite\Excel\Excel::DOMPDF;
+            $contentType  = 'application/pdf';
+        } else {
+            $filename .= '.xlsx';
+        }
 
         return Excel::download(
             new MahasiswaExport($prodiId, $prodi->nama, $filters),
             $filename,
-            \Maatwebsite\Excel\Excel::XLSX,
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+            $exportFormat,
+            ['Content-Type' => $contentType]
         );
     }
 

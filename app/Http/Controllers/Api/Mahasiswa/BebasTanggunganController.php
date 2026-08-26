@@ -57,4 +57,14 @@ class BebasTanggunganController extends Controller
 
         return response()->json(['success' => true, 'data' => $bt], 201);
     }
+
+    public function downloadPdf(Request $request)
+    {
+        $m = $request->user()->mahasiswa;
+        $b = $m->bebasTanggungan;
+        if (! $b || $b->status !== 'Diterbitkan') {
+            return response()->json(['success' => false, 'message' => 'Surat belum diterbitkan atau tidak ditemukan.'], 403);
+        }
+        return \App\Services\PdfGeneratorService::suratBebasTanggungan($b->id);
+    }
 }

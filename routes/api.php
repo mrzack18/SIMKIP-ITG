@@ -82,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/bebas-tanggungan/{id}',           [AdminBT::class, 'show']);
         Route::patch('/bebas-tanggungan/{id}/approve', [AdminBT::class, 'approve']);
         Route::patch('/bebas-tanggungan/{id}/reject',  [AdminBT::class, 'reject']);
+        Route::get('/bebas-tanggungan/{id}/pdf',       [AdminBT::class, 'downloadPdf']);
 
         // Laporan
         Route::get('/laporan',              [AdminLaporan::class, 'index']);
@@ -89,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/laporan/{id}',         [AdminLaporan::class, 'show']);
         Route::put('/laporan/{id}',         [AdminLaporan::class, 'update']);
         Route::patch('/laporan/{id}/submit',[AdminLaporan::class, 'submit']);
+        Route::get('/laporan/{id}/pdf',     [AdminLaporan::class, 'downloadPdf']);
 
         // Data Akademik
         Route::get('/akademik/ipk',       [AdminAkademik::class, 'indexIPK']);
@@ -146,10 +148,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/pelatihan',      [MhsPelatihan::class, 'index']);
         Route::post('/pelatihan',     [MhsPelatihan::class, 'store']);
         Route::put('/pelatihan/{id}', [MhsPelatihan::class, 'update']);
+        Route::get('/pelatihan/{id}', [MhsPelatihan::class, 'show']);
         Route::delete('/pelatihan/{id}', [MhsPelatihan::class, 'destroy']);
 
-        Route::get('/bebas-tanggungan',  [MhsBT::class, 'show']);
-        Route::post('/bebas-tanggungan', [MhsBT::class, 'store']);
+        Route::get('/bebas-tanggungan',      [MhsBT::class, 'show']);
+        Route::post('/bebas-tanggungan',     [MhsBT::class, 'store']);
+        Route::get('/bebas-tanggungan/pdf',  [MhsBT::class, 'downloadPdf']);
     });
 
     // ── PRODI ─────────────────────────────────────────────────────────────────
@@ -158,6 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/mahasiswa',          [ProdiMahasiswa::class, 'index']);
         Route::get('/mahasiswa/{id}',     [ProdiMahasiswa::class, 'show']);
         Route::get('/ekspor',             [ProdiMahasiswa::class, 'ekspor']);
+        Route::get('/ekspor/download',    [ProdiMahasiswa::class, 'exportDownload']);
     });
 
     // ── WAREK ─────────────────────────────────────────────────────────────────
@@ -167,6 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/laporan/{id}',         [WarekLaporan::class, 'show']);
         Route::patch('/laporan/{id}/approve',[WarekLaporan::class, 'approve']);
         Route::patch('/laporan/{id}/return', [WarekLaporan::class, 'return']);
+        Route::get('/laporan/{id}/pdf',      [WarekLaporan::class, 'downloadPdf']);
 
         // Warek juga bisa lihat semua mahasiswa (read-only)
         Route::get('/mahasiswa', function (\Illuminate\Http\Request $req) {

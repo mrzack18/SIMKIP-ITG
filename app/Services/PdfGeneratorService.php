@@ -102,7 +102,8 @@ class PdfGeneratorService
                 'isHtml5ParserEnabled' => true,
             ]);
 
-        $filename = "Laporan_KIP-K_{$laporan->nomor_surat}.pdf";
+        $safeNomor = str_replace(['/', '\\'], '-', $laporan->nomor_surat);
+        $filename = "Laporan_KIP-K_{$safeNomor}.pdf";
         return $pdf->download($filename);
     }
 
