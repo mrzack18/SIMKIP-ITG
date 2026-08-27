@@ -27,20 +27,18 @@ class SPController extends Controller
 
         return response()->json([
             'success'     => true,
-            'data'        => $data->map(fn($sp) => [
-                'id'              => $sp->id,
-                'nim'             => $sp->mahasiswa->nim,
-                'nama'            => $sp->mahasiswa->nama,
-                'prodi'           => $sp->mahasiswa->prodi?->nama,
-                'level'           => $sp->level,
-                'jenis'           => $sp->jenis_pelanggaran,
-                'tanggal_terbit'  => $sp->tanggal_terbit?->format('d M Y'),
-                'batas_evaluasi'  => $sp->batas_evaluasi?->format('d M Y'),
-                'status'          => $sp->status,
-                'sisa_hari'       => $sp->sisa_hari,
-            ]),
+            'data'        => \App\Http\Resources\SuratPeringatanResource::collection($data),
             'total' => $total, 'page' => $page, 'limit' => $limit,
             'total_pages' => (int) ceil($total/$limit),
+        ]);
+    }
+
+    public function history(int $id): JsonResponse
+    {
+        $data = SuratPeringatan::with(['mahasiswa.prodi'])->where('mahasiswa_id', $id)->latest()->get();
+        return response()->json([
+            'success' => true,
+            'data'    => \App\Http\Resources\SuratPeringatanResource::collection($data),
         ]);
     }
 
@@ -52,7 +50,7 @@ class SPController extends Controller
             'jenis_pelanggaran' => 'required|in:Akademik,Non-Akademik,Cuti Tanpa Izin',
             'deskripsi'         => 'required|string|min:10',
             'tanggal_terbit'    => 'required|date',
-            'batas_evaluasi'    => 'required|date|after:tanggal_terbit',
+            'batas_evaluasi'    => 'nullable|date|after:tanggal_terbit',
             'catatan'           => 'nullable|string',
         ]);
 

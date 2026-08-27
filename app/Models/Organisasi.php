@@ -10,8 +10,19 @@ class Organisasi extends Model
     use HasFactory;
 
     protected $fillable = [
-        'mahasiswa_id', 'nama', 'jabatan', 'periode_mulai', 'periode_selesai',
-        'deskripsi', 'file_sk', 'status', 'catatan_admin', 'validated_by', 'validated_at',
+        'mahasiswa_id',
+        'nama',
+        'jenis',
+        'jabatan',
+        'periode_mulai',
+        'periode_selesai',
+        'deskripsi',
+        'file_sk',
+        'foto_kegiatan',
+        'status',
+        'catatan_admin',
+        'validated_by',
+        'validated_at',
     ];
 
     protected $casts = [

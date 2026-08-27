@@ -11,98 +11,156 @@ class DokumenController extends Controller
 {
     public function queue(Request $request): JsonResponse
     {
-        $query = Dokumen::with(['mahasiswa.prodi', 'jenis', 'approvedBy']);
-
-        if ($s = $request->search) {
-            $query->whereHas('mahasiswa', fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
-        }
-        if ($request->status && $request->status !== 'Semua') {
-            $query->where('status', $request->status);
-        }
-        if ($request->jenis && $request->jenis !== 'Semua') {
-            $query->whereHas('jenis', fn($q) => $q->where('nama', $request->jenis));
-        }
-
         $limit = (int)($request->limit ?? 10);
         $page  = (int)($request->page ?? 1);
-        $total = $query->count();
-        $data  = $query->latest()->skip(($page-1)*$limit)->take($limit)->get();
+        $status = $request->status;
+        $search = $request->search;
+        $jenisFilter = $request->jenis;
+
+        $items = collect();
+
+        // 1. Dokumens
+        $dokQuery = Dokumen::with(['mahasiswa.prodi', 'jenis']);
+        if ($status && $status !== 'Semua') $dokQuery->where('status', $status);
+        $doks = $dokQuery->get()->map(function($d) {
+            return [
+                'id' => 'doc_' . $d->id,
+                'nim' => $d->mahasiswa->nim,
+                'nama' => $d->mahasiswa->nama,
+                'prodi' => $d->mahasiswa->prodi?->nama ?? 'Unknown',
+                'jenis' => $d->jenis->nama,
+                'tanggalUpload' => $d->created_at->format('Y-m-d\TH:i:s'),
+                'status' => $d->status,
+                'created_at' => $d->created_at,
+            ];
+        });
+        $items = $items->concat($doks);
+
+        // 2. Prestasis
+        $presQuery = \App\Models\Prestasi::with(['mahasiswa.prodi']);
+        // map Menunggu Validasi to Menunggu for consistency in queue tab if needed, but we keep original status
+        if ($status && $status !== 'Semua') {
+            if ($status === 'Menunggu') {
+                $presQuery->whereIn('status', ['Menunggu Validasi', 'Menunggu']);
+            } else {
+                $presQuery->where('status', $status);
+            }
+        }
+        $pres = $presQuery->get()->map(function($p) {
+            return [
+                'id' => 'prestasi_' . $p->id,
+                'nim' => $p->mahasiswa->nim,
+                'nama' => $p->mahasiswa->nama,
+                'prodi' => $p->mahasiswa->prodi?->nama ?? 'Unknown',
+                'jenis' => 'Sertifikat Prestasi',
+                'tanggalUpload' => $p->created_at->format('Y-m-d\TH:i:s'),
+                'status' => $p->status === 'Menunggu Validasi' ? 'Menunggu' : $p->status,
+                'created_at' => $p->created_at,
+            ];
+        });
+        $items = $items->concat($pres);
+
+        // 3. Organisasis
+        $orgQuery = \App\Models\Organisasi::with(['mahasiswa.prodi']);
+        if ($status && $status !== 'Semua') $orgQuery->where('status', $status);
+        $orgs = $orgQuery->get()->map(function($o) {
+            return [
+                'id' => 'organisasi_' . $o->id,
+                'nim' => $o->mahasiswa->nim,
+                'nama' => $o->mahasiswa->nama,
+                'prodi' => $o->mahasiswa->prodi?->nama ?? 'Unknown',
+                'jenis' => 'SK Organisasi',
+                'tanggalUpload' => $o->created_at->format('Y-m-d\TH:i:s'),
+                'status' => $o->status,
+                'created_at' => $o->created_at,
+            ];
+        });
+        $items = $items->concat($orgs);
+
+        // 4. Pelatihans
+        $pelQuery = \App\Models\Pelatihan::with(['mahasiswa.prodi']);
+        if ($status && $status !== 'Semua') $pelQuery->where('status', $status);
+        $pels = $pelQuery->get()->map(function($p) {
+            return [
+                'id' => 'pelatihan_' . $p->id,
+                'nim' => $p->mahasiswa->nim,
+                'nama' => $p->mahasiswa->nama,
+                'prodi' => $p->mahasiswa->prodi?->nama ?? 'Unknown',
+                'jenis' => 'Sertifikat Pelatihan',
+                'tanggalUpload' => $p->created_at->format('Y-m-d\TH:i:s'),
+                'status' => $p->status,
+                'created_at' => $p->created_at,
+            ];
+        });
+        $items = $items->concat($pels);
+
+        // Filter search & jenis
+        if ($search) {
+            $search = strtolower($search);
+            $items = $items->filter(function($i) use ($search) {
+                return str_contains(strtolower($i['nama']), $search) || str_contains(strtolower($i['nim']), $search);
+            });
+        }
+        if ($jenisFilter && $jenisFilter !== 'Semua') {
+            $items = $items->filter(function($i) use ($jenisFilter) {
+                return str_contains(strtolower($i['jenis']), strtolower($jenisFilter));
+            });
+        }
+
+        // Sort descending
+        $sorted = $items->sortByDesc('created_at')->values();
+
+        $total = $sorted->count();
+        $paginated = $sorted->slice(($page - 1) * $limit, $limit)->values();
 
         return response()->json([
-            'success'     => true,
-            'data'        => $data->map(fn($d) => [
-                'id'             => $d->id,
-                'nim'            => $d->mahasiswa->nim,
-                'nama'           => $d->mahasiswa->nama,
-                'prodi'          => $d->mahasiswa->prodi?->nama,
-                'jenis'          => $d->jenis->nama,
-                'nama_file'      => $d->nama_file,
-                'status'         => $d->status,
-                'catatan_admin'  => $d->catatan_admin,
-                'tanggal_upload' => $d->created_at->format('d M Y'),
-                'approved_by'    => $d->approvedBy?->name,
-                'approved_at'    => $d->approved_at?->format('d M Y'),
-                'file_url'       => asset('storage/' . $d->path_file),
-            ]),
-            'total'       => $total,
-            'page'        => $page,
-            'limit'       => $limit,
-            'total_pages' => (int) ceil($total/$limit),
+            'success' => true,
+            'data' => \App\Http\Resources\DokumenQueueResource::collection($paginated),
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
         ]);
     }
 
-    public function approve(Request $request, int $id): JsonResponse
+    public function validateDokumen(Request $request, string $id): JsonResponse
     {
-        $dok = Dokumen::with('mahasiswa.user')->findOrFail($id);
-        $dok->update([
-            'status'      => 'Disetujui',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-            'catatan_admin'=> null,
+        $request->validate([
+            'status' => 'required|in:Disetujui,Ditolak',
+            'catatan_admin' => 'nullable|string'
         ]);
 
-        Notification::kirim(
-            $dok->mahasiswa->user_id,
-            "Dokumen {$dok->jenis->nama} Disetujui",
-            "Dokumen {$dok->jenis->nama} Anda telah diverifikasi dan disetujui oleh admin.",
-            'success',
-            '/mahasiswa/dokumen'
-        );
+        $parts = explode('_', $id);
+        if (count($parts) !== 2) return response()->json(['message' => 'Invalid ID format'], 400);
 
-        AuditLog::catat('Validasi', "Approve dokumen {$dok->jenis->nama} milik {$dok->mahasiswa->nama}", [
-            'terkait_nim'  => $dok->mahasiswa->nim,
-            'terkait_nama' => $dok->mahasiswa->nama,
-        ]);
+        $type = $parts[0];
+        $realId = $parts[1];
+        
+        $adminId = auth()->id();
+        $status = $request->status;
+        $catatan = $request->catatan_admin;
 
-        return response()->json(['success' => true, 'message' => 'Dokumen disetujui.']);
-    }
+        if ($type === 'doc') {
+            $dok = Dokumen::with('mahasiswa')->findOrFail($realId);
+            $dok->update(['status' => $status, 'catatan_admin' => $catatan, 'approved_by' => $adminId, 'approved_at' => now()]);
+            // notification logic if needed
+            return response()->json(['success' => true, 'message' => 'Tervalidasi']);
+        } elseif ($type === 'prestasi') {
+            $pres = \App\Models\Prestasi::findOrFail($realId);
+            $presStatus = $status;
+            // if we need to keep Menunggu Validasi when pending, handled by update
+            $pres->update(['status' => $presStatus, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+            return response()->json(['success' => true, 'message' => 'Tervalidasi']);
+        } elseif ($type === 'organisasi') {
+            $org = \App\Models\Organisasi::findOrFail($realId);
+            $org->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+            return response()->json(['success' => true, 'message' => 'Tervalidasi']);
+        } elseif ($type === 'pelatihan') {
+            $pel = \App\Models\Pelatihan::findOrFail($realId);
+            $pel->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+            return response()->json(['success' => true, 'message' => 'Tervalidasi']);
+        }
 
-    public function reject(Request $request, int $id): JsonResponse
-    {
-        $request->validate(['catatan' => 'required|string|min:5']);
-
-        $dok = Dokumen::with(['mahasiswa.user', 'jenis'])->findOrFail($id);
-        $dok->update([
-            'status'       => 'Ditolak',
-            'approved_by'  => auth()->id(),
-            'approved_at'  => now(),
-            'catatan_admin'=> $request->catatan,
-        ]);
-
-        Notification::kirim(
-            $dok->mahasiswa->user_id,
-            "Dokumen {$dok->jenis->nama} Ditolak",
-            "Dokumen {$dok->jenis->nama} Anda ditolak. Alasan: {$request->catatan}",
-            'error',
-            '/mahasiswa/dokumen'
-        );
-
-        AuditLog::catat('Validasi', "Tolak dokumen {$dok->jenis->nama} milik {$dok->mahasiswa->nama}", [
-            'terkait_nim'  => $dok->mahasiswa->nim,
-            'terkait_nama' => $dok->mahasiswa->nama,
-        ]);
-
-        return response()->json(['success' => true, 'message' => 'Dokumen ditolak.']);
+        return response()->json(['message' => 'Unknown type'], 400);
     }
 
     public function serveFile(int $id): mixed

@@ -10,9 +10,20 @@ class Pelatihan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'mahasiswa_id', 'nama', 'jenis', 'penyelenggara',
-        'tanggal_mulai', 'tanggal_selesai', 'tempat', 'deskripsi',
-        'file_sertifikat', 'status', 'catatan_admin', 'validated_by', 'validated_at',
+        'mahasiswa_id',
+        'nama',
+        'jenis',
+        'penyelenggara',
+        'tanggal_mulai',
+        'tanggal_selesai',
+        'tempat',
+        'deskripsi',
+        'file_sertifikat',
+        'foto_kegiatan',
+        'status',
+        'catatan_admin',
+        'validated_by',
+        'validated_at',
     ];
 
     protected $casts = [

@@ -27,16 +27,8 @@ class DokumenController extends Controller
         if ($req->user()->role === "admin") return app(AdminDokumen::class)->queue($req);
         abort(403);
     }
-    public function approve(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminDokumen::class)->approve($req, $id);
-        abort(403);
-    }
-    public function reject(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminDokumen::class)->reject($req, $id);
-        abort(403);
-    }
-    public function serveFile(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminDokumen::class)->serveFile($id);
+    public function validateDokumen(Request $req, $id) {
+        if ($req->user()->role === "admin") return app(AdminDokumen::class)->validateDokumen($req, $id);
         abort(403);
     }
 }

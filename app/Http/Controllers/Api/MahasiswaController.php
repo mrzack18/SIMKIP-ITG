@@ -58,6 +58,55 @@ class MahasiswaController extends Controller
         ]);
     }
 
+    private function checkAccessAndGetMahasiswa($req, $id) {
+        if ($req->user()->role === "mahasiswa") abort(403);
+        $m = Mahasiswa::findOrFail($id);
+        if ($req->user()->role === "prodi" && $m->prodi_id !== $req->user()->prodi_id) abort(403);
+        return $m;
+    }
+
+    public function prestasi(Request $req, $id) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+        $data = $m->prestasis()->with('mahasiswa.prodi')->latest()->get();
+        return response()->json(['data' => \App\Http\Resources\PrestasiResource::collection($data)]);
+    }
+
+    public function organisasi(Request $req, $id) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+        $data = $m->organisasis()->with('mahasiswa.prodi')->latest()->get();
+        return response()->json(['data' => \App\Http\Resources\OrganisasiResource::collection($data)]);
+    }
+
+    public function pelatihan(Request $req, $id) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+        $data = $m->pelatihans()->with('mahasiswa.prodi')->latest()->get();
+        return response()->json(['data' => \App\Http\Resources\PelatihanResource::collection($data)]);
+    }
+
+    public function validatePrestasi(Request $req, $id, $itemId) {
+        if ($req->user()->role !== "admin") abort(403);
+        $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu Validasi', 'catatan_admin' => 'nullable|string']);
+        $p = \App\Models\Prestasi::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
+        $p->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
+        return response()->json(['data' => new \App\Http\Resources\PrestasiResource($p)]);
+    }
+
+    public function validateOrganisasi(Request $req, $id, $itemId) {
+        if ($req->user()->role !== "admin") abort(403);
+        $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu', 'catatan_admin' => 'nullable|string']);
+        $o = \App\Models\Organisasi::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
+        $o->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
+        return response()->json(['data' => new \App\Http\Resources\OrganisasiResource($o)]);
+    }
+
+    public function validatePelatihan(Request $req, $id, $itemId) {
+        if ($req->user()->role !== "admin") abort(403);
+        $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu', 'catatan_admin' => 'nullable|string']);
+        $p = \App\Models\Pelatihan::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
+        $p->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
+        return response()->json(['data' => new \App\Http\Resources\PelatihanResource($p)]);
+    }
+
     private function warekIndex(Request $request) {
         $query = Mahasiswa::withDetails();
 

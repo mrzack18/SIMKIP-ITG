@@ -25,6 +25,7 @@ class PelatihanFactory extends Factory
             'tempat' => $this->faker->city(),
             'deskripsi' => $this->faker->paragraph(),
             'file_sertifikat' => 'sertifikat_' . $this->faker->word() . '.pdf',
+            'foto_kegiatan' => 'foto_kegiatan_' . $this->faker->word() . '.jpg',
             'status' => $status,
             'catatan_admin' => $status === 'Ditolak' ? 'Sertifikat tidak sesuai standar' : null,
             'validated_by' => $status !== 'Menunggu' ? User::factory() : null,

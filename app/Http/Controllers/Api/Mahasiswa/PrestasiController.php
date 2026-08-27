@@ -12,7 +12,12 @@ class PrestasiController extends Controller
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa;
-        return response()->json(['success' => true, 'data' => $m->prestasis()->latest()->get()]);
+        if (!$m) return response()->json(['data' => []]);
+
+        $data = $m->prestasis()->latest()->get();
+        return response()->json([
+            'data' => \App\Http\Resources\PrestasiResource::collection($data)
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -34,11 +39,11 @@ class PrestasiController extends Controller
         $m = $request->user()->mahasiswa;
 
         $fileSert = $request->hasFile('file_sertifikat')
-            ? $request->file('file_sertifikat')->store("prestasi/{$m->nim}/sertifikat", 'public')
+            ? $request->file('file_sertifikat')->store("uploads/prestasi/{$m->nim}/sertifikat", 'public')
             : null;
 
         $fileFoto = $request->hasFile('file_foto')
-            ? $request->file('file_foto')->store("prestasi/{$m->nim}/foto", 'public')
+            ? $request->file('file_foto')->store("uploads/prestasi/{$m->nim}/foto", 'public')
             : null;
 
         $p = Prestasi::create(array_merge($request->only([
@@ -51,7 +56,7 @@ class PrestasiController extends Controller
             'status'         => 'Menunggu Validasi',
         ]));
 
-        return response()->json(['success' => true, 'data' => $p], 201);
+        return response()->json(['data' => new \App\Http\Resources\PrestasiResource($p)], 201);
     }
 
     public function update(Request $request, int $id): JsonResponse
@@ -60,7 +65,18 @@ class PrestasiController extends Controller
         $p = Prestasi::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
 
         if ($p->status === 'Disetujui') {
-            return response()->json(['success' => false, 'message' => 'Prestasi yang sudah disetujui tidak dapat diedit.'], 422);
+            return response()->json(['message' => 'Prestasi yang sudah disetujui tidak dapat diedit.'], 403);
+        }
+
+        // Add file update logic if necessary, or just basic fields for now
+        if ($request->hasFile('file_sertifikat')) {
+            if ($p->file_sertifikat) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_sertifikat);
+            $p->file_sertifikat = $request->file('file_sertifikat')->store("uploads/prestasi/{$m->nim}/sertifikat", 'public');
+        }
+
+        if ($request->hasFile('file_foto')) {
+            if ($p->file_foto) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_foto);
+            $p->file_foto = $request->file('file_foto')->store("uploads/prestasi/{$m->nim}/foto", 'public');
         }
 
         $p->update($request->only([
@@ -68,14 +84,18 @@ class PrestasiController extends Controller
             'tanggal_mulai', 'tanggal_selesai', 'tempat', 'deskripsi', 'link_penyelenggara',
         ]));
 
-        return response()->json(['success' => true, 'data' => $p]);
+        return response()->json(['data' => new \App\Http\Resources\PrestasiResource($p)]);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
     {
         $m = $request->user()->mahasiswa;
         $p = Prestasi::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
+        
+        if ($p->file_sertifikat) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_sertifikat);
+        if ($p->file_foto) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_foto);
+        
         $p->delete();
-        return response()->json(['success' => true, 'message' => 'Prestasi dihapus.']);
+        return response()->json(['message' => 'Prestasi dihapus.']);
     }
 }

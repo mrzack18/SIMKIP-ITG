@@ -11,10 +11,13 @@ class Dokumen extends Model
 
     protected $fillable = [
         'mahasiswa_id', 'dokumen_jenis_id', 'nama_file', 'path_file',
-        'ukuran', 'status', 'catatan_admin', 'approved_by', 'approved_at',
+        'ukuran', 'status', 'catatan_admin', 'metadata', 'approved_by', 'approved_at',
     ];
 
-    protected $casts = ['approved_at' => 'datetime'];
+    protected $casts = [
+        'approved_at' => 'datetime',
+        'metadata' => 'array',
+    ];
 
     public function mahasiswa()
     {

@@ -52,6 +52,12 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/mahasiswa/{id}/ipk",         [MahasiswaController::class, "ipk"]);
     Route::delete("/mahasiswa/{id}",          [MahasiswaController::class, "destroy"]);
 
+    Route::get("/mahasiswa/{id}/prestasi",    [MahasiswaController::class, "prestasi"]);
+    Route::get("/mahasiswa/{id}/organisasi",  [MahasiswaController::class, "organisasi"]);
+    Route::get("/mahasiswa/{id}/pelatihan",   [MahasiswaController::class, "pelatihan"]);
+    Route::put("/mahasiswa/{id}/prestasi/{itemId}/validate",   [MahasiswaController::class, "validatePrestasi"]);
+    Route::put("/mahasiswa/{id}/organisasi/{itemId}/validate", [MahasiswaController::class, "validateOrganisasi"]);
+    Route::put("/mahasiswa/{id}/pelatihan/{itemId}/validate",  [MahasiswaController::class, "validatePelatihan"]);
     Route::get("/ipk",  [IPKController::class, "index"]);
     Route::post("/ipk", [IPKController::class, "store"]);
 
@@ -77,16 +83,14 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/dokumen",              [DokumenController::class, "index"]);
     Route::post("/dokumen",             [DokumenController::class, "store"]);
     Route::delete("/dokumen/{id}",      [DokumenController::class, "destroy"]);
-    Route::get("/dokumen/arsip",        [DokumenController::class, "arsip"]);
-    Route::get("/dokumen/queue",        [DokumenController::class, "queue"]);
-    Route::patch("/dokumen/{id}/approve",[DokumenController::class, "approve"]);
-    Route::patch("/dokumen/{id}/reject", [DokumenController::class, "reject"]);
-    Route::get("/dokumen/{id}/file",    [DokumenController::class, "serveFile"]);
+    
+    // Unified Admin Dokumen Queue
+    Route::get("/admin/dokumen-queue", [DokumenController::class, "queue"]);
+    Route::put("/admin/dokumen-queue/{id}/validate", [DokumenController::class, "validateDokumen"]);
 
     Route::get("/sp",               [SPController::class, "index"]);
     Route::post("/sp",              [SPController::class, "store"]);
-    Route::get("/sp/{id}",          [SPController::class, "show"]);
-    Route::patch("/sp/{id}/status", [SPController::class, "updateStatus"]);
+    Route::get("/mahasiswa/{id}/sp",[SPController::class, "history"]);
 
     Route::get("/bebas-tanggungan",                [BebasTanggunganController::class, "index"]);
     Route::post("/bebas-tanggungan",               [BebasTanggunganController::class, "store"]);

@@ -31,6 +31,7 @@ class SuratPeringatan extends Model
 
     public function getSisaHariAttribute(): int
     {
-        return now()->diffInDays($this->batas_evaluasi, false);
+        if (!$this->batas_evaluasi) return 0;
+        return max(0, now()->diffInDays($this->batas_evaluasi, false));
     }
 }
