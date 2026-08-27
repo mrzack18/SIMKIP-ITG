@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
+
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\BebasTanggungan;
-use App\Models\Mahasiswa;
 use App\Models\Notification;
 use App\Services\BebasTanggunganService;
+use App\Http\Resources\BebasTanggunganResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,11 +15,21 @@ class BebasTanggunganController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = BebasTanggungan::with('mahasiswa.prodi');
+        $query = BebasTanggungan::with(['mahasiswa.prodi']);
+
+        if ($request->status && $request->status !== 'Semua') {
+            $statusMap = [
+                'menunggu' => ['Menunggu', 'Diproses'],
+                'diterbitkan' => ['Disetujui'],
+                'ditolak' => ['Ditolak']
+            ];
+            $dbStatus = $statusMap[$request->status] ?? [$request->status];
+            $query->whereIn('status', $dbStatus);
+        }
+
         if ($s = $request->search) {
             $query->whereHas('mahasiswa', fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
         }
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
 
         $limit = (int)($request->limit ?? 10);
         $page  = (int)($request->page ?? 1);
@@ -26,15 +38,7 @@ class BebasTanggunganController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $data->map(fn($b) => [
-                'id'             => $b->id,
-                'nim'            => $b->mahasiswa->nim,
-                'nama'           => $b->mahasiswa->nama,
-                'prodi'          => $b->mahasiswa->prodi?->nama,
-                'tanggal_ajukan' => $b->tanggal_ajukan?->format('d M Y'),
-                'status'         => $b->status,
-                'catatan_admin'  => $b->catatan_admin,
-            ]),
+            'data'    => BebasTanggunganResource::collection($data),
             'total' => $total, 'page' => $page, 'limit' => $limit,
             'total_pages' => (int) ceil($total/$limit),
         ]);
@@ -58,14 +62,18 @@ class BebasTanggunganController extends Controller
         ]);
     }
 
-    public function approve(int $id): JsonResponse
+    public function approve(Request $request, int $id): JsonResponse
     {
         $b = BebasTanggungan::with('mahasiswa.user')->findOrFail($id);
+
+        if ($b->status === 'Disetujui' || $b->status === 'Ditolak') {
+            return response()->json(['success' => false, 'message' => 'Permohonan sudah diproses.'], 422);
+        }
 
         $nomor = 'SKPS/KIP-K/ITG/' . strtoupper(now()->format('m')) . '/' . now()->year . '/' . str_pad($id, 3, '0', STR_PAD_LEFT);
 
         $b->update([
-            'status'        => 'Diterbitkan',
+            'status'        => 'Disetujui',
             'reviewed_by'   => auth()->id(),
             'reviewed_at'   => now(),
             'nomor_surat'   => $nomor,
@@ -94,6 +102,11 @@ class BebasTanggunganController extends Controller
         $request->validate(['alasan' => 'required|string|min:10']);
 
         $b = BebasTanggungan::with('mahasiswa.user')->findOrFail($id);
+        
+        if ($b->status === 'Disetujui' || $b->status === 'Ditolak') {
+            return response()->json(['success' => false, 'message' => 'Permohonan sudah diproses.'], 422);
+        }
+        
         $b->update([
             'status'       => 'Ditolak',
             'reviewed_by'  => auth()->id(),
@@ -115,7 +128,7 @@ class BebasTanggunganController extends Controller
     public function downloadPdf(int $id)
     {
         $b = BebasTanggungan::findOrFail($id);
-        if ($b->status !== 'Diterbitkan') {
+        if ($b->status !== 'Disetujui') {
             return response()->json(['success' => false, 'message' => 'Surat belum diterbitkan.'], 403);
         }
         return \App\Services\PdfGeneratorService::suratBebasTanggungan($id);

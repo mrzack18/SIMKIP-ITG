@@ -26,7 +26,7 @@ class PrestasiController extends Controller
     }
 
     public function destroy(Request $req, $id) {
-        if ($req->user()->role === "mahasiswa") return app(MhsPrestasi::class)->destroy($id);
+        if ($req->user()->role === "mahasiswa") return app(MhsPrestasi::class)->destroy($req, $id);
         abort(403);
     }
 

@@ -16,7 +16,7 @@ class DokumenController extends Controller
         abort(403);
     }
     public function destroy(Request $req, $id) {
-        if ($req->user()->role === "mahasiswa") return app(MhsDokumen::class)->destroy($id);
+        if ($req->user()->role === "mahasiswa") return app(MhsDokumen::class)->destroy($req, $id);
         abort(403);
     }
     public function arsip(Request $req) {

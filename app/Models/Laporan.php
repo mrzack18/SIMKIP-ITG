@@ -12,6 +12,7 @@ class Laporan extends Model
     protected $fillable = [
         'nomor_surat', 'judul', 'periode', 'tahun_akademik', 'semester',
         'tanggal_laporan', 'catatan_laporan', 'status', 'dibuat_oleh', 'submitted_at',
+        'cakupan', 'angkatan', 'prodi', 'tujuan_prodi', 'tujuan_warek'
     ];
 
     protected $casts = [

@@ -31,7 +31,7 @@ class PelatihanController extends Controller
     }
 
     public function destroy(Request $req, $id) {
-        if ($req->user()->role === "mahasiswa") return app(MhsPelatihan::class)->destroy($id);
+        if ($req->user()->role === "mahasiswa") return app(MhsPelatihan::class)->destroy($req, $id);
         abort(403);
     }
 

@@ -3,7 +3,8 @@
  * TODO: Replace mock implementations with real API calls
  */
 import type { DokumenQueue, DokumenStatus } from "@/types";
-import { dokumenQueue } from "@/data/mockData";
+import type { DokumenQueue, DokumenStatus, ApiResponse } from "@/types";
+import { api } from "./api";
 
 export interface DokumenFilter {
   search?: string;
@@ -11,43 +12,46 @@ export interface DokumenFilter {
   jenis?: string;
 }
 
-/**
- * Get dokumen queue
- * Replace with: return api.get<DokumenQueue[]>("/dokumen/queue");
- */
 export async function getDokumenQueue(
   filter: DokumenFilter = {}
 ): Promise<DokumenQueue[]> {
-  await new Promise((r) => setTimeout(r, 300));
+  const params = new URLSearchParams();
+  Object.entries(filter).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.append(key, String(value));
+    }
+  });
 
-  let data = [...dokumenQueue] as DokumenQueue[];
-
-  if (filter.search) {
-    const q = filter.search.toLowerCase();
-    data = data.filter(
-      (d) => d.nama.toLowerCase().includes(q) || d.nim.includes(q)
-    );
-  }
-  if (filter.status) data = data.filter((d) => d.status === filter.status);
-  if (filter.jenis) data = data.filter((d) => d.jenis === filter.jenis);
-
-  return data;
+  const res = await api.get<ApiResponse<DokumenQueue[]>>(`/admin/dokumen-queue?${params.toString()}`);
+  return res.data;
 }
 
-/**
- * Approve a document
- * Replace with: return api.patch(`/dokumen/${id}/approve`, {});
- */
-export async function approveDokumen(id: number): Promise<void> {
-  await new Promise((r) => setTimeout(r, 500));
-  console.log(`[Mock] Dokumen ${id} disetujui`);
+export async function approveDokumen(id: string): Promise<void> {
+  await api.put(`/admin/dokumen-queue/${id}/validate`, {
+    status: "Disetujui",
+  });
 }
 
-/**
- * Reject a document
- * Replace with: return api.patch(`/dokumen/${id}/reject`, { catatan });
- */
-export async function rejectDokumen(id: number, catatan: string): Promise<void> {
-  await new Promise((r) => setTimeout(r, 500));
-  console.log(`[Mock] Dokumen ${id} ditolak. Catatan: ${catatan}`);
+export async function rejectDokumen(id: string, catatan: string): Promise<void> {
+  await api.put(`/admin/dokumen-queue/${id}/validate`, {
+    status: "Ditolak",
+    catatan_admin: catatan,
+  });
+}
+
+// Additional endpoints for mahasiswa
+export async function uploadDokumen(payload: FormData): Promise<any> {
+  return api.post("/dokumen", payload);
+}
+
+export async function getArsipDokumen(filter: { status?: string; jenis?: string } = {}): Promise<any[]> {
+  const params = new URLSearchParams();
+  if (filter.status) params.append("status", filter.status);
+  if (filter.jenis) params.append("jenis", filter.jenis);
+  const res = await api.get<ApiResponse<any[]>>(`/dokumen?${params.toString()}`);
+  return res.data;
+}
+
+export async function deleteDokumen(id: number): Promise<void> {
+  await api.delete(`/dokumen/${id}`);
 }

@@ -40,7 +40,7 @@ export type DokumenJenis =
   | string;
 
 export interface DokumenQueue {
-  id: number;
+  id: string | number;
   nim: string;
   nama: string;
   prodi: string;
@@ -61,7 +61,7 @@ export interface SuratPeringatan {
   level: "SP1" | "SP2" | "SP3";
   alasan: string;
   tanggalTerbit: string;
-  batasEvaluasi: string;
+  batasEvaluasi: string | null;
   status: SPStatus;
   sisa: number;
 }
@@ -127,12 +127,15 @@ export type OrganisasiStatus = "Disetujui" | "Menunggu" | "Ditolak";
 export interface Organisasi {
   id: number;
   nama: string;
+  jenis?: string;
   jabatan: string;
   mulai: string;
   selesai: string;
   deskripsi: string;
   status: OrganisasiStatus;
   catatanAdmin?: string;
+  fileSk?: string;
+  fotoKegiatan?: string;
 }
 
 // Pelatihan
@@ -148,6 +151,7 @@ export interface Pelatihan {
   tempat: string;
   deskripsi: string;
   sertifikat?: string;
+  fotoKegiatan?: string;
   status: PelatihanStatus;
   catatanAdmin?: string;
 }

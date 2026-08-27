@@ -26,7 +26,7 @@ class OrganisasiController extends Controller
     }
 
     public function destroy(Request $req, $id) {
-        if ($req->user()->role === "mahasiswa") return app(MhsOrganisasi::class)->destroy($id);
+        if ($req->user()->role === "mahasiswa") return app(MhsOrganisasi::class)->destroy($req, $id);
         abort(403);
     }
 

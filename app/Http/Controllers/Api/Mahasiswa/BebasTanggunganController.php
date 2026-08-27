@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Models\BebasTanggungan;
 use App\Services\BebasTanggunganService;
+use App\Http\Resources\BebasTanggunganResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,16 +17,21 @@ class BebasTanggunganController extends Controller
         $permohonan = $m->bebasTanggungan;
         $checklist  = BebasTanggunganService::getChecklist($m);
 
+        $status = 'belum';
+        if ($permohonan) {
+            $statusMap = [
+                'Menunggu'  => 'menunggu',
+                'Diproses'  => 'menunggu',
+                'Disetujui' => 'diterbitkan',
+                'Ditolak'   => 'ditolak',
+            ];
+            $status = $statusMap[$permohonan->status] ?? 'menunggu';
+        }
+
         return response()->json([
             'success'    => true,
-            'status'     => $permohonan?->status,
-            'permohonan' => $permohonan ? [
-                'id'             => $permohonan->id,
-                'tanggal_ajukan' => $permohonan->tanggal_ajukan?->format('d M Y'),
-                'catatan_admin'  => $permohonan->catatan_admin,
-                'nomor_surat'    => $permohonan->nomor_surat,
-                'tanggal_terbit' => $permohonan->tanggal_terbit?->format('d M Y'),
-            ] : null,
+            'status'     => $status,
+            'data'       => $permohonan ? new BebasTanggunganResource($permohonan) : [],
             'checklist'  => $checklist['checklist'],
             'dokumen'    => $checklist['dokumen'],
             'can_apply'  => $checklist['can_apply'] && $permohonan === null,
@@ -55,14 +61,15 @@ class BebasTanggunganController extends Controller
             'status'         => 'Menunggu',
         ]);
 
-        return response()->json(['success' => true, 'data' => $bt], 201);
+        return response()->json(['success' => true, 'data' => new BebasTanggunganResource($bt)], 201);
     }
 
     public function downloadPdf(Request $request)
     {
         $m = $request->user()->mahasiswa;
         $b = $m->bebasTanggungan;
-        if (! $b || $b->status !== 'Diterbitkan') {
+        // Fix bug: DB uses Disetujui
+        if (! $b || $b->status !== 'Disetujui') {
             return response()->json(['success' => false, 'message' => 'Surat belum diterbitkan atau tidak ditemukan.'], 403);
         }
         return \App\Services\PdfGeneratorService::suratBebasTanggungan($b->id);

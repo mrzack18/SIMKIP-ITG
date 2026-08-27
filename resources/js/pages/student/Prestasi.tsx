@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
-import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2 } from "lucide-react";
+import { api } from "@/services/api";
 
 type PTab = "Internasional" | "Nasional" | "Wilayah";
 type PStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak";
@@ -21,68 +22,7 @@ interface Prestasi {
   catatanAdmin?: string;
 }
 
-const INITIAL: Prestasi[] = [
-  {
-    id: 1,
-    tab: "Internasional",
-    nama: "International Paper Competition — IEEE",
-    penyelenggara: "IEEE",
-    pencapaian: "Best Presenter",
-    tanggalMulai: "2026-03-01",
-    tanggalSelesai: "2026-03-05",
-    tempat: "Jakarta",
-    deskripsi: "Kompetisi paper internasional yang diselenggarakan oleh IEEE.",
-    linkPenyelenggara: "https://ieee.org",
-    fileSertifikat: "sertifikat_ieee.pdf",
-    fileFoto: "foto_ieee.jpg",
-    status: "Disetujui",
-  },
-  {
-    id: 2,
-    tab: "Nasional",
-    nama: "Hackathon Nasional 2025",
-    penyelenggara: "Kemendikbud",
-    pencapaian: "Juara 2",
-    tanggalMulai: "2025-11-10",
-    tanggalSelesai: "2025-11-12",
-    tempat: "Bandung",
-    deskripsi: "Hackathon tingkat nasional yang diselenggarakan oleh Kemendikbud.",
-    linkPenyelenggara: "https://kemendikbud.go.id",
-    fileSertifikat: "sertifikat_hackathon.pdf",
-    fileFoto: "foto_hackathon.jpg",
-    status: "Disetujui",
-  },
-  {
-    id: 3,
-    tab: "Nasional",
-    nama: "Lomba Esai Nasional",
-    penyelenggara: "Universitas Indonesia",
-    pencapaian: "Finalis",
-    tanggalMulai: "2025-08-20",
-    tanggalSelesai: "2025-08-21",
-    tempat: "Online",
-    deskripsi: "Lomba penulisan esai tingkat nasional yang diselenggarakan oleh Universitas Indonesia.",
-    linkPenyelenggara: "https://ui.ac.id",
-    fileSertifikat: "sertifikat_esai.pdf",
-    fileFoto: "foto_esai.jpg",
-    status: "Menunggu Validasi",
-  },
-  {
-    id: 4,
-    tab: "Wilayah",
-    nama: "Olimpiade Sains Jawa Barat",
-    penyelenggara: "Diknas Jabar",
-    pencapaian: "Juara 1",
-    tanggalMulai: "2025-05-15",
-    tanggalSelesai: "2025-05-16",
-    tempat: "Bandung",
-    deskripsi: "Olimpiade sains tingkat Jawa Barat yang diselenggarakan oleh Dinas Pendidikan Jawa Barat.",
-    linkPenyelenggara: "https://disdik.jabarprov.go.id",
-    fileSertifikat: "sertifikat_olimpiade.pdf",
-    fileFoto: "foto_olimpiade.jpg",
-    status: "Disetujui",
-  },
-];
+
 
 const TABS: PTab[] = ["Internasional", "Nasional", "Wilayah"];
 
@@ -132,15 +72,34 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function Prestasi() {
-  const [list, setList] = useState<Prestasi[]>(INITIAL);
+  const [list, setList] = useState<Prestasi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<PTab>("Internasional");
   const [openForm, setOpenForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [detail, setDetail] = useState<Prestasi | null>(null);
   const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
-  const [fileSertifikat, setFileSertifikat] = useState("");
-  const [fileFoto, setFileFoto] = useState("");
+  const [fileSertifikat, setFileSertifikat] = useState<File | null>(null);
+  const [fileFoto, setFileFoto] = useState<File | null>(null);
   const sertifikatRef = useRef<HTMLInputElement>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
+
+  const fetchPrestasi = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get<{ data: Prestasi[] }>("/prestasi");
+      setList(res.data);
+    } catch (err: any) {
+      setError(err.message || "Gagal memuat prestasi");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPrestasi();
+  }, []);
 
   const set = (k: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -150,23 +109,44 @@ export default function Prestasi() {
 
   const openAddForm = () => {
     setForm({ ...EMPTY_FORM, tab: activeTab });
-    setFileSertifikat("");
-    setFileFoto("");
+    setFileSertifikat(null);
+    setFileFoto(null);
     setOpenForm(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.nama.trim() || !form.penyelenggara.trim()) return;
-    const newItem: Prestasi = {
-      id: Date.now(),
-      ...form,
-      fileSertifikat,
-      fileFoto,
-      status: "Menunggu Validasi",
-    };
-    setList((prev) => [newItem, ...prev]);
-    setOpenForm(false);
+    try {
+      setIsSubmitting(true);
+      const payload = new FormData();
+      payload.append("tingkat", form.tab); // API uses tingkat not tab
+      payload.append("namaPrestasi", form.nama); // API uses namaPrestasi
+      payload.append("penyelenggara", form.penyelenggara);
+      if (form.pencapaian) payload.append("pencapaian", form.pencapaian);
+      if (form.tanggalMulai) payload.append("tanggalMulai", form.tanggalMulai);
+      if (form.tanggalSelesai) payload.append("tanggalSelesai", form.tanggalSelesai);
+      if (form.tempat) payload.append("tempat", form.tempat);
+      if (form.deskripsi) payload.append("deskripsi", form.deskripsi);
+      if (form.linkPenyelenggara) payload.append("linkPenyelenggara", form.linkPenyelenggara);
+      if (fileSertifikat) payload.append("fileSertifikat", fileSertifikat);
+      if (fileFoto) payload.append("fileFoto", fileFoto);
+
+      await api.post("/prestasi", payload);
+      setOpenForm(false);
+      fetchPrestasi();
+    } catch (err: any) {
+      alert(err.message || "Gagal menyimpan prestasi");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" /> Memuat data prestasi...</div>;
+  }
+  if (error) {
+    return <div className="p-8 text-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="space-y-5">
@@ -588,7 +568,7 @@ export default function Prestasi() {
                   {fileSertifikat ? (
                     <div className="flex items-center justify-center gap-2">
                       <FileText size={16} style={{ color: "#263F93" }} />
-                      <span className="text-sm font-medium" style={{ color: "#263F93" }}>{fileSertifikat}</span>
+                      <span className="text-sm font-medium" style={{ color: "#263F93" }}>{fileSertifikat.name}</span>
                     </div>
                   ) : (
                     <>
@@ -603,7 +583,7 @@ export default function Prestasi() {
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   className="hidden"
-                  onChange={(e) => setFileSertifikat(e.target.files?.[0]?.name || "")}
+                  onChange={(e) => setFileSertifikat(e.target.files?.[0] || null)}
                 />
               </div>
 
@@ -619,7 +599,7 @@ export default function Prestasi() {
                   {fileFoto ? (
                     <div className="flex items-center justify-center gap-2">
                       <Image size={16} style={{ color: "#263F93" }} />
-                      <span className="text-sm font-medium" style={{ color: "#263F93" }}>{fileFoto}</span>
+                      <span className="text-sm font-medium" style={{ color: "#263F93" }}>{fileFoto.name}</span>
                     </div>
                   ) : (
                     <>
@@ -634,7 +614,7 @@ export default function Prestasi() {
                   type="file"
                   accept=".jpg,.jpeg,.png"
                   className="hidden"
-                  onChange={(e) => setFileFoto(e.target.files?.[0]?.name || "")}
+                  onChange={(e) => setFileFoto(e.target.files?.[0] || null)}
                 />
               </div>
             </div>
@@ -648,11 +628,11 @@ export default function Prestasi() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={!form.nama.trim() || !form.penyelenggara.trim()}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-opacity"
+                disabled={!form.nama.trim() || !form.penyelenggara.trim() || isSubmitting}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-opacity flex items-center justify-center"
                 style={{ background: "#263F93" }}
               >
-                Simpan Prestasi
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : "Simpan Prestasi"}
               </button>
             </div>
           </div>
