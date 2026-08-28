@@ -14,12 +14,16 @@ export async function apiCall<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = localStorage.getItem("simkip_token");
-  
+
   const headers = new Headers(options.headers || {});
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  
+  // Inertia middleware detects non-Inertia GETs via X-Requested-With absence
+  // and renders the SPA shell instead of returning JSON. Mark every request
+  // as XHR so api endpoints always respond with their declared JSON body.
+  headers.set("X-Requested-With", "XMLHttpRequest");
+
   // Set Content-Type only if it's not FormData
   if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
