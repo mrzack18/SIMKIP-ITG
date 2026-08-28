@@ -5,21 +5,14 @@ import {
 } from "recharts";
 import { ChevronLeft, ChevronRight, Check, Download, Info, Loader2, AlertTriangle } from "lucide-react";
 import { createLaporan, submitLaporan, getPreviewStatistics, type LaporanPreviewStatistics } from "@/services/laporanService";
+import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
+import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import logoItg from "@/imports/logo_itg.jpg";
 
 const STEPS = [
   { label: "Informasi Laporan", num: 1 },
   { label: "Review Data", num: 2 },
   { label: "Preview & Kirim", num: 3 },
-];
-
-const ANGKATAN_LIST = ["2022", "2023", "2024", "2025", "2026"];
-const PRODI_LIST = [
-  "Teknik Informatika",
-  "Sistem Informasi",
-  "Teknik Industri",
-  "Teknik Sipil",
-  "Arsitektur",
 ];
 
 type Cakupan = "semua" | "angkatan" | "prodi" | "keduanya";
@@ -40,6 +33,32 @@ export default function SusunLaporan() {
   const [tujuanWarek, setTujuanWarek] = useState(true);
   const [tujuanProdi, setTujuanProdi] = useState(false);
   const [prodiTujuan, setProdiTujuan] = useState("");
+
+  // Filter options from BE
+  const [prodiList, setProdiList] = useState<string[]>([]);
+  const [angkatanList, setAngkatanList] = useState<string[]>([]);
+  const [tahunList, setTahunList] = useState<string[]>(["2025/2026", "2024/2025", "2023/2024"]);
+  const [signature, setSignature] = useState<SignatureConfig | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getMahasiswaFilterOptions()
+      .then((opts) => {
+        if (!active) return;
+        setProdiList(opts.prodis.map((p) => p.nama));
+        setAngkatanList(opts.angkatans.map(String));
+      })
+      .catch(() => { /* fallback empty */ });
+    getKonfigurasiAll()
+      .then((res) => {
+        if (!active) return;
+        const unique = Array.from(new Set(res.data.periode_history.map((p) => p.tahun_akademik)));
+        if (unique.length) setTahunList(unique);
+        if (res?.data?.signature) setSignature(res.data.signature);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -235,7 +254,7 @@ export default function SusunLaporan() {
                 onChange={set("tahunAkademik")}
                 className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 bg-white"
               >
-                {["2025/2026", "2024/2025", "2023/2024"].map((o) => (
+                {tahunList.map((o) => (
                   <option key={o}>{o}</option>
                 ))}
               </select>
@@ -321,7 +340,7 @@ export default function SusunLaporan() {
                         onChange={set("angkatan")}
                         className="px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none bg-white"
                       >
-                        {ANGKATAN_LIST.map((a) => (
+                        {angkatanList.map((a) => (
                           <option key={a}>{a}</option>
                         ))}
                       </select>
@@ -336,7 +355,7 @@ export default function SusunLaporan() {
                         onChange={set("prodi")}
                         className="px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none bg-white"
                       >
-                        {PRODI_LIST.map((p) => (
+                        {prodiList.map((p) => (
                           <option key={p}>{p}</option>
                         ))}
                       </select>
@@ -613,15 +632,15 @@ export default function SusunLaporan() {
                     <p>Garut, {tanggalFmt}</p>
                     <p className="font-medium">Pengelola KIP-K</p>
                     <div className="h-16" />
-                    <p className="font-bold underline">Encep Jianul Hayat, S.T., M.T.</p>
-                    <p className="text-xs text-gray-500">NIP. 197804202006041001</p>
+                    <p className="font-bold underline">{signature?.pengelola_nama ?? "Encep Jianul Hayat, S.T., M.T."}</p>
+                    <p className="text-xs text-gray-500">NIP. {signature?.pengelola_nip ?? "197804202006041001"}</p>
                   </div>
                   <div>
                     <p>Mengetahui,</p>
                     <p className="font-medium">Wakil Utama</p>
                     <div className="h-16" />
-                    <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
-                    <p className="text-xs text-gray-500">NIP. 198203152008012002</p>
+                    <p className="font-bold underline">{signature?.warek_nama ?? "Dr. Rina Kurniawati, S.E., M.Si."}</p>
+                    <p className="text-xs text-gray-500">NIP. {signature?.warek_nip ?? "198203252008012002"}</p>
                   </div>
                 </div>
 
@@ -658,7 +677,7 @@ export default function SusunLaporan() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 bg-white"
                   >
                     <option value="">Semua Program Studi</option>
-                    {PRODI_LIST.map(p => <option key={p} value={p}>{p}</option>)}
+                    {prodiList.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
               )}

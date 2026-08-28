@@ -20,6 +20,7 @@ import {
   approveBebasTanggungan,
   rejectBebasTanggungan,
 } from "@/services/bebasTanggunganService";
+import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { BebasTanggunganDetailResponse } from "@/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,9 +59,15 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
 }
 
 // FormalSurat renders a preview of the official letter
-function FormalSurat({ data }: { data: BebasTanggunganDetailResponse }) {
+function FormalSurat({ data, signature }: { data: BebasTanggunganDetailResponse; signature: SignatureConfig | null }) {
   const { mahasiswa, permohonan, dokumen, ipkTerakhir } = data;
   const docsApproved = dokumen.filter((d) => d.status === "Disetujui");
+  const sig = signature ?? {
+    pengelola_nama: "Encep Jianul Hayat, S.T., M.T.",
+    pengelola_nip: "197804202006041001",
+    warek_nama: "Dr. Rina Kurniawati, S.E., M.Si.",
+    warek_nip: "198203152008012002",
+  };
 
   return (
     <div className="border-2 border-[#263F93] rounded-xl p-1">
@@ -152,15 +159,15 @@ function FormalSurat({ data }: { data: BebasTanggunganDetailResponse }) {
             <p>Garut, {permohonan.tanggalTerbit ?? permohonan.tanggalAjukan ?? "—"}</p>
             <p className="mt-0.5">Pengelola KIP-K,</p>
             <div className="h-14 my-1" />
-            <p className="font-bold underline">Encep Jianul Hayat, S.T., M.T.</p>
-            <p className="text-gray-500">NIP. 197804202006041001</p>
+            <p className="font-bold underline">{sig.pengelola_nama}</p>
+            <p className="text-gray-500">NIP. {sig.pengelola_nip}</p>
           </div>
           <div>
             <p>Mengetahui,</p>
             <p className="mt-0.5">Wakil Rektor,</p>
             <div className="h-14 my-1" />
-            <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
-            <p className="text-gray-500">NIP. 198203152008012002</p>
+            <p className="font-bold underline">{sig.warek_nama}</p>
+            <p className="text-gray-500">NIP. {sig.warek_nip}</p>
           </div>
         </div>
       </div>
@@ -181,6 +188,7 @@ export default function BebasTanggunganDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [signature, setSignature] = useState<SignatureConfig | null>(null);
 
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
@@ -216,6 +224,15 @@ export default function BebasTanggunganDetail() {
   useEffect(() => {
     fetchDetail();
   }, [fetchDetail]);
+
+  // Load signature config from BE for formal letter preview
+  useEffect(() => {
+    getKonfigurasiAll()
+      .then((res) => {
+        if (res?.data?.signature) setSignature(res.data.signature);
+      })
+      .catch(() => { /* fallback ke default di render */ });
+  }, []);
 
   const handleApprove = async () => {
     if (!data || isSubmitting) return;
@@ -543,7 +560,7 @@ export default function BebasTanggunganDetail() {
             </div>
           </div>
           <div className="p-5">
-            <FormalSurat data={data} />
+            <FormalSurat data={data} signature={signature} />
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Plus, Download, FileText, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { getLaporanList, type LaporanFilter } from "@/services/laporanService"
+import { getKonfigurasiAll } from "@/services/konfigurasiService"
 import type { Laporan } from "@/types"
 
 const statusStyle: Record<string, { badge: string; icon: React.ReactNode; label: string }> = {
@@ -70,6 +71,21 @@ export default function LaporanList() {
   const [statusFilter, setStatusFilter] = useState("")
   const [cakupanFilter, setCakupanFilter] = useState("")
   const [page, setPage] = useState(1)
+
+  const [tahunList, setTahunList] = useState<string[]>([""])
+
+  // Load available tahun akademik from konfigurasi
+  useEffect(() => {
+    let active = true;
+    getKonfigurasiAll()
+      .then((res) => {
+        if (!active) return;
+        const unique = Array.from(new Set(res.data.periode_history.map((p) => p.tahun_akademik)));
+        setTahunList(["", ...unique]);
+      })
+      .catch(() => { /* fallback ke default */ });
+    return () => { active = false };
+  }, []);
 
   const [laporan, setLaporan] = useState<Laporan[]>([])
   const [total, setTotal] = useState(0)
@@ -197,7 +213,7 @@ export default function LaporanList() {
           onChange={(e) => handleTahunChange(e.target.value)}
           className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
         >
-          {["", "2025/2026", "2024/2025", "2023/2024"].map((o) => (
+          {tahunList.map((o) => (
             <option key={o} value={o}>{o === "" ? "Semua Tahun" : o}</option>
           ))}
         </select>

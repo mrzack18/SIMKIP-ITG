@@ -164,7 +164,12 @@ class MahasiswaController extends Controller
 
     public function bebasTanggungan(Request $request, $id)
     {
+        if ($request->user()->role === "mahasiswa") abort(403);
+
         $m = Mahasiswa::with('user', 'prodi')->findOrFail($id);
+
+        if ($request->user()->role === "prodi" && $m->prodi_id !== $request->user()->prodi_id) abort(403);
+
         $permohonan = $m->bebasTanggungan;
         $checklist = \App\Services\BebasTanggunganService::getChecklist($m);
         

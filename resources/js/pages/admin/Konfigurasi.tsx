@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import axios from "axios"
 import {
   Save,
   Plus,
@@ -22,22 +23,6 @@ const Toast = ({ msg, onClose }: { msg: string; onClose: () => void }) => (
     </button>
   </div>
 )
-
-const prodiList = [
-  { id: 1, nama: "Teknik Informatika", kode: "TI", aktif: true },
-  { id: 2, nama: "Teknik Industri", kode: "TIn", aktif: true },
-  { id: 3, nama: "Teknik Sipil", kode: "TS", aktif: true },
-  { id: 4, nama: "Arsitektur", kode: "AR", aktif: true },
-  { id: 5, nama: "Sistem Informasi", kode: "SI", aktif: true },
-]
-
-const dokumenList = [
-  { id: 1, nama: "Sertifikat PKKMB", wajib: true },
-  { id: 2, nama: "PKKMB", wajib: true },
-  { id: 3, nama: "Berita Acara Kerja Praktik", wajib: true },
-  { id: 4, nama: "Bukti Sidang Skripsi", wajib: true },
-  { id: 5, nama: "Sertifikat Bela Negara", wajib: true },
-]
 
 const SectionHeader = ({
   num,
@@ -67,14 +52,20 @@ const SectionHeader = ({
   </div>
 )
 
+const formatTgl = (iso: string) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+};
+
 export default function Konfigurasi() {
   const [ipkMin, setIpkMin] = useState(3.0)
   const [showIpkWarning, setShowIpkWarning] = useState(false)
   const [periodeAktif, setPeriodeAktif] = useState(true)
   const [tglBuka, setTglBuka] = useState("2026-09-01")
   const [tglTutup, setTglTutup] = useState("2026-09-15")
-  const [prodis, setProdis] = useState(prodiList)
-  const [dokumens, setDokumens] = useState(dokumenList)
+  const [prodis, setProdis] = useState<any[]>([])
+  const [dokumens, setDokumens] = useState<any[]>([])
   const [toast, setToast] = useState("")
   const [institusi, setInstitusi] = useState({
     nama: "Institut Teknologi Garut",
@@ -84,15 +75,15 @@ export default function Konfigurasi() {
   const [showAddProdi, setShowAddProdi] = useState(false)
 
   // Nilai Mutu state
-  const [nilaiMutu, setNilaiMutu] = useState([
+  const [nilaiMutu, setNilaiMutu] = useState<any[]>([])
+  /* 
     { id: 1, min: 80, max: 100, huruf: "A", poin: 4.0, lulus: true },
     { id: 2, min: 75, max: 79, huruf: "AB", poin: 3.5, lulus: true },
     { id: 3, min: 70, max: 74, huruf: "B", poin: 3.0, lulus: true },
     { id: 4, min: 65, max: 69, huruf: "BC", poin: 2.5, lulus: true },
     { id: 5, min: 60, max: 64, huruf: "C", poin: 2.0, lulus: true },
     { id: 6, min: 55, max: 59, huruf: "D", poin: 1.0, lulus: false },
-    { id: 7, min: 0, max: 54, huruf: "E", poin: 0.0, lulus: false },
-  ])
+  */
   const [editingNilai, setEditingNilai] = useState<number | null>(null)
   const [editRow, setEditRow] = useState<{
     min: number
@@ -103,24 +94,59 @@ export default function Konfigurasi() {
   } | null>(null)
 
   // Section 7 State: Regulasi & Aturan
-  const [regulasi, setRegulasi] = useState([
+  const [regulasi, setRegulasi] = useState<any[]>([])
+  /* 
     { id: 1, nama: "IPK Minimum", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester", nilai: "3.00", tipe: "number", aktif: true },
     { id: 2, nama: "Masa Tenggang SP", deskripsi: "Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan", nilai: "90", tipe: "number", aktif: true },
     { id: 3, nama: "Batas Semester Studi", deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K", nilai: "8", tipe: "number", aktif: true },
     { id: 4, nama: "Minimum SKS per Semester", deskripsi: "Jumlah SKS minimum yang harus diambil mahasiswa per semester", nilai: "18", tipe: "number", aktif: true },
-    { id: 5, nama: "Total SKS Kelulusan", deskripsi: "Total SKS minimum untuk syarat kelulusan", nilai: "144", tipe: "number", aktif: true },
-  ])
+  */
   const [showAddRegulasi, setShowAddRegulasi] = useState(false)
   const [editRegulasi, setEditRegulasi] = useState<number | null>(null)
   const [regulasiForm, setRegulasiForm] = useState({ nama: "", deskripsi: "", nilai: "", tipe: "number" as "number" | "text" })
   const [editRegulasiRow, setEditRegulasiRow] = useState<{nama: string, deskripsi: string, nilai: string, tipe: "number" | "text"} | null>(null)
 
   // Section 8 State: Jenis Pelanggaran
-  const [jenisPelanggaran, setJenisPelanggaran] = useState([
+  
+  const [periodeHistory, setPeriodeHistory] = useState<any[]>([])
+  
+  const fetchData = async () => {
+    try {
+      const res = await axios.get("/api/admin/konfigurasi/all")
+      if (res.data.success) {
+        const d = res.data.data
+        setInstitusi(d.institusi)
+        setRegulasi(d.regulasi)
+        setNilaiMutu(d.nilai_mutu)
+        setJenisPelanggaran(d.jenis_pelanggaran)
+        setProdis(d.prodis)
+        setDokumens(d.dokumens)
+        setPeriodeHistory(d.periode_history)
+        
+        const ipkMinObj = d.regulasi.find((r:any) => r.nama === "IPK Minimum")
+        if (ipkMinObj) setIpkMin(parseFloat(ipkMinObj.nilai))
+        
+        const pAktif = d.periode_history.find((p:any) => p.is_aktif)
+        if (pAktif) {
+           setTglBuka(pAktif.tanggal_buka)
+           setTglTutup(pAktif.tanggal_tutup)
+           setPeriodeAktif(true)
+        } else {
+           setPeriodeAktif(false)
+        }
+      }
+    } catch(e) {}
+  }
+  
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const [jenisPelanggaran, setJenisPelanggaran] = useState<any[]>([])
+  /* 
     { id: 1, nama: "Akademik", deskripsi: "IPK di bawah standar minimum yang ditetapkan", eskalasi: "normal", aktif: true },
     { id: 2, nama: "Non-Akademik", deskripsi: "Pelanggaran kode etik atau tata tertib kampus", eskalasi: "normal", aktif: true },
-    { id: 3, nama: "Cuti Tanpa Izin", deskripsi: "Tidak melakukan registrasi ulang tanpa keterangan", eskalasi: "langsung_sp3", aktif: true },
-  ])
+  */
   const [showAddPelanggaran, setShowAddPelanggaran] = useState(false)
   const [pelanggaranForm, setPelanggaranForm] = useState({ nama: "", deskripsi: "", eskalasi: "normal" as "normal" | "langsung_sp3" })
   const [editPelanggaran, setEditPelanggaran] = useState<number | null>(null)
@@ -131,16 +157,69 @@ export default function Konfigurasi() {
     setTimeout(() => setToast(""), 3000)
   }
 
-  const handleIPKSave = () => {
-    setShowIpkWarning(false)
-    showToast("Threshold IPK berhasil diperbarui")
+  
+  const saveRegulasiAll = async () => {
+    const payload: any = {};
+    regulasi.forEach(r => {
+       if(r.nama === 'IPK Minimum') payload.ipk_minimum = r.nilai;
+       if(r.nama === 'Masa Tenggang SP') payload.masa_tenggang_sp = r.nilai;
+       if(r.nama === 'Batas Semester Studi') payload.max_semester = r.nilai;
+       if(r.nama === 'Minimum SKS per Semester') payload.sks_minimum_semester = r.nilai;
+       if(r.nama === 'Total SKS Kelulusan') payload.sks_minimum_lulus = r.nilai;
+    });
+    payload.ipk_minimum = ipkMin; // from the dedicated UI
+    await axios.put('/api/admin/konfigurasi', payload);
+    fetchData();
+    setShowIpkWarning(false);
+    showToast("Konfigurasi berhasil disimpan");
   }
 
-  const periodeHistory = [
-    { sem: "Genap 2024/2025", buka: "1 Sep 2025", tutup: "15 Sep 2025" },
-    { sem: "Ganjil 2024/2025", buka: "1 Mar 2025", tutup: "15 Mar 2025" },
-    { sem: "Genap 2023/2024", buka: "2 Sep 2024", tutup: "16 Sep 2024" },
-  ]
+  const handleProdiSave = async () => {
+     if(newProdi.nama && newProdi.kode) {
+        await axios.post('/api/admin/konfigurasi/prodi', newProdi);
+        setNewProdi({nama: '', kode: ''});
+        setShowAddProdi(false);
+        fetchData();
+        showToast("Prodi berhasil ditambahkan");
+     }
+  }
+
+  const handleDeleteNilaiMutu = async (id: number) => {
+      await axios.delete('/api/admin/konfigurasi/nilai-mutu/'+id);
+      fetchData();
+      showToast("Dihapus");
+  }
+  
+  const handleSaveNilaiMutu = async (id: number, data: any) => {
+      if(id === 0) {
+          await axios.post('/api/admin/konfigurasi/nilai-mutu', data);
+      } else {
+          await axios.put('/api/admin/konfigurasi/nilai-mutu/'+id, data);
+      }
+      fetchData();
+      showToast("Tersimpan");
+  }
+
+  const handleTogglePelanggaran = async (id: number, aktif: boolean) => {
+      // Actually we just update aktif
+      const p = jenisPelanggaran.find(x => x.id === id);
+      if(p) {
+          await axios.put('/api/admin/konfigurasi/pelanggaran/'+id, {...p, aktif: !aktif});
+          fetchData();
+      }
+  }
+  const handleSavePelanggaran = async (data: any, id: number|null = null) => {
+      if(id) {
+          await axios.put('/api/admin/konfigurasi/pelanggaran/'+id, data);
+      } else {
+          await axios.post('/api/admin/konfigurasi/pelanggaran', data);
+      }
+      fetchData();
+      showToast("Tersimpan");
+  }
+
+
+  
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -228,7 +307,7 @@ export default function Konfigurasi() {
             {periodeAktif ? (
               <span className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-600">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Periode Aktif: 1 Sep – 15 Sep 2026
+                Periode Aktif: {tglBuka && tglTutup ? `${formatTgl(tglBuka)} – ${formatTgl(tglTutup)}` : "—"}
               </span>
             ) : (
               <span className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-full text-xs font-500">
@@ -1115,7 +1194,7 @@ export default function Konfigurasi() {
                 Batal
               </button>
               <button
-                onClick={handleIPKSave}
+                onClick={saveRegulasiAll}
                 className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white"
                 style={{ background: "#D97706" }}
               >

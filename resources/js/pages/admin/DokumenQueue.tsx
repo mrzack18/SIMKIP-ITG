@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { getDokumenQueue, approveDokumen, rejectDokumen } from "@/services/dokumenService";
-import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan } from "@/services/mahasiswaService";
+import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan, getMahasiswaFilterOptions } from "@/services/mahasiswaService";
+import { getDokumenJenisList } from "@/services/konfigurasiService";
 import type { DokumenQueue as DokumenQueueType } from "@/types";
 
 type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
@@ -9,20 +10,6 @@ type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
 type RejectionEntry = { date: string; catatan: string; reviewer: string };
 
 const REVIEWER_NAME = "Encep Jianul Hayat, S.T., M.T.";
-
-const jenisDokumen = [
-  "Semua",
-  "Sertifikat PKKMB",
-  "Sertifikat Bela Negara",
-  "Sertifikat MABIM",
-  "Berita Acara Kerja Praktik",
-  "Sertifikasi",
-  "Bukti Sidang Skripsi",
-  "Sertifikat Prestasi",
-  "SK Organisasi",
-  "Sertifikat Pelatihan",
-];
-const prodiOptions = ["Semua", "Teknik Informatika", "Teknik Industri", "Teknik Sipil", "Arsitektur", "Sistem Informasi"];
 
 const typeIcon = (jenis: string, className?: string) => {
   const cn = className || "text-blue-600";
@@ -323,6 +310,8 @@ export default function DokumenQueue() {
   const [search, setSearch] = useState("");
   const [jenis, setJenis] = useState("Semua");
   const [prodi, setProdi] = useState("Semua");
+  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua"]);
+  const [jenisDokumenOptions, setJenisDokumenOptions] = useState<string[]>(["Semua"]);
   const [reviewing, setReviewing] = useState<DokumenQueueType | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
@@ -343,6 +332,25 @@ export default function DokumenQueue() {
   const [previewPrestasi, setPreviewPrestasi] = useState<any | null>(null);
   const [previewOrganisasi, setPreviewOrganisasi] = useState<any | null>(null);
   const [previewPelatihan, setPreviewPelatihan] = useState<any | null>(null);
+
+  // Load filter options from BE
+  useEffect(() => {
+    let active = true;
+    getMahasiswaFilterOptions()
+      .then((opts) => {
+        if (!active) return;
+        setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
+      })
+      .catch(() => {});
+    getDokumenJenisList()
+      .then((list) => {
+        if (!active) return;
+        setJenisDokumenOptions(["Semua", ...list.map((d) => d.nama)]);
+      })
+      .catch(() => {});
+    return () => { active = false };
+  }, []);
+
   // Load all items (no status filter) for accurate tab counts
   useEffect(() => {
     let active = true;
@@ -582,7 +590,7 @@ export default function DokumenQueue() {
           </div>
           <select value={jenis} onChange={e => handleJenisChange(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600">
-            {jenisDokumen.map(j => <option key={j}>{j}</option>)}
+            {jenisDokumenOptions.map(j => <option key={j}>{j}</option>)}
           </select>
           <select value={prodi} onChange={e => setProdi(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600">

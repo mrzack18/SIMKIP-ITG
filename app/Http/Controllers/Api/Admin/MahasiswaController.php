@@ -289,7 +289,11 @@ class MahasiswaController extends Controller
 
     public function rekapPrestasi(Request $request): JsonResponse
     {
-        $prestasis = \App\Models\Prestasi::with(['mahasiswa.prodi'])->latest()->get()->map(function($p) {
+        $query = \App\Models\Prestasi::with(['mahasiswa.prodi']);
+        if ($request->mahasiswa_id) {
+            $query->where('mahasiswa_id', $request->mahasiswa_id);
+        }
+        $prestasis = $query->latest()->get()->map(function($p) {
             return [
                 'id' => $p->id,
                 'mahasiswa_id' => $p->mahasiswa_id,
@@ -340,7 +344,11 @@ class MahasiswaController extends Controller
 
     public function rekapOrganisasi(Request $request): JsonResponse
     {
-        $organisasis = \App\Models\Organisasi::with(['mahasiswa.prodi'])->latest()->get()->map(function($o) {
+        $query = \App\Models\Organisasi::with(['mahasiswa.prodi']);
+        if ($request->mahasiswa_id) {
+            $query->where('mahasiswa_id', $request->mahasiswa_id);
+        }
+        $organisasis = $query->latest()->get()->map(function($o) {
             return [
                 'id' => $o->id,
                 'mahasiswa_id' => $o->mahasiswa_id,
@@ -363,7 +371,11 @@ class MahasiswaController extends Controller
 
     public function rekapPelatihan(Request $request): JsonResponse
     {
-        $pelatihans = \App\Models\Pelatihan::with(['mahasiswa.prodi'])->latest()->get()->map(function($p) {
+        $query = \App\Models\Pelatihan::with(['mahasiswa.prodi']);
+        if ($request->mahasiswa_id) {
+            $query->where('mahasiswa_id', $request->mahasiswa_id);
+        }
+        $pelatihans = $query->latest()->get()->map(function($p) {
             return [
                 'id' => $p->id,
                 'mahasiswa_id' => $p->mahasiswa_id,

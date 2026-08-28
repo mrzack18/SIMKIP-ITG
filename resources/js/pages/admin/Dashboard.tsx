@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getAdminDashboardData, DashboardResponse } from "../../services/dashboardService";
+import { useAuth } from "@/context/AuthContext";
 import {
   BarChart,
   Bar,
@@ -89,6 +90,7 @@ function ProdiChartTooltip({
 
 // ── Main component ─────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const { user } = useAuth();
   const [selectedAngkatan, setSelectedAngkatan] = useState<string>("Semua");
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +134,7 @@ export default function Dashboard() {
           <img src={logoItg} alt="ITG Logo" className="h-12 w-12 object-contain rounded-lg" />
           <div>
             <h1 className="font-bold text-2xl text-[#263F93]">
-              Selamat datang, Pak Encep Jianul
+              Selamat datang, {user?.nama ?? "Admin"}
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}

@@ -3,7 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ChevronLeft, Download, Printer, CheckCircle, QrCode, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { getLaporanById, type LaporanStatistics } from "@/services/laporanService";
+import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { Laporan } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 import logoItg from "@/imports/logo_itg.jpg";
 
 function formatDateLong(iso?: string | null): string {
@@ -14,6 +16,7 @@ function formatDateLong(iso?: string | null): string {
 
 export default function LaporanDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [laporan, setLaporan] = useState<Laporan | null>(null);
   const [statistics, setStatistics] = useState<LaporanStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,6 +30,9 @@ export default function LaporanDetail() {
   const [checked, setChecked] = useState(false);
 
   const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+  const [signature, setSignature] = useState<SignatureConfig | null>(null);
+
+  const canApprove = user?.role === "warek";
 
   useEffect(() => {
     if (!id) { setError("ID laporan tidak valid."); setLoading(false); return; }
@@ -42,11 +48,24 @@ export default function LaporanDetail() {
     return () => { active = false };
   }, [id]);
 
+  // Load signature from BE
+  useEffect(() => {
+    getKonfigurasiAll()
+      .then((res) => {
+        if (res?.data?.signature) setSignature(res.data.signature);
+      })
+      .catch(() => { /* fallback */ });
+  }, []);
+
   const currentStatus = optimisticStatus ?? laporan?.status ?? "Draft";
   const isApproved = currentStatus === "Disetujui";
   const isPending = currentStatus === "Diajukan";
 
   async function handleApprove() {
+    if (!canApprove) {
+      setActionError("Hanya Warek yang dapat menyetujui laporan.");
+      return;
+    }
     setActionBusy(true);
     setActionError("");
     try {
@@ -62,6 +81,10 @@ export default function LaporanDetail() {
   }
 
   async function handleReject() {
+    if (!canApprove) {
+      setActionError("Hanya Warek yang dapat mengembalikan laporan.");
+      return;
+    }
     if (!revisiNote.trim()) return;
     setActionBusy(true);
     setActionError("");
@@ -267,8 +290,8 @@ export default function LaporanDetail() {
                   ) : (
                     <div className="h-16" />
                   )}
-                  <p className="font-bold underline">Encep Jianul Hayat, S.T., M.T.</p>
-                  <p className="text-xs text-gray-500">NIP. 197804202006041001</p>
+                  <p className="font-bold underline">{signature?.pengelola_nama ?? "Encep Jianul Hayat, S.T., M.T."}</p>
+                  <p className="text-xs text-gray-500">NIP. {signature?.pengelola_nip ?? "197804202006041001"}</p>
                 </div>
                 <div>
                   <p>Mengetahui,</p>
@@ -284,8 +307,8 @@ export default function LaporanDetail() {
                       </span>
                     </div>
                   )}
-                  <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
-                  <p className="text-xs text-gray-500">NIP. 198203152008012002</p>
+                  <p className="font-bold underline">{signature?.warek_nama ?? "Dr. Rina Kurniawati, S.E., M.Si."}</p>
+                  <p className="text-xs text-gray-500">NIP. {signature?.warek_nip ?? "198203152008012002"}</p>
                 </div>
               </div>
 

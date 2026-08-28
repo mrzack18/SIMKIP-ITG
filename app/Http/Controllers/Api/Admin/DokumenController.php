@@ -166,7 +166,21 @@ class DokumenController extends Controller
 
     public function serveFile(int $id): mixed
     {
-        $dok = Dokumen::findOrFail($id);
+        $dok = Dokumen::with('mahasiswa')->findOrFail($id);
+        $user = auth()->user();
+
+        $allowed = match ($user->role) {
+            'admin'     => true,
+            'warek'     => true,
+            'mahasiswa' => false,
+            'prodi'     => $user->prodi_id === $dok->mahasiswa->prodi_id,
+            default     => false,
+        };
+
+        if (! $allowed) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak berhak mengakses file ini.'], 403);
+        }
+
         $path = storage_path('app/public/' . $dok->path_file);
         if (! file_exists($path)) {
             return response()->json(['success' => false, 'message' => 'File tidak ditemukan.'], 404);

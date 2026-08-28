@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 import { getSPDetail, updateSPStatus, type SPDetailResponse } from "@/services/spService";
+import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { SuratPeringatan } from "@/types";
 
 // ── Static UI mappings ───────────────────────────────────────────────────────
@@ -14,19 +15,6 @@ const levelColor: Record<string, { bg: string; text: string; border: string }> =
   SP2: { bg: "#FEE2E2", text: "#991B1B", border: "#EF4444" },
   SP3: { bg: "#7F1D1D", text: "#FEE2E2", border: "#7F1D1D" },
 };
-
-const ROMAN_MONTHS: Record<number, string> = {
-  1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI",
-  7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "XI", 12: "XII",
-};
-
-function nomorSurat(level: string, tanggalTerbit: string | null, id: number): string {
-  if (!tanggalTerbit) return "—";
-  const d = new Date(tanggalTerbit);
-  const roman = ROMAN_MONTHS[d.getMonth() + 1] ?? "?";
-  const year = d.getFullYear();
-  return `SP/${level}/ITG/${roman}/${year}/${String(id).padStart(3, "0")}`;
-}
 
 function formatTanggal(dateStr: string | null): string {
   if (!dateStr) return "—";
@@ -76,6 +64,8 @@ export default function SPDetail() {
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
   const [notFound, setNotFound]       = useState(false);
+  const [signature, setSignature]     = useState<SignatureConfig | null>(null);
+  const [masaTenggang, setMasaTenggang] = useState<number>(180);
 
   const [expandedTimeline, setExpandedTimeline] = useState<number | null>(null);
   const [showMarkDone, setShowMarkDone]         = useState(false);
@@ -103,6 +93,15 @@ export default function SPDetail() {
   }, [spId]);
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
+
+  // Load signature config from BE
+  useEffect(() => {
+    getKonfigurasiAll()
+      .then((res) => {
+        if (res?.data?.signature) setSignature(res.data.signature);
+      })
+      .catch(() => { /* fallback */ });
+  }, []);
 
   const handleMarkDone = async () => {
     if (!detail || markDoneLoading) return;
@@ -161,15 +160,26 @@ export default function SPDetail() {
     </div>
   );
 
+  // Load signature + masa tenggang from BE
+  useEffect(() => {
+    getKonfigurasiAll()
+      .then((res) => {
+        if (res?.data?.signature) setSignature(res.data.signature);
+        const reg = res?.data?.regulasi?.find((r: any) => r.nama === "Masa Tenggang SP");
+        if (reg) setMasaTenggang(Number(reg.nilai));
+      })
+      .catch(() => { /* fallback */ });
+  }, []);
+
   const sp     = detail.data;
   const extra  = detail.extra;
   const history = detail.history ?? [];
   const lc     = levelColor[sp.level] ?? levelColor.SP1;
 
-  const totalDays  = 180;
+  const totalDays  = masaTenggang;
   const elapsed    = totalDays - (sp.sisa ?? 0);
   const progressPct = Math.min(100, (elapsed / totalDays) * 100);
-  const nSurat     = nomorSurat(sp.level, sp.tanggalTerbit, sp.id);
+  const nSurat     = sp.nomorSurat ?? "—";
   const isSelesai  = sp.status === "Selesai" || sp.status === "Pemberhentian";
 
   return (
@@ -497,8 +507,8 @@ export default function SPDetail() {
                       <p>Mengetahui,</p>
                       <p className="font-medium">Wakil Rektor Bidang Kemahasiswaan</p>
                       <div className="h-16" />
-                      <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
-                      <p className="text-xs text-gray-500">NIP. 198203252008012002</p>
+                      <p className="font-bold underline">{signature?.warek_nama ?? "Dr. Rina Kurniawati, S.E., M.Si."}</p>
+                      <p className="text-xs text-gray-500">NIP. {signature?.warek_nip ?? "198203252008012002"}</p>
                     </div>
                   </div>
                 </div>

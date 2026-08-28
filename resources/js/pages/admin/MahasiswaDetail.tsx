@@ -59,6 +59,7 @@ import {
   cabutKipkMahasiswa,
   type SemesterDetailBE,
 } from "@/services/mahasiswaService"
+import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService"
 import type { Mahasiswa, MataKuliah, SemesterDetail, MahasiswaBebasTanggunganResponse } from "@/types"
 import logoItg from "@/imports/logo_itg.jpg"
 
@@ -1676,7 +1677,13 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
   );
 }
 
-function FormalSurat({ student }: { student: MahasiswaBebasTanggunganResponse['mahasiswa'] & { permohonan: NonNullable<MahasiswaBebasTanggunganResponse['permohonan']> } }) {
+function FormalSurat({ student, signature }: { student: MahasiswaBebasTanggunganResponse['mahasiswa'] & { permohonan: NonNullable<MahasiswaBebasTanggunganResponse['permohonan']> }; signature?: { pengelola_nama: string; pengelola_nip: string; warek_nama: string; warek_nip: string } }) {
+  const sig = signature ?? {
+    pengelola_nama: "Encep Jianul Hayat, S.T., M.T.",
+    pengelola_nip: "197804202006041001",
+    warek_nama: "Dr. Rina Kurniawati, S.E., M.Si.",
+    warek_nip: "198203252008012002",
+  };
   return (
     <div className="border-2 border-[#263F93] rounded-xl p-1">
       <div className="border border-[#263F93] rounded-lg p-6 font-serif text-gray-800 text-xs leading-relaxed">
@@ -1757,15 +1764,15 @@ function FormalSurat({ student }: { student: MahasiswaBebasTanggunganResponse['m
             <p>Garut, {student.permohonan.tanggalPermohonan}</p>
             <p className="mt-0.5">Pengelola KIP-K,</p>
             <div className="h-14 my-1" />
-            <p className="font-bold underline">Encep Jianul Hayat, S.T., M.T.</p>
-            <p className="text-gray-500">NIP. 197804202006041001</p>
+            <p className="font-bold underline">{sig.pengelola_nama}</p>
+            <p className="text-gray-500">NIP. {sig.pengelola_nip}</p>
           </div>
           <div>
             <p>Mengetahui,</p>
             <p className="mt-0.5">Wakil Rektor,</p>
             <div className="h-14 my-1" />
-            <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
-            <p className="text-gray-500">NIP. 198203152008012002</p>
+            <p className="font-bold underline">{sig.warek_nama}</p>
+            <p className="text-gray-500">NIP. {sig.warek_nip}</p>
           </div>
         </div>
       </div>
@@ -1965,7 +1972,7 @@ function TabSuratPenyelesaian({
               <Download size={16} /> Download PDF
             </a>
           </div>
-          <FormalSurat student={{ ...data.mahasiswa, permohonan: permohonan as any }} />
+          <FormalSurat student={{ ...data.mahasiswa, permohonan: permohonan as any }} signature={signature ?? undefined} />
         </div>
       )}
 
@@ -2083,6 +2090,8 @@ export default function MahasiswaDetail() {
   const [spData, setSpData] = useState<any[]>([])
   const [dokumenData, setDokumenData] = useState<any[]>([])
   const [btData, setBtData] = useState<MahasiswaBebasTanggunganResponse | null>(null)
+  const [signature, setSignature] = useState<SignatureConfig | null>(null)
+  const [periodeAktif, setPeriodeAktif] = useState<string>("")
   
   const [loadingMain, setLoadingMain] = useState(true)
   const [loadingIpk, setLoadingIpk] = useState(true)
@@ -2114,6 +2123,17 @@ export default function MahasiswaDetail() {
       .finally(() => { if (active) setLoadingMain(false) })
     return () => { active = false }
   }, [mhsId])
+
+  // Load signature config from BE
+  useEffect(() => {
+    getKonfigurasiAll()
+      .then((res) => {
+        if (res?.data?.signature) setSignature(res.data.signature);
+        const periode = res?.data?.periode_history?.find((p: any) => p.is_aktif);
+        if (periode) setPeriodeAktif(`${periode.semester} ${periode.tahun_akademik}`);
+      })
+      .catch(() => { /* fallback */ });
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -2582,7 +2602,7 @@ export default function MahasiswaDetail() {
               Mahasiswa: <strong>{mhs.nama}</strong>
             </p>
             <p className="text-gray-600 text-xs text-center font-medium mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
-              Semester saat pencabutan: Ganjil 2026/2027
+              Semester saat pencabutan: {periodeAktif || "—"}
             </p>
             <div className="mb-4 space-y-4">
               <div>

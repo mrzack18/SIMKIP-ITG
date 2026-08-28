@@ -25,10 +25,10 @@ import {
   validatePrestasi,
   validateOrganisasi,
   validatePelatihan,
+  getMahasiswaFilterOptions,
 } from "@/services/mahasiswaService"
+import { getKonfigurasiAll } from "@/services/konfigurasiService"
 
-const prodiOptions = ["Semua", "Teknik Informatika", "Sistem Informasi", "Teknik Industri", "Teknik Sipil", "Arsitektur"]
-const angkatanOptions = ["Semua", "2021", "2022", "2023", "2024", "2025"]
 const kipkOptions = ["Semua", "KIP-K Reguler", "KIP-K Aspirasi"]
 
 // ── Data Akademik & Non-Akademik ─────────────────────────────────────────────
@@ -582,6 +582,35 @@ export default function DataAkademik() {
   const [organisasiData, setOrganisasiData] = useState<any[]>([])
   const [pelatihanData, setPelatihanData] = useState<any[]>([])
 
+  // Filter options loaded from BE
+  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua"])
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua"])
+  const [periodeAktifRange, setPeriodeAktifRange] = useState<string>("—")
+
+  // Load filter options from BE
+  useEffect(() => {
+    let active = true;
+    getMahasiswaFilterOptions()
+      .then((opts) => {
+        if (!active) return;
+        setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
+        setAngkatanOptions(["Semua", ...opts.angkatans.map(String)]);
+      })
+      .catch(() => { /* fallback to defaults */ });
+    getKonfigurasiAll()
+      .then((res) => {
+        if (!active) return;
+        const periode = res?.data?.periode_history?.find((p: any) => p.is_aktif);
+        if (periode) {
+          const buka = new Date(periode.tanggal_buka).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+          const tutup = new Date(periode.tanggal_tutup).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+          setPeriodeAktifRange(`${buka} – ${tutup}`);
+        }
+      })
+      .catch(() => { /* fallback */ });
+    return () => { active = false; };
+  }, []);
+
   // ── Fetch Data ────────────────────────────────────────────────────────────────
   useEffect(() => {
     let active = true
@@ -935,7 +964,7 @@ export default function DataAkademik() {
               <div>
                 <p className="text-xs text-gray-500">Periode Input Aktif</p>
                 <p className="font-display font-700 text-sm text-gray-800 mt-0.5">
-                  1 Sep – 15 Sep 2026
+                  {periodeAktifRange}
                 </p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-600 bg-green-100 text-green-700">
                   Aktif
@@ -967,7 +996,7 @@ export default function DataAkademik() {
               <FilterSelect
                 value={angkatanFilter}
                 onChange={setAngkatanFilter}
-                options={["Semua", "2021", "2022", "2023", "2024"]}
+                options={angkatanOptions}
               />
               <FilterSelect
                 value={spFilter}

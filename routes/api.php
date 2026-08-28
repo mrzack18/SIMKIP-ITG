@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\Admin\KonfigurasiController as AdminConfig;
 use App\Http\Controllers\Api\Admin\AuditController as AdminAudit;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
 
-Route::post("/auth/login", [AuthController::class, "login"]);
+Route::post("/auth/login", [AuthController::class, "login"])
+    ->middleware("throttle:5,1");
 
 Route::middleware("auth:sanctum")->group(function () {
 
@@ -97,8 +98,10 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/arsip", [\App\Http\Controllers\Api\Mahasiswa\ArsipController::class, "index"]);
     
     // Unified Admin Dokumen Queue
-    Route::get("/admin/dokumen-queue", [DokumenController::class, "queue"]);
-    Route::put("/admin/dokumen-queue/{id}/validate", [DokumenController::class, "validateDokumen"]);
+    Route::middleware("role:admin")->prefix("admin/dokumen-queue")->group(function () {
+        Route::get("/",                        [DokumenController::class, "queue"]);
+        Route::put("/{id}/validate",           [DokumenController::class, "validateDokumen"]);
+    });
 
     Route::get("/sp",                      [SPController::class, "index"]);
     Route::post("/sp",                     [SPController::class, "store"]);
@@ -111,8 +114,10 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::post("/bebas-tanggungan",               [BebasTanggunganController::class, "store"]);
     Route::get("/bebas-tanggungan/pdf",            [BebasTanggunganController::class, "downloadPdfMhs"]);
     Route::get("/bebas-tanggungan/{id}",           [BebasTanggunganController::class, "show"]);
-    Route::patch("/bebas-tanggungan/{id}/approve", [BebasTanggunganController::class, "approve"]);
-    Route::patch("/bebas-tanggungan/{id}/reject",  [BebasTanggunganController::class, "reject"]);
+    Route::patch("/bebas-tanggungan/{id}/approve", [BebasTanggunganController::class, "approve"])
+        ->middleware("role:admin");
+    Route::patch("/bebas-tanggungan/{id}/reject",  [BebasTanggunganController::class, "reject"])
+        ->middleware("role:admin");
     Route::get("/bebas-tanggungan/{id}/pdf",       [BebasTanggunganController::class, "downloadPdfAdmin"]);
 
     Route::get("/laporan",                     [LaporanController::class, "index"]);
@@ -137,6 +142,21 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::post("/dokumen-jenis",            [AdminConfig::class, "storeDokumenJenis"]);
         Route::delete("/dokumen-jenis/{id}",     [AdminConfig::class, "destroyDokumenJenis"]);
         Route::patch("/dokumen-jenis/{id}/toggle",[AdminConfig::class, "toggleDokumenJenis"]);
+
+        Route::get("/all",                       [AdminConfig::class, "indexAll"]);
+        
+        Route::post("/nilai-mutu",               [AdminConfig::class, "storeNilaiMutu"]);
+        Route::put("/nilai-mutu/{id}",           [AdminConfig::class, "updateNilaiMutu"]);
+        Route::delete("/nilai-mutu/{id}",        [AdminConfig::class, "destroyNilaiMutu"]);
+        
+        Route::post("/pelanggaran",              [AdminConfig::class, "storePelanggaran"]);
+        Route::put("/pelanggaran/{id}",          [AdminConfig::class, "updatePelanggaran"]);
+        Route::delete("/pelanggaran/{id}",       [AdminConfig::class, "destroyPelanggaran"]);
+        
+        Route::post("/periode",                  [AdminConfig::class, "storePeriode"]);
+        Route::put("/periode/{id}",              [AdminConfig::class, "updatePeriode"]);
+        Route::delete("/periode/{id}",           [AdminConfig::class, "destroyPeriode"]);
+        Route::patch("/periode/{id}/activate",   [AdminConfig::class, "activatePeriode"]);
     });
 
     // Ekspor Prodi
