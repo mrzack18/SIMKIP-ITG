@@ -22,4 +22,5 @@ class BebasTanggungan extends Model
 
     public function mahasiswa() { return $this->belongsTo(Mahasiswa::class); }
     public function reviewedBy() { return $this->belongsTo(User::class, 'reviewed_by'); }
+    public function histories() { return $this->hasMany(BebasTanggunganHistory::class)->latest(); }
 }

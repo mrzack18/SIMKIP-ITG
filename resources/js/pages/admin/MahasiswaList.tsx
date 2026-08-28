@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -12,63 +12,21 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  ShieldOff,
   UserMinus,
   UserX,
   UserCheck,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { mahasiswaList } from "@/data/mockData";
-
-// ── Enriched mock data (IPK, trend, semester, kategori overrides, SP) ──────
-const enriched: Record<string, {
-  ipk: number;
-  trendDelta: number;
-  semester: number;
-  kategori: "Reguler" | "Aspirasi";
-  sp: "SP1" | "SP2" | "SP3" | null;
-  status?: string;
-  semesterDicabut?: string;
-  tanggalDicabut?: string;
-  alasanDicabut?: string;
-  dicabutOleh?: string;
-  alasanNonaktif?: string;
-  tanggalNonaktif?: string;
-}> = {
-  "2206001": { ipk: 3.35, trendDelta: +0.10, semester: 7,  kategori: "Reguler",  sp: null  },
-  "2206002": { ipk: 2.85, trendDelta: -0.22, semester: 7,  kategori: "Aspirasi", sp: "SP2" },
-  "2303001": { ipk: 3.12, trendDelta: +0.05, semester: 5,  kategori: "Reguler",  sp: "SP1" },
-  "2211001": { ipk: 3.45, trendDelta: +0.15, semester: 7,  kategori: "Reguler",  sp: null, status: "Nonaktif", alasanNonaktif: "Cuti Akademik", tanggalNonaktif: "15 Jan 2026"  },
-  "2420001": { ipk: 3.78, trendDelta: +0.20, semester: 3,  kategori: "Aspirasi", sp: null, status: "Nonaktif", alasanNonaktif: "Masalah Administrasi", tanggalNonaktif: "20 Jan 2026"  },
-  "2307001": { ipk: 3.92, trendDelta: +0.08, semester: 5,  kategori: "Reguler",  sp: null  },
-  "2106001": { ipk: 2.95, trendDelta: -0.10, semester: 9,  kategori: "Reguler",  sp: null, status: "Dicabut", semesterDicabut: "Ganjil 2025/2026", tanggalDicabut: "10 Feb 2026", alasanDicabut: "IPK di Bawah Standar", dicabutOleh: "Admin Pusat"  },
-  "2303002": { ipk: 2.70, trendDelta: -0.30, semester: 5,  kategori: "Aspirasi", sp: "SP3", status: "Dicabut", semesterDicabut: "Genap 2025/2026", tanggalDicabut: "12 Mar 2026", alasanDicabut: "SP3 Otomatis", dicabutOleh: "Sistem" },
-  "2211002": { ipk: 2.88, trendDelta: -0.05, semester: 7,  kategori: "Reguler",  sp: "SP1" },
-  "2207001": { ipk: 3.20, trendDelta: +0.12, semester: 7,  kategori: "Reguler",  sp: null  },
-  "2306001": { ipk: 3.55, trendDelta: +0.18, semester: 5,  kategori: "Aspirasi", sp: null  },
-  "2220001": { ipk: 3.40, trendDelta: +0.02, semester: 7,  kategori: "Reguler",  sp: null  },
-};
-
-// Merge enriched data into mahasiswaList
-const students = mahasiswaList.map((m) => {
-  const e = enriched[m.nim];
-  return {
-    ...m,
-    ipk:       e?.ipk        ?? m.ipk,
-    trendDelta: e?.trendDelta ?? 0,
-    semester:  e?.semester   ?? m.semester,
-    kategori:  (e?.kategori  ?? m.kategori) as "Reguler" | "Aspirasi",
-    sp:        (e?.sp !== undefined ? e.sp : m.sp) as "SP1" | "SP2" | "SP3" | null,
-    status:    e?.status ?? m.status,
-    semesterDicabut: e?.semesterDicabut ?? m.semesterDicabut,
-    tanggalDicabut: e?.tanggalDicabut ?? m.tanggalDicabut,
-    alasanDicabut: e?.alasanDicabut ?? m.alasanDicabut,
-    dicabutOleh: e?.dicabutOleh ?? m.dicabutOleh,
-    alasanNonaktif: e?.alasanNonaktif ?? m.alasanNonaktif,
-    tanggalNonaktif: e?.tanggalNonaktif ?? m.tanggalNonaktif,
-  };
-});
-
-const PAGE_SIZE = 10;
+import {
+  getMahasiswaList,
+  getMahasiswaFilterOptions,
+  deleteMahasiswa,
+  updateMahasiswaStatus,
+  cabutKipkMahasiswa,
+  type MahasiswaFilter,
+} from "@/services/mahasiswaService";
+import type { Mahasiswa, PaginatedResponse } from "@/types";
 
 // ── SP badges (accumulated) ────────────────────────────────────────────────
 function SpBadges({ level }: { level: "SP1" | "SP2" | "SP3" }) {
@@ -108,16 +66,19 @@ function FilterSelect({
   value,
   onChange,
   options,
+  disabled = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: string[];
+  disabled?: boolean;
 }) {
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600"
+      disabled={disabled}
+      className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600 disabled:opacity-50"
     >
       {options.map((o) => (
         <option key={o}>{o}</option>
@@ -126,74 +87,198 @@ function FilterSelect({
   );
 }
 
+const LIMIT = 10;
+
 export default function MahasiswaList() {
+  // Filter options from BE
+  const [prodiOptions, setProdiOptions]     = useState<string[]>([]);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>([]);
+  const [optionsLoading, setOptionsLoading]  = useState(true);
+
   // Filters
-  const [search,        setSearch]        = useState("");
-  const [prodiFilter,   setProdiFilter]   = useState("Semua");
-  const [angkatanFilter, setAngkatanFilter] = useState("Semua");
-  const [spFilter,      setSpFilter]      = useState("Semua");
-  const [statusFilter,  setStatusFilter]  = useState("Semua Status");
-  const [kipFilter,     setKipFilter]     = useState("Semua");
-  const [ipkFilter,     setIpkFilter]     = useState("Semua");
-  const [sortBy,        setSortBy]        = useState("IPK Tertinggi → Terendah");
-  const [page,          setPage]          = useState(1);
+  const [searchInput,     setSearchInput]     = useState("");
+  const [search,          setSearch]          = useState("");
+  const [prodiFilter,     setProdiFilter]     = useState("Semua");
+  const [angkatanFilter,  setAngkatanFilter]  = useState("Semua");
+  const [spFilter,        setSpFilter]        = useState("Semua");
+  const [statusFilter,    setStatusFilter]    = useState("Semua Status");
+  const [kipFilter,       setKipFilter]       = useState("Semua");
+  const [ipkFilter,       setIpkFilter]       = useState("Semua");
+  const [sortBy,          setSortBy]          = useState("IPK Tertinggi → Terendah");
+  const [page,            setPage]            = useState(1);
+
+  // Data state
+  const [students,   setStudents]   = useState<Mahasiswa[]>([]);
+  const [total,      setTotal]      = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState("");
 
   // Action menu & delete modal
   const [openMenu,         setOpenMenu]         = useState<number | null>(null);
-  const [deleteModal,      setDeleteModal]      = useState<typeof students[0] | null>(null);
+  const [deleteModal,      setDeleteModal]      = useState<Mahasiswa | null>(null);
   const [deleteConfirmNim, setDeleteConfirmNim] = useState("");
-  
-  const [nonaktifModal, setNonaktifModal] = useState<typeof students[0] | null>(null);
-  const [cabutModal, setCabutModal] = useState<typeof students[0] | null>(null);
+  const [deleting,         setDeleting]         = useState(false);
+  const [deleteError,      setDeleteError]      = useState("");
+
+  const [nonaktifModal,   setNonaktifModal]   = useState<Mahasiswa | null>(null);
+  const [nonaktifAlasan,  setNonaktifAlasan]  = useState("Cuti Akademik");
+  const [nonaktifCatatan, setNonaktifCatatan] = useState("");
+  const [nonaktifLoading, setNonaktifLoading] = useState(false);
+  const [nonaktifError,   setNonaktifError]   = useState("");
+
+  const [cabutModal,      setCabutModal]      = useState<Mahasiswa | null>(null);
   const [cabutConfirmNim, setCabutConfirmNim] = useState("");
+  const [cabutAlasan,     setCabutAlasan]     = useState("IPK di Bawah Standar");
+  const [cabutCatatan,    setCabutCatatan]    = useState("");
+  const [cabutLoading,    setCabutLoading]    = useState(false);
+  const [cabutError,      setCabutError]      = useState("");
 
   const isFiltered =
     search || prodiFilter !== "Semua" || angkatanFilter !== "Semua" ||
-    spFilter !== "Semua" || statusFilter !== "Semua Status" || kipFilter !== "Semua" || ipkFilter !== "Semua" ||
+    spFilter !== "Semua" || statusFilter !== "Semua Status" ||
+    kipFilter !== "Semua" || ipkFilter !== "Semua" ||
     sortBy !== "IPK Tertinggi → Terendah";
 
+  // ── Load filter options from BE once on mount ──────────────────────────
+  useEffect(() => {
+    getMahasiswaFilterOptions()
+      .then((opts) => {
+        setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
+        setAngkatanOptions(["Semua", ...opts.angkatans.map(String)]);
+      })
+      .catch(() => {
+        // Fallback: keep empty — filters still work without dynamic options
+      })
+      .finally(() => setOptionsLoading(false));
+  }, []);
+
+  // ── Build filter payload for BE ──────────────────────────────────────────
+  const buildFilter = useCallback((): MahasiswaFilter => {
+    const f: MahasiswaFilter = { page, limit: LIMIT };
+    if (search)                                         f.search     = search;
+    if (prodiFilter !== "Semua")                       f.prodi      = prodiFilter;
+    if (angkatanFilter !== "Semua")                    f.angkatan   = angkatanFilter;
+    if (spFilter !== "Semua")                          f.spFilter   = spFilter;
+    if (statusFilter !== "Semua Status")               f.status     = statusFilter;
+    if (kipFilter !== "Semua")                         f.kipFilter  = kipFilter;
+    if (ipkFilter !== "Semua")                         f.ipkFilter  = ipkFilter;
+    if (sortBy !== "IPK Tertinggi → Terendah")         f.sortBy     = sortBy;
+    return f;
+  }, [search, prodiFilter, angkatanFilter, spFilter, statusFilter, kipFilter, ipkFilter, sortBy, page]);
+
+  // ── Fetch list on filter/page change ────────────────────────────────────
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    getMahasiswaList(buildFilter())
+      .then((res: PaginatedResponse<Mahasiswa>) => {
+        if (!active) return;
+        setStudents(res.data || []);
+        setTotal(res.total || 0);
+        setTotalPages(Math.max(1, res.totalPages || 1));
+      })
+      .catch((err: any) => {
+        if (!active) return;
+        setError(err?.message ?? "Gagal memuat data mahasiswa");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [buildFilter]);
+
+  // ── Debounced search — only commits after 400ms idle ───────────────────
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(value.trim());
+      setPage(1);
+    }, 400);
+  };
+
   function resetFilters() {
-    setSearch(""); setProdiFilter("Semua"); setAngkatanFilter("Semua");
-    setSpFilter("Semua"); setStatusFilter("Semua Status"); setKipFilter("Semua"); setIpkFilter("Semua");
+    setSearchInput(""); setSearch("");
+    setProdiFilter("Semua"); setAngkatanFilter("Semua");
+    setSpFilter("Semua"); setStatusFilter("Semua Status");
+    setKipFilter("Semua"); setIpkFilter("Semua");
     setSortBy("IPK Tertinggi → Terendah"); setPage(1);
   }
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    let list = students.filter((m) => {
-      if (search && !m.nama.toLowerCase().includes(q) && !m.nim.includes(q)) return false;
-      if (prodiFilter !== "Semua" && m.prodi !== prodiFilter) return false;
-      if (angkatanFilter !== "Semua" && String(m.angkatan) !== angkatanFilter) return false;
-      if (spFilter === "Tanpa SP" && m.sp !== null) return false;
-      if (spFilter === "SP1" && m.sp !== "SP1") return false;
-      if (spFilter === "SP2" && m.sp !== "SP2") return false;
-      if (spFilter === "SP3" && m.sp !== "SP3") return false;
-      if (statusFilter !== "Semua Status" && m.status !== statusFilter) return false;
-      if (kipFilter === "KIP-K Reguler" && m.kategori !== "Reguler") return false;
-      if (kipFilter === "KIP-K Aspirasi" && m.kategori !== "Aspirasi") return false;
-      if (ipkFilter === "Di Bawah Standar (< 3.0)" && m.ipk >= 3.0) return false;
-      if (ipkFilter === "Di Atas Standar (≥ 3.0)" && m.ipk < 3.0) return false;
-      return true;
-    });
-
-    list = [...list].sort((a, b) => {
-      switch (sortBy) {
-        case "IPK Tertinggi → Terendah": return b.ipk - a.ipk;
-        case "IPK Terendah → Tertinggi": return a.ipk - b.ipk;
-        case "Nama A–Z":                 return a.nama.localeCompare(b.nama);
-        case "Angkatan Terbaru":         return b.angkatan - a.angkatan;
-        default: return 0;
-      }
-    });
-
-    return list;
-  }, [search, prodiFilter, angkatanFilter, spFilter, statusFilter, kipFilter, ipkFilter, sortBy]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   function goPage(p: number) {
     setPage(Math.min(Math.max(1, p), totalPages));
+  }
+
+  async function handleDelete() {
+    if (!deleteModal || deleteConfirmNim !== deleteModal.nim) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteMahasiswa(deleteModal.id, deleteConfirmNim);
+      setDeleteModal(null);
+      setDeleteConfirmNim("");
+      const res = await getMahasiswaList(buildFilter());
+      setStudents(res.data || []);
+      setTotal(res.total || 0);
+      setTotalPages(Math.max(1, res.totalPages || 1));
+    } catch (err: any) {
+      setDeleteError(err?.message ?? "Gagal menghapus data");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleUpdateStatus() {
+    if (!nonaktifModal) return;
+    setNonaktifLoading(true);
+    setNonaktifError("");
+    try {
+      const status = nonaktifModal.status === "Aktif" ? "Nonaktif" : "Aktif";
+      await updateMahasiswaStatus(nonaktifModal.id, {
+        status,
+        alasan_status: status === "Nonaktif" ? nonaktifAlasan : undefined,
+        catatan_status: status === "Nonaktif" ? nonaktifCatatan : undefined,
+      });
+      setNonaktifModal(null);
+      setNonaktifAlasan("Cuti Akademik");
+      setNonaktifCatatan("");
+      const res = await getMahasiswaList(buildFilter());
+      setStudents(res.data || []);
+      setTotal(res.total || 0);
+      setTotalPages(Math.max(1, res.totalPages || 1));
+    } catch (err: any) {
+      setNonaktifError(err?.message ?? "Gagal mengubah status");
+    } finally {
+      setNonaktifLoading(false);
+    }
+  }
+
+  async function handleCabut() {
+    if (!cabutModal || cabutConfirmNim !== cabutModal.nim) return;
+    setCabutLoading(true);
+    setCabutError("");
+    try {
+      await cabutKipkMahasiswa(cabutModal.id, {
+        alasan_cabut: cabutAlasan,
+        catatan_cabut: cabutCatatan,
+        konfirmasi_nim: cabutConfirmNim,
+      });
+      setCabutModal(null);
+      setCabutConfirmNim("");
+      setCabutAlasan("IPK di Bawah Standar");
+      setCabutCatatan("");
+      const res = await getMahasiswaList(buildFilter());
+      setStudents(res.data || []);
+      setTotal(res.total || 0);
+      setTotalPages(Math.max(1, res.totalPages || 1));
+    } catch (err: any) {
+      setCabutError(err?.message ?? "Gagal mencabut KIP-K");
+    } finally {
+      setCabutLoading(false);
+    }
   }
 
   return (
@@ -202,7 +287,7 @@ export default function MahasiswaList() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-bold text-2xl text-gray-900">Manajemen Mahasiswa</h1>
-          <p className="text-gray-500 text-sm mt-0.5">167 mahasiswa KIP-K terdaftar</p>
+          <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa KIP-K terdaftar</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
@@ -218,6 +303,13 @@ export default function MahasiswaList() {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+          <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-[#E2E8F0]">
         <div className="flex flex-wrap items-center gap-3">
@@ -225,23 +317,27 @@ export default function MahasiswaList() {
           <div className="relative flex-1 min-w-48">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Cari NIM atau Nama..."
               className="w-full pl-9 pr-4 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]/30"
             />
           </div>
 
+          {/* Prodi — from BE */}
           <FilterSelect
             value={prodiFilter}
             onChange={(v) => { setProdiFilter(v); setPage(1); }}
-            options={["Semua", "Teknik Informatika", "Sistem Informasi", "Teknik Industri", "Teknik Sipil", "Arsitektur"]}
+            options={optionsLoading ? ["Semua"] : prodiOptions}
+            disabled={optionsLoading}
           />
 
+          {/* Angkatan — from BE */}
           <FilterSelect
             value={angkatanFilter}
             onChange={(v) => { setAngkatanFilter(v); setPage(1); }}
-            options={["Semua", "2021", "2022", "2023", "2024"]}
+            options={optionsLoading ? ["Semua"] : angkatanOptions}
+            disabled={optionsLoading}
           />
 
           <FilterSelect
@@ -287,7 +383,12 @@ export default function MahasiswaList() {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative">
+          {loading && (
+            <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
+              <Loader2 className="animate-spin text-[#263F93]" size={28} />
+            </div>
+          )}
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
@@ -304,16 +405,17 @@ export default function MahasiswaList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F8FAFC]">
-              {paginated.length === 0 ? (
+              {students.length === 0 && !loading ? (
                 <tr>
                   <td colSpan={12} className="px-4 py-10 text-center text-gray-400 text-sm">
                     Tidak ada mahasiswa yang sesuai filter.
                   </td>
                 </tr>
               ) : (
-                paginated.map((m, i) => {
-                  const globalIdx = (page - 1) * PAGE_SIZE + i + 1;
-                  const trend = m.trendDelta;
+                students.map((m, i) => {
+                  const globalIdx = (page - 1) * LIMIT + i + 1;
+                  const trend   = m.trendDelta ?? 0;
+                  const spLevel = (m.sp && (m.sp === "SP1" || m.sp === "SP2" || m.sp === "SP3")) ? m.sp : null;
                   return (
                     <tr
                       key={m.id}
@@ -324,7 +426,7 @@ export default function MahasiswaList() {
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{m.nim}</td>
                       <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{m.nama}</td>
                       <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">
-                        {m.prodi
+                        {(m.prodi ?? "—")
                           .replace("Teknik Informatika", "T. Informatika")
                           .replace("Teknik Industri", "T. Industri")
                           .replace("Teknik Sipil", "T. Sipil")
@@ -334,8 +436,10 @@ export default function MahasiswaList() {
                       <td className="px-4 py-3">
                         {m.kategori === "Reguler" ? (
                           <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Reguler</span>
-                        ) : (
+                        ) : m.kategori === "Aspirasi" ? (
                           <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Aspirasi</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -365,7 +469,7 @@ export default function MahasiswaList() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">{m.semester}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{m.semester ?? "—"}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -373,6 +477,8 @@ export default function MahasiswaList() {
                               ? "bg-green-100 text-green-700"
                               : m.status === "Dicabut"
                               ? "bg-red-100 text-red-700"
+                              : m.status === "Lulus"
+                              ? "bg-blue-100 text-blue-700"
                               : "bg-gray-100 text-gray-500"
                           }`}
                         >
@@ -380,8 +486,8 @@ export default function MahasiswaList() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {m.sp ? (
-                          <SpBadges level={m.sp} />
+                        {spLevel ? (
+                          <SpBadges level={spLevel} />
                         ) : (
                           <span className="text-gray-300 text-sm">—</span>
                         )}
@@ -450,33 +556,46 @@ export default function MahasiswaList() {
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-gray-500">
           <span>
-            Menampilkan {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
-            {Math.min(page * PAGE_SIZE, filtered.length)} dari {filtered.length} mahasiswa
+            {students.length === 0
+              ? "Tidak ada data"
+              : `Menampilkan ${(page - 1) * LIMIT + 1}–${Math.min(page * LIMIT, total)} dari ${total} mahasiswa`}
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => goPage(page - 1)}
-              disabled={page === 1}
+              disabled={page === 1 || loading}
               className="p-1.5 rounded border border-[#E2E8F0] hover:bg-gray-50 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={13} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                onClick={() => goPage(p)}
-                className={`px-2.5 py-1 rounded border text-xs transition-colors ${
-                  p === page
-                    ? "border-[#263F93] bg-[#263F93] text-white"
-                    : "border-[#E2E8F0] hover:bg-gray-50 text-gray-600"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-1.5 text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goPage(p as number)}
+                    disabled={loading}
+                    className={`px-2.5 py-1 rounded border text-xs transition-colors ${
+                      p === page
+                        ? "border-[#263F93] bg-[#263F93] text-white"
+                        : "border-[#E2E8F0] hover:bg-gray-50 text-gray-600"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
             <button
               onClick={() => goPage(page + 1)}
-              disabled={page === totalPages}
+              disabled={page === totalPages || loading}
               className="p-1.5 rounded border border-[#E2E8F0] hover:bg-gray-50 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight size={13} />
@@ -485,7 +604,7 @@ export default function MahasiswaList() {
         </div>
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* ── Delete confirmation modal ─────────────────────────────────────── */}
       {deleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -499,6 +618,12 @@ export default function MahasiswaList() {
             <p className="text-red-600 text-xs text-center font-medium mb-4">
               Data yang dihapus tidak dapat dikembalikan.
             </p>
+            {deleteError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-start gap-2">
+                <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700">{deleteError}</p>
+              </div>
+            )}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Ketik NIM untuk konfirmasi:
@@ -512,24 +637,26 @@ export default function MahasiswaList() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => { setDeleteModal(null); setDeleteConfirmNim(""); }}
-                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                onClick={() => { setDeleteModal(null); setDeleteConfirmNim(""); setDeleteError(""); }}
+                disabled={deleting}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
                 Batal
               </button>
               <button
-                disabled={deleteConfirmNim !== deleteModal.nim}
-                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={handleDelete}
+                disabled={deleteConfirmNim !== deleteModal.nim || deleting}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 style={{ background: "#DC2626" }}
               >
-                Hapus Permanen
+                {deleting ? <><Loader2 size={14} className="animate-spin" /> Menghapus...</> : "Hapus Permanen"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Nonaktif/Aktif confirmation modal */}
+      {/* ── Nonaktif/Aktif confirmation modal ───────────────────────────── */}
       {nonaktifModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -542,11 +669,21 @@ export default function MahasiswaList() {
             <p className="text-gray-500 text-sm text-center mb-4">
               Mahasiswa: <strong>{nonaktifModal.nama}</strong>
             </p>
+            {nonaktifError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-start gap-2">
+                <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700">{nonaktifError}</p>
+              </div>
+            )}
             {nonaktifModal.status === "Aktif" ? (
               <div className="mb-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Alasan Nonaktif</label>
-                  <select className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200">
+                  <select
+                    value={nonaktifAlasan}
+                    onChange={(e) => setNonaktifAlasan(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-200"
+                  >
                     <option>Cuti Akademik</option>
                     <option>Masalah Administrasi</option>
                     <option>Permintaan Sendiri</option>
@@ -555,7 +692,12 @@ export default function MahasiswaList() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
-                  <textarea rows={3} className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 resize-none"></textarea>
+                  <textarea
+                    value={nonaktifCatatan}
+                    onChange={(e) => setNonaktifCatatan(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 resize-none"
+                  />
                 </div>
               </div>
             ) : (
@@ -565,24 +707,30 @@ export default function MahasiswaList() {
             )}
             <div className="flex gap-3">
               <button
-                onClick={() => setNonaktifModal(null)}
-                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                onClick={() => { setNonaktifModal(null); setNonaktifError(""); }}
+                disabled={nonaktifLoading}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
                 Batal
               </button>
               <button
-                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors"
+                onClick={handleUpdateStatus}
+                disabled={nonaktifLoading}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
                 style={{ background: nonaktifModal.status === "Aktif" ? "#F59E0B" : "#10B981" }}
-                onClick={() => setNonaktifModal(null)}
               >
-                {nonaktifModal.status === "Aktif" ? "Nonaktifkan" : "Aktifkan"}
+                {nonaktifLoading ? (
+                  <><Loader2 size={14} className="animate-spin" /> Menyimpan...</>
+                ) : (
+                  nonaktifModal.status === "Aktif" ? "Nonaktifkan" : "Aktifkan"
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cabut KIP-K confirmation modal */}
+      {/* ── Cabut KIP-K confirmation modal ───────────────────────────────── */}
       {cabutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -590,16 +738,23 @@ export default function MahasiswaList() {
               <UserX size={20} className="text-red-600" />
             </div>
             <h3 className="font-bold text-gray-900 text-lg text-center mb-2">Cabut KIP-K Mahasiswa</h3>
-            <p className="text-gray-500 text-sm text-center mb-2">
+            <p className="text-gray-500 text-sm text-center mb-4">
               Mahasiswa: <strong>{cabutModal.nama}</strong>
             </p>
-            <p className="text-gray-600 text-xs text-center font-medium mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
-              Semester saat pencabutan: Ganjil 2026/2027
-            </p>
+            {cabutError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-start gap-2">
+                <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700">{cabutError}</p>
+              </div>
+            )}
             <div className="mb-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Alasan Pencabutan</label>
-                <select className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-200">
+                <select
+                  value={cabutAlasan}
+                  onChange={(e) => setCabutAlasan(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-red-200"
+                >
                   <option>IPK di Bawah Standar</option>
                   <option>Cuti Tanpa Izin</option>
                   <option>Pelanggaran Berat</option>
@@ -609,7 +764,12 @@ export default function MahasiswaList() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
-                <textarea rows={2} className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"></textarea>
+                <textarea
+                  value={cabutCatatan}
+                  onChange={(e) => setCabutCatatan(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -625,18 +785,23 @@ export default function MahasiswaList() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => { setCabutModal(null); setCabutConfirmNim(""); }}
-                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                onClick={() => { setCabutModal(null); setCabutConfirmNim(""); setCabutError(""); }}
+                disabled={cabutLoading}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40"
               >
                 Batal
               </button>
               <button
-                disabled={cabutConfirmNim !== cabutModal.nim}
-                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={handleCabut}
+                disabled={cabutConfirmNim !== cabutModal.nim || cabutLoading}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 style={{ background: "#DC2626" }}
-                onClick={() => { setCabutModal(null); setCabutConfirmNim(""); }}
               >
-                Cabut Permanen
+                {cabutLoading ? (
+                  <><Loader2 size={14} className="animate-spin" /> Memproses...</>
+                ) : (
+                  "Cabut Permanen"
+                )}
               </button>
             </div>
           </div>

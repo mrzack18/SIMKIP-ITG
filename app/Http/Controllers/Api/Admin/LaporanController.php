@@ -4,11 +4,15 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Laporan;
 use App\Models\LaporanReview;
+use App\Models\Mahasiswa;
 use App\Models\Notification;
+use App\Models\Prodi;
 use App\Models\User;
+use App\Models\IpkSemestr;
 use App\Http\Resources\LaporanResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
@@ -19,6 +23,15 @@ class LaporanController extends Controller
             $query->where(fn($q) => $q->where('judul','like',"%$s%")->orWhere('nomor_surat','like',"%$s%"));
         }
         if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
+        if ($request->tahun_akademik) $query->where('tahun_akademik', $request->tahun_akademik);
+        if ($request->semester) $query->where('semester', $request->semester);
+        if ($request->cakupan && $request->cakupan !== 'semua') {
+            if ($request->cakupan === 'keduanya') {
+                $query->where('cakupan', 'keduanya');
+            } else {
+                $query->where('cakupan', $request->cakupan);
+            }
+        }
 
         $limit = (int)($request->limit ?? 10);
         $page  = (int)($request->page ?? 1);
@@ -29,7 +42,8 @@ class LaporanController extends Controller
             'success'     => true,
             'data'        => LaporanResource::collection($data),
             'total' => $total, 'page' => $page, 'limit' => $limit,
-            'total_pages' => (int) ceil($total/$limit),
+            'totalPages' => (int) ceil($total / max($limit, 1)),
+            'total_pages' => (int) ceil($total / max($limit, 1)),
         ]);
     }
 
@@ -74,7 +88,215 @@ class LaporanController extends Controller
     public function show(int $id): JsonResponse
     {
         $l = Laporan::with(['dibuatOleh','reviews.warek'])->findOrFail($id);
-        return response()->json(['success' => true, 'data' => new LaporanResource($l)]);
+        $statistics = $this->computeStatistics($l);
+        return response()->json([
+            'success' => true,
+            'data' => new LaporanResource($l),
+            'statistics' => $statistics,
+        ]);
+    }
+
+    public function previewStatistics(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cakupan' => 'required|in:semua,angkatan,prodi,keduanya',
+            'angkatan' => 'nullable|string',
+            'prodi'    => 'nullable|string',
+        ]);
+
+        $cakupan = $request->cakupan;
+        $angkatan = $request->angkatan;
+        $prodiNama = $request->prodi;
+
+        $mQuery = Mahasiswa::query();
+
+        if ($cakupan === 'angkatan') {
+            $mQuery->where('angkatan', $angkatan);
+        } elseif ($cakupan === 'prodi') {
+            $prodi = Prodi::where('nama', $prodiNama)->first();
+            if ($prodi) $mQuery->where('prodi_id', $prodi->id);
+        } elseif ($cakupan === 'keduanya') {
+            $mQuery->where('angkatan', $angkatan);
+            $prodi = Prodi::where('nama', $prodiNama)->first();
+            if ($prodi) $mQuery->where('prodi_id', $prodi->id);
+        }
+
+        // Total & kategori
+        $counts = (clone $mQuery)
+            ->select('kategori', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('kategori')
+            ->pluck('jumlah', 'kategori');
+
+        $totalReguler  = (int) ($counts['Reguler'] ?? 0);
+        $totalAspirasi = (int) ($counts['Aspirasi'] ?? 0);
+        $totalMahasiswa = $totalReguler + $totalAspirasi;
+
+        // Rata-rata IPK — latest IPK per mahasiswa
+        $mIds = (clone $mQuery)->pluck('id')->toArray();
+
+        $latestIpks = IpkSemestr::whereIn('mahasiswa_id', $mIds)
+            ->whereNotNull('ipk')
+            ->get()
+            ->groupBy('mahasiswa_id')
+            ->map(fn($rows) => $rows->sortByDesc('semester')->first()?->ipk)
+            ->filter(fn($v) => $v !== null)
+            ->map(fn($v) => (float) $v);
+
+        $rataIpk = $latestIpks->count() > 0 ? round($latestIpks->avg(), 2) : null;
+
+        // Distribusi angkatan
+        $distribusi = (clone $mQuery)
+            ->select('angkatan', DB::raw('COUNT(*) as jumlah'))
+            ->whereNotNull('angkatan')
+            ->groupBy('angkatan')
+            ->orderBy('angkatan')
+            ->get()
+            ->map(fn($r) => ['angkatan' => (string) $r->angkatan, 'total' => (int) $r->jumlah])
+            ->values();
+
+        // IPK trend — rata-rata IPK per semester (latest 6)
+        $ipkBySemester = IpkSemestr::join('mahasiswas as m', 'ipk_semestrs.mahasiswa_id', 'm.id')
+            ->whereIn('m.id', $mIds)
+            ->whereNotNull('ipk_semestrs.ipk')
+            ->select('ipk_semestrs.semester', DB::raw('ROUND(AVG(ipk_semestrs.ipk), 2) as avg_ipk'))
+            ->groupBy('ipk_semestrs.semester')
+            ->orderBy('ipk_semestrs.semester')
+            ->limit(6)
+            ->get()
+            ->map(fn($r) => ['semester' => 'Sem ' . (int) $r->semester, 'ipk' => (float) $r->avg_ipk])
+            ->values();
+
+        // IPK distribution buckets — latest IPK per mahasiswa, then bucket
+        $allIpks = IpkSemestr::whereIn('mahasiswa_id', $mIds)
+            ->whereNotNull('ipk')
+            ->get()
+            ->groupBy('mahasiswa_id')
+            ->map(fn($rows) => $rows->sortByDesc('semester')->first()?->ipk)
+            ->filter(fn($v) => $v !== null)
+            ->map(fn($v) => (float) $v);
+
+        $ipkBuckets = [
+            ['range' => '< 2.5',  'count' => $allIpks->filter(fn($v) => $v < 2.5)->count()],
+            ['range' => '2.5–2.9','count' => $allIpks->filter(fn($v) => $v >= 2.5 && $v < 3.0)->count()],
+            ['range' => '3.0–3.4','count' => $allIpks->filter(fn($v) => $v >= 3.0 && $v < 3.5)->count()],
+            ['range' => '3.5–3.9','count' => $allIpks->filter(fn($v) => $v >= 3.5 && $v < 4.0)->count()],
+            ['range' => '4.0',    'count' => $allIpks->filter(fn($v) => $v == 4.0)->count()],
+        ];
+
+        // Sample mahasiswa list (paginated, 20 items for preview)
+        $mahasiswas = (clone $mQuery)
+            ->with(['prodi'])
+            ->limit(20)
+            ->get()
+            ->map(fn($m) => [
+                'id'       => $m->id,
+                'nim'      => $m->nim,
+                'nama'     => $m->nama,
+                'prodi'    => $m->prodi?->nama ?? '',
+                'angkatan' => $m->angkatan,
+                'ipk'      => $m->ipkTerakhir,
+                'sp'       => $m->sp,
+                'status'   => $m->status,
+                'kategori' => $m->kategori,
+            ]);
+
+        $pctReguler  = $totalMahasiswa > 0 ? round($totalReguler / $totalMahasiswa * 100) : 0;
+        $pctAspirasi = $totalMahasiswa > 0 ? round($totalAspirasi / $totalMahasiswa * 100) : 0;
+
+        return response()->json([
+            'success' => true,
+            'totalMahasiswa' => $totalMahasiswa,
+            'kipk' => [
+                'reguler'  => ['total' => $totalReguler, 'persen' => $pctReguler],
+                'aspirasi' => ['total' => $totalAspirasi, 'persen' => $pctAspirasi],
+            ],
+            'rataIpk' => $rataIpk,
+            'distribusiAngkatan' => $distribusi,
+            'ipkTrend' => $ipkBySemester,
+            'ipkBuckets' => $ipkBuckets,
+            'mahasiswas' => $mahasiswas,
+        ]);
+    }
+
+    private function computeStatistics(Laporan $l): array
+    {
+        $mQuery = Mahasiswa::query();
+
+        if ($l->cakupan === 'angkatan') {
+            $mQuery->where('angkatan', $l->angkatan);
+        } elseif ($l->cakupan === 'prodi') {
+            $prodi = Prodi::where('nama', $l->prodi)->first();
+            if ($prodi) $mQuery->where('prodi_id', $prodi->id);
+        } elseif ($l->cakupan === 'keduanya') {
+            $mQuery->where('angkatan', $l->angkatan);
+            $prodi = Prodi::where('nama', $l->prodi)->first();
+            if ($prodi) $mQuery->where('prodi_id', $prodi->id);
+        }
+
+        // Total & kategori
+        $counts = (clone $mQuery)
+            ->select('kategori', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('kategori')
+            ->pluck('jumlah', 'kategori');
+
+        $totalReguler  = (int) ($counts['Reguler'] ?? 0);
+        $totalAspirasi = (int) ($counts['Aspirasi'] ?? 0);
+        $totalMahasiswa = $totalReguler + $totalAspirasi;
+
+        // Rata-rata IPK — latest IPK per mahasiswa
+        $mIds = (clone $mQuery)->pluck('id')->toArray();
+
+        $latestIpks = IpkSemestr::whereIn('mahasiswa_id', $mIds)
+            ->whereNotNull('ipk')
+            ->get()
+            ->groupBy('mahasiswa_id')
+            ->map(fn($rows) => $rows->sortByDesc('semester')->first()?->ipk)
+            ->filter(fn($v) => $v !== null)
+            ->map(fn($v) => (float) $v);
+
+        $rataIpk = $latestIpks->count() > 0 ? round($latestIpks->avg(), 2) : null;
+
+        // Distribusi angkatan
+        $distribusi = (clone $mQuery)
+            ->select('angkatan', DB::raw('COUNT(*) as jumlah'))
+            ->whereNotNull('angkatan')
+            ->groupBy('angkatan')
+            ->orderBy('angkatan')
+            ->get()
+            ->map(fn($r) => [
+                'angkatan' => (string) $r->angkatan,
+                'total' => (int) $r->jumlah,
+            ])
+            ->values();
+
+        // IPK trend — rata-rata IPK per semester (latest 6)
+        $ipkBySemester = IpkSemestr::join('mahasiswas as m', 'ipk_semestrs.mahasiswa_id', 'm.id')
+            ->whereIn('m.id', $mIds)
+            ->whereNotNull('ipk_semestrs.ipk')
+            ->select('ipk_semestrs.semester', DB::raw('ROUND(AVG(ipk_semestrs.ipk), 2) as avg_ipk'))
+            ->groupBy('ipk_semestrs.semester')
+            ->orderBy('ipk_semestrs.semester')
+            ->limit(6)
+            ->get()
+            ->map(fn($r) => [
+                'semester' => 'Sem ' . (int) $r->semester,
+                'ipk' => (float) $r->avg_ipk,
+            ])
+            ->values();
+
+        $pctReguler  = $totalMahasiswa > 0 ? round($totalReguler / $totalMahasiswa * 100) : 0;
+        $pctAspirasi = $totalMahasiswa > 0 ? round($totalAspirasi / $totalMahasiswa * 100) : 0;
+
+        return [
+            'totalMahasiswa' => $totalMahasiswa,
+            'kipk' => [
+                'reguler' => ['total' => $totalReguler, 'persen' => $pctReguler],
+                'aspirasi' => ['total' => $totalAspirasi, 'persen' => $pctAspirasi],
+            ],
+            'rataIpk' => $rataIpk,
+            'distribusiAngkatan' => $distribusi,
+            'ipkTrend' => $ipkBySemester,
+        ];
     }
 
     public function update(Request $request, int $id): JsonResponse

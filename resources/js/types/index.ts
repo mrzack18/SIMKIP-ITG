@@ -25,6 +25,25 @@ export interface Mahasiswa {
   ipk: number;
   semester: number;
   sp: string | null;
+  // Optional BE-rich fields (MahasiswaResource)
+  trendDelta?: number;
+  semesterDicabut?: string | null;
+  tanggalDicabut?: string | null;
+  alasanDicabut?: string | null;
+  dicabutOleh?: string | null;
+  alasanNonaktif?: string | null;
+  tanggalNonaktif?: string | null;
+  email?: string | null;
+  noHp?: string | null;
+  fotoProfil?: string | null;
+  nik?: string | null;
+  nisn?: string | null;
+  tempatLahir?: string | null;
+  tanggalLahir?: string | null;
+  jenisKelamin?: string | null;
+  alamat?: string | null;
+  namaAyah?: string | null;
+  namaIbu?: string | null;
 }
 
 // Dokumen
@@ -41,6 +60,7 @@ export type DokumenJenis =
 
 export interface DokumenQueue {
   id: string | number;
+  mahasiswas_id?: number;
   nim: string;
   nama: string;
   prodi: string;
@@ -157,32 +177,142 @@ export interface Pelatihan {
 }
 
 // Bebas Tanggungan
-export type BebasTanggunganStatus = "Menunggu" | "Diproses" | "Disetujui" | "Ditolak";
+export type BebasTanggunganStatus = "menunggu" | "diterbitkan" | "ditolak";
 
 export interface BebasTanggungan {
   id: number;
-  nim: string;
-  nama: string;
-  prodi: string;
-  angkatan: number;
+  nim?: string;
+  nama?: string;
+  prodi?: string;
+  angkatan?: number;
   tanggalPermohonan: string;
   status: BebasTanggunganStatus;
   keterangan?: string;
+  catatanAdmin?: string;
+}
+
+export interface RejectionHistoryEntry {
+  tgl: string;
+  catatan: string;
+  oleh: string;
+}
+
+export interface BebasTanggunganChecklist {
+  syarat: string;
+  terpenuhi: boolean;
+  keterangan: string | null;
+}
+
+export interface BebasTanggunganDokumen {
+  jenis_id: number;
+  nama: string;
+  status: string | null;
+  tanggal_upload: string | null;
+  catatan: string | null;
+}
+
+export interface MahasiswaBebasTanggunganResponse {
+  success: boolean;
+  mahasiswa: {
+    id: number;
+    nim: string;
+    nama: string;
+    prodi: string;
+    angkatan: number;
+  };
+  permohonan: BebasTanggungan | null;
+  checklist: BebasTanggunganChecklist[];
+  dokumen: BebasTanggunganDokumen[];
+  rejection_history: RejectionHistoryEntry[];
+}
+
+// Admin list endpoint types
+export interface BebasTanggunganListItem {
+  id: number;
+  status: BebasTanggunganStatus;
+  tanggalAjukan: string | null;
+  catatanAdmin: string | null;
+  nomorSurat: string | null;
+  tanggalTerbit: string | null;
+  semester: number;
+  spBersih: boolean;
+  docsOk: number;
+  docsTotal: number;
+  mahasiswa: {
+    id: number;
+    nim: string;
+    nama: string;
+    prodi: string;
+    angkatan: number;
+    kategori?: string;
+    status?: string;
+  } | null;
+}
+
+export interface BebasTanggunganListResponse {
+  success: boolean;
+  data: BebasTanggunganListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  counts: {
+    menunggu: number;
+    diterbitkan: number;
+    ditolak: number;
+  };
+}
+
+// Admin detail endpoint types
+export interface BebasTanggunganDetailResponse {
+  success: boolean;
+  permohonan: {
+    id: number;
+    status: BebasTanggunganStatus;
+    tanggalAjukan: string | null;
+    tanggalTerbit: string | null;
+    nomorSurat: string | null;
+    catatanAdmin: string | null;
+  };
+  mahasiswa: {
+    id: number;
+    nim: string;
+    nama: string;
+    prodi: string | null;
+    angkatan: number;
+    semester: number;
+  };
+  checklist: BebasTanggunganChecklist[];
+  dokumen: BebasTanggunganDokumen[];
+  sksDitempuh: number;
+  sksMinimum: number;
+  ipkTerakhir: number;
+  ipkMinimum: number;
+  canApply: boolean;
+  rejectionHistory: RejectionHistoryEntry[];
 }
 
 // Laporan
-export type LaporanStatus = "Draft" | "Diajukan" | "Disetujui" | "Ditolak";
+export type LaporanStatus = "Draft" | "Diajukan" | "Disetujui" | "Ditolak" | "Dikembalikan";
 
 export interface Laporan {
   id: number;
   judul: string;
   periode: string;
   semester: string;
-  tanggalBuat: string;
-  tanggalAjukan?: string;
+  tahunAkademik?: string;
+  tanggalLaporan?: string | null;
+  submittedAt?: string | null;
   status: LaporanStatus;
   dibuat?: string;
   catatan?: string;
+  catatanWarek?: string | null;
+  nomorSurat?: string | null;
+  cakupan?: string | null;
+  angkatan?: string | null;
+  prodi?: string | null;
+  tujuanProdi?: boolean;
+  tujuanWarek?: boolean;
 }
 
 // Prodi/Angkatan stats

@@ -13,12 +13,15 @@ class DokumenJenisResource extends JsonResource
         $dokumen = $this->whenLoaded('dokumens') ? $this->dokumens->first() : null;
 
         return [
-            'id' => $dokumen ? $dokumen->id : 'jenis_' . $this->id,
+            'id' => $dokumen ? (string)$dokumen->id : 'jenis_' . $this->id,
             'dokumenJenisId' => $this->id,
+            'kode' => $this->kode,
             'nama' => $this->nama,
-            'status' => $dokumen ? $dokumen->status : 'Belum Diunggah',
+            'desc' => $this->deskripsi,
+            'status' => $dokumen ? ($dokumen->status === 'Menunggu' ? 'Menunggu Validasi' : $dokumen->status) : 'Belum Diunggah',
             'tanggal' => $dokumen ? $dokumen->created_at->format('d M Y') : null,
             'catatan' => $dokumen ? $dokumen->catatan_admin : null,
+            'fileName' => $dokumen ? $dokumen->nama_file : null,
             'fileUrl' => $dokumen ? Storage::url($dokumen->path_file) : null,
             'metadata' => $dokumen ? $dokumen->metadata : null,
             'isWajib' => (bool) $this->is_wajib,

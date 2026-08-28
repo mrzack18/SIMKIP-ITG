@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   Search,
@@ -15,20 +15,23 @@ import {
   X,
   ExternalLink,
   FileImage,
+  Loader2,
 } from "lucide-react"
-import { mahasiswaList } from "@/data/mockData"
 import {
-  ipkDataByMahasiswaId as ipkData,
-  prestasiData,
-  organisasiData,
-  pelatihanAkademikData,
-  pelatihanNonAkademikData,
-  prodiOptions,
-  angkatanOptions,
-  kipkOptions,
-} from "@/data/mockDataAkademik"
+  getRekapAkademik,
+  getRekapPrestasi,
+  getRekapOrganisasi,
+  getRekapPelatihan,
+  validatePrestasi,
+  validateOrganisasi,
+  validatePelatihan,
+} from "@/services/mahasiswaService"
 
-// ── Mock data imported from @/data/mockDataAkademik ───────────────────────────
+const prodiOptions = ["Semua", "Teknik Informatika", "Sistem Informasi", "Teknik Industri", "Teknik Sipil", "Arsitektur"]
+const angkatanOptions = ["Semua", "2021", "2022", "2023", "2024", "2025"]
+const kipkOptions = ["Semua", "KIP-K Reguler", "KIP-K Aspirasi"]
+
+// ── Data Akademik & Non-Akademik ─────────────────────────────────────────────
 
 const spColors: Record<string, string> = {
   SP1: "bg-gray-100 text-gray-700",
@@ -79,11 +82,26 @@ function ProgresIPK({ delta }: { delta: number }) {
 function PrestasiModal({
   item,
   onClose,
+  onValidate,
 }: {
-  item: typeof prestasiData[0]
+  item: any
   onClose: () => void
+  onValidate: (mId: number, iId: number, status: string, catatan: string) => Promise<void>
 }) {
-  const [localStatus, setLocalStatus] = useState(item.status)
+  const [validating, setValidating] = useState(false)
+  
+  const handleValidate = async (status: string) => {
+    setValidating(true)
+    try {
+      await onValidate(item.mahasiswa_id, item.id, status, "")
+      onClose()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setValidating(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -111,9 +129,9 @@ function PrestasiModal({
               {item.tingkat}
             </span>
             <span
-              className={`px-2.5 py-1 rounded-full text-xs font-600 ${statusBadge(localStatus)}`}
+              className={`px-2.5 py-1 rounded-full text-xs font-600 ${statusBadge(item.status)}`}
             >
-              {localStatus}
+              {item.status}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -167,21 +185,23 @@ function PrestasiModal({
               {item.catatan}
             </div>
           )}
-          {localStatus === "Menunggu" && (
+          {item.status === "Menunggu" && (
             <div className="flex gap-2 pt-1">
               <button
-                onClick={() => setLocalStatus("Disetujui")}
-                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white"
+                disabled={validating}
+                onClick={() => handleValidate("Disetujui")}
+                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white disabled:opacity-50"
                 style={{ background: "#059669" }}
               >
-                Setujui
+                {validating ? "Memproses..." : "Setujui"}
               </button>
               <button
-                onClick={() => setLocalStatus("Ditolak")}
-                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white"
+                disabled={validating}
+                onClick={() => handleValidate("Ditolak")}
+                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white disabled:opacity-50"
                 style={{ background: "#DC2626" }}
               >
-                Tolak
+                {validating ? "Memproses..." : "Tolak"}
               </button>
             </div>
           )}
@@ -195,11 +215,26 @@ function PrestasiModal({
 function OrganisasiModal({
   item,
   onClose,
+  onValidate,
 }: {
-  item: typeof organisasiData[0]
+  item: any
   onClose: () => void
+  onValidate: (mId: number, iId: number, status: string, catatan: string) => Promise<void>
 }) {
-  const [localStatus, setLocalStatus] = useState(item.status)
+  const [validating, setValidating] = useState(false)
+  
+  const handleValidate = async (status: string) => {
+    setValidating(true)
+    try {
+      await onValidate(item.mahasiswa_id, item.id, status, "")
+      onClose()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setValidating(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -223,9 +258,9 @@ function OrganisasiModal({
           {/* Status */}
           <div className="flex gap-2">
             <span
-              className={`px-2.5 py-1 rounded-full text-xs font-600 ${statusBadge(localStatus)}`}
+              className={`px-2.5 py-1 rounded-full text-xs font-600 ${statusBadge(item.status)}`}
             >
-              {localStatus}
+              {item.status}
             </span>
           </div>
           {/* Data Mahasiswa */}
@@ -305,21 +340,23 @@ function OrganisasiModal({
               </button>
             </div>
           </div>
-          {localStatus === "Menunggu" && (
+          {item.status === "Menunggu" && (
             <div className="flex gap-2 pt-1">
               <button
-                onClick={() => setLocalStatus("Disetujui")}
-                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white"
+                disabled={validating}
+                onClick={() => handleValidate("Disetujui")}
+                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white disabled:opacity-50"
                 style={{ background: "#059669" }}
               >
-                Setujui
+                {validating ? "Memproses..." : "Setujui"}
               </button>
               <button
-                onClick={() => setLocalStatus("Ditolak")}
-                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white"
+                disabled={validating}
+                onClick={() => handleValidate("Ditolak")}
+                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white disabled:opacity-50"
                 style={{ background: "#DC2626" }}
               >
-                Tolak
+                {validating ? "Memproses..." : "Tolak"}
               </button>
             </div>
           )}
@@ -330,16 +367,30 @@ function OrganisasiModal({
 }
 
 // ─── Pelatihan Detail Modal ───────────────────────────────────────────────────
-type PelatihanItem = typeof pelatihanAkademikData[0]
 function PelatihanModal({
   item,
   onClose,
+  onValidate,
 }: {
-  item: PelatihanItem
+  item: any
   onClose: () => void
+  onValidate: (mId: number, iId: number, status: string, catatan: string) => Promise<void>
 }) {
-  const [localStatus, setLocalStatus] = useState(item.status)
+  const [validating, setValidating] = useState(false)
   const isAkademik = item.jenis === "Akademik"
+  
+  const handleValidate = async (status: string) => {
+    setValidating(true)
+    try {
+      await onValidate(item.mahasiswa_id, item.id, status, "")
+      onClose()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setValidating(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -363,9 +414,9 @@ function PelatihanModal({
           {/* Status & Jenis */}
           <div className="flex gap-2">
             <span
-              className={`px-2.5 py-1 rounded-full text-xs font-600 ${statusBadge(localStatus)}`}
+              className={`px-2.5 py-1 rounded-full text-xs font-600 ${statusBadge(item.status)}`}
             >
-              {localStatus}
+              {item.status}
             </span>
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-600 ${
@@ -464,21 +515,23 @@ function PelatihanModal({
               </button>
             </div>
           </div>
-          {localStatus === "Menunggu" && (
+          {item.status === "Menunggu" && (
             <div className="flex gap-2 pt-1">
               <button
-                onClick={() => setLocalStatus("Disetujui")}
-                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white"
+                disabled={validating}
+                onClick={() => handleValidate("Disetujui")}
+                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white disabled:opacity-50"
                 style={{ background: "#059669" }}
               >
-                Setujui
+                {validating ? "Memproses..." : "Setujui"}
               </button>
               <button
-                onClick={() => setLocalStatus("Ditolak")}
-                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white"
+                disabled={validating}
+                onClick={() => handleValidate("Ditolak")}
+                className="flex-1 py-2.5 rounded-xl text-sm font-500 text-white disabled:opacity-50"
                 style={{ background: "#DC2626" }}
               >
-                Tolak
+                {validating ? "Memproses..." : "Tolak"}
               </button>
             </div>
           )}
@@ -521,6 +574,143 @@ export default function DataAkademik() {
     "akademik",
   )
 
+  // ── API State ────────────────────────────────────────────────────────────────
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [akademikRows, setAkademikRows] = useState<any[]>([])
+  const [prestasiData, setPrestasiData] = useState<any[]>([])
+  const [organisasiData, setOrganisasiData] = useState<any[]>([])
+  const [pelatihanData, setPelatihanData] = useState<any[]>([])
+
+  // ── Fetch Data ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError("")
+    Promise.all([
+      getRekapAkademik(),
+      getRekapPrestasi(),
+      getRekapOrganisasi(),
+      getRekapPelatihan(),
+    ])
+      .then(([akademik, prestasi, organisasi, pelatihan]) => {
+        if (!active) return
+        setAkademikRows(
+          (akademik.data || []).map((r: any) => ({
+            ...r,
+            sem: Number(r.semester?.replace(/\D/g, "")) || 0,
+            mkBelumLulus: r.mkBelumLulus ?? 0,
+          })),
+        )
+        setPrestasiData(prestasi.data || [])
+        setOrganisasiData(
+          (organisasi.data || []).map((o: any) => ({
+            ...o,
+            periode: o.periodeMulai && o.periodeSelesai
+              ? `${o.periodeMulai} – ${o.periodeSelesai}`
+              : o.periodeMulai || "-",
+          })),
+        )
+        setPelatihanData(
+          (pelatihan.data || []).map((p: any) => ({
+            ...p,
+            tanggal:
+              p.tanggalMulai && p.tanggalSelesai
+                ? `${p.tanggalMulai} – ${p.tanggalSelesai}`
+                : p.tanggalMulai || "-",
+          })),
+        )
+      })
+      .catch((err: any) => {
+        if (!active) return
+        setError(err?.message ?? "Gagal memuat data")
+      })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const fetchData = () => {
+    let active = true
+    setLoading(true)
+    setError("")
+    Promise.all([
+      getRekapAkademik(),
+      getRekapPrestasi(),
+      getRekapOrganisasi(),
+      getRekapPelatihan(),
+    ])
+      .then(([akademik, prestasi, organisasi, pelatihan]) => {
+        if (!active) return
+        setAkademikRows(
+          (akademik.data || []).map((r: any) => ({
+            ...r,
+            sem: Number(r.semester?.replace(/\D/g, "")) || 0,
+            mkBelumLulus: r.mkBelumLulus ?? 0,
+          })),
+        )
+        setPrestasiData(prestasi.data || [])
+        setOrganisasiData(
+          (organisasi.data || []).map((o: any) => ({
+            ...o,
+            periode: o.periodeMulai && o.periodeSelesai
+              ? `${o.periodeMulai} – ${o.periodeSelesai}`
+              : o.periodeMulai || "-",
+          })),
+        )
+        setPelatihanData(
+          (pelatihan.data || []).map((p: any) => ({
+            ...p,
+            tanggal:
+              p.tanggalMulai && p.tanggalSelesai
+                ? `${p.tanggalMulai} – ${p.tanggalSelesai}`
+                : p.tanggalMulai || "-",
+          })),
+        )
+      })
+      .catch((err: any) => {
+        if (!active) return
+        setError(err?.message ?? "Gagal memuat data")
+      })
+      .finally(() => { if (active) setLoading(false) })
+  }
+
+  // ── Validation Handlers ─────────────────────────────────────────────────────
+  async function handleValidatePrestasi(
+    mahasiswaId: number,
+    itemId: number,
+    status: string,
+    catatan: string,
+  ) {
+    await validatePrestasi(mahasiswaId, itemId, { status, catatan_admin: catatan })
+    setPrestasiData((prev) =>
+      prev.map((p) => (p.id === itemId ? { ...p, status } : p)),
+    )
+  }
+
+  async function handleValidateOrganisasi(
+    mahasiswaId: number,
+    itemId: number,
+    status: string,
+    catatan: string,
+  ) {
+    await validateOrganisasi(mahasiswaId, itemId, { status, catatan_admin: catatan })
+    setOrganisasiData((prev) =>
+      prev.map((o) => (o.id === itemId ? { ...o, status } : o)),
+    )
+  }
+
+  async function handleValidatePelatihan(
+    mahasiswaId: number,
+    itemId: number,
+    status: string,
+    catatan: string,
+  ) {
+    await validatePelatihan(mahasiswaId, itemId, { status, catatan_admin: catatan })
+    setPelatihanData((prev) =>
+      prev.map((p) => (p.id === itemId ? { ...p, status } : p)),
+    )
+  }
+
   // Akademik filters
   const [search, setSearch] = useState("")
   const [prodiFilter, setProdiFilter] = useState("Semua")
@@ -552,32 +742,19 @@ export default function DataAkademik() {
   const [pelStatus, setPelStatus] = useState("Semua")
 
   // Modal state
-  const [prestasiModal, setPrestasiModal] =
-    useState<typeof prestasiData[0] | null>(null)
-  const [organisasiModal, setOrganisasiModal] =
-    useState<typeof organisasiData[0] | null>(null)
-  const [pelatihanModal, setPelatihanModal] = useState<PelatihanItem | null>(
-    null,
-  )
+  const [prestasiModal, setPrestasiModal] = useState<any | null>(null)
+  const [organisasiModal, setOrganisasiModal] = useState<any | null>(null)
+  const [pelatihanModal, setPelatihanModal] = useState<any | null>(null)
 
-  // Build merged akademik rows
-  const akademikRows = mahasiswaList.map((m) => {
-    const d = ipkData[m.id]
-    return {
-      ...m,
-      ipk: d?.ipk ?? m.ipk,
-      delta: d?.delta ?? 0,
-      sem: d?.sem ?? m.semester,
-      mkBelumLulus: d?.mkBelumLulus ?? 0,
-      sp: d?.sp ?? m.sp,
-      kipkLabel: m.kategori === "Aspirasi" ? "KIP-K Aspirasi" : "KIP-K Reguler",
-    }
-  })
+  // Split pelatihan by jenis (client-side)
+  const pelatihanAkademikData = pelatihanData.filter((p) => p.jenis === "Akademik")
+  const pelatihanNonAkademikData = pelatihanData.filter((p) => p.jenis === "Non-Akademik")
 
+  // Merge data tak perlu karena data sudah digabungkan di backend
   const belowStd = akademikRows.filter((r) => r.ipk < 3.0).length
-  const avgIPK = (
+  const avgIPK = akademikRows.length > 0 ? (
     akademikRows.reduce((s, r) => s + r.ipk, 0) / akademikRows.length
-  ).toFixed(2)
+  ).toFixed(2) : "0.00"
 
   // Filter akademik
   const filteredAkademik = akademikRows
@@ -664,10 +841,7 @@ export default function DataAkademik() {
   )
 
   // Filter pelatihan
-  const pelData: PelatihanItem[] =
-    pelatihanTab === "akademik"
-      ? pelatihanAkademikData
-      : pelatihanNonAkademikData
+  const pelData = pelatihanTab === "akademik" ? pelatihanAkademikData : pelatihanNonAkademikData
   const filteredPelatihan = pelData.filter(
     (p) =>
       (pelProdi === "Semua" || p.prodi === pelProdi) &&
@@ -682,6 +856,18 @@ export default function DataAkademik() {
 
   return (
     <div className="space-y-5">
+      {loading && (
+        <div className="flex items-center justify-center p-12 bg-white rounded-2xl shadow-sm border border-gray-100 mb-5">
+          <Loader2 className="w-8 h-8 text-[#263F93] animate-spin" />
+        </div>
+      )}
+      {error && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex items-center justify-between mb-5">
+          <span>{error}</span>
+          <button onClick={fetchData} className="text-sm font-medium hover:underline">Coba Lagi</button>
+        </div>
+      )}
+      
       {/* Header */}
       <div>
         <h1 className="font-display font-700 text-2xl text-gray-900">
@@ -1426,18 +1612,21 @@ export default function DataAkademik() {
         <PrestasiModal
           item={prestasiModal}
           onClose={() => setPrestasiModal(null)}
+          onValidate={handleValidatePrestasi}
         />
       )}
       {organisasiModal && (
         <OrganisasiModal
           item={organisasiModal}
           onClose={() => setOrganisasiModal(null)}
+          onValidate={handleValidateOrganisasi}
         />
       )}
       {pelatihanModal && (
         <PelatihanModal
           item={pelatihanModal}
           onClose={() => setPelatihanModal(null)}
+          onValidate={handleValidatePelatihan}
         />
       )}
     </div>

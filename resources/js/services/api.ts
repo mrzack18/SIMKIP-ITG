@@ -6,7 +6,7 @@
  * mock data returns with actual fetch/axios calls.
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
 
 // HTTP helper with auth token support
 export async function apiCall<T>(
@@ -34,8 +34,11 @@ export async function apiCall<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "Request failed" }));
-    throw new Error(error.message ?? `HTTP ${response.status}`);
+    const body = await response.json().catch(() => ({}));
+    const err = new Error(body?.message ?? `HTTP ${response.status}`);
+    (err as any).status = response.status;
+    (err as any).error = body;
+    throw err;
   }
 
   return response.json();

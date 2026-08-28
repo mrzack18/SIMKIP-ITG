@@ -10,7 +10,7 @@ class DokumenJenis extends Model
     use HasFactory;
 
     protected $table = 'dokumen_jenis';
-    protected $fillable = ['nama', 'is_wajib', 'urutan'];
+    protected $fillable = ['nama', 'kode', 'deskripsi', 'is_wajib', 'urutan'];
     protected $casts = ['is_wajib' => 'boolean'];
 
     public function dokumens()

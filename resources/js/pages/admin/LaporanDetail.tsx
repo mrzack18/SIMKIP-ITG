@@ -1,26 +1,104 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ChevronLeft, Download, Printer, CheckCircle, RotateCcw, QrCode, Clock } from "lucide-react";
-import { mahasiswaList, angkatanStats } from "../../data/mockData";
+import { ChevronLeft, Download, Printer, CheckCircle, QrCode, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { getLaporanById, type LaporanStatistics } from "@/services/laporanService";
+import type { Laporan } from "@/types";
 import logoItg from "@/imports/logo_itg.jpg";
 
-const ipkTrend = [
-  { sem: "Sem 1", avg: 3.10 }, { sem: "Sem 2", avg: 3.18 }, { sem: "Sem 3", avg: 3.22 },
-  { sem: "Sem 4", avg: 3.15 }, { sem: "Sem 5", avg: 3.21 }, { sem: "Sem 6", avg: 3.24 },
-];
+function formatDateLong(iso?: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+}
 
 export default function LaporanDetail() {
   const { id } = useParams();
+  const [laporan, setLaporan] = useState<Laporan | null>(null);
+  const [statistics, setStatistics] = useState<LaporanStatistics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [showApprove, setShowApprove] = useState(false);
   const [showRevisi, setShowRevisi] = useState(false);
   const [revisiNote, setRevisiNote] = useState("");
-  const [approved, setApproved] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [checked, setChecked] = useState(false);
-  const role = "admin"; // could be "warek" in real app
 
-  const isApproved = approved || id === "1";
-  const isPending = id === "2";
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) { setError("ID laporan tidak valid."); setLoading(false); return; }
+    let active = true;
+    setLoading(true);
+    setError("");
+    getLaporanById(Number(id))
+      .then(({ laporan: data, statistics: stats }) => {
+        if (active) { setLaporan(data); setStatistics(stats); }
+      })
+      .catch((err) => { if (active) setError(err?.message ?? "Gagal memuat laporan"); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false };
+  }, [id]);
+
+  const currentStatus = optimisticStatus ?? laporan?.status ?? "Draft";
+  const isApproved = currentStatus === "Disetujui";
+  const isPending = currentStatus === "Diajukan";
+
+  async function handleApprove() {
+    setActionBusy(true);
+    setActionError("");
+    try {
+      const { approveLaporan } = await import("@/services/laporanService");
+      await approveLaporan(Number(id));
+      setOptimisticStatus("Disetujui");
+      setShowApprove(false);
+    } catch (e: any) {
+      setActionError(e?.message ?? "Gagal menyetujui laporan");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function handleReject() {
+    if (!revisiNote.trim()) return;
+    setActionBusy(true);
+    setActionError("");
+    try {
+      const { rejectLaporan } = await import("@/services/laporanService");
+      await rejectLaporan(Number(id), revisiNote);
+      setOptimisticStatus("Dikembalikan");
+      setShowRevisi(false);
+      setRevisiNote("");
+    } catch (e: any) {
+      setActionError(e?.message ?? "Gagal mengembalikan laporan");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-gray-500">
+        <Loader2 className="animate-spin mr-2" /> Memuat laporan...
+      </div>
+    );
+  }
+
+  if (error || !laporan) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-4">
+        <Link to="/admin/laporan" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <ChevronLeft size={16} /> Laporan Semester
+        </Link>
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+          <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error || "Laporan tidak ditemukan."}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
@@ -33,21 +111,28 @@ export default function LaporanDetail() {
         <span className="text-gray-800 font-500">Detail Laporan</span>
       </div>
 
+      {actionError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+          <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{actionError}</p>
+        </div>
+      )}
+
       {/* Formal report document */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Pending watermark */}
         {!isApproved && (
           <div className="bg-yellow-50 border-b border-yellow-200 px-5 py-2.5 flex items-center justify-center gap-2">
-            <span className="text-xs font-600 text-yellow-700 flex items-center justify-center gap-1"><Clock size={14} /> Menunggu Persetujuan Warek III</span>
+            <span className="text-xs font-600 text-yellow-700 flex items-center justify-center gap-1">
+              <Clock size={14} />
+              {currentStatus === "Dikembalikan" ? "Dikembalikan untuk Revisi" : "Menunggu Persetujuan Warek III"}
+            </span>
           </div>
         )}
 
         <div className="p-8">
-          {/* Double border formal letter wrapper */}
           <div className="border-2 border-[#263F93] rounded-xl p-1">
             <div className="border border-[#263F93] rounded-lg p-8 space-y-6">
 
-              {/* Kop surat */}
               <div className="flex items-center gap-4 border-b-2 border-[#263F93] pb-5 mb-6">
                 <img src={logoItg} alt="Logo ITG" className="h-16 w-16 object-contain" />
                 <div className="flex-1 text-center">
@@ -58,62 +143,82 @@ export default function LaporanDetail() {
                 </div>
               </div>
 
-              {/* Nomor, tanggal, perihal */}
               <div className="grid grid-cols-[120px_8px_1fr] gap-y-1.5 text-sm mb-6">
-                <span className="text-gray-600">Nomor</span><span>:</span><span>045/BKKH-ITG/VIII/2026</span>
-                <span className="text-gray-600">Tanggal</span><span>:</span><span>17 Agustus 2026</span>
-                <span className="text-gray-600">Perihal</span><span>:</span><span className="font-semibold">Laporan Perkembangan Mahasiswa KIP-K</span>
-                <span className="text-gray-600">Kepada Yth.</span><span>:</span><span>Wakil Rektor III ITG</span>
+                <span className="text-gray-600">Nomor</span><span>:</span>
+                <span className="font-mono">{laporan.nomorSurat || "—"}</span>
+                <span className="text-gray-600">Tanggal</span><span>:</span>
+                <span>{formatDateLong(laporan.submittedAt || laporan.tanggalLaporan)}</span>
+                <span className="text-gray-600">Perihal</span><span>:</span>
+                <span className="font-semibold">{laporan.judul}</span>
+                <span className="text-gray-600">Kepada Yth.</span><span>:</span>
+                <span>{laporan.tujuanProdi ? "Wakil Rektor III & Program Studi" : "Wakil Rektor III ITG"}</span>
               </div>
 
-              {/* Summary cards */}
               <div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">I. Ringkasan Data Mahasiswa KIP-K</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { label: "Total Mahasiswa", val: "167", color: "#263F93" },
-                    { label: "Mahasiswa Reguler", val: "102 (61%)", color: "#059669" },
-                    { label: "Mahasiswa Aspirasi", val: "65 (39%)", color: "#7C3AED" },
-                    { label: "Rata-rata IPK", val: "3.24", color: "#D4A72C" },
-                  ].map(({ label, val, color }) => (
-                    <div key={label} className="rounded-xl p-3 border-l-4" style={{ borderColor: color, background: "#F8FAFC" }}>
-                      <div className="font-bold text-lg" style={{ color }}>{val}</div>
-                      <div className="text-xs text-gray-500">{label}</div>
+                  <div className="rounded-xl p-3 border-l-4" style={{ borderColor: "#263F93", background: "#F8FAFC" }}>
+                    <div className="font-bold text-lg" style={{ color: "#263F93" }}>{statistics?.totalMahasiswa ?? "—"}</div>
+                    <div className="text-xs text-gray-500">Total Mahasiswa</div>
+                  </div>
+                  <div className="rounded-xl p-3 border-l-4" style={{ borderColor: "#059669", background: "#F8FAFC" }}>
+                    <div className="font-bold text-lg" style={{ color: "#059669" }}>
+                      {statistics ? `${statistics.kipk.reguler.total} (${statistics.kipk.reguler.persen}%)` : "—"}
                     </div>
-                  ))}
+                    <div className="text-xs text-gray-500">Mahasiswa Reguler</div>
+                  </div>
+                  <div className="rounded-xl p-3 border-l-4" style={{ borderColor: "#7C3AED", background: "#F8FAFC" }}>
+                    <div className="font-bold text-lg" style={{ color: "#7C3AED" }}>
+                      {statistics ? `${statistics.kipk.aspirasi.total} (${statistics.kipk.aspirasi.persen}%)` : "—"}
+                    </div>
+                    <div className="text-xs text-gray-500">Mahasiswa Aspirasi</div>
+                  </div>
+                  <div className="rounded-xl p-3 border-l-4" style={{ borderColor: "#D4A72C", background: "#F8FAFC" }}>
+                    <div className="font-bold text-lg" style={{ color: "#D4A72C" }}>{statistics?.rataIpk ?? "—"}</div>
+                    <div className="text-xs text-gray-500">Rata-rata IPK</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Charts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-gray-700 text-xs uppercase tracking-wide mb-2">Sebaran per Angkatan</h3>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={angkatanStats} margin={{ left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                      <XAxis dataKey="angkatan" tick={{ fontSize: 10, fill: "#94A3B8" }} />
-                      <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} />
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Bar dataKey="reguler" stackId="a" fill="#263F93" name="Reguler" />
-                      <Bar dataKey="aspirasi" stackId="a" fill="#D4A72C" name="Aspirasi" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {statistics && statistics.distribusiAngkatan.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={statistics.distribusiAngkatan}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                        <XAxis dataKey="angkatan" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip formatter={(v) => [v, "Jumlah"]} />
+                        <Bar dataKey="total" fill="#263F93" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-40 flex items-center justify-center text-xs text-gray-400 border border-dashed border-gray-200 rounded-lg">
+                      {statistics ? "Tidak ada data angkatan" : "Memuat..."}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-700 text-xs uppercase tracking-wide mb-2">Tren Rata-rata IPK</h3>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <LineChart data={ipkTrend} margin={{ left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                      <XAxis dataKey="sem" tick={{ fontSize: 10, fill: "#94A3B8" }} />
-                      <YAxis domain={[3.0, 3.4]} tick={{ fontSize: 10, fill: "#94A3B8" }} />
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Line type="monotone" dataKey="avg" stroke="#263F93" strokeWidth={2.5} dot={{ fill: "#263F93", r: 3 }} name="IPK Avg" />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {statistics && statistics.ipkTrend.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <LineChart data={statistics.ipkTrend}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                        <XAxis dataKey="semester" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} domain={[0, 4]} />
+                        <Tooltip formatter={(v) => [v, "IPK"]} />
+                        <Line type="monotone" dataKey="ipk" stroke="#D4A72C" strokeWidth={2} dot={{ r: 3 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-40 flex items-center justify-center text-xs text-gray-400 border border-dashed border-gray-200 rounded-lg">
+                      {statistics ? "Tidak ada data IPK" : "Memuat..."}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Data table */}
               <div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-3">II. Data Mahasiswa</h3>
                 <div className="overflow-x-auto">
@@ -126,27 +231,34 @@ export default function LaporanDetail() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E2E8F0]">
-                      {mahasiswaList.slice(0, 6).map(m => (
-                        <tr key={m.id} className={m.ipk < 3.0 ? "bg-red-50/30" : ""}>
-                          <td className="px-3 py-2 font-mono text-gray-500 border-r border-[#E2E8F0]">{m.nim.slice(-6)}</td>
-                          <td className="px-3 py-2 font-medium text-gray-800 border-r border-[#E2E8F0]">{m.nama}</td>
-                          <td className="px-3 py-2 text-gray-500 border-r border-[#E2E8F0]">{m.prodi.replace("Teknik ", "T.")}</td>
-                          <td className="px-3 py-2 font-semibold border-r border-[#E2E8F0]" style={{ color: m.ipk >= 3.0 ? "#059669" : "#DC2626" }}>{m.ipk}</td>
-                          <td className="px-3 py-2 text-gray-500 border-r border-[#E2E8F0]">2</td>
-                          <td className="px-3 py-2 text-gray-500 border-r border-[#E2E8F0]">1</td>
-                          <td className="px-3 py-2 border-r border-[#E2E8F0]">{m.sp ? <span className="text-red-600 font-semibold">{m.sp}</span> : "—"}</td>
-                          <td className="px-3 py-2 text-gray-400">{m.ipk < 3.0 ? "Perlu perhatian" : "—"}</td>
-                        </tr>
-                      ))}
+                      <tr>
+                        <td colSpan={8} className="px-3 py-6 text-center text-gray-400 text-xs">
+                          Tabel detail tersedia di versi PDF.
+                          <a
+                            href={`/api/laporan/${laporan.id}/pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 text-[#263F93] underline"
+                          >
+                            Unduh PDF
+                          </a>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Signatures */}
+              {laporan.catatanWarek && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                  <span className="font-semibold text-amber-900">Catatan Warek: </span>
+                  <span className="text-amber-800">{laporan.catatanWarek}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-8 mt-10 text-sm text-center">
                 <div>
-                  <p>Garut, 17 Agustus 2026</p>
+                  <p>Garut, {formatDateLong(laporan.submittedAt || laporan.tanggalLaporan)}</p>
                   <p className="font-medium">Pengelola KIP-K</p>
                   {isApproved ? (
                     <div className="w-20 h-16 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center mx-auto my-2">
@@ -167,7 +279,9 @@ export default function LaporanDetail() {
                     </div>
                   ) : (
                     <div className="h-16 flex items-center justify-center">
-                      <span className="text-xs text-yellow-600 border border-dashed border-yellow-300 rounded px-2 py-1">Menunggu Approval</span>
+                      <span className="text-xs text-yellow-600 border border-dashed border-yellow-300 rounded px-2 py-1">
+                        {currentStatus === "Diajukan" ? "Menunggu Approval" : "Belum Disetujui"}
+                      </span>
                     </div>
                   )}
                   <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
@@ -185,36 +299,56 @@ export default function LaporanDetail() {
         {isApproved ? (
           <>
             <span className="flex items-center gap-1.5 text-sm text-green-600 font-500">
-              <CheckCircle size={15} /> Laporan Disetujui — 20 Agustus 2026
+              <CheckCircle size={15} /> Laporan Disetujui
             </span>
             <div className="flex-1" />
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+            <a
+              href={`/api/laporan/${laporan.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
+            >
               <Printer size={14} /> Cetak
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white" style={{ background: "#263F93" }}>
+            </a>
+            <a
+              href={`/api/laporan/${laporan.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white"
+              style={{ background: "#263F93" }}
+            >
               <Download size={14} /> Download PDF
-            </button>
+            </a>
           </>
-        ) : role === "admin" ? (
+        ) : isPending ? (
           <>
-            <span className="text-sm text-yellow-600 font-500 flex items-center gap-1"><Clock size={14} /> Menunggu persetujuan Warek III</span>
+            <span className="text-sm text-yellow-600 font-500 flex items-center gap-1">
+              <Clock size={14} /> Menunggu persetujuan Warek III
+            </span>
             <div className="flex-1" />
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+            <a
+              href={`/api/laporan/${laporan.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
+            >
               <Printer size={14} /> Cetak
-            </button>
+            </a>
           </>
         ) : (
           <>
+            <span className="text-sm text-gray-600 font-500">
+              {currentStatus === "Draft" ? "Laporan masih draf. Ajukan untuk review Warek III." : "Status: " + currentStatus}
+            </span>
             <div className="flex-1" />
-            <button onClick={() => setShowRevisi(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-500 border border-orange-200 text-orange-600 hover:bg-orange-50">
-              <RotateCcw size={14} /> Kembalikan untuk Revisi
-            </button>
-            <button onClick={() => setShowApprove(true)}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-700 text-white"
-              style={{ background: "#059669" }}>
-              <CheckCircle size={15} /> Setujui Laporan
-            </button>
+            <a
+              href={`/api/laporan/${laporan.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
+            >
+              <Printer size={14} /> Cetak
+            </a>
           </>
         )}
       </div>
@@ -232,10 +366,11 @@ export default function LaporanDetail() {
               <span className="text-xs text-gray-600">Saya telah membaca dan menyetujui isi laporan ini. Tanda tangan digital akan diterapkan.</span>
             </label>
             <div className="flex gap-3">
-              <button onClick={() => setShowApprove(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
-              <button disabled={!checked} onClick={() => { setShowApprove(false); setApproved(true); }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white disabled:opacity-40"
+              <button onClick={() => setShowApprove(false)} disabled={actionBusy} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 disabled:opacity-40">Batal</button>
+              <button disabled={!checked || actionBusy} onClick={handleApprove}
+                className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white disabled:opacity-40 flex items-center justify-center gap-2"
                 style={{ background: "#059669" }}>
+                {actionBusy ? <Loader2 size={14} className="animate-spin" /> : null}
                 Konfirmasi
               </button>
             </div>
@@ -252,10 +387,11 @@ export default function LaporanDetail() {
               placeholder="Catatan revisi untuk Admin..."
               className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none resize-none mb-4" />
             <div className="flex gap-3">
-              <button onClick={() => setShowRevisi(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
-              <button onClick={() => setShowRevisi(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white"
+              <button onClick={() => setShowRevisi(false)} disabled={actionBusy} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 disabled:opacity-40">Batal</button>
+              <button onClick={handleReject} disabled={!revisiNote.trim() || actionBusy}
+                className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white disabled:opacity-40 flex items-center justify-center gap-2"
                 style={{ background: "#D97706" }}>
+                {actionBusy ? <Loader2 size={14} className="animate-spin" /> : null}
                 Kirim Revisi
               </button>
             </div>

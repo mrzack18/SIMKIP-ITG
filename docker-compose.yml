@@ -11,6 +11,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - simokip-network
 
@@ -54,7 +55,7 @@ services:
       - /var/www/node_modules
     command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
     ports:
-      - "5174:5173"
+      - "5174:5174"
     networks:
       - simokip-network
 

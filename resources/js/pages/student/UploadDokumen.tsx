@@ -1,15 +1,20 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, CheckCircle, Clock, AlertTriangle, FileText, Eye, Download, X } from "lucide-react";
+import { api } from "@/services/api";
 
 type DocStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak" | "Belum Diunggah";
 
 interface Doc {
   id: string;
+  dokumenJenisId: number;
+  kode: string;
   nama: string;
   desc: string;
   status: DocStatus;
   catatan?: string;
   fileName?: string;
+  fileUrl?: string;
+  metadata?: any;
 }
 
 interface ExtraFieldDef {
@@ -46,45 +51,6 @@ const EXTRA_FIELDS: Record<string, ExtraFieldDef[]> = {
   ],
 };
 
-const INITIAL_DOCS: Doc[] = [
-  {
-    id: "pkkmb",
-    nama: "PKKMB",
-    desc: "Sertifikat Pengenalan Kehidupan Kampus Bagi Mahasiswa Baru",
-    status: "Disetujui",
-    fileName: "pkkmb_rifaldi.pdf",
-  },
-  {
-    id: "belanegara",
-    nama: "Bela Negara",
-    desc: "Sertifikat keikutsertaan program Bela Negara",
-    status: "Disetujui",
-    fileName: "belanegara_rifaldi.pdf",
-  },
-  {
-    id: "mabim",
-    nama: "MABIM",
-    desc: "Sertifikat keikutsertaan Masa Bimbingan Mahasiswa",
-    status: "Menunggu Validasi",
-    fileName: "mabim_rifaldi.pdf",
-  },
-  {
-    id: "ba_kp",
-    nama: "Berita Acara KP",
-    desc: "Berita acara/bukti sidang Kerja Praktik",
-    status: "Ditolak",
-    catatan: "File buram, mohon upload ulang",
-    fileName: "ba_kp_rifaldi.pdf",
-  },
-  {
-    id: "sertifikasi",
-    nama: "Sertifikasi",
-    desc: "Sertifikat profesional/kompetensi (minimal 1 wajib)",
-    status: "Belum Diunggah",
-  },
-
-];
-
 const borderColor: Record<DocStatus, string> = {
   Disetujui: "border-l-green-500",
   "Menunggu Validasi": "border-l-amber-400",
@@ -107,7 +73,10 @@ function StatusIcon({ status }: { status: DocStatus }) {
 }
 
 export default function UploadDokumen() {
-  const [docs, setDocs] = useState<Doc[]>(INITIAL_DOCS);
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const [viewTarget, setViewTarget] = useState<Doc | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -116,9 +85,25 @@ export default function UploadDokumen() {
   const [extraFields, setExtraFields] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const fetchDokumen = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get<{ data: Doc[] }>("/dokumen");
+      setDocs(res.data);
+    } catch (err: any) {
+      setError(err.message || "Gagal memuat dokumen");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDokumen();
+  }, []);
+
   const approved = docs.filter((d) => d.status === "Disetujui").length;
   const total = docs.length;
-  const pct = Math.round((approved / total) * 100);
+  const pct = total === 0 ? 0 : Math.round((approved / total) * 100);
 
   const openUpload = (docId: string) => {
     setUploadTarget(docId);
@@ -133,26 +118,42 @@ export default function UploadDokumen() {
     if (file) setSelectedFile(file);
   };
 
-  const handleUploadSubmit = () => {
+  const handleUploadSubmit = async () => {
     if (!selectedFile || !uploadTarget) return;
-    setUploading(true);
-    setTimeout(() => {
-      setDocs((prev) =>
-        prev.map((d) =>
-          d.id === uploadTarget
-            ? { ...d, status: "Menunggu Validasi" as DocStatus, catatan: undefined, fileName: selectedFile.name }
-            : d
-        )
-      );
-      setUploading(false);
+    const uploadDoc = docs.find((d) => d.id === uploadTarget);
+    if (!uploadDoc) return;
+
+    try {
+      setUploading(true);
+      const payload = new FormData();
+      payload.append("dokumen_jenis_id", uploadDoc.dokumenJenisId.toString());
+      payload.append("file", selectedFile);
+      if (Object.keys(extraFields).length > 0) {
+        payload.append("metadata", JSON.stringify(extraFields));
+      }
+
+      await api.post("/dokumen", payload);
       setUploadTarget(null);
       setSelectedFile(null);
       setExtraFields({});
-    }, 1200);
+      fetchDokumen();
+    } catch (err: any) {
+      if (err.status === 413) {
+        alert("File terlalu besar (maksimal 5MB).");
+      } else {
+        alert(err.error?.message || err.message || "Gagal mengunggah dokumen");
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
   const uploadDoc = docs.find((d) => d.id === uploadTarget);
-  const currentExtraFields = uploadTarget ? (EXTRA_FIELDS[uploadTarget] ?? []) : [];
+  const currentExtraFields = uploadDoc?.kode ? (EXTRA_FIELDS[uploadDoc.kode] ?? []) : [];
+
+  if (error && docs.length === 0) {
+    return <div className="p-8 text-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="space-y-5">
@@ -178,25 +179,27 @@ export default function UploadDokumen() {
       </div>
 
       {/* Progress */}
-      <div className="bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-semibold text-gray-700">
-            {approved} dari {total} dokumen telah disetujui
-          </p>
-          <p className="text-sm text-gray-400">{pct}%</p>
-        </div>
-        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${pct}%`, background: "#263F93" }}
-          />
-        </div>
-        {approved === total && (
-          <div className="flex items-center gap-2 mt-3 text-green-600 text-sm font-medium">
-            <CheckCircle size={16} /> Semua dokumen kewajiban telah disetujui!
+      {total > 0 && (
+        <div className="bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-gray-700">
+              {approved} dari {total} dokumen telah disetujui
+            </p>
+            <p className="text-sm text-gray-400">{pct}%</p>
           </div>
-        )}
-      </div>
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${pct}%`, background: "#263F93" }}
+            />
+          </div>
+          {approved === total && (
+            <div className="flex items-center gap-2 mt-3 text-green-600 text-sm font-medium">
+              <CheckCircle size={16} /> Semua dokumen kewajiban telah disetujui!
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Document cards — fixed order */}
       <div className="space-y-3">
@@ -245,10 +248,10 @@ export default function UploadDokumen() {
                     <Eye size={13} /> Lihat
                   </button>
                 )}
-                {doc.status === "Disetujui" && (
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                {doc.status === "Disetujui" && doc.fileUrl && (
+                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
                     <Download size={13} /> Unduh
-                  </button>
+                  </a>
                 )}
                 {(doc.status === "Belum Diunggah" || doc.status === "Ditolak") && (
                   <button
@@ -308,7 +311,7 @@ export default function UploadDokumen() {
                   <>
                     <Upload size={28} className="text-gray-300 mx-auto mb-3" />
                     <p className="text-sm text-gray-600 font-medium">Seret file ke sini atau klik untuk memilih</p>
-                    <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG — maks. 10MB</p>
+                    <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG — maks. 5MB</p>
                   </>
                 )}
               </div>
@@ -395,10 +398,16 @@ export default function UploadDokumen() {
               </button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex flex-col items-center justify-center gap-3">
-                <FileText size={48} className="text-gray-300" />
-                <p className="text-sm text-gray-500 font-medium">{viewTarget.fileName}</p>
-                <p className="text-xs text-gray-400">Pratinjau dokumen</p>
+              <div className="h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex flex-col items-center justify-center gap-3 relative overflow-hidden">
+                {viewTarget.fileUrl && (viewTarget.fileName?.endsWith('.jpg') || viewTarget.fileName?.endsWith('.png') || viewTarget.fileName?.endsWith('.jpeg')) ? (
+                  <img src={viewTarget.fileUrl} alt="Preview" className="w-full h-full object-contain" />
+                ) : (
+                  <>
+                    <FileText size={48} className="text-gray-300" />
+                    <p className="text-sm text-gray-500 font-medium">{viewTarget.fileName}</p>
+                    <p className="text-xs text-gray-400">Pratinjau dokumen (PDF atau lainnya)</p>
+                  </>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -407,9 +416,11 @@ export default function UploadDokumen() {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                    <Download size={14} /> Unduh
-                  </button>
+                  {viewTarget.fileUrl && (
+                    <a href={viewTarget.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                      <Download size={14} /> Unduh
+                    </a>
+                  )}
                   <button
                     onClick={() => setViewTarget(null)}
                     className="px-4 py-2 rounded-lg text-sm font-medium text-white"

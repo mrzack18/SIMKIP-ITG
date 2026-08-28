@@ -13,6 +13,7 @@ class DokumenQueueResource extends JsonResource
         // We will assume the controller maps the properties to standard names before passing to the resource.
         return [
             'id' => $this['id'],
+            'mahasiswas_id' => $this['mahasiswas_id'] ?? null,
             'nim' => $this['nim'],
             'nama' => $this['nama'],
             'prodi' => $this['prodi'],

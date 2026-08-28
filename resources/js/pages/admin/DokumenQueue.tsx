@@ -1,109 +1,14 @@
-import { useState } from "react";
-import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon } from "lucide-react";
-import { dokumenQueue as _dokumenQueue } from "../../data/mockData";
-
-// Override mock data with corrected document names + add Pelatihan entry
-const dokumenQueue = [
-  ..._dokumenQueue.map(d => {
-    if (d.jenis === "Sertifikat KKN") return { ...d, jenis: "Sertifikat PKKMB" };
-    if (d.jenis === "Bukti Keaktifan Organisasi") return { ...d, jenis: "SK Organisasi" };
-    if (d.jenis === "Sertifikat Prestasi Nasional") return { ...d, jenis: "Sertifikat Prestasi" };
-    if (d.jenis === "Laporan Kerja Praktik") return { ...d, jenis: "Berita Acara Kerja Praktik" };
-    return d;
-  }),
-  {
-    id: 20,
-    jenis: "Sertifikat Pelatihan",
-    nama: "Ahmad Rifaldi",
-    nim: "2206001",
-    prodi: "Teknik Informatika",
-    status: "Menunggu",
-    tanggalUpload: "2026-08-17",
-  },
-];
+import { useState, useEffect } from "react";
+import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { getDokumenQueue, approveDokumen, rejectDokumen } from "@/services/dokumenService";
+import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan } from "@/services/mahasiswaService";
+import type { DokumenQueue as DokumenQueueType } from "@/types";
 
 type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
 
 type RejectionEntry = { date: string; catatan: string; reviewer: string };
 
 const REVIEWER_NAME = "Encep Jianul Hayat, S.T., M.T.";
-
-// Mock prestasi data keyed by doc id
-const mockPrestasiData: Record<number, {
-  namaPrestasi: string;
-  tingkat: string;
-  penyelenggara: string;
-  pencapaian: string;
-  tanggalMulai: string;
-  tanggalSelesai: string;
-  tempat: string;
-  deskripsi: string;
-  link: string;
-  fotoSerti?: string;
-  fotoPodium?: string;
-}> = {
-  5: {
-    namaPrestasi: "Olimpiade Teknologi Informasi Nasional 2025",
-    tingkat: "Nasional",
-    penyelenggara: "Kemendikbudristek",
-    pencapaian: "Juara 2",
-    tanggalMulai: "5 Januari 2025",
-    tanggalSelesai: "7 Januari 2025",
-    tempat: "Jakarta",
-    deskripsi: "Kompetisi teknologi informasi tingkat nasional yang diselenggarakan oleh Kemendikbudristek, diikuti 150 tim dari 80 perguruan tinggi seluruh Indonesia.",
-    link: "https://kemendikbud.go.id/olimpiade-ti-2025",
-    fotoSerti: "sertifikat-olim.pdf",
-    fotoPodium: "podium-juara2.jpg",
-  },
-};
-
-// Mock organisasi data keyed by doc id
-const mockOrganisasiData: Record<number, {
-  organisasi: string;
-  jenis: string;
-  jabatan: string;
-  periodeMulai: string;
-  periodeSelesai: string;
-  deskripsi: string;
-  skPengurus?: string;
-  fotoDokumentasi?: string;
-}> = {
-  3: {
-    organisasi: "Himpunan Mahasiswa Teknik Informatika (HMTI)",
-    jenis: "Organisasi",
-    jabatan: "Sekretaris Umum",
-    periodeMulai: "September 2025",
-    periodeSelesai: "September 2026",
-    deskripsi: "Bertanggung jawab atas dokumentasi dan administrasi himpunan, koordinasi dengan departemen lain, dan pengelolaan arsip surat-menyurat.",
-    skPengurus: "sk-hmti-2025.pdf",
-    fotoDokumentasi: "rapat-hmti.jpg",
-  },
-};
-
-// Mock pelatihan data keyed by doc id
-const mockPelatihanData: Record<number, {
-  namaPelatihan: string;
-  jenis: string;
-  penyelenggara: string;
-  tanggalMulai: string;
-  tanggalSelesai: string;
-  tempat: string;
-  deskripsi: string;
-  sertifikat?: string;
-  fotoKegiatan?: string;
-}> = {
-  20: {
-    namaPelatihan: "Pelatihan Machine Learning Dasar",
-    jenis: "Akademik",
-    penyelenggara: "Google Developer Student Clubs ITG",
-    tanggalMulai: "10 Agustus 2026",
-    tanggalSelesai: "12 Agustus 2026",
-    tempat: "Garut",
-    deskripsi: "Pelatihan pengenalan machine learning menggunakan Python dan TensorFlow untuk mahasiswa tingkat 3 ke atas.",
-    sertifikat: "serti-ml.pdf",
-    fotoKegiatan: "pelatihan-ml.jpg",
-  },
-};
 
 const jenisDokumen = [
   "Semua",
@@ -196,7 +101,7 @@ function DocPlaceholderCard({ icon, label }: { icon: React.ReactNode; label: str
   );
 }
 
-function MahasiswaSection({ doc }: { doc: typeof dokumenQueue[0] }) {
+function MahasiswaSection({ doc }: { doc: DokumenQueueType }) {
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
       <GrayHeader title="Data Mahasiswa & Unggahan" />
@@ -213,14 +118,17 @@ function MahasiswaSection({ doc }: { doc: typeof dokumenQueue[0] }) {
 
 // --- Document detail preview components ---
 
-function PrestasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
-  const data = mockPrestasiData[doc.id];
-  const tingkatColor =
-    data?.tingkat === "Internasional" ? "bg-purple-100 text-purple-700" :
-    data?.tingkat === "Nasional" ? "bg-blue-100 text-blue-700" :
-    data?.tingkat === "Wilayah" ? "bg-orange-100 text-orange-700" :
-    "bg-gray-100 text-gray-500";
+const tingkatBadge = (tingkat: string) => {
+  switch (tingkat) {
+    case "Internasional": return "bg-purple-100 text-purple-700";
+    case "Nasional": return "bg-blue-100 text-blue-700";
+    case "Wilayah": return "bg-teal-100 text-teal-700";
+    case "Institusi": return "bg-gray-100 text-gray-700";
+    default: return "bg-gray-100 text-gray-700";
+  }
+};
 
+function PrestasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | null }) {
   return (
     <div className="space-y-3">
       {/* Section 1: Data Prestasi */}
@@ -235,8 +143,8 @@ function PrestasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
           <div>
             <span className="text-gray-400 text-xs">Kategori Tingkat</span>
             <div className="mt-0.5">
-              {data ? (
-                <span className={`inline-block px-2 py-0.5 rounded-full font-semibold text-xs ${tingkatColor}`}>
+              {data?.tingkat ? (
+                <span className={`inline-block px-2 py-0.5 rounded-full font-semibold text-xs ${tingkatBadge(data.tingkat)}`}>
                   {data.tingkat}
                 </span>
               ) : (
@@ -253,15 +161,15 @@ function PrestasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
           <div className="col-span-2">
             <span className="text-gray-400 text-xs">Link Penyelenggara</span>
             <div className="mt-0.5">
-              {data?.link ? (
+              {data?.linkPenyelenggara ? (
                 <a
-                  href={data.link}
+                  href={data.linkPenyelenggara}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
                   style={{ color: "#263F93" }}
                 >
-                  {data.link} <ExternalLink size={11} />
+                  {data.linkPenyelenggara} <ExternalLink size={11} />
                 </a>
               ) : (
                 <span className="text-xs text-gray-400">—</span>
@@ -286,8 +194,7 @@ function PrestasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
   );
 }
 
-function OrganisasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
-  const data = mockOrganisasiData[doc.id];
+function OrganisasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | null }) {
   return (
     <div className="space-y-3">
       {/* Section 1: Data Organisasi */}
@@ -296,13 +203,13 @@ function OrganisasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
         <div className="p-4 grid grid-cols-2 gap-3 bg-white">
           <InfoRow
             label="Nama Organisasi"
-            value={data?.organisasi ?? "Unit Kegiatan Mahasiswa (placeholder)"}
+            value={data?.nama ?? "—"}
             colSpan={2}
           />
           <InfoRow label="Jenis" value={data?.jenis ?? "—"} />
           <InfoRow label="Jabatan" value={data?.jabatan ?? "—"} />
-          <InfoRow label="Periode Mulai" value={data?.periodeMulai ?? "—"} />
-          <InfoRow label="Periode Selesai" value={data?.periodeSelesai ?? "—"} />
+          <InfoRow label="Periode Mulai" value={data?.mulai ?? "—"} />
+          <InfoRow label="Periode Selesai" value={data?.selesai ?? "—"} />
           <InfoRow label="Deskripsi Kegiatan" value={data?.deskripsi ?? "—"} colSpan={2} />
         </div>
       </div>
@@ -322,9 +229,8 @@ function OrganisasiPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
   );
 }
 
-function PelatihanPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
-  const data = mockPelatihanData[doc.id];
-  const jenisColor = data?.jenis === "Akademik" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700";
+function PelatihanPreview({ doc, data }: { doc: DokumenQueueType; data: any | null }) {
+  const jenisColor = "bg-blue-100 text-blue-700";
 
   return (
     <div className="space-y-3">
@@ -368,7 +274,7 @@ function PelatihanPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
   );
 }
 
-function GenericPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
+function GenericPreview({ doc }: { doc: DokumenQueueType }) {
   return (
     <div className="space-y-3">
       {/* Section 1: Informasi Dokumen */}
@@ -376,8 +282,7 @@ function GenericPreview({ doc }: { doc: typeof dokumenQueue[0] }) {
         <BlueHeader icon={<FileCheck size={15} />} title="Informasi Dokumen" />
         <div className="p-4 grid grid-cols-2 gap-3 bg-white">
           <InfoRow label="Jenis Dokumen" value={doc.jenis} colSpan={2} />
-          <InfoRow label="Tanggal Pelaksanaan" value="15 September 2022" />
-          <InfoRow label="Tempat / Lokasi" value="Kampus ITG, Garut" />
+          <InfoRow label="Tanggal Diunggah" value={formatDate(doc.tanggalUpload)} colSpan={2} />
         </div>
       </div>
 
@@ -418,80 +323,199 @@ export default function DokumenQueue() {
   const [search, setSearch] = useState("");
   const [jenis, setJenis] = useState("Semua");
   const [prodi, setProdi] = useState("Semua");
-  const [reviewing, setReviewing] = useState<typeof dokumenQueue[0] | null>(null);
+  const [reviewing, setReviewing] = useState<DokumenQueueType | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
-  const [processed, setProcessed] = useState<Record<number, string>>({});
-  const [rejectionHistory, setRejectionHistory] = useState<Record<number, RejectionEntry[]>>({});
+  const [processed, setProcessed] = useState<Record<string, string>>({});
+  const [rejectionHistory, setRejectionHistory] = useState<Record<string, RejectionEntry[]>>({});
   const [zoom, setZoom] = useState(1);
   const [reviewIdx, setReviewIdx] = useState(0);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [queue, setQueue] = useState<DokumenQueueType[]>([]);
+  const [fullQueue, setFullQueue] = useState<DokumenQueueType[]>([]); // all items for accurate tab counts
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [previewPrestasi, setPreviewPrestasi] = useState<any | null>(null);
+  const [previewOrganisasi, setPreviewOrganisasi] = useState<any | null>(null);
+  const [previewPelatihan, setPreviewPelatihan] = useState<any | null>(null);
+  // Load all items (no status filter) for accurate tab counts
+  useEffect(() => {
+    let active = true;
+    getDokumenQueue({
+      page: 1,
+      limit: 9999,
+      search: search || undefined,
+      jenis: jenis !== "Semua" ? jenis : undefined,
+    })
+      .then((res) => { if (active) setFullQueue(res.data); })
+      .catch(() => {});
+    return () => { active = false };
+  }, [search, jenis]);
 
-  const getStatus = (d: typeof dokumenQueue[0]) => processed[d.id] || d.status;
+  // Load paginated queue for display
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    const statusParam = tab !== "Semua" ? tab : undefined;
+    getDokumenQueue({
+      page: currentPage,
+      limit: 10,
+      search: search || undefined,
+      status: statusParam as any,
+      jenis: jenis !== "Semua" ? jenis : undefined,
+    })
+      .then((res) => {
+        if (!active) return;
+        setQueue(res.data);
+        setTotalItems(res.total);
+        setTotalPages(res.totalPages ?? 1);
+      })
+      .catch((err) => { if (active) setError(err?.message ?? "Gagal memuat antrian dokumen"); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false };
+  }, [currentPage, tab, search, jenis]);
+  // Reset page when tab/search/jenis changes
+  const handleTabChange = (t: Tab) => {
+    setTab(t);
+    setCurrentPage(1);
+  };
 
-  const filtered = dokumenQueue.filter(d => {
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
+
+  const handleJenisChange = (val: string) => {
+    setJenis(val);
+    setCurrentPage(1);
+  };
+
+  // Load preview data when reviewing changes
+  useEffect(() => {
+    if (!reviewing) {
+      setPreviewPrestasi(null);
+      setPreviewOrganisasi(null);
+      setPreviewPelatihan(null);
+      return;
+    }
+    const mhsId = reviewing.mahasiswas_id;
+    if (!mhsId) return;
+
+    const idPrefix = String(reviewing.id);
+    if (idPrefix.startsWith("prestasi_")) {
+      const itemId = Number(idPrefix.replace("prestasi_", ""));
+      getMahasiswaPrestasi(mhsId)
+        .then((list) => setPreviewPrestasi(list.find((p: any) => p.id === itemId) || null));
+    } else if (idPrefix.startsWith("organisasi_")) {
+      const itemId = Number(idPrefix.replace("organisasi_", ""));
+      getMahasiswaOrganisasi(mhsId)
+        .then((list) => setPreviewOrganisasi(list.find((o: any) => o.id === itemId) || null));
+    } else if (idPrefix.startsWith("pelatihan_")) {
+      const itemId = Number(idPrefix.replace("pelatihan_", ""));
+      getMahasiswaPelatihan(mhsId)
+        .then((list) => setPreviewPelatihan(list.find((p: any) => p.id === itemId) || null));
+    }
+  }, [reviewing]);
+
+  const getStatus = (d: DokumenQueueType) => processed[String(d.id)] || d.status;
+
+  const filtered = queue.filter(d => {
     const q = search.toLowerCase();
     const status = getStatus(d);
     return (
       (tab === "Semua" || (tab === "Menunggu" ? status === "Menunggu" : tab === "Disetujui" ? status === "Disetujui" : status === "Ditolak")) &&
       (jenis === "Semua" || d.jenis.toLowerCase().includes(jenis.toLowerCase())) &&
       (prodi === "Semua" || d.prodi === prodi) &&
-      (d.nama.toLowerCase().includes(q) || d.nim.includes(q))
+      (d.nama.toLowerCase().includes(q) || d.nim.toLowerCase().includes(q))
     );
   });
 
-  const counts: Record<Tab, number> = {
-    Semua: dokumenQueue.length,
-    Menunggu: dokumenQueue.filter(d => getStatus(d) === "Menunggu").length,
-    Disetujui: dokumenQueue.filter(d => getStatus(d) === "Disetujui").length,
-    Ditolak: dokumenQueue.filter(d => getStatus(d) === "Ditolak").length,
+  // For pagination display — use server-returned totals
+  const startItem = totalItems > 0 ? (currentPage - 1) * 10 + 1 : 0;
+  const endItem = Math.min(currentPage * 10, totalItems);
+
+  const goToPage = (p: number) => {
+    if (p < 1 || p > totalPages) return;
+    setCurrentPage(p);
   };
 
-  const openReview = (d: typeof dokumenQueue[0]) => {
+  const counts: Record<Tab, number> = {
+    Semua: fullQueue.length,
+    Menunggu: fullQueue.filter(d => (processed[String(d.id)] || d.status) === "Menunggu").length,
+    Disetujui: fullQueue.filter(d => (processed[String(d.id)] || d.status) === "Disetujui").length,
+    Ditolak: fullQueue.filter(d => (processed[String(d.id)] || d.status) === "Ditolak").length,
+  };
+
+  const openReview = (d: DokumenQueueType) => {
     const idx = filtered.indexOf(d);
     setReviewIdx(idx);
     setReviewing(d);
     setShowReject(false);
     setRejectNote("");
+    setActionError("");
     setZoom(1);
   };
 
   const navigateReview = (dir: -1 | 1) => {
     const next = filtered[reviewIdx + dir];
-    if (next) { setReviewIdx(reviewIdx + dir); setReviewing(next); setShowReject(false); setZoom(1); }
+    if (next) { setReviewIdx(reviewIdx + dir); setReviewing(next); setShowReject(false); setActionError(""); setZoom(1); }
   };
 
-  const handleApprove = () => {
+  async function handleApprove() {
     if (!reviewing) return;
-    setProcessed(p => ({ ...p, [reviewing.id]: "Disetujui" }));
-    const next = filtered[reviewIdx + 1];
-    if (next && getStatus(next) === "Menunggu") { setReviewIdx(reviewIdx + 1); setReviewing(next); setShowReject(false); setZoom(1); }
-    else setReviewing(null);
-  };
+    setActionBusy(true);
+    setActionError("");
+    try {
+      await approveDokumen(String(reviewing.id));
+      setProcessed(p => ({ ...p, [String(reviewing.id)]: "Disetujui" }));
+      const next = filtered[reviewIdx + 1];
+      if (next && getStatus(next) === "Menunggu") { setReviewIdx(reviewIdx + 1); setReviewing(next); setShowReject(false); setZoom(1); }
+      else setReviewing(null);
+    } catch (e: any) {
+      setActionError(e?.message ?? "Gagal menyetujui dokumen");
+    } finally {
+      setActionBusy(false);
+    }
+  }
 
-  const handleReject = () => {
+  async function handleReject() {
     if (!reviewing) return;
-    const now = new Date().toISOString();
-    const entry: RejectionEntry = {
-      date: now,
-      catatan: rejectNote.trim() || "Dokumen tidak terbaca dengan jelas",
-      reviewer: REVIEWER_NAME,
-    };
-    setRejectionHistory(h => ({
-      ...h,
-      [reviewing.id]: [...(h[reviewing.id] || []), entry],
-    }));
-    setProcessed(p => ({ ...p, [reviewing.id]: "Ditolak" }));
-    setShowReject(false);
-    setRejectNote("");
-  };
+    setActionBusy(true);
+    setActionError("");
+    try {
+      await rejectDokumen(String(reviewing.id), rejectNote.trim() || "Dokumen tidak terbaca dengan jelas");
+      const now = new Date().toISOString();
+      const entry: RejectionEntry = {
+        date: now,
+        catatan: rejectNote.trim() || "Dokumen tidak terbaca dengan jelas",
+        reviewer: REVIEWER_NAME,
+      };
+      setRejectionHistory(h => ({
+        ...h,
+        [String(reviewing.id)]: [...(h[String(reviewing.id)] || []), entry],
+      }));
+      setProcessed(p => ({ ...p, [String(reviewing.id)]: "Ditolak" }));
+      setShowReject(false);
+      setRejectNote("");
+    } catch (e: any) {
+      setActionError(e?.message ?? "Gagal menolak dokumen");
+    } finally {
+      setActionBusy(false);
+    }
+  }
 
   const openRejectPanel = () => {
     if (!reviewing) return;
+    setActionError("");
     const currentStatus = getStatus(reviewing);
     if (currentStatus === "Ditolak") {
-      const history = rejectionHistory[reviewing.id];
+      const history = rejectionHistory[String(reviewing.id)];
       const lastEntry = history && history.length > 0 ? history[history.length - 1] : null;
       setRejectNote(lastEntry ? lastEntry.catatan : "");
     } else {
@@ -501,7 +525,7 @@ export default function DokumenQueue() {
   };
 
   const currentStatus = reviewing ? getStatus(reviewing) : null;
-  const docHistory = reviewing ? (rejectionHistory[reviewing.id] || []) : [];
+  const docHistory = reviewing ? (rejectionHistory[String(reviewing.id)] || []) : [];
   const fullHistory: RejectionEntry[] = reviewing
     ? [
         ...(reviewing.status === "Ditolak" && docHistory.length === 0
@@ -530,7 +554,7 @@ export default function DokumenQueue() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit flex-wrap">
         {(["Semua", "Menunggu", "Disetujui", "Ditolak"] as Tab[]).map(t => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => handleTabChange(t)}
             className={`px-4 py-2 rounded-lg text-sm font-500 transition-all flex items-center gap-2 ${
               tab === t ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"
             }`}>
@@ -553,10 +577,10 @@ export default function DokumenQueue() {
         <div className={`flex flex-wrap gap-3 ${!filterOpen ? "hidden sm:flex" : "flex"}`}>
           <div className="relative flex-1 min-w-48">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari NIM atau Nama..."
+            <input value={search} onChange={e => handleSearchChange(e.target.value)} placeholder="Cari NIM atau Nama..."
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
           </div>
-          <select value={jenis} onChange={e => setJenis(e.target.value)}
+          <select value={jenis} onChange={e => handleJenisChange(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600">
             {jenisDokumen.map(j => <option key={j}>{j}</option>)}
           </select>
@@ -591,9 +615,9 @@ export default function DokumenQueue() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-500 text-gray-800">{d.jenis}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-500">{d.prodi.replace("Teknik ", "T.")}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-500">{(d.prodi || "").replace("Teknik ", "T.")}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">{d.nama} · {d.nim.slice(-8)}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{d.nama} · {d.nim}</div>
                   <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
                     <Clock size={10} /> Diunggah {relativeTime(d.tanggalUpload)}
                   </div>
@@ -633,11 +657,41 @@ export default function DokumenQueue() {
       {/* Pagination */}
       {filtered.length > 0 && (
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Menampilkan {filtered.length} dari {dokumenQueue.length} dokumen</span>
+          <span>Menampilkan {filtered.length > 0 ? `${startItem}–${endItem}` : 0} dari {totalItems} dokumen</span>
           <div className="flex items-center gap-1">
-            <button className="px-2 py-1 rounded border border-gray-200 hover:bg-gray-50">‹</button>
-            <button className="px-2 py-1 rounded border border-[#263F93] bg-[#263F93] text-white">1</button>
-            <button className="px-2 py-1 rounded border border-gray-200 hover:bg-gray-50">›</button>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-30"
+            >‹</button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let p: number;
+              if (totalPages <= 5) {
+                p = i + 1;
+              } else if (currentPage <= 3) {
+                p = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                p = totalPages - 4 + i;
+              } else {
+                p = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={p}
+                  onClick={() => goToPage(p)}
+                  className={`px-2 py-1 rounded border text-xs ${
+                    p === currentPage
+                      ? "border-[#263F93] bg-[#263F93] text-white"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >{p}</button>
+              );
+            })}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-30"
+            >›</button>
           </div>
         </div>
       )}
@@ -650,7 +704,7 @@ export default function DokumenQueue() {
             <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
               <div>
                 <h3 className="font-600 text-gray-800 text-sm">{reviewing.jenis}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{reviewing.nama} · {reviewing.nim.slice(-8)}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{reviewing.nama} · {reviewing.nim}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">{reviewIdx + 1} / {filtered.length}</span>
@@ -682,11 +736,11 @@ export default function DokumenQueue() {
             <div className="flex-1 overflow-auto p-4 space-y-4">
               {/* Document detail by type */}
               {isPrestasi(reviewing.jenis) ? (
-                <PrestasiPreview doc={reviewing} />
+                <PrestasiPreview doc={reviewing} data={previewPrestasi} />
               ) : isOrganisasi(reviewing.jenis) ? (
-                <OrganisasiPreview doc={reviewing} />
+                <OrganisasiPreview doc={reviewing} data={previewOrganisasi} />
               ) : isPelatihan(reviewing.jenis) ? (
-                <PelatihanPreview doc={reviewing} />
+                <PelatihanPreview doc={reviewing} data={previewPelatihan} />
               ) : (
                 <>
                   <GenericPreview doc={reviewing} />
@@ -735,17 +789,25 @@ export default function DokumenQueue() {
 
             {/* Action area */}
             <div className="px-5 py-4 border-t space-y-3 flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
+              {actionError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 flex items-center gap-2">
+                  <AlertCircle size={13} className="flex-shrink-0" />
+                  {actionError}
+                </div>
+              )}
               {!showReject ? (
                 <>
-                  <button onClick={handleApprove}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-500 text-white text-sm transition-colors"
+                  <button onClick={handleApprove} disabled={actionBusy}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-500 text-white text-sm transition-colors disabled:opacity-60"
                     style={{ background: "#059669" }}>
-                    <CheckCircle size={16} /> {currentStatus === "Disetujui" ? "Sudah Disetujui (Ubah ke Tolak)" : "Setujui Dokumen"}
+                    {actionBusy ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                    {currentStatus === "Disetujui" ? "Sudah Disetujui (Ubah ke Tolak)" : "Setujui Dokumen"}
                   </button>
-                  <button onClick={openRejectPanel}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-500 text-sm border transition-colors hover:bg-red-50"
+                  <button onClick={openRejectPanel} disabled={actionBusy}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-500 text-sm border transition-colors hover:bg-red-50 disabled:opacity-60"
                     style={{ borderColor: "#FECACA", color: "#DC2626" }}>
-                    <XCircle size={16} /> {currentStatus === "Ditolak" ? "Tambah Catatan Penolakan" : "Tolak / Revisi"}
+                    {actionBusy ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+                    {currentStatus === "Ditolak" ? "Tambah Catatan Penolakan" : "Tolak / Revisi"}
                   </button>
                 </>
               ) : (
@@ -762,7 +824,8 @@ export default function DokumenQueue() {
                       onFocus={e => { e.target.style.boxShadow = "0 0 0 3px rgba(220,38,38,0.15)"; e.target.style.borderColor = "#FCA5A5"; }}
                       onBlur={e => { e.target.style.boxShadow = "none"; e.target.style.borderColor = "#E2E8F0"; }} />
                   </div>
-                  <button onClick={handleReject} className="w-full py-3 rounded-xl font-500 text-white text-sm transition-opacity hover:opacity-90" style={{ background: "#DC2626" }}>
+                  <button onClick={handleReject} disabled={!rejectNote.trim() || actionBusy} className="w-full py-3 rounded-xl font-500 text-white text-sm transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2" style={{ background: "#DC2626" }}>
+                    {actionBusy ? <Loader2 size={16} className="animate-spin" /> : null}
                     {currentStatus === "Ditolak" ? "Simpan Catatan Penolakan" : "Kirim Penolakan"}
                   </button>
                   <button onClick={() => setShowReject(false)} className="w-full py-2 text-sm text-gray-500 hover:text-gray-700">Batal</button>

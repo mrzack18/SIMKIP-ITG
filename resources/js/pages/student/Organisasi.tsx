@@ -1,5 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download, Image } from "lucide-react";
+import { api } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 
 type OStatus = "Disetujui" | "Menunggu" | "Ditolak";
 
@@ -14,6 +16,7 @@ interface Org {
   status: OStatus;
   catatanAdmin?: string;
   fotoKegiatan?: string;
+  fileSk?: string;
 }
 
 const statusStyle: Record<OStatus, { badge: string; icon: React.ReactNode; dot: string }> = {
@@ -40,18 +43,15 @@ function fmtMonth(ym: string) {
   return `${names[parseInt(m) - 1]} ${y}`;
 }
 
-const INITIAL: Org[] = [
-  { id: 1, jenis: "Organisasi", nama: "BEM ITG", jabatan: "Ketua Divisi Pendidikan", mulai: "2025-09", selesai: "2026-08", deskripsi: "Mengelola program kerja divisi pendidikan mahasiswa.", status: "Disetujui" },
-  { id: 2, jenis: "Organisasi", nama: "HIMA Teknik Informatika", jabatan: "Sekretaris Umum", mulai: "2024-09", selesai: "2025-08", deskripsi: "Mengurus administrasi himpunan mahasiswa prodi.", status: "Disetujui" },
-  { id: 3, jenis: "Kepanitiaan", nama: "Seminar Nasional", jabatan: "Ketua Pelaksana", mulai: "2026-02", selesai: "2026-08", deskripsi: "Mengadakan seminar.", status: "Menunggu", fotoKegiatan: "foto-seminar.jpg" },
-  { id: 4, jenis: "Kegiatan", nama: "UKM Fotografi", jabatan: "Ketua", mulai: "2023-09", selesai: "2024-08", deskripsi: "", status: "Ditolak", catatanAdmin: "SK Kepengurusan tidak terlihat jelas, mohon upload ulang." },
-];
 
-// Mock student name for SK preview
-const STUDENT_NAME = "Ahmad Rifaldi";
 
 export default function Organisasi() {
-  const [list, setList] = useState<Org[]>(INITIAL);
+  const { user } = useAuth();
+  const STUDENT_NAME = user?.nama || "Mahasiswa";
+
+  const [list, setList] = useState<Org[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<Org | null>(null);
   const [skOrg, setSkOrg] = useState<Org | null>(null);
@@ -64,13 +64,64 @@ export default function Organisasi() {
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const handleSubmit = () => {
+  const fetchOrganisasi = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get<{ data: Org[] }>("/organisasi");
+      if (res && res.data && Array.isArray(res.data)) {
+        setList(res.data);
+      } else if (res && Array.isArray(res.data)) { // in case of { data: [...] } structure
+        setList(res.data);
+      } else if (res && (res as any).data && Array.isArray((res as any).data.data)) {
+        setList((res as any).data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganisasi();
+  }, []);
+
+  const handleSubmit = async () => {
     if (!form.nama.trim() || !form.jabatan.trim()) return;
-    setList(prev => [{ id: Date.now(), ...form, status: "Menunggu" as OStatus }, ...prev]);
-    setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
-    setFileName("");
-    setFotoName("");
-    setOpen(false);
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("jenis", form.jenis);
+      formData.append("nama", form.nama);
+      formData.append("jabatan", form.jabatan);
+      if (form.mulai) formData.append("periode_mulai", `${form.mulai}-01`);
+      if (form.selesai) formData.append("periode_selesai", `${form.selesai}-01`);
+      if (form.deskripsi) formData.append("deskripsi", form.deskripsi);
+      
+      const fileEl = fileRef.current?.files?.[0];
+      if (fileEl) formData.append("file_sk", fileEl);
+      
+      const fotoEl = fotoRef.current?.files?.[0];
+      if (fotoEl) formData.append("foto_kegiatan", fotoEl);
+
+      await api.post("/organisasi", formData);
+
+      setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+      setFileName("");
+      setFotoName("");
+      setOpen(false);
+      
+      fetchOrganisasi();
+    } catch (err: any) {
+      if (err.status === 422 && err.error?.errors) {
+        const msgs = Object.values(err.error.errors).flat().join("\n");
+        alert(msgs);
+      } else {
+        alert(err.message || "Terjadi kesalahan sistem saat menyimpan data.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -126,9 +177,15 @@ export default function Organisasi() {
                   </div>
 
                   {/* Proof thumbnail */}
-                  <div className="mt-3 h-16 bg-[#F8FAFC] rounded-lg flex items-center justify-center border border-dashed border-[#E2E8F0] gap-2">
-                    <FileText size={14} className="text-gray-300" />
-                    <span className="text-xs text-gray-300">sk-kepengurusan.pdf</span>
+                  <div className="mt-3 h-16 bg-[#F8FAFC] rounded-lg flex items-center justify-center border border-dashed border-[#E2E8F0] gap-2 overflow-hidden">
+                    {org.fileSk ? (
+                      <span className="text-xs text-gray-400 font-500">Dokumen SK Tersedia</span>
+                    ) : (
+                      <>
+                        <FileText size={14} className="text-gray-300" />
+                        <span className="text-xs text-gray-300">Belum ada dokumen</span>
+                      </>
+                    )}
                   </div>
 
                   {org.catatanAdmin && (
@@ -207,14 +264,23 @@ export default function Organisasi() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2">
                     <FileText size={28} className="text-gray-300" />
-                    <p className="text-xs text-gray-400">sk-kepengurusan.pdf</p>
-                    <button className="mt-1 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
+                    <p className="text-xs text-gray-400 px-2 text-center">{detail.fileSk ? "SK Tersedia" : "Belum ada dokumen"}</p>
+                    <button 
+                      onClick={() => detail.fileSk && window.open(detail.fileSk, '_blank')}
+                      disabled={!detail.fileSk}
+                      className="mt-1 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-100 flex items-center gap-1.5 disabled:opacity-50">
                       <Eye size={11} /> Lihat Dokumen
                     </button>
                   </div>
-                  <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2">
-                    <Image size={28} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">{detail.fotoKegiatan || "Belum ada foto"}</p>
+                  <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2 overflow-hidden">
+                    {detail.fotoKegiatan ? (
+                      <img src={detail.fotoKegiatan} alt="Foto Kegiatan" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <Image size={28} className="text-gray-300" />
+                        <p className="text-xs text-gray-400 text-center px-2">Belum ada foto</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -293,7 +359,9 @@ export default function Organisasi() {
                   Tutup
                 </button>
                 <button
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                  onClick={() => skOrg.fileSk && window.open(skOrg.fileSk, '_blank')}
+                  disabled={!skOrg.fileSk}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 disabled:opacity-50"
                   style={{ background: "#263F93" }}
                 >
                   <Download size={14} /> Unduh SK
@@ -401,10 +469,10 @@ export default function Organisasi() {
 
             <div className="px-5 py-4 border-t border-[#E2E8F0] flex gap-3">
               <button onClick={() => setOpen(false)} className="flex-1 py-2.5 border border-[#E2E8F0] rounded-xl text-sm text-gray-600">Batal</button>
-              <button onClick={handleSubmit} disabled={!form.nama.trim() || !form.jabatan.trim()}
+              <button onClick={handleSubmit} disabled={!form.nama.trim() || !form.jabatan.trim() || isSubmitting}
                 className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white disabled:opacity-40"
                 style={{ background: "#263F93" }}>
-                Simpan
+                {isSubmitting ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
           </div>

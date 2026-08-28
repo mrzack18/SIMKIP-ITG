@@ -88,8 +88,13 @@ export default function Prestasi() {
   const fetchPrestasi = async () => {
     try {
       setLoading(true);
-      const res = await api.get<{ data: Prestasi[] }>("/prestasi");
-      setList(res.data);
+      const res = await api.get<{ data: any[] }>("/prestasi");
+      const mappedData = res.data.map((item: any) => ({
+        ...item,
+        tab: item.tingkat,
+        nama: item.namaPrestasi,
+      }));
+      setList(mappedData);
     } catch (err: any) {
       setError(err.message || "Gagal memuat prestasi");
     } finally {
@@ -119,23 +124,27 @@ export default function Prestasi() {
     try {
       setIsSubmitting(true);
       const payload = new FormData();
-      payload.append("tingkat", form.tab); // API uses tingkat not tab
-      payload.append("namaPrestasi", form.nama); // API uses namaPrestasi
+      payload.append("tingkat", form.tab);
+      payload.append("nama_prestasi", form.nama);
       payload.append("penyelenggara", form.penyelenggara);
       if (form.pencapaian) payload.append("pencapaian", form.pencapaian);
-      if (form.tanggalMulai) payload.append("tanggalMulai", form.tanggalMulai);
-      if (form.tanggalSelesai) payload.append("tanggalSelesai", form.tanggalSelesai);
+      if (form.tanggalMulai) payload.append("tanggal_mulai", form.tanggalMulai);
+      if (form.tanggalSelesai) payload.append("tanggal_selesai", form.tanggalSelesai);
       if (form.tempat) payload.append("tempat", form.tempat);
       if (form.deskripsi) payload.append("deskripsi", form.deskripsi);
-      if (form.linkPenyelenggara) payload.append("linkPenyelenggara", form.linkPenyelenggara);
-      if (fileSertifikat) payload.append("fileSertifikat", fileSertifikat);
-      if (fileFoto) payload.append("fileFoto", fileFoto);
+      if (form.linkPenyelenggara) payload.append("link_penyelenggara", form.linkPenyelenggara);
+      if (fileSertifikat) payload.append("file_sertifikat", fileSertifikat);
+      if (fileFoto) payload.append("file_foto", fileFoto);
 
       await api.post("/prestasi", payload);
       setOpenForm(false);
       fetchPrestasi();
     } catch (err: any) {
-      alert(err.message || "Gagal menyimpan prestasi");
+      if (err.status === 413) {
+        alert("File yang Anda upload terlalu besar. Server menolak permintaan (HTTP 413). Silakan kompres file Anda atau hubungi admin untuk memperbesar batas ukuran upload (upload_max_filesize di php.ini).");
+      } else {
+        alert(err.error?.message || err.message || "Gagal menyimpan prestasi");
+      }
     } finally {
       setIsSubmitting(false);
     }

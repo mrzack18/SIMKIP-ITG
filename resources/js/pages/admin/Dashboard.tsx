@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { getAdminDashboardData, DashboardResponse } from "../../services/dashboardService";
 import {
   BarChart,
   Bar,
@@ -21,84 +22,7 @@ import {
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
-// ── Summary chart data (Reguler vs Aspirasi) ─────────────────────────────────
-const prodiSebaranData = [
-  { name: "Teknik Informatika", Reguler: 26, Aspirasi: 16, Dicabut: 3 },
-  { name: "Sistem Informasi",   Reguler: 20, Aspirasi: 11, Dicabut: 2 },
-  { name: "Teknik Industri",    Reguler: 12, Aspirasi: 8,  Dicabut: 1 },
-  { name: "Teknik Sipil",       Reguler: 10, Aspirasi: 6,  Dicabut: 1 },
-  { name: "Arsitektur",         Reguler: 8,  Aspirasi: 4,  Dicabut: 1 },
-];
-
-const angkatanSebaranData = [
-  { name: "2022", Reguler: 22, Aspirasi: 13, Dicabut: 3 },
-  { name: "2023", Reguler: 19, Aspirasi: 12, Dicabut: 2 },
-  { name: "2024", Reguler: 15, Aspirasi: 9,  Dicabut: 1 },
-  { name: "2025", Reguler: 11, Aspirasi: 7,  Dicabut: 1 },
-  { name: "2026", Reguler: 8,  Aspirasi: 5,  Dicabut: 1 },
-];
-
-// ── Per-prodi per-angkatan data ───────────────────────────────────────────────
-const sebaranPerProdiAngkatan: Record<string, { name: string; Reguler: number; Aspirasi: number; Dicabut?: number }[]> = {
-  "Semua": [
-    { name: "Teknik Informatika", Reguler: 26, Aspirasi: 16, Dicabut: 3 },
-    { name: "Sistem Informasi",   Reguler: 20, Aspirasi: 11, Dicabut: 2 },
-    { name: "Teknik Industri",    Reguler: 12, Aspirasi: 8,  Dicabut: 1 },
-    { name: "Teknik Sipil",       Reguler: 10, Aspirasi: 6,  Dicabut: 1 },
-    { name: "Arsitektur",         Reguler: 8,  Aspirasi: 4,  Dicabut: 1 },
-  ],
-  "2022": [
-    { name: "Teknik Informatika", Reguler: 8, Aspirasi: 4, Dicabut: 1 },
-    { name: "Sistem Informasi",   Reguler: 6, Aspirasi: 2, Dicabut: 1 },
-    { name: "Teknik Industri",    Reguler: 4, Aspirasi: 2, Dicabut: 0 },
-    { name: "Teknik Sipil",       Reguler: 3, Aspirasi: 2, Dicabut: 1 },
-    { name: "Arsitektur",         Reguler: 2, Aspirasi: 2, Dicabut: 0 },
-  ],
-  "2023": [
-    { name: "Teknik Informatika", Reguler: 7, Aspirasi: 3, Dicabut: 1 },
-    { name: "Sistem Informasi",   Reguler: 5, Aspirasi: 3, Dicabut: 1 },
-    { name: "Teknik Industri",    Reguler: 3, Aspirasi: 2, Dicabut: 0 },
-    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 2, Dicabut: 0 },
-    { name: "Arsitektur",         Reguler: 2, Aspirasi: 1, Dicabut: 0 },
-  ],
-  "2024": [
-    { name: "Teknik Informatika", Reguler: 5, Aspirasi: 3, Dicabut: 1 },
-    { name: "Sistem Informasi",   Reguler: 4, Aspirasi: 3, Dicabut: 0 },
-    { name: "Teknik Industri",    Reguler: 3, Aspirasi: 2, Dicabut: 0 },
-    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 1, Dicabut: 0 },
-    { name: "Arsitektur",         Reguler: 2, Aspirasi: 1, Dicabut: 0 },
-  ],
-  "2025": [
-    { name: "Teknik Informatika", Reguler: 4, Aspirasi: 3, Dicabut: 0 },
-    { name: "Sistem Informasi",   Reguler: 3, Aspirasi: 2, Dicabut: 0 },
-    { name: "Teknik Industri",    Reguler: 1, Aspirasi: 1, Dicabut: 1 },
-    { name: "Teknik Sipil",       Reguler: 2, Aspirasi: 1, Dicabut: 0 },
-    { name: "Arsitektur",         Reguler: 1, Aspirasi: 0, Dicabut: 0 },
-  ],
-  "2026": [
-    { name: "Teknik Informatika", Reguler: 2, Aspirasi: 3, Dicabut: 0 },
-    { name: "Sistem Informasi",   Reguler: 2, Aspirasi: 1, Dicabut: 0 },
-    { name: "Teknik Industri",    Reguler: 1, Aspirasi: 1, Dicabut: 0 },
-    { name: "Teknik Sipil",       Reguler: 1, Aspirasi: 0, Dicabut: 0 },
-    { name: "Arsitektur",         Reguler: 1, Aspirasi: 0, Dicabut: 1 },
-  ],
-};
-
-// ── SP widget data ─────────────────────────────────────────────────────────
-const spAktif = [
-  { nama: "Sari Dewi Lestari",  nim: "2206002", prodi: "SI",    sp: "SP2", sisa: 45 },
-  { nama: "Budi Santoso",       nim: "2303001", prodi: "T.Ind", sp: "SP1", sisa: 82 },
-  { nama: "Indra Permana",      nim: "2211002", prodi: "T.Sip", sp: "SP1", sisa: 60 },
-  { nama: "Hesti Rahayu",       nim: "2303002", prodi: "T.Ind", sp: "SP3", sisa: 12 },
-];
-
-// ── Dokumen queue widget data ──────────────────────────────────────────────
-const dokumenQueue = [
-  { jenis: "Sertifikat PKKMB",     nama: "Ahmad Rifaldi" },
-  { jenis: "Sertifikat MABIM",     nama: "Juwita Ramadhani" },
-  { jenis: "Bukti Sidang Skripsi", nama: "Krisna Bayu" },
-  { jenis: "Sertifikasi",          nama: "Lena Pertiwi" },
-];
+// ── Real data will be fetched from API ────────────────────────────────────────
 
 // ── SP badge helper ────────────────────────────────────────────────────────
 function SpBadges({ level }: { level: "SP1" | "SP2" | "SP3" }) {
@@ -166,6 +90,39 @@ function ProdiChartTooltip({
 // ── Main component ─────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [selectedAngkatan, setSelectedAngkatan] = useState<string>("Semua");
+  const [data, setData] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAdminDashboardData();
+        setData(res);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#263F93]"></div>
+      </div>
+    );
+  }
+
+  const { 
+    stats, 
+    prodi_sebaran: prodiSebaranData, 
+    angkatan_sebaran: angkatanSebaranData, 
+    sebaran_per_prodi_angkatan: sebaranPerProdiAngkatan, 
+    sp_aktif: spAktif, 
+    dokumen_queue: dokumenQueue 
+  } = data;
 
   return (
     <div className="space-y-6">
@@ -177,7 +134,9 @@ export default function Dashboard() {
             <h1 className="font-bold text-2xl text-[#263F93]">
               Selamat datang, Pak Encep Jianul
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">19 Agustus 2026</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
           </div>
         </div>
         <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-[#D4A72C] text-[#263F93]">
@@ -196,9 +155,9 @@ export default function Dashboard() {
               Total Mahasiswa<br />KIP-K Aktif
             </p>
           </div>
-          <p className="text-3xl font-bold text-[#263F93]">167</p>
+          <p className="text-3xl font-bold text-[#263F93]">{stats.total_aktif}</p>
           <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-            +3 dari semester lalu
+            Terbaru
           </span>
         </div>
 
@@ -209,8 +168,10 @@ export default function Dashboard() {
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight">KIP-K Reguler</p>
           </div>
-          <p className="text-3xl font-bold text-gray-800">102</p>
-          <p className="text-xs text-gray-400 mt-1">61% dari total</p>
+          <p className="text-3xl font-bold text-gray-800">{stats.reguler}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {stats.total_aktif ? Math.round((stats.reguler / stats.total_aktif) * 100) : 0}% dari total
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
@@ -220,8 +181,10 @@ export default function Dashboard() {
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight">KIP-K Aspirasi</p>
           </div>
-          <p className="text-3xl font-bold text-gray-800">65</p>
-          <p className="text-xs text-gray-400 mt-1">39% dari total</p>
+          <p className="text-3xl font-bold text-gray-800">{stats.aspirasi}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {stats.total_aktif ? Math.round((stats.aspirasi / stats.total_aktif) * 100) : 0}% dari total
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
@@ -233,7 +196,7 @@ export default function Dashboard() {
               Mahasiswa Dicabut
             </p>
           </div>
-          <p className="text-3xl font-bold text-red-600">8</p>
+          <p className="text-3xl font-bold text-red-600">{stats.mahasiswa_dicabut}</p>
           <Link
             to="/admin/mahasiswa?status=dicabut"
             className="inline-flex items-center gap-1 mt-2 text-xs text-[#263F93] hover:underline font-medium"
@@ -251,7 +214,7 @@ export default function Dashboard() {
               Dokumen Menunggu<br />Validasi
             </p>
           </div>
-          <p className="text-3xl font-bold text-gray-800">5</p>
+          <p className="text-3xl font-bold text-gray-800">{stats.dokumen_menunggu}</p>
           <Link
             to="/admin/dokumen"
             className="inline-flex items-center gap-1 mt-2 text-xs text-[#263F93] hover:underline font-medium"
@@ -317,7 +280,7 @@ export default function Dashboard() {
             onChange={(e) => setSelectedAngkatan(e.target.value)}
             className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
           >
-            {["Semua", "2022", "2023", "2024", "2025", "2026"].map((opt) => (
+            {Object.keys(sebaranPerProdiAngkatan).map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
@@ -325,7 +288,7 @@ export default function Dashboard() {
 
         <ResponsiveContainer width="100%" height={240}>
           <BarChart
-            data={sebaranPerProdiAngkatan[selectedAngkatan]}
+            data={sebaranPerProdiAngkatan[selectedAngkatan] || []}
             layout="vertical"
             barCategoryGap="25%"
             barGap={3}
@@ -432,7 +395,7 @@ export default function Dashboard() {
             <AlertTriangle size={18} className="text-amber-500" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-800">14</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.semester_lebih_8}</p>
             <p className="text-xs text-gray-500 leading-tight mt-0.5">
               Mahasiswa Semester &gt;8
               <br />
@@ -446,7 +409,7 @@ export default function Dashboard() {
             <AlertTriangle size={18} className="text-red-500" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-800">7</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.sp_semester_ini}</p>
             <p className="text-xs text-gray-500 leading-tight mt-0.5">
               SP Diterbitkan
               <br />
@@ -460,7 +423,7 @@ export default function Dashboard() {
             <Clock size={18} className="text-[#263F93]" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-800">3</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.bebas_tanggungan_pending}</p>
             <p className="text-xs text-gray-500 leading-tight mt-0.5">
               Permohonan Surat Penyelesaian
               <br />

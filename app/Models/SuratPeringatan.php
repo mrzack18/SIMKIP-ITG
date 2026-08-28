@@ -12,6 +12,7 @@ class SuratPeringatan extends Model
     protected $fillable = [
         'mahasiswa_id', 'level', 'jenis_pelanggaran', 'deskripsi',
         'tanggal_terbit', 'batas_evaluasi', 'status', 'diterbitkan_oleh', 'catatan',
+        'nomor_surat',
     ];
 
     protected $casts = [
@@ -32,6 +33,6 @@ class SuratPeringatan extends Model
     public function getSisaHariAttribute(): int
     {
         if (!$this->batas_evaluasi) return 0;
-        return max(0, now()->diffInDays($this->batas_evaluasi, false));
+        return (int) max(0, now()->diffInDays($this->batas_evaluasi, false));
     }
 }

@@ -25,6 +25,7 @@ class DokumenController extends Controller
         $doks = $dokQuery->get()->map(function($d) {
             return [
                 'id' => 'doc_' . $d->id,
+                'mahasiswas_id' => $d->mahasiswa_id,
                 'nim' => $d->mahasiswa->nim,
                 'nama' => $d->mahasiswa->nama,
                 'prodi' => $d->mahasiswa->prodi?->nama ?? 'Unknown',
@@ -38,7 +39,6 @@ class DokumenController extends Controller
 
         // 2. Prestasis
         $presQuery = \App\Models\Prestasi::with(['mahasiswa.prodi']);
-        // map Menunggu Validasi to Menunggu for consistency in queue tab if needed, but we keep original status
         if ($status && $status !== 'Semua') {
             if ($status === 'Menunggu') {
                 $presQuery->whereIn('status', ['Menunggu Validasi', 'Menunggu']);
@@ -49,6 +49,7 @@ class DokumenController extends Controller
         $pres = $presQuery->get()->map(function($p) {
             return [
                 'id' => 'prestasi_' . $p->id,
+                'mahasiswas_id' => $p->mahasiswa_id,
                 'nim' => $p->mahasiswa->nim,
                 'nama' => $p->mahasiswa->nama,
                 'prodi' => $p->mahasiswa->prodi?->nama ?? 'Unknown',
@@ -66,6 +67,7 @@ class DokumenController extends Controller
         $orgs = $orgQuery->get()->map(function($o) {
             return [
                 'id' => 'organisasi_' . $o->id,
+                'mahasiswas_id' => $o->mahasiswa_id,
                 'nim' => $o->mahasiswa->nim,
                 'nama' => $o->mahasiswa->nama,
                 'prodi' => $o->mahasiswa->prodi?->nama ?? 'Unknown',
@@ -83,6 +85,7 @@ class DokumenController extends Controller
         $pels = $pelQuery->get()->map(function($p) {
             return [
                 'id' => 'pelatihan_' . $p->id,
+                'mahasiswas_id' => $p->mahasiswa_id,
                 'nim' => $p->mahasiswa->nim,
                 'nama' => $p->mahasiswa->nama,
                 'prodi' => $p->mahasiswa->prodi?->nama ?? 'Unknown',
@@ -119,6 +122,7 @@ class DokumenController extends Controller
             'total' => $total,
             'page' => $page,
             'limit' => $limit,
+            'totalPages' => (int) ceil($total / max($limit, 1)),
         ]);
     }
 
@@ -134,7 +138,7 @@ class DokumenController extends Controller
 
         $type = $parts[0];
         $realId = $parts[1];
-        
+
         $adminId = auth()->id();
         $status = $request->status;
         $catatan = $request->catatan_admin;
@@ -142,13 +146,10 @@ class DokumenController extends Controller
         if ($type === 'doc') {
             $dok = Dokumen::with('mahasiswa')->findOrFail($realId);
             $dok->update(['status' => $status, 'catatan_admin' => $catatan, 'approved_by' => $adminId, 'approved_at' => now()]);
-            // notification logic if needed
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'prestasi') {
             $pres = \App\Models\Prestasi::findOrFail($realId);
-            $presStatus = $status;
-            // if we need to keep Menunggu Validasi when pending, handled by update
-            $pres->update(['status' => $presStatus, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+            $pres->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'organisasi') {
             $org = \App\Models\Organisasi::findOrFail($realId);

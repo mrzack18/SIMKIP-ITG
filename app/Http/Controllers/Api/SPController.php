@@ -9,8 +9,8 @@ class SPController extends Controller
     public function index(Request $req) {
         return match($req->user()->role) {
             "mahasiswa" => (function() use ($req) {
-                $m = $req->user()->mahasiswa()->with("suratPeringatans")->first();
-                return response()->json(["success" => true, "data" => $m->suratPeringatans]);
+                $m = $req->user()->mahasiswa()->with(["suratPeringatans.mahasiswa.user", "suratPeringatans.mahasiswa.prodi"])->first();
+                return response()->json(["success" => true, "data" => \App\Http\Resources\SuratPeringatanResource::collection($m->suratPeringatans)]);
             })(),
             "admin" => app(AdminSP::class)->index($req),
             default => abort(403),
@@ -27,5 +27,12 @@ class SPController extends Controller
     public function updateStatus(Request $req, $id) {
         if ($req->user()->role === "admin") return app(AdminSP::class)->updateStatus($req, $id);
         abort(403);
+    }
+    public function history(Request $req, $id) {
+        return match($req->user()->role) {
+            "admin" => app(AdminSP::class)->history($id),
+            // if we need to add warek, prodi, etc later
+            default => abort(403),
+        };
     }
 }

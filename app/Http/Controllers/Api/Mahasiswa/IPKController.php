@@ -17,8 +17,25 @@ class IPKController extends Controller
         if (!$m) return response()->json(['data' => []]);
 
         $data = $m->ipkSemestrs()->with('mataKuliahs')->orderByDesc('semester')->get();
+        $carryOver = IPKCalculatorService::getCarryOver($m->id);
+
+        $totalLulus = 0;
+        $uniqueMks = IPKCalculatorService::getUniqueCoursesUpToSemester($m->id, 999);
+        foreach ($uniqueMks as $mk) {
+            if ($mk->lulus) $totalLulus += $mk->sks;
+        }
+
+        $statistik = [
+            'tertinggi' => $data->count() > 0 ? $data->sortByDesc('ipk')->first()->only(['ipk', 'semester']) : ['ipk' => 0, 'semester' => '-'],
+            'terendah'  => $data->count() > 0 ? $data->sortBy('ipk')->first()->only(['ipk', 'semester']) : ['ipk' => 0, 'semester' => '-'],
+            'rata_rata' => $data->count() > 0 ? round($data->avg('ipk'), 2) : 0,
+            'total_sks_lulus' => $totalLulus,
+        ];
+
         return response()->json([
-            'data' => \App\Http\Resources\SemesterDetailResource::collection($data)
+            'data' => \App\Http\Resources\SemesterDetailResource::collection($data),
+            'carry_over' => $carryOver,
+            'statistik' => $statistik
         ]);
     }
 
@@ -31,7 +48,7 @@ class IPKController extends Controller
         $request->validate([
             'semester'               => 'required|integer|min:1|max:14',
             'tahun_ajaran'           => 'required|string|max:30',
-            'ipk'                    => 'required|numeric|between:0,4',
+            // ipk is ignored from client as we calculate it
             'file_khs'               => 'nullable|file|mimes:pdf,jpg,jpeg|max:5120',
             'mata_kuliah'            => 'required|array|min:1',
             'mata_kuliah.*.kode'     => 'required|string|max:20',
@@ -42,30 +59,44 @@ class IPKController extends Controller
 
         $m = $request->user()->mahasiswa;
 
-        if ($m->ipkSemestrs()->where('semester', $request->semester)->exists()) {
-            return response()->json(['success' => false, 'message' => "Data IPK semester {$request->semester} sudah ada."], 422);
-        }
-
-        $filePath = null;
-        if ($request->hasFile('file_khs')) {
-            $filePath = $request->file('file_khs')->store("khs/{$m->nim}", 'public');
-        }
-
         $mks     = IPKCalculatorService::prepareMataKuliah($request->mata_kuliah);
-        $ipkCalc = IPKCalculatorService::hitungIPK($mks);
+        $ipsCalc = IPKCalculatorService::hitungIPS($mks);
 
-        $ipkSem = IpkSemestr::create([
-            'mahasiswa_id' => $m->id,
-            'semester'     => $request->semester,
-            'tahun_ajaran' => $request->tahun_ajaran,
-            'ipk'          => $ipkCalc,
-            'file_khs'     => $filePath,
-        ]);
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
 
-        foreach ($mks as $mk) {
-            $ipkSem->mataKuliahs()->create($mk);
+            // Upsert IpkSemestr (to support update functionality)
+            $ipkSem = IpkSemestr::updateOrCreate(
+                ['mahasiswa_id' => $m->id, 'semester' => $request->semester],
+                [
+                    'tahun_ajaran' => $request->tahun_ajaran,
+                    'ips'          => $ipsCalc,
+                    'ipk'          => 0, // Fallback default untuk strict mode insert, direcalculate sesaat lagi
+                ]
+            );
+
+            // Clear old courses if updating
+            $ipkSem->mataKuliahs()->delete();
+
+            foreach ($mks as $mk) {
+                $ipkSem->mataKuliahs()->create($mk);
+            }
+
+            // Recalculate IPK Kumulatif retroactively
+            IPKCalculatorService::recalculateAllIPK($m->id);
+
+            // Handle file upload safely after DB is secured
+            if ($request->hasFile('file_khs')) {
+                $filePath = $request->file('file_khs')->store("khs/{$m->nim}", 'public');
+                $ipkSem->update(['file_khs' => $filePath]);
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json(['success' => true, 'data' => $ipkSem->load('mataKuliahs')], 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan data KHS: ' . $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => true, 'data' => $ipkSem->load('mataKuliahs')], 201);
     }
 }

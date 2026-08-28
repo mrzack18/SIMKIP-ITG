@@ -14,7 +14,7 @@ class BebasTanggunganController extends Controller
     public function show(Request $request): JsonResponse
     {
         $m          = $request->user()->mahasiswa;
-        $permohonan = $m->bebasTanggungan;
+        $permohonan = \App\Models\BebasTanggungan::with('histories.reviewedBy')->where('mahasiswa_id', $m->id)->first();
         $checklist  = BebasTanggunganService::getChecklist($m);
 
         $status = 'belum';
@@ -41,8 +41,9 @@ class BebasTanggunganController extends Controller
     public function store(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa;
+        $bt = $m->bebasTanggungan;
 
-        if ($m->bebasTanggungan) {
+        if ($bt && $bt->status !== 'Ditolak') {
             return response()->json(['success' => false, 'message' => 'Anda sudah mengajukan permohonan bebas tanggungan.'], 422);
         }
 
@@ -55,11 +56,18 @@ class BebasTanggunganController extends Controller
             ], 422);
         }
 
-        $bt = BebasTanggungan::create([
-            'mahasiswa_id'   => $m->id,
-            'tanggal_ajukan' => now()->toDateString(),
-            'status'         => 'Menunggu',
-        ]);
+        if ($bt && $bt->status === 'Ditolak') {
+            $bt->update([
+                'tanggal_ajukan' => now()->toDateString(),
+                'status'         => 'Menunggu',
+            ]);
+        } else {
+            $bt = BebasTanggungan::create([
+                'mahasiswa_id'   => $m->id,
+                'tanggal_ajukan' => now()->toDateString(),
+                'status'         => 'Menunggu',
+            ]);
+        }
 
         return response()->json(['success' => true, 'data' => new BebasTanggunganResource($bt)], 201);
     }

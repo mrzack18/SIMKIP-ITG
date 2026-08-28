@@ -42,6 +42,53 @@ class MahasiswaController extends Controller
         abort(403);
     }
 
+    public function updateStatus(Request $req, $id) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->updateStatus($req, $id);
+        abort(403);
+    }
+
+    public function cabutKipk(Request $req, $id) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->cabutKipk($req, $id);
+        abort(403);
+    }
+
+    public function filterOptions(Request $req) {
+        if (!in_array($req->user()->role, ['admin', 'prodi', 'warek'])) abort(403);
+
+        $prodis = \App\Models\Prodi::select('id', 'nama', 'kode')
+            ->where('is_aktif', true)
+            ->orderBy('nama')
+            ->get();
+
+        $angkatans = Mahasiswa::select('angkatan')
+            ->distinct()
+            ->orderByDesc('angkatan')
+            ->pluck('angkatan');
+
+        return response()->json([
+            'success'   => true,
+            'prodis'    => $prodis,
+            'angkatans' => $angkatans,
+        ]);
+    }
+
+    public function rekapAkademik(Request $req) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->rekapAkademik($req);
+        abort(403);
+    }
+    public function rekapPrestasi(Request $req) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->rekapPrestasi($req);
+        abort(403);
+    }
+    public function rekapOrganisasi(Request $req) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->rekapOrganisasi($req);
+        abort(403);
+    }
+    public function rekapPelatihan(Request $req) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->rekapPelatihan($req);
+        abort(403);
+    }
+
     public function ipk(Request $req, $id) {
         if ($req->user()->role === "mahasiswa") abort(403);
 
@@ -83,6 +130,14 @@ class MahasiswaController extends Controller
         return response()->json(['data' => \App\Http\Resources\PelatihanResource::collection($data)]);
     }
 
+    public function dokumen(Request $req, $id) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->dokumen($req, $id);
+        
+        // Fallback for Prodi if they also need to view documents
+        return app(AdminMahasiswa::class)->dokumen($req, $id);
+    }
+
     public function validatePrestasi(Request $req, $id, $itemId) {
         if ($req->user()->role !== "admin") abort(403);
         $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu Validasi', 'catatan_admin' => 'nullable|string']);
@@ -105,6 +160,36 @@ class MahasiswaController extends Controller
         $p = \App\Models\Pelatihan::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
         $p->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
         return response()->json(['data' => new \App\Http\Resources\PelatihanResource($p)]);
+    }
+
+    public function bebasTanggungan(Request $request, $id)
+    {
+        $m = Mahasiswa::with('user', 'prodi')->findOrFail($id);
+        $permohonan = $m->bebasTanggungan;
+        $checklist = \App\Services\BebasTanggunganService::getChecklist($m);
+        
+        $history = [];
+        if ($permohonan) {
+            $history = $permohonan->histories()->with('reviewedBy')->get()->map(function($h) {
+                return [
+                    'tgl' => $h->created_at->format('d M Y'),
+                    'catatan' => $h->catatan,
+                    'oleh' => $h->reviewedBy ? $h->reviewedBy->name : 'Sistem'
+                ];
+            });
+        }
+
+        return response()->json([
+            'success' => true,
+            'mahasiswa' => [
+                'id' => $m->id, 'nim' => $m->nim, 'nama' => $m->nama,
+                'prodi' => $m->prodi?->nama, 'angkatan' => $m->angkatan,
+            ],
+            'permohonan' => $permohonan ? new \App\Http\Resources\BebasTanggunganResource($permohonan) : null,
+            'checklist' => $checklist['checklist'],
+            'dokumen' => $checklist['dokumen'],
+            'rejection_history' => $history,
+        ]);
     }
 
     private function warekIndex(Request $request) {

@@ -36,6 +36,10 @@ class LaporanController extends Controller
         if ($req->user()->role === "admin") return app(AdminLaporan::class)->submit($id);
         abort(403);
     }
+    public function previewStatistics(Request $req) {
+        if ($req->user()->role === "admin") return app(AdminLaporan::class)->previewStatistics($req);
+        abort(403);
+    }
     public function approve(Request $req, $id) {
         if ($req->user()->role === "warek") return app(WarekLaporan::class)->approve($req, $id);
         abort(403);

@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { Download, Eye, ChevronDown, ChevronUp, FileText, Search, Filter, X, Calendar, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Folder, CheckCircle, Image as ImageIcon, ExternalLink, Award } from "lucide-react";
+import { useState, useEffect } from "react";
+import { api } from "../../services/api";
+import { Download, Eye, ChevronDown, ChevronUp, FileText, Search, Filter, X, Calendar, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Folder, CheckCircle, Image as ImageIcon, ExternalLink, Award, Loader } from "lucide-react";
 
-interface FileItem {
-  id: number;
+export interface FileItem {
+  id: string;
+  source?: string;
   nama: string;
   kategori: string;
   tanggal: string;
   tipe: "pdf" | "img";
+  file_url?: string;
+  status?: string;
   // Prestasi
   tingkat?: string;
   namaKejuaraan?: string;
@@ -27,105 +31,6 @@ interface FileItem {
   tanggalSelesai?: string;
 }
 
-const FILES: FileItem[] = [
-  { id: 1, nama: "SK Penetapan KIP-K 2022", kategori: "SK Penetapan KIP-K", tanggal: "1 Sep 2022", tipe: "pdf" },
-  { id: 2, nama: "KHS Semester 1 — 2022/2023 Ganjil", kategori: "Kartu Hasil Studi", tanggal: "15 Jan 2023", tipe: "pdf" },
-  { id: 3, nama: "KHS Semester 2 — 2022/2023 Genap", kategori: "Kartu Hasil Studi", tanggal: "20 Jun 2023", tipe: "pdf" },
-  { id: 4, nama: "KHS Semester 3 — 2023/2024 Ganjil", kategori: "Kartu Hasil Studi", tanggal: "12 Jan 2024", tipe: "pdf" },
-  { id: 5, nama: "KHS Semester 4 — 2023/2024 Genap", kategori: "Kartu Hasil Studi", tanggal: "18 Jun 2024", tipe: "pdf" },
-  { id: 6, nama: "KHS Semester 5 — 2024/2025 Ganjil", kategori: "Kartu Hasil Studi", tanggal: "10 Jan 2025", tipe: "pdf" },
-  { id: 7, nama: "KHS Semester 6 — 2024/2025 Genap", kategori: "Kartu Hasil Studi", tanggal: "15 Jun 2025", tipe: "pdf" },
-  {
-    id: 8,
-    nama: "Sertifikat Juara 2 Lomba Coding Nasional",
-    kategori: "Sertifikat Prestasi",
-    tanggal: "20 Mei 2026",
-    tipe: "img",
-    tingkat: "Nasional",
-    namaKejuaraan: "Lomba Coding Nasional 2026",
-    penyelenggara: "Kemendikbudristek",
-    pencapaian: "Juara 2",
-    tanggalMulai: "18 Mei 2026",
-    tanggalSelesai: "20 Mei 2026",
-    tempat: "Jakarta Convention Center, Jakarta",
-    deskripsi: "Kompetisi pemrograman tingkat nasional yang diselenggarakan oleh Kemendikbudristek.",
-    link: "https://pusatprestasinasional.kemdikbud.go.id/lcn-2026",
-  },
-  {
-    id: 9,
-    nama: "Sertifikat Juara 1 Hackathon ITG",
-    kategori: "Sertifikat Prestasi",
-    tanggal: "5 Nov 2025",
-    tipe: "img",
-    tingkat: "Institusi",
-    namaKejuaraan: "Hackathon ITG 2025",
-    penyelenggara: "Institut Teknologi Garut",
-    pencapaian: "Juara 1",
-    tanggalMulai: "4 Nov 2025",
-    tanggalSelesai: "5 Nov 2025",
-    tempat: "Auditorium ITG, Garut",
-    deskripsi: "Kompetisi pengembangan solusi teknologi digital berkelanjutan kampus selama 24 jam non-stop.",
-    link: "https://itg.ac.id/hackathon-2025",
-  },
-  {
-    id: 10,
-    nama: "SK Kepengurusan BEM ITG",
-    kategori: "Bukti Keaktifan Organisasi",
-    tanggal: "1 Sep 2025",
-    tipe: "pdf",
-    jenis: "Organisasi",
-    namaOrganisasi: "Badan Eksekutif Mahasiswa ITG",
-    jabatan: "Kepala Departemen Akademik",
-    periode: "2025 — 2026",
-    tanggalMulai: "1 Sep 2025",
-    tanggalSelesai: "31 Agu 2026",
-    deskripsi: "Memimpin divisi akademik dalam menyelenggarakan program mentoring, workshop beasiswa KIP-K, dan pelatihan kepemimpinan mahasiswa.",
-  },
-  {
-    id: 11,
-    nama: "SK Kepengurusan HIMA TI",
-    kategori: "Bukti Keaktifan Organisasi",
-    tanggal: "2 Sep 2024",
-    tipe: "pdf",
-    jenis: "Organisasi",
-    namaOrganisasi: "Himpunan Mahasiswa Teknik Informatika",
-    jabatan: "Sekretaris Umum",
-    periode: "2024 — 2025",
-    tanggalMulai: "2 Sep 2024",
-    tanggalSelesai: "31 Agu 2025",
-    deskripsi: "Mengelola administrasi persuratan, pengarsipan berkas kegiatan organisasi, serta notulensi rapat evaluasi bulanan.",
-  },
-  { id: 12, nama: "Sertifikat PKKMB 2022", kategori: "Dokumen Kewajiban", tanggal: "20 Sep 2022", tipe: "pdf" },
-  { id: 13, nama: "Sertifikat Bela Negara 2022", kategori: "Dokumen Kewajiban", tanggal: "15 Nov 2022", tipe: "pdf" },
-  {
-    id: 14,
-    nama: "Sertifikat Workshop Machine Learning",
-    kategori: "Sertifikat Pelatihan",
-    tanggal: "12 Nov 2025",
-    tipe: "pdf",
-    namaPelatihan: "Workshop Machine Learning",
-    jenis: "Akademik",
-    penyelenggara: "Dicoding Indonesia",
-    tanggalMulai: "10 Nov 2025",
-    tanggalSelesai: "12 Nov 2025",
-    tempat: "Online (Zoom)",
-    deskripsi: "Pelatihan intensif machine learning mencakup supervised learning, unsupervised learning, dan implementasi model menggunakan scikit-learn dan TensorFlow.",
-  },
-  {
-    id: 15,
-    nama: "Sertifikat Pelatihan Kepemimpinan Nasional Pemuda",
-    kategori: "Sertifikat Pelatihan",
-    tanggal: "9 Agu 2025",
-    tipe: "pdf",
-    namaPelatihan: "Pelatihan Kepemimpinan Nasional Pemuda",
-    jenis: "Non-Akademik",
-    penyelenggara: "Kemendikbudristek",
-    tanggalMulai: "5 Agu 2025",
-    tanggalSelesai: "9 Agu 2025",
-    tempat: "Balai Pelatihan Nasional, Jakarta",
-    deskripsi: "Program pengembangan kepemimpinan bagi mahasiswa penerima beasiswa KIP-K tingkat nasional.",
-  },
-];
 
 const CATEGORIES = [
   "SK Penetapan KIP-K",
@@ -134,6 +39,7 @@ const CATEGORIES = [
   "Bukti Keaktifan Organisasi",
   "Sertifikat Pelatihan",
   "Dokumen Kewajiban",
+  "Surat Surat Penyelesaian",
 ];
 
 const catIcons: Record<string, React.ReactNode> = {
@@ -234,7 +140,7 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
             <DetailRow icon={<Calendar size={14} />} label="Tanggal Upload" value={preview.tanggal} />
             <div className="flex gap-2">
               <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 bg-green-100 text-green-700">
-                <CheckCircle size={14} /> Disetujui
+                <CheckCircle size={14} /> {preview.status || "Disetujui"}
               </span>
             </div>
           </div>
@@ -388,46 +294,13 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
             </div>
           )}
 
-          {/* New 2-column File placeholders specific to category */}
-          {(isPrestasi || isOrganisasi || isPelatihan) ? (
-            <div className="border-t border-gray-100 pt-4 space-y-2">
-              <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">Berkas</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {isPrestasi && (
-                  <>
-                    <FilePlaceholderCard label="Foto Sertifikat" />
-                    <FilePlaceholderCard label="Foto Podium" />
-                  </>
-                )}
-                {isOrganisasi && (
-                  <>
-                    <FilePlaceholderCard label="SK Kepengurusan" />
-                    <FilePlaceholderCard label="Foto Kegiatan" />
-                  </>
-                )}
-                {isPelatihan && (
-                  <>
-                    <FilePlaceholderCard label="Sertifikat" />
-                    <FilePlaceholderCard label="Foto Saat Kegiatan" />
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center mt-4">
-              {preview.tipe === "img" ? (
-                <ImageIcon size={40} className="text-blue-400" />
-              ) : (
-                <FileText size={40} className="text-gray-300" />
-              )}
-              <p className="text-xs text-gray-400">Pratinjau dokumen tidak tersedia. Gunakan tombol Unduh.</p>
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            {!isPrestasi && !isOrganisasi && !isPelatihan && (
-              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
-                <Download size={14} /> Unduh
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            {preview.file_url && (
+              <button 
+                onClick={() => window.open(preview.file_url, '_blank')}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                <Download size={14} /> Unduh Dokumen Utama
               </button>
             )}
             <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm text-white font-500" style={{ background: "#263F93" }}>
@@ -446,9 +319,25 @@ export default function ArsipDigital() {
   const [filterCat, setFilterCat] = useState("Semua");
   const [preview, setPreview] = useState<FileItem | null>(null);
 
+  const [data, setData] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get<any>("/arsip")
+      .then(res => {
+        setData(res.data || []);
+      })
+      .catch(err => {
+        console.error("Gagal memuat arsip", err);
+        setError("Gagal memuat data arsip. Silakan coba lagi.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const toggle = (cat: string) => setCollapsed(p => ({ ...p, [cat]: !p[cat] }));
 
-  const filtered = FILES.filter(f => {
+  const filtered = data.filter(f => {
     const matchSearch = f.nama.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCat === "Semua" || f.kategori === filterCat;
     return matchSearch && matchCat;
@@ -490,7 +379,17 @@ export default function ArsipDigital() {
       </div>
 
       {/* Category sections */}
-      <div className="space-y-4">
+      {loading ? (
+        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-gray-100 shadow-sm space-y-3">
+          <Loader size={24} className="text-[#263F93] animate-spin" />
+          <p className="text-sm text-gray-500">Memuat arsip digital...</p>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-100 rounded-xl p-5 text-center text-red-600 text-sm font-500">
+          {error}
+        </div>
+      ) : (
+        <div className="space-y-4">
         {grouped.length === 0 && (
           <div className="bg-white rounded-xl p-10 text-center border border-gray-100 shadow-sm">
             <p className="text-gray-400 text-sm">Tidak ada dokumen ditemukan.</p>
@@ -516,7 +415,8 @@ export default function ArsipDigital() {
             )}
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {preview && <PreviewModal preview={preview} onClose={() => setPreview(null)} />}
     </div>

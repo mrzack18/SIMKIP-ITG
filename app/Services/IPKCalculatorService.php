@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\MataKuliah;
+use App\Models\IpkSemestr;
+
 class IPKCalculatorService
 {
     /** Grade → nilai mutu */
@@ -29,10 +32,10 @@ class IPKCalculatorService
     }
 
     /**
-     * Hitung IPK dari array mata kuliah
+     * Hitung IPS dari array mata kuliah
      * @param array $mks [['sks' => 3, 'nilai_huruf' => 'A'], ...]
      */
-    public static function hitungIPK(array $mks): float
+    public static function hitungIPS(array $mks): float
     {
         $totalBobot = 0.0;
         $totalSKS   = 0;
@@ -63,5 +66,75 @@ class IPKCalculatorService
                 'lulus'       => self::isLulus($mk['nilai_huruf']),
             ];
         }, $mks);
+    }
+
+    /**
+     * Get unique courses for a student up to a specific semester
+     */
+    public static function getUniqueCoursesUpToSemester(int $mahasiswaId, int $maxSemester): array
+    {
+        $allMKs = MataKuliah::whereHas('ipkSemestr', function($q) use ($mahasiswaId, $maxSemester) {
+            $q->where('mahasiswa_id', $mahasiswaId)->where('semester', '<=', $maxSemester);
+        })
+        ->join('ipk_semestrs', 'mata_kuliahs.ipk_semester_id', '=', 'ipk_semestrs.id')
+        ->select('mata_kuliahs.*', 'ipk_semestrs.semester as semester')
+        ->orderBy('ipk_semestrs.semester', 'asc')
+        ->get();
+
+        $uniqueMks = [];
+        foreach ($allMKs as $mk) {
+            // Replace old entry with the newer one (since ordered by semester asc)
+            $uniqueMks[strtoupper($mk->kode)] = $mk;
+        }
+
+        return $uniqueMks;
+    }
+
+    /**
+     * Recalculate IPK Kumulatif for all semesters of a student
+     */
+    public static function recalculateAllIPK(int $mahasiswaId): void
+    {
+        $semesters = IpkSemestr::where('mahasiswa_id', $mahasiswaId)->orderBy('semester', 'asc')->get();
+        
+        foreach ($semesters as $sem) {
+            $uniqueMks = self::getUniqueCoursesUpToSemester($mahasiswaId, $sem->semester);
+            $totalBobot = 0.0;
+            $totalSKS = 0;
+            
+            foreach ($uniqueMks as $mk) {
+                $totalBobot += $mk->nilai_mutu * $mk->sks;
+                $totalSKS += $mk->sks;
+            }
+            
+            $ipk = $totalSKS > 0 ? round($totalBobot / $totalSKS, 2) : 0.0;
+            $sem->update(['ipk' => $ipk]);
+        }
+    }
+
+    /**
+     * Dapatkan mata kuliah yang bernilai D/E yang belum lulus (Carry-Over)
+     */
+    public static function getCarryOver(int $mahasiswaId): array
+    {
+        // Get unique courses up to the latest semester (using an arbitrarily large maxSemester)
+        $uniqueMks = self::getUniqueCoursesUpToSemester($mahasiswaId, 999);
+        $carryOver = [];
+        
+        foreach ($uniqueMks as $mk) {
+            if (!self::isLulus($mk->nilai_huruf)) {
+                $carryOver[] = [
+                    'kode' => $mk->kode,
+                    'nama' => $mk->nama,
+                    'sks' => $mk->sks,
+                    'nilaiHuruf' => $mk->nilai_huruf,
+                    'semesterAwal' => "Semester " . $mk->semester,
+                ];
+            }
+        }
+        
+        // Sort by semester ascending
+        usort($carryOver, fn($a, $b) => $a['semesterAwal'] <=> $b['semesterAwal']);
+        return $carryOver;
     }
 }

@@ -18,9 +18,13 @@ class SuratPeringatanResource extends JsonResource
             'level' => $this->level,
             'alasan' => $this->deskripsi,
             'tanggalTerbit' => $this->tanggal_terbit ? $this->tanggal_terbit->format('Y-m-d') : null,
-            'batasEvaluasi' => $this->batas_evaluasi ? $this->batas_evaluasi->format('Y-m-d') : '-',
+            'batasEvaluasi' => $this->batas_evaluasi ? $this->batas_evaluasi->format('Y-m-d') : null,
             'status' => $this->status,
             'sisa' => $this->sisa_hari,
+            // Additional mapping for Mahasiswa Frontend
+            'nomorSurat' => $this->nomor_surat,
+            'tanggal' => $this->tanggal_terbit ? $this->tanggal_terbit->translatedFormat('d F Y') : null,
+            'sisaHari' => $this->sisa_hari,
         ];
     }
 }

@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { api } from "../../services/api"
 import {
   AreaChart,
   Area,
@@ -23,11 +24,9 @@ import {
   ChevronRight,
   Lock,
 } from "lucide-react"
-import { ipkHistory } from "../../data/mockData"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const THRESHOLD = 3.0
-const PERIOD_ACTIVE = true
 
 type NilaiHuruf = "A" | "AB" | "B" | "BC" | "C" | "D" | "E" | ""
 
@@ -43,10 +42,16 @@ interface CarryOver {
   kode: string
   nama: string
   sks: number
-  nilai: string
+  nilaiHuruf: string
   semesterAwal: string
-  status: "Belum Diperbaiki" | "Lulus"
-  lulusDiSem?: string
+}
+
+interface PeriodeConfig {
+  aktif: boolean
+  buka: string
+  tutup: string
+  tahun_akademik: string
+  semester: string
 }
 
 // ─── Grade helpers ─────────────────────────────────────────────────────────────
@@ -70,75 +75,56 @@ function getLulus(nilai: NilaiHuruf): boolean | null {
   return nilai !== "D" && nilai !== "E"
 }
 
-// ─── Mock data ─────────────────────────────────────────────────────────────────
-const initialMK: MataKuliah[] = [
-  { id: 1, kode: "IF401", nama: "Kecerdasan Buatan", sks: 3, nilai: "A" },
-  { id: 2, kode: "IF402", nama: "Pemrograman Web", sks: 3, nilai: "B" },
-  { id: 3, kode: "IF403", nama: "Praktikum Jaringan", sks: 2, nilai: "D" },
-  { id: 4, kode: "IF404", nama: "Etika Profesi", sks: 2, nilai: "A" },
-]
+// ─── Initial state ─────────────────────────────────────────────────────────────
+const initialMK: MataKuliah[] = []
 
-const carryOverData: CarryOver[] = [
-  {
-    kode: "IF301",
-    nama: "Statistika",
-    sks: 3,
-    nilai: "E",
-    semesterAwal: "Semester 4",
-    status: "Belum Diperbaiki",
-  },
-  {
-    kode: "IF205",
-    nama: "Fisika Dasar",
-    sks: 2,
-    nilai: "D",
-    semesterAwal: "Semester 3",
-    status: "Lulus",
-    lulusDiSem: "5",
-  },
-]
-
-const historyWithMK = ipkHistory.map((h) => ({
-  ...h,
-  mkBelumLulus: h.semester === 4 ? 2 : 0,
-  mk: [
-    { kode: "MK001", nama: "Contoh Mata Kuliah A", sks: 3, nilai: "A" },
-    { kode: "MK002", nama: "Contoh Mata Kuliah B", sks: 2, nilai: "B" },
-  ],
-}))
-
-// ─── Stat card helpers ─────────────────────────────────────────────────────────
-const highestSem = ipkHistory.reduce((a, b) => (a.ipk > b.ipk ? a : b))
-const lowestSem = ipkHistory.reduce((a, b) => (a.ipk < b.ipk ? a : b))
-const avgIPK = (
-  ipkHistory.reduce((s, h) => s + h.ipk, 0) / ipkHistory.length
-).toFixed(2)
-
-// ─── Custom chart dot ──────────────────────────────────────────────────────────
-const CustomDot = (props: any) => {
-  const { cx, cy, payload } = props
-  const isLast = payload.semester === ipkHistory[ipkHistory.length - 1].semester
-  return (
-    <circle
-      cx={cx}
-      cy={cy}
-      r={isLast ? 7 : 4}
-      fill={payload.ipk >= THRESHOLD ? "#059669" : "#DC2626"}
-      stroke="white"
-      strokeWidth={2}
-    />
-  )
-}
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function InputIPK() {
   const [mkList, setMkList] = useState<MataKuliah[]>(initialMK)
-  const [nextId, setNextId] = useState(10)
+  const [nextId, setNextId] = useState(1)
   const [toast, setToast] = useState(false)
   const [expandedSem, setExpandedSem] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<string | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isSaved, setIsSaved] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  const [historyData, setHistoryData] = useState<any[]>([])
+  const [carryOverData, setCarryOverData] = useState<CarryOver[]>([])
+  const [statistik, setStatistik] = useState<any>({
+    tertinggi: { ipk: 0, semester: "-" },
+    terendah: { ipk: 0, semester: "-" },
+    rata_rata: 0,
+    total_sks_lulus: 0,
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [periode, setPeriode] = useState<PeriodeConfig | null>(null)
+  const [periodeError, setPeriodeError] = useState(false)
+
+  const fetchData = async () => {
+    try {
+      const [resIpk, resPeriode]: any = await Promise.all([
+        api.get('/ipk'),
+        api.get('/konfigurasi/periode')
+      ])
+      
+      setHistoryData(resIpk.data || [])
+      setCarryOverData(resIpk.carry_over || [])
+      if (resIpk.statistik) setStatistik(resIpk.statistik)
+      
+      setPeriode(resPeriode)
+    } catch (error) {
+      console.error(error)
+      setPeriodeError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   // IPK semester calculation
   const validMK = mkList.filter((m) => m.nilai !== "" && m.sks > 0)
@@ -152,9 +138,7 @@ export default function InputIPK() {
   // Derived: MK semester ini yang bernilai D/E
   const mkDE = mkList.filter((m) => m.nilai === "D" || m.nilai === "E")
 
-  const pendingCarryOver = carryOverData.filter(
-    (c) => c.status === "Belum Diperbaiki",
-  )
+  const pendingCarryOver = carryOverData
 
   // Row handlers
   const addRow = () => {
@@ -177,37 +161,82 @@ export default function InputIPK() {
     )
   }
 
-  const handleSave = () => {
-    setIsSaved(true)
-    setToast(true)
-    setTimeout(() => setToast(false), 3500)
+  const handleSave = async () => {
+    if (mkList.length === 0 || totalSKS === 0) return alert("Silakan tambahkan mata kuliah terlebih dahulu.")
+    const currentSemester = historyData.length > 0 
+      ? Math.max(...historyData.map(h => h.semester)) + 1 
+      : 1
+    
+    setIsSubmitting(true)
+    const formData = new FormData()
+    formData.append('semester', String(currentSemester))
+    
+    if (periode) {
+      formData.append('tahun_ajaran', periode.tahun_akademik)
+    }
+    
+    if (uploadedFile) formData.append('file_khs', uploadedFile)
+    
+    mkList.forEach((mk, idx) => {
+      formData.append(`mata_kuliah[${idx}][kode]`, mk.kode)
+      formData.append(`mata_kuliah[${idx}][nama]`, mk.nama)
+      formData.append(`mata_kuliah[${idx}][sks]`, String(mk.sks))
+      formData.append(`mata_kuliah[${idx}][nilai_huruf]`, mk.nilai)
+    })
+
+    try {
+      await api.post('/ipk', formData)
+      setIsSaved(true)
+      setToast(true)
+      setTimeout(() => setToast(false), 3500)
+      fetchData() // Refresh chart & history
+    } catch (error: any) {
+      alert(error.error?.message || 'Gagal menyimpan nilai')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
     const file = e.dataTransfer.files[0]
-    if (file) setUploadedFile(file.name)
+    if (file) setUploadedFile(file)
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) setUploadedFile(file.name)
+    if (file) setUploadedFile(file)
   }
 
   // IPK change indicator
   const ipkChange = (idx: number) => {
     if (idx === 0) return null
-    return ipkHistory[idx].ipk - ipkHistory[idx - 1].ipk
+    return historyData[idx].ipk - historyData[idx - 1].ipk
   }
 
-  const inputClass = isSaved
+  const inputClass = isSaved || isSubmitting
     ? "w-full border border-gray-100 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
     : "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 focus:border-[#263F93]"
 
-  const selectClass = isSaved
+  const selectClass = isSaved || isSubmitting
     ? "w-full border border-gray-100 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
     : "w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 focus:border-[#263F93] bg-white"
+
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props
+    const isLast = historyData.length > 0 && payload.semester === historyData[historyData.length - 1].semester
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={isLast ? 7 : 4}
+        fill={payload.ipk >= THRESHOLD ? "#059669" : "#DC2626"}
+        stroke="white"
+        strokeWidth={2}
+      />
+    )
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -229,11 +258,18 @@ export default function InputIPK() {
         </p>
       </div>
 
-      {PERIOD_ACTIVE ? (
+      {periodeError ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+          <span className="text-sm text-red-700 font-medium">
+            Gagal memuat konfigurasi akademik. Silakan muat ulang halaman.
+          </span>
+        </div>
+      ) : periode?.aktif ? (
         <div className="bg-[#EDF0F8] border border-[#263F93] rounded-xl px-4 py-3 flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-[#263F93] shrink-0" />
           <span className="text-sm font-semibold text-[#263F93]">
-            Periode input nilai aktif hingga 15 September 2026
+            Periode input nilai aktif hingga {new Date(periode.tutup).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} (Semester {periode.semester} {periode.tahun_akademik})
           </span>
         </div>
       ) : (
@@ -252,21 +288,21 @@ export default function InputIPK() {
           {
             icon: <TrendingUp size={18} className="text-green-500" />,
             label: "IPK Tertinggi",
-            val: highestSem.ipk.toFixed(2),
-            sub: `Semester ${highestSem.semester}`,
+            val: Number(statistik.tertinggi.ipk).toFixed(2),
+            sub: `Semester ${statistik.tertinggi.semester}`,
             color: "text-[#263F93]",
           },
           {
             icon: <TrendingDown size={18} className="text-red-400" />,
             label: "IPK Terendah",
-            val: lowestSem.ipk.toFixed(2),
-            sub: `Semester ${lowestSem.semester}`,
+            val: Number(statistik.terendah.ipk).toFixed(2),
+            sub: `Semester ${statistik.terendah.semester}`,
             color: "text-[#263F93]",
           },
           {
             icon: <Award size={18} style={{ color: "#D4A72C" }} />,
             label: "IPK Rata-rata",
-            val: avgIPK,
+            val: Number(statistik.rata_rata).toFixed(2),
             sub: "Semua semester",
             color: "text-[#263F93]",
           },
@@ -303,7 +339,7 @@ export default function InputIPK() {
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart
-            data={ipkHistory}
+            data={historyData}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           >
             <defs>
@@ -361,11 +397,11 @@ export default function InputIPK() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-5 border-b border-gray-100">
           <h2 className="font-bold text-gray-900 text-base">
-            Input Nilai Mata Kuliah &mdash; Semester 7 (TA 2025/2026 Ganjil)
+            Input Nilai Mata Kuliah &mdash; Semester {historyData.length > 0 ? Math.max(...historyData.map(h => h.semester)) + 1 : 1}
           </h2>
         </div>
 
-        {!PERIOD_ACTIVE ? (
+        {!periode?.aktif ? (
           <div className="p-6 text-center text-gray-500 text-sm">
             Periode input nilai belum dibuka. Silakan tunggu pengumuman dari
             pengelola.
@@ -417,7 +453,7 @@ export default function InputIPK() {
                             onChange={(e) =>
                               updateRow(mk.id, "kode", e.target.value)
                             }
-                            disabled={isSaved}
+                            disabled={isSaved || isSubmitting}
                             placeholder="IF401"
                             className={inputClass}
                           />
@@ -429,7 +465,7 @@ export default function InputIPK() {
                             onChange={(e) =>
                               updateRow(mk.id, "nama", e.target.value)
                             }
-                            disabled={isSaved}
+                            disabled={isSaved || isSubmitting}
                             placeholder="Nama mata kuliah"
                             className={inputClass}
                           />
@@ -447,7 +483,7 @@ export default function InputIPK() {
                                 parseInt(e.target.value) || 1,
                               )
                             }
-                            disabled={isSaved}
+                            disabled={isSaved || isSubmitting}
                             className={inputClass}
                           />
                         </td>
@@ -461,7 +497,7 @@ export default function InputIPK() {
                                 e.target.value as NilaiHuruf,
                               )
                             }
-                            disabled={isSaved}
+                            disabled={isSaved || isSubmitting}
                             className={selectClass}
                           >
                             <option value="">-- Pilih --</option>
@@ -493,7 +529,7 @@ export default function InputIPK() {
                         <td className="px-3 py-2">
                           <button
                             onClick={() => deleteRow(mk.id)}
-                            disabled={isSaved}
+                            disabled={isSaved || isSubmitting}
                             className="text-gray-300 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             <Trash2 size={15} />
@@ -510,7 +546,7 @@ export default function InputIPK() {
             <div className="px-5 pt-3 pb-4 border-t border-gray-100 flex items-center justify-between">
               <button
                 onClick={addRow}
-                disabled={isSaved}
+                disabled={isSaved || isSubmitting}
                 className="flex items-center gap-2 text-sm text-[#263F93] font-semibold hover:text-[#1a2d6d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <Plus size={15} />
@@ -546,8 +582,8 @@ export default function InputIPK() {
                 {uploadedFile ? (
                   <div className="flex items-center justify-center gap-2 text-green-700">
                     <CheckCircle size={16} />
-                    <span className="text-sm font-medium">{uploadedFile}</span>
-                    {!isSaved && (
+                    <span className="text-sm font-medium">{uploadedFile.name}</span>
+                    {!isSaved && !isSubmitting && (
                       <button
                         onClick={() => setUploadedFile(null)}
                         className="text-gray-400 hover:text-gray-600 ml-2 text-xs underline"
@@ -603,9 +639,10 @@ export default function InputIPK() {
               ) : (
                 <button
                   onClick={handleSave}
-                  className="w-full bg-[#263F93] hover:bg-[#1a2d6d] text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#263F93] hover:bg-[#1a2d6d] text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50"
                 >
-                  Simpan Nilai Semester
+                  {isSubmitting ? "Menyimpan..." : "Simpan Nilai Semester"}
                 </button>
               )}
             </div>
@@ -716,9 +753,7 @@ export default function InputIPK() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {carryOverData
-                    .filter((c) => c.status === "Belum Diperbaiki")
-                    .map((c) => (
+                  {carryOverData.map((c) => (
                       <tr key={c.kode} className="hover:bg-gray-50/50">
                         <td className="px-4 py-3 font-mono text-xs text-gray-600">
                           {c.kode}
@@ -727,7 +762,7 @@ export default function InputIPK() {
                         <td className="px-3 py-3 text-gray-600">{c.sks}</td>
                         <td className="px-3 py-3">
                           <span className="font-bold text-red-600">
-                            {c.nilai}
+                            {c.nilaiHuruf}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-gray-500 text-xs">
@@ -783,7 +818,7 @@ export default function InputIPK() {
               </tr>
             </thead>
             <tbody>
-              {historyWithMK.map((h, idx) => {
+              {historyData.map((h, idx) => {
                 const change = ipkChange(idx)
                 const isExpanded = expandedSem === h.semester
                 return (
@@ -872,7 +907,7 @@ export default function InputIPK() {
                               </tr>
                             </thead>
                             <tbody>
-                              {h.mk.map((m: any) => (
+                              {h.mataKuliah?.map((m: any) => (
                                 <tr
                                   key={m.kode}
                                   className="text-gray-700 border-t border-blue-100/50"
@@ -883,7 +918,7 @@ export default function InputIPK() {
                                   <td className="py-1.5 pr-6">{m.nama}</td>
                                   <td className="py-1.5 pr-6">{m.sks}</td>
                                   <td className="py-1.5 font-bold">
-                                    {m.nilai}
+                                    {m.nilai_huruf}
                                   </td>
                                 </tr>
                               ))}

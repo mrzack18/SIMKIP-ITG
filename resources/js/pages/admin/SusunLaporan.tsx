@@ -1,24 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { ChevronLeft, ChevronRight, Check, Download, Info } from "lucide-react";
-import { mahasiswaList } from "../../data/mockData";
+import { ChevronLeft, ChevronRight, Check, Download, Info, Loader2, AlertTriangle } from "lucide-react";
+import { createLaporan, submitLaporan, getPreviewStatistics, type LaporanPreviewStatistics } from "@/services/laporanService";
 import logoItg from "@/imports/logo_itg.jpg";
 
 const STEPS = [
   { label: "Informasi Laporan", num: 1 },
   { label: "Review Data", num: 2 },
   { label: "Preview & Kirim", num: 3 },
-];
-
-const ipkBuckets = [
-  { range: "< 2.5", count: 1 },
-  { range: "2.5–2.9", count: 3 },
-  { range: "3.0–3.4", count: 7 },
-  { range: "3.5–3.9", count: 6 },
-  { range: "4.0", count: 2 },
 ];
 
 const ANGKATAN_LIST = ["2022", "2023", "2024", "2025", "2026"];
@@ -36,7 +28,6 @@ export default function SusunLaporan() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    nomorSurat: "024/LAP/ITG/VIII/2026",
     judul: "Laporan Evaluasi Semester Genap Tahun Akademik 2025/2026",
     tahunAkademik: "2025/2026",
     semester: "Genap",
@@ -46,16 +37,24 @@ export default function SusunLaporan() {
     angkatan: "2022",
     prodi: "Teknik Informatika",
   });
-  const [submitted, setSubmitted] = useState(false);
   const [tujuanWarek, setTujuanWarek] = useState(true);
   const [tujuanProdi, setTujuanProdi] = useState(false);
+  const [prodiTujuan, setProdiTujuan] = useState("");
+
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  // Real data from backend
+  const [preview, setPreview] = useState<LaporanPreviewStatistics | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
 
   const set = (k: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const step1Valid =
-    form.nomorSurat.trim() !== "" &&
     form.judul.trim() !== "" &&
     form.tanggalLaporan !== "";
 
@@ -67,25 +66,93 @@ export default function SusunLaporan() {
     return base;
   })();
 
-  const totalMhs = mahasiswaList.length;
-  const rataIPK = (mahasiswaList.reduce((s, m) => s + m.ipk, 0) / totalMhs).toFixed(2);
-  const berSP = mahasiswaList.filter((m) => m.sp).length;
-
   const tanggalFmt = new Date(form.tanggalLaporan).toLocaleDateString("id-ID", {
     day: "numeric", month: "long", year: "numeric",
   });
 
-  if (submitted) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-64 gap-4">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-          <Check size={32} className="text-[#263F93]" />
-        </div>
-        <p className="font-600 text-gray-800">Laporan berhasil dikirim ke Warek III</p>
-        <p className="text-sm text-gray-400">Mengarahkan ke halaman detail…</p>
-      </div>
-    );
-  }
+  const fetchPreview = () => {
+    setPreviewLoading(true);
+    setPreviewError("");
+    getPreviewStatistics(
+      form.cakupan,
+      form.cakupan === "semua" ? undefined : form.angkatan,
+      form.cakupan === "semua" ? undefined : form.prodi,
+    )
+      .then(setPreview)
+      .catch((err: any) => {
+        const msg = err?.error?.message ?? err?.message ?? "Gagal memuat data preview";
+        setPreviewError(`[${err?.status}] ${msg}`);
+      })
+      .finally(() => setPreviewLoading(false));
+  };
+
+  // Fetch preview when entering Step 2
+  const goNext = () => {
+    if (step === 0) {
+      fetchPreview();
+    }
+    setStep((s) => s + 1);
+  };
+
+  const goBack = () => {
+    setStep((s) => s - 1);
+  };
+
+  const handleSimpanDraf = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        judul: judul,
+        tahunAkademik: form.tahunAkademik,
+        semester: form.semester as "Ganjil" | "Genap",
+        tanggalLaporan: form.tanggalLaporan,
+        catatanLaporan: form.catatan || undefined,
+        cakupan: form.cakupan,
+        angkatan: form.cakupan === "semua" ? undefined : form.angkatan,
+        prodi: form.cakupan === "semua" ? undefined : form.prodi,
+        tujuanWarek: tujuanWarek,
+        tujuanProdi: tujuanProdi,
+      };
+      const created = await createLaporan(payload);
+      navigate(`/admin/laporan/${created.id}`);
+    } catch (err: any) {
+      setError(err?.message ?? "Gagal menyimpan laporan");
+      setSaving(false);
+    }
+  };
+
+  const handleKirimWarek = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      const payload = {
+        judul: judul,
+        tahunAkademik: form.tahunAkademik,
+        semester: form.semester as "Ganjil" | "Genap",
+        tanggalLaporan: form.tanggalLaporan,
+        catatanLaporan: form.catatan || undefined,
+        cakupan: form.cakupan,
+        angkatan: form.cakupan === "semua" ? undefined : form.angkatan,
+        prodi: form.cakupan === "semua" ? undefined : form.prodi,
+        tujuanWarek: tujuanWarek,
+        tujuanProdi: tujuanProdi,
+      };
+      const created = await createLaporan(payload);
+      await submitLaporan(created.id);
+      navigate(`/admin/laporan/${created.id}`);
+    } catch (err: any) {
+      setError(err?.message ?? "Gagal mengirim laporan");
+      setSubmitting(false);
+    }
+  };
+
+  const cakupanLabel = (() => {
+    if (form.cakupan === "semua") return "Seluruh Mahasiswa KIP-K";
+    if (form.cakupan === "angkatan") return `Angkatan ${form.angkatan}`;
+    if (form.cakupan === "prodi") return form.prodi;
+    return `Angkatan ${form.angkatan} — ${form.prodi}`;
+  })();
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -97,6 +164,14 @@ export default function SusunLaporan() {
         <span>/</span>
         <span className="text-gray-800 font-500">Susun Laporan Baru</span>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
 
       {/* Step Indicator — sticky */}
       <div className="sticky top-0 z-20 bg-white rounded-xl shadow-sm border border-[#E2E8F0] px-6 py-4">
@@ -142,33 +217,6 @@ export default function SusunLaporan() {
           <h2 className="font-600 text-gray-800">Informasi Laporan</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                Nomor Surat <span className="text-red-400">*</span>
-              </label>
-              <input
-                value={form.nomorSurat}
-                onChange={set("nomorSurat")}
-                placeholder="024/LAP/ITG/VIII/2026"
-                className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                Tahun Akademik
-              </label>
-              <select
-                value={form.tahunAkademik}
-                onChange={set("tahunAkademik")}
-                className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none bg-white"
-              >
-                {["2025/2026", "2024/2025", "2023/2024"].map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </div>
-
             <div className="sm:col-span-2">
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
                 Judul Laporan <span className="text-red-400">*</span>
@@ -178,6 +226,19 @@ export default function SusunLaporan() {
                 onChange={set("judul")}
                 className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Akademik</label>
+              <select
+                value={form.tahunAkademik}
+                onChange={set("tahunAkademik")}
+                className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 bg-white"
+              >
+                {["2025/2026", "2024/2025", "2023/2024"].map((o) => (
+                  <option key={o}>{o}</option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -300,105 +361,122 @@ export default function SusunLaporan() {
         <div className="space-y-4">
           <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-5">
             <h2 className="font-600 text-gray-800 mb-1">Review Data Mahasiswa</h2>
-            <p className="text-xs text-gray-400 mb-4">
-              Cakupan:{" "}
-              {form.cakupan === "semua"
-                ? "Seluruh Mahasiswa KIP-K"
-                : form.cakupan === "angkatan"
-                ? `Angkatan ${form.angkatan}`
-                : form.cakupan === "prodi"
-                ? form.prodi
-                : `Angkatan ${form.angkatan} — ${form.prodi}`}
-            </p>
+            <p className="text-xs text-gray-400 mb-4">Cakupan: {cakupanLabel}</p>
 
-            {/* Summary cards */}
-            <div className="grid grid-cols-3 gap-3 mb-5">
-              {[
-                { label: "Total Mahasiswa", val: totalMhs },
-                { label: "Rata-rata IPK", val: rataIPK },
-                { label: "Mahasiswa Ber-SP", val: berSP },
-              ].map(({ label, val }) => (
-                <div
-                  key={label}
-                  className="rounded-xl p-3 text-center border border-[#E2E8F0]"
-                  style={{ background: "#F8FAFC" }}
-                >
-                  <div className="font-display font-700 text-xl text-gray-900">{val}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+            {previewLoading ? (
+              <div className="flex items-center justify-center py-16 text-gray-400">
+                <Loader2 size={20} className="animate-spin mr-2" /> Memuat data...
+              </div>
+            ) : previewError ? (
+              <div className="text-center py-8 text-red-500 text-sm">{previewError}</div>
+            ) : preview ? (
+              <>
+                {/* Summary cards */}
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className="rounded-xl p-3 text-center border border-[#E2E8F0]" style={{ background: "#F8FAFC" }}>
+                    <div className="font-display font-700 text-xl text-gray-900">{preview.totalMahasiswa}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Total Mahasiswa</div>
+                  </div>
+                  <div className="rounded-xl p-3 text-center border border-[#E2E8F0]" style={{ background: "#F8FAFC" }}>
+                    <div className="font-display font-700 text-xl text-gray-900">{preview.rataIpk ?? "—"}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Rata-rata IPK</div>
+                  </div>
+                  <div className="rounded-xl p-3 text-center border border-[#E2E8F0]" style={{ background: "#F8FAFC" }}>
+                    <div className="font-display font-700 text-xl text-gray-900">
+                      {preview.kipk.reguler.total + preview.kipk.aspirasi.total > 0
+                        ? Math.round((preview.kipk.reguler.total / preview.totalMahasiswa) * 100)
+                        : 0}%
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">Reguler</div>
+                  </div>
                 </div>
-              ))}
-            </div>
 
-            {/* IPK histogram */}
-            <div className="mb-5">
-              <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">
-                Distribusi IPK Mahasiswa
-              </p>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={ipkBuckets} margin={{ left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                  <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94A3B8" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} />
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                  <Bar dataKey="count" fill="#263F93" radius={[4, 4, 0, 0]} name="Jumlah" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+                {/* IPK histogram */}
+                <div className="mb-5">
+                  <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">
+                    Distribusi IPK Mahasiswa
+                  </p>
+                  {preview.ipkBuckets.some(b => b.count > 0) ? (
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={preview.ipkBuckets} margin={{ left: -20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                        <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94A3B8" }} />
+                        <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} allowDecimals={false} />
+                        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                        <Bar dataKey="count" fill="#263F93" radius={[4, 4, 0, 0]} name="Jumlah" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-40 flex items-center justify-center text-xs text-gray-400 border border-dashed border-gray-200 rounded-lg">
+                      Tidak ada data IPK untuk cakupan ini
+                    </div>
+                  )}
+                </div>
 
-            {/* Preview table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-[#E2E8F0]">
-                    {["NIM", "Nama", "Prodi", "Angkatan", "IPK", "SP", "Status"].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-3 py-2 font-600 text-gray-500 uppercase tracking-wide"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {mahasiswaList.slice(0, 5).map((m) => (
-                    <tr key={m.id} className={m.ipk < 3.0 ? "bg-red-50/30" : ""}>
-                      <td className="px-3 py-2 font-mono text-gray-500">{m.nim.slice(-8)}</td>
-                      <td className="px-3 py-2 font-500 text-gray-800">{m.nama}</td>
-                      <td className="px-3 py-2 text-gray-500">{m.prodi.replace("Teknik ", "T.")}</td>
-                      <td className="px-3 py-2 text-gray-500">{m.angkatan}</td>
-                      <td
-                        className="px-3 py-2 font-600"
-                        style={{ color: m.ipk >= 3.0 ? "#059669" : "#DC2626" }}
-                      >
-                        {m.ipk}
-                      </td>
-                      <td className="px-3 py-2">
-                        {m.sp ? (
-                          <span className="text-red-600 font-600">{m.sp}</span>
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-500 ${
-                            m.ipk >= 3.0
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {m.ipk >= 3.0 ? "Baik" : "Perlu Perhatian"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-xs text-gray-400 mt-2 text-center">
-                Menampilkan 5 dari {totalMhs} mahasiswa
-              </p>
-            </div>
+                {/* Preview table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-[#E2E8F0]">
+                        {["NIM", "Nama", "Prodi", "Angkatan", "IPK", "SP", "Status"].map((h) => (
+                          <th
+                            key={h}
+                            className="text-left px-3 py-2 font-600 text-gray-500 uppercase tracking-wide"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {preview.mahasiswas.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-3 py-6 text-center text-gray-400">
+                            Tidak ada mahasiswa untuk cakupan ini.
+                          </td>
+                        </tr>
+                      ) : (
+                        preview.mahasiswas.map((m) => (
+                          <tr key={m.id} className={m.ipk < 3.0 ? "bg-red-50/30" : ""}>
+                            <td className="px-3 py-2 font-mono text-gray-500">{m.nim}</td>
+                            <td className="px-3 py-2 font-500 text-gray-800">{m.nama}</td>
+                            <td className="px-3 py-2 text-gray-500">{m.prodi.replace("Teknik ", "T.")}</td>
+                            <td className="px-3 py-2 text-gray-500">{m.angkatan}</td>
+                            <td
+                              className="px-3 py-2 font-600"
+                              style={{ color: m.ipk >= 3.0 ? "#059669" : "#DC2626" }}
+                            >
+                              {m.ipk ?? "—"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {m.sp ? (
+                                <span className="text-red-600 font-600">{m.sp}</span>
+                              ) : (
+                                <span className="text-gray-300">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-500 ${
+                                  m.ipk >= 3.0
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {m.ipk >= 3.0 ? "Baik" : "Perlu Perhatian"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-gray-400 mt-2 text-center">
+                    Menampilkan {Math.min(preview.mahasiswas.length, 20)} dari {preview.totalMahasiswa} mahasiswa
+                  </p>
+                </div>
+              </>
+            ) : null}
           </div>
 
           <button className="flex items-center gap-2 px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50">
@@ -413,7 +491,7 @@ export default function SusunLaporan() {
           <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-5">
             <h2 className="font-600 text-gray-800 mb-4">Preview Laporan</h2>
 
-            {/* Formal letter — canonical double-border format */}
+            {/* Formal letter */}
             <div className="border-2 border-[#263F93] rounded-xl p-1">
               <div className="border border-[#263F93] rounded-lg p-8 space-y-5 text-xs text-gray-700 bg-white">
 
@@ -430,10 +508,10 @@ export default function SusunLaporan() {
 
                 {/* Nomor, tanggal, perihal */}
                 <div className="grid grid-cols-[120px_8px_1fr] gap-y-1.5 text-sm mb-6">
-                  <span className="text-gray-600">Nomor</span><span>:</span><span>{form.nomorSurat || "[Nomor Surat]"}</span>
+                  <span className="text-gray-600">Nomor</span><span>:</span><span>[Akan diisi setelah disimpan]</span>
                   <span className="text-gray-600">Tanggal</span><span>:</span><span>{tanggalFmt}</span>
                   <span className="text-gray-600">Perihal</span><span>:</span><span className="font-semibold">Laporan Perkembangan Mahasiswa KIP-K</span>
-                  <span className="text-gray-600">Kepada Yth.</span><span>:</span><span>Wakil Rektor III ITG</span>
+                  <span className="text-gray-600">Kepada Yth.</span><span>:</span><span>Wakil Utama III ITG</span>
                 </div>
 
                 {/* Judul laporan */}
@@ -448,72 +526,78 @@ export default function SusunLaporan() {
                     <thead>
                       <tr style={{ background: "#F8FAFC" }}>
                         <th className="border border-[#E2E8F0] px-3 py-2 text-left font-semibold">Keterangan</th>
-                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Jumlah Mahasiswa</th>
-                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Rata-rata IPK</th>
-                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Ber-SP</th>
+                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Jumlah</th>
+                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Reguler</th>
+                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Aspirasi</th>
+                        <th className="border border-[#E2E8F0] px-3 py-2 text-center font-semibold">Rata IPK</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="border border-[#E2E8F0] px-3 py-2 text-gray-600">
-                          {form.cakupan === "semua"
-                            ? "Seluruh Mahasiswa KIP-K"
-                            : form.cakupan === "angkatan"
-                            ? `Angkatan ${form.angkatan}`
-                            : form.cakupan === "prodi"
-                            ? form.prodi
-                            : `Angkatan ${form.angkatan} — ${form.prodi}`}
+                        <td className="border border-[#E2E8F0] px-3 py-2 text-gray-600">{cakupanLabel}</td>
+                        <td className="border border-[#E2E8F0] px-3 py-2 text-center font-bold">
+                          {preview?.totalMahasiswa ?? "—"}
                         </td>
-                        <td className="border border-[#E2E8F0] px-3 py-2 text-center font-bold">{totalMhs}</td>
-                        <td className="border border-[#E2E8F0] px-3 py-2 text-center font-bold">{rataIPK}</td>
-                        <td className="border border-[#E2E8F0] px-3 py-2 text-center font-bold">{berSP}</td>
+                        <td className="border border-[#E2E8F0] px-3 py-2 text-center">
+                          {preview ? `${preview.kipk.reguler.total} (${preview.kipk.reguler.persen}%)` : "—"}
+                        </td>
+                        <td className="border border-[#E2E8F0] px-3 py-2 text-center">
+                          {preview ? `${preview.kipk.aspirasi.total} (${preview.kipk.aspirasi.persen}%)` : "—"}
+                        </td>
+                        <td className="border border-[#E2E8F0] px-3 py-2 text-center font-bold">
+                          {preview?.rataIpk ?? "—"}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
                 {/* IPK distribution chart */}
-                <div>
-                  <p className="text-xs font-bold text-gray-600 uppercase mb-1">II. Distribusi IPK</p>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <BarChart data={ipkBuckets} margin={{ left: -20, top: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                      <XAxis dataKey="range" tick={{ fontSize: 9, fill: "#94A3B8" }} />
-                      <YAxis tick={{ fontSize: 9, fill: "#94A3B8" }} />
-                      <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6 }} />
-                      <Bar dataKey="count" fill="#263F93" radius={[3, 3, 0, 0]} name="Jumlah" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {preview && preview.ipkBuckets.some(b => b.count > 0) && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-600 uppercase mb-1">II. Distribusi IPK</p>
+                    <ResponsiveContainer width="100%" height={150}>
+                      <BarChart data={preview.ipkBuckets} margin={{ left: -20, top: 4 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                        <XAxis dataKey="range" tick={{ fontSize: 9, fill: "#94A3B8" }} />
+                        <YAxis tick={{ fontSize: 9, fill: "#94A3B8" }} allowDecimals={false} />
+                        <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6 }} />
+                        <Bar dataKey="count" fill="#263F93" radius={[3, 3, 0, 0]} name="Jumlah" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
 
                 {/* Sample data table */}
-                <div>
-                  <p className="text-xs font-bold text-gray-600 uppercase mb-1">III. Sampel Data Mahasiswa</p>
-                  <table className="w-full text-xs border border-[#E2E8F0]">
-                    <thead>
-                      <tr style={{ background: "#F8FAFC" }}>
-                        {["NIM", "Nama", "Prodi", "Angkatan", "IPK", "SP"].map((h) => (
-                          <th key={h} className="border border-[#E2E8F0] px-2 py-1.5 text-left font-semibold">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mahasiswaList.slice(0, 5).map((m) => (
-                        <tr key={m.id}>
-                          <td className="border border-[#E2E8F0] px-2 py-1.5 font-mono">{m.nim.slice(-8)}</td>
-                          <td className="border border-[#E2E8F0] px-2 py-1.5">{m.nama}</td>
-                          <td className="border border-[#E2E8F0] px-2 py-1.5">{m.prodi.replace("Teknik ", "T.")}</td>
-                          <td className="border border-[#E2E8F0] px-2 py-1.5">{m.angkatan}</td>
-                          <td className="border border-[#E2E8F0] px-2 py-1.5 font-bold"
-                            style={{ color: m.ipk >= 3.0 ? "#059669" : "#DC2626" }}>
-                            {m.ipk}
-                          </td>
-                          <td className="border border-[#E2E8F0] px-2 py-1.5">{m.sp || "—"}</td>
+                {preview && preview.mahasiswas.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-600 uppercase mb-1">III. Sampel Data Mahasiswa</p>
+                    <table className="w-full text-xs border border-[#E2E8F0]">
+                      <thead>
+                        <tr style={{ background: "#F8FAFC" }}>
+                          {["NIM", "Nama", "Prodi", "Angkatan", "IPK", "SP"].map((h) => (
+                            <th key={h} className="border border-[#E2E8F0] px-2 py-1.5 text-left font-semibold">{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {preview.mahasiswas.slice(0, 5).map((m) => (
+                          <tr key={m.id}>
+                            <td className="border border-[#E2E8F0] px-2 py-1.5 font-mono">{m.nim}</td>
+                            <td className="border border-[#E2E8F0] px-2 py-1.5">{m.nama}</td>
+                            <td className="border border-[#E2E8F0] px-2 py-1.5">{m.prodi.replace("Teknik ", "T.")}</td>
+                            <td className="border border-[#E2E8F0] px-2 py-1.5">{m.angkatan}</td>
+                            <td className="border border-[#E2E8F0] px-2 py-1.5 font-bold"
+                              style={{ color: m.ipk >= 3.0 ? "#059669" : "#DC2626" }}>
+                              {m.ipk ?? "—"}
+                            </td>
+                            <td className="border border-[#E2E8F0] px-2 py-1.5">{m.sp || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 {/* Catatan */}
                 {form.catatan && (
@@ -534,7 +618,7 @@ export default function SusunLaporan() {
                   </div>
                   <div>
                     <p>Mengetahui,</p>
-                    <p className="font-medium">Wakil Rektor</p>
+                    <p className="font-medium">Wakil Utama</p>
                     <div className="h-16" />
                     <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
                     <p className="text-xs text-gray-500">NIP. 198203152008012002</p>
@@ -554,7 +638,7 @@ export default function SusunLaporan() {
               <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
                 <input type="checkbox" checked={tujuanWarek} onChange={e => setTujuanWarek(e.target.checked)} className="accent-[#263F93]" />
                 <div>
-                  <p className="text-sm font-500 text-gray-800">Wakil Rektor III (Kemahasiswaan)</p>
+                  <p className="text-sm font-500 text-gray-800">Wakil Utama III (Kemahasiswaan)</p>
                   <p className="text-xs text-gray-400">Laporan akan dikirim untuk review dan persetujuan Warek III</p>
                 </div>
               </label>
@@ -568,13 +652,13 @@ export default function SusunLaporan() {
               {tujuanProdi && (
                 <div className="ml-9">
                   <label className="block text-sm font-500 text-gray-700 mb-1.5">Pilih Prodi Tujuan</label>
-                  <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 bg-white">
-                    <option>Semua Program Studi</option>
-                    <option>Teknik Informatika</option>
-                    <option>Sistem Informasi</option>
-                    <option>Teknik Industri</option>
-                    <option>Teknik Sipil</option>
-                    <option>Arsitektur</option>
+                  <select
+                    value={prodiTujuan}
+                    onChange={e => setProdiTujuan(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 bg-white"
+                  >
+                    <option value="">Semua Program Studi</option>
+                    {PRODI_LIST.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
               )}
@@ -587,7 +671,7 @@ export default function SusunLaporan() {
       <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] px-5 py-4 flex items-center justify-between">
         {step > 0 ? (
           <button
-            onClick={() => setStep((s) => s - 1)}
+            onClick={goBack}
             className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
           >
             <ChevronLeft size={16} /> Kembali
@@ -600,26 +684,31 @@ export default function SusunLaporan() {
 
         {step < 2 ? (
           <button
-            onClick={() => setStep((s) => s + 1)}
+            onClick={goNext}
             disabled={step === 0 && !step1Valid}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-500 text-white disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "#263F93" }}
           >
+            {previewLoading ? <Loader2 size={14} className="animate-spin" /> : null}
             Selanjutnya <ChevronRight size={15} />
           </button>
         ) : (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setSubmitted(true); setTimeout(() => navigate("/admin/laporan/1"), 1500); }}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-500 text-gray-600 hover:bg-gray-50"
+              onClick={handleSimpanDraf}
+              disabled={saving || submitting}
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-500 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
             >
+              {saving && <Loader2 size={14} className="animate-spin" />}
               Simpan Draf
             </button>
             <button
-              onClick={() => { setSubmitted(true); setTimeout(() => navigate("/admin/laporan/1"), 1500); }}
-              className="px-5 py-2.5 rounded-lg text-sm font-700 text-white"
+              onClick={handleKirimWarek}
+              disabled={saving || submitting}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-700 text-white disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: "#263F93" }}
             >
+              {submitting && <Loader2 size={14} className="animate-spin" />}
               Kirim ke Warek III
             </button>
           </div>

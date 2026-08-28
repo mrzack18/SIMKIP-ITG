@@ -14,12 +14,15 @@ class Mahasiswa extends Model
         'kategori', 'status', 'nomor_sk', 'tanggal_sk', 'file_sk',
         'alasan_nonaktif', 'tanggal_nonaktif',
         'semester_dicabut', 'tanggal_dicabut', 'alasan_dicabut', 'dicabut_oleh',
+        'nik', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
+        'alamat', 'nama_ayah', 'nama_ibu', 'tel_ayah', 'tel_ibu'
     ];
 
     protected $casts = [
         'tanggal_sk' => 'date',
         'tanggal_nonaktif' => 'date',
         'tanggal_dicabut' => 'date',
+        'tanggal_lahir' => 'date',
     ];
 
     public function user()
@@ -74,7 +77,7 @@ class Mahasiswa extends Model
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->orderByDesc('semester')
                 ->limit(1),
-            
+
             'prev_ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->orderByDesc('semester')
@@ -86,6 +89,11 @@ class Mahasiswa extends Model
                 ->whereIn('status', ['Aktif', 'Masa Tenggang'])
                 ->orderByDesc('level')
                 ->limit(1),
+
+            'mk_belum_lulus' => \App\Models\MataKuliah::selectRaw('COUNT(*)')
+                ->whereIn('ipk_semester_id', \App\Models\IpkSemestr::select('id')
+                    ->whereColumn('mahasiswa_id', 'mahasiswas.id'))
+                ->where('lulus', false),
         ])
         ->withCount('ipkSemestrs as semester_calc')
         ->with('prodi');
@@ -131,5 +139,13 @@ class Mahasiswa extends Model
         $prev = isset($this->attributes['prev_ipk_calc']) ? (float) $this->attributes['prev_ipk_calc'] : null;
         if ($prev === null) return 0.0;
         return round($ipk - $prev, 2);
+    }
+
+    /** Jumlah mata kuliah yang belum lulus */
+    public function getMkBelumLulusAttribute(): int
+    {
+        return isset($this->attributes['mk_belum_lulus'])
+            ? (int) $this->attributes['mk_belum_lulus']
+            : 0;
     }
 }

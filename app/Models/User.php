@@ -38,4 +38,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Notification::class)->latest();
     }
+
+    public function contactHistories()
+    {
+        return $this->hasMany(ContactHistory::class)->latest();
+    }
 }

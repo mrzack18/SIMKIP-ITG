@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Konfigurasi;
 
 class MahasiswaController extends Controller
 {
@@ -168,7 +169,7 @@ class MahasiswaController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $m = Mahasiswa::withDetails()->findOrFail($id);
+        $m = Mahasiswa::withDetails()->with(['user.contactHistories'])->findOrFail($id);
 
         return response()->json(['data' => new \App\Http\Resources\MahasiswaResource($m)]);
     }
@@ -193,5 +194,195 @@ class MahasiswaController extends Controller
         return response()->json(['success' => true, 'message' => 'Mahasiswa berhasil dihapus.']);
     }
 
+    public function updateStatus(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|in:Aktif,Nonaktif',
+            'alasan_status' => 'required_if:status,Nonaktif|string|nullable',
+            'catatan_status' => 'nullable|string',
+        ]);
 
+        $m = Mahasiswa::findOrFail($id);
+        
+        $oldStatus = $m->status;
+        $m->status = $request->status;
+        
+        if ($request->status === 'Nonaktif') {
+            $alasan = $request->alasan_status;
+            if ($request->catatan_status) {
+                $alasan .= ' | Catatan: ' . $request->catatan_status;
+            }
+            $m->alasan_nonaktif = $alasan;
+            $m->tanggal_nonaktif = now();
+        } else {
+            $m->alasan_nonaktif = null;
+            $m->tanggal_nonaktif = null;
+        }
+
+        $m->save();
+
+        AuditLog::catat('Ubah', "Mengubah status mahasiswa {$m->nama} ({$m->nim}) dari {$oldStatus} menjadi {$m->status}", [
+            'terkait_nim'  => $m->nim,
+            'terkait_nama' => $m->nama,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Status mahasiswa berhasil diperbarui.', 'data' => new \App\Http\Resources\MahasiswaResource($m)]);
+    }
+
+    public function cabutKipk(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'alasan_cabut' => 'required|string',
+            'catatan_cabut' => 'nullable|string',
+            'konfirmasi_nim' => 'required|string',
+        ]);
+
+        $m = Mahasiswa::findOrFail($id);
+
+        if ($request->konfirmasi_nim !== $m->nim) {
+            return response()->json(['success' => false, 'message' => 'NIM konfirmasi tidak sesuai.'], 422);
+        }
+
+        $oldStatus = $m->status;
+        $m->status = 'Dicabut';
+        
+        $alasan = $request->alasan_cabut;
+        if ($request->catatan_cabut) {
+            $alasan .= ' | Catatan: ' . $request->catatan_cabut;
+        }
+        $m->alasan_dicabut = $alasan;
+        $m->tanggal_dicabut = now();
+        $m->dicabut_oleh = collect(explode(' ', $request->user()->name))->first();
+        
+        $semesterAktif = Konfigurasi::get('semester_aktif', 'Ganjil');
+        $tahunAjaranAktif = Konfigurasi::get('tahun_akademik_aktif', date('Y') . '/' . (date('Y') + 1));
+        $m->semester_dicabut = $semesterAktif . ' ' . $tahunAjaranAktif;
+        
+        $m->save();
+
+        AuditLog::catat('Ubah', "Mencabut KIP-K mahasiswa {$m->nama} ({$m->nim})", [
+            'terkait_nim'  => $m->nim,
+            'terkait_nama' => $m->nama,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Status KIP-K mahasiswa berhasil dicabut.', 'data' => new \App\Http\Resources\MahasiswaResource($m)]);
+    }    public function rekapAkademik(Request $request): JsonResponse
+    {
+        $mahasiswas = Mahasiswa::withDetails()->get()->map(function($m) {
+            return [
+                'id' => $m->id,
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'prodi' => $m->prodi->nama,
+                'angkatan' => $m->angkatan,
+                'kategori' => $m->kategori,
+                'kipkLabel' => $m->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
+                'ipk' => $m->ipk_terakhir,
+                'delta' => $m->trend_delta_calc,
+                'semester' => 'Semester ' . $m->semester_aktif,
+                'sp' => $m->sp_aktif,
+                'mkBelumLulus' => $m->mk_belum_lulus,
+            ];
+        });
+        return response()->json(['success' => true, 'data' => $mahasiswas]);
+    }
+
+    public function rekapPrestasi(Request $request): JsonResponse
+    {
+        $prestasis = \App\Models\Prestasi::with(['mahasiswa.prodi'])->latest()->get()->map(function($p) {
+            return [
+                'id' => $p->id,
+                'mahasiswa_id' => $p->mahasiswa_id,
+                'nama' => $p->mahasiswa->nama,
+                'nim' => $p->mahasiswa->nim,
+                'prodi' => $p->mahasiswa->prodi->nama,
+                'angkatan' => $p->mahasiswa->angkatan,
+                'kipk' => $p->mahasiswa->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
+                'namaPrestasi' => $p->nama,
+                'tingkat' => $p->tingkat,
+                'pencapaian' => $p->pencapaian,
+                'penyelenggara' => $p->penyelenggara,
+                'tanggal' => $p->tanggal ? $p->tanggal->format('d M Y') : null,
+                'tempat' => $p->tempat,
+                'deskripsi' => $p->deskripsi,
+                'link' => $p->link,
+                'status' => $p->status,
+                'catatan' => $p->catatan_admin,
+            ];
+        });
+        return response()->json(['success' => true, 'data' => $prestasis]);
+    }
+
+    public function dokumen(Request $request, int $id): JsonResponse
+    {
+        $mahasiswa = Mahasiswa::findOrFail($id);
+        $dokumens = \App\Models\Dokumen::with('jenis')
+            ->where('mahasiswa_id', $id)
+            ->get()
+            ->map(function ($d) {
+                return [
+                    'id' => $d->id,
+                    'jenis' => $d->jenis->nama ?? 'Lainnya',
+                    'nama_file' => $d->nama_file,
+                    'file_url' => $d->path_file ? url('storage/' . $d->path_file) : null,
+                    'status' => $d->status,
+                    'catatan' => $d->catatan_admin,
+                    'tanggal_upload' => $d->created_at->format('d M Y'),
+                    'is_wajib' => $d->jenis->is_wajib ?? false,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $dokumens
+        ]);
+    }
+
+    public function rekapOrganisasi(Request $request): JsonResponse
+    {
+        $organisasis = \App\Models\Organisasi::with(['mahasiswa.prodi'])->latest()->get()->map(function($o) {
+            return [
+                'id' => $o->id,
+                'mahasiswa_id' => $o->mahasiswa_id,
+                'nama' => $o->mahasiswa->nama,
+                'nim' => $o->mahasiswa->nim,
+                'prodi' => $o->mahasiswa->prodi->nama,
+                'angkatan' => $o->mahasiswa->angkatan,
+                'kipk' => $o->mahasiswa->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
+                'organisasi' => $o->nama,
+                'jabatan' => $o->jabatan,
+                'periodeMulai' => $o->periode_mulai,
+                'periodeSelesai' => $o->periode_selesai,
+                'deskripsi' => $o->deskripsi,
+                'status' => $o->status,
+                'catatan' => $o->catatan_admin,
+            ];
+        });
+        return response()->json(['success' => true, 'data' => $organisasis]);
+    }
+
+    public function rekapPelatihan(Request $request): JsonResponse
+    {
+        $pelatihans = \App\Models\Pelatihan::with(['mahasiswa.prodi'])->latest()->get()->map(function($p) {
+            return [
+                'id' => $p->id,
+                'mahasiswa_id' => $p->mahasiswa_id,
+                'nama' => $p->mahasiswa->nama,
+                'nim' => $p->mahasiswa->nim,
+                'prodi' => $p->mahasiswa->prodi->nama,
+                'angkatan' => $p->mahasiswa->angkatan,
+                'kipk' => $p->mahasiswa->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
+                'namaPelatihan' => $p->nama,
+                'jenis' => $p->jenis,
+                'penyelenggara' => $p->penyelenggara,
+                'tanggalMulai' => $p->tanggal_mulai ? $p->tanggal_mulai->format('d M Y') : null,
+                'tanggalSelesai' => $p->tanggal_selesai ? $p->tanggal_selesai->format('d M Y') : null,
+                'tempat' => $p->tempat,
+                'deskripsi' => $p->deskripsi,
+                'status' => $p->status,
+                'catatan' => $p->catatan_admin,
+            ];
+        });
+        return response()->json(['success' => true, 'data' => $pelatihans]);
+    }
 }

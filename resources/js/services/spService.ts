@@ -1,8 +1,6 @@
 /**
  * Surat Peringatan Service
- * TODO: Replace mock implementations with real API calls
  */
-import type { SuratPeringatan } from "@/types";
 import type { SuratPeringatan, ApiResponse, PaginatedResponse } from "@/types";
 import { api } from "./api";
 
@@ -22,13 +20,38 @@ export async function getSPList(filter: SPFilter = {}): Promise<PaginatedRespons
     }
   });
 
-  const res = await api.get<ApiResponse<PaginatedResponse<SuratPeringatan>>>(`/sp?${params.toString()}`);
-  return res.data;
+  const res = await api.get<{ success: boolean; data: SuratPeringatan[]; total: number; page: number; limit: number; total_pages: number }>(`/sp?${params.toString()}`);
+  return {
+    data: res.data,
+    total: res.total,
+    page: res.page,
+    limit: res.limit,
+    totalPages: res.total_pages,
+  };
 }
 
-export async function getSPById(id: number): Promise<SuratPeringatan | null> {
-  // Not explicitly defined in API, fallback to finding from list or implement in backend if needed
-  throw new Error("getSPById is not implemented via backend API directly");
+export interface SPDetailResponse {
+  success: boolean;
+  data: SuratPeringatan;
+  extra: {
+    jenisPelanggaran: string | null;
+    catatan: string | null;
+    diterbitkanOleh: string | null;
+    mahasiswaId: number;
+    kategori: string | null;
+  };
+  history: SuratPeringatan[];
+}
+
+export async function getSPDetail(id: number): Promise<SPDetailResponse> {
+  return api.get<SPDetailResponse>(`/sp/${id}`);
+}
+
+export async function updateSPStatus(
+  id: number,
+  payload: { status: "Aktif" | "Masa Tenggang" | "Selesai"; catatan?: string }
+): Promise<{ success: boolean; message: string }> {
+  return api.patch<{ success: boolean; message: string }>(`/sp/${id}/status`, payload);
 }
 
 export async function terbitkanSP(

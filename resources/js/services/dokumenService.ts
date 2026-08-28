@@ -1,20 +1,28 @@
 /**
  * Dokumen Service
- * TODO: Replace mock implementations with real API calls
  */
-import type { DokumenQueue, DokumenStatus } from "@/types";
 import type { DokumenQueue, DokumenStatus, ApiResponse } from "@/types";
 import { api } from "./api";
+
+export interface DokumenQueueResponse {
+  data: DokumenQueue[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 export interface DokumenFilter {
   search?: string;
   status?: DokumenStatus | "";
   jenis?: string;
+  page?: number;
+  limit?: number;
 }
 
 export async function getDokumenQueue(
   filter: DokumenFilter = {}
-): Promise<DokumenQueue[]> {
+): Promise<DokumenQueueResponse> {
   const params = new URLSearchParams();
   Object.entries(filter).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
@@ -22,8 +30,7 @@ export async function getDokumenQueue(
     }
   });
 
-  const res = await api.get<ApiResponse<DokumenQueue[]>>(`/admin/dokumen-queue?${params.toString()}`);
-  return res.data;
+  return api.get<DokumenQueueResponse>(`/admin/dokumen-queue?${params.toString()}`);
 }
 
 export async function approveDokumen(id: string): Promise<void> {

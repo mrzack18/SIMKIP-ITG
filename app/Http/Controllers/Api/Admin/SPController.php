@@ -29,7 +29,8 @@ class SPController extends Controller
             'success'     => true,
             'data'        => \App\Http\Resources\SuratPeringatanResource::collection($data),
             'total' => $total, 'page' => $page, 'limit' => $limit,
-            'total_pages' => (int) ceil($total/$limit),
+            'totalPages' => (int) ceil($total / max($limit, 1)),
+            'total_pages' => (int) ceil($total / max($limit, 1)),
         ]);
     }
 
@@ -75,6 +76,12 @@ class SPController extends Controller
             'catatan'           => $request->catatan,
         ]);
 
+        $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+        $monthRoman = $romans[(int)now()->format('n')];
+        $nomorSurat = str_pad($sp->id, 3, '0', STR_PAD_LEFT) . '/SP/KIP-K/ITG/' . $monthRoman . '/' . now()->year;
+        
+        $sp->update(['nomor_surat' => $nomorSurat]);
+
         if ($level === 'SP3') {
             SPValidationService::handleSP3($mahasiswa);
         }
@@ -96,8 +103,26 @@ class SPController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $sp = SuratPeringatan::with(['mahasiswa.prodi','diterbitkanOleh'])->findOrFail($id);
-        return response()->json(['success' => true, 'data' => $sp]);
+        $sp = SuratPeringatan::with(['mahasiswa.prodi', 'diterbitkanOleh'])->findOrFail($id);
+
+        // SP history for same mahasiswa (for timeline section)
+        $history = SuratPeringatan::with(['mahasiswa.prodi'])
+            ->where('mahasiswa_id', $sp->mahasiswa_id)
+            ->latest('tanggal_terbit')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => new \App\Http\Resources\SuratPeringatanResource($sp),
+            'extra'   => [
+                'jenisPelanggaran' => $sp->jenis_pelanggaran,
+                'catatan'          => $sp->catatan,
+                'diterbitkanOleh'  => $sp->diterbitkanOleh?->name,
+                'mahasiswaId'      => $sp->mahasiswa_id,
+                'kategori'         => $sp->mahasiswa?->kategori,
+            ],
+            'history' => \App\Http\Resources\SuratPeringatanResource::collection($history),
+        ]);
     }
 
     public function updateStatus(Request $request, int $id): JsonResponse

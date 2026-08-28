@@ -1,13 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronLeft, Upload, X, CheckCircle, AlertCircle, Eye, EyeOff,
-  FileText, Info, Printer, Copy, XCircle, Users, Check, ChevronDown, Trash2, Download, User, BookOpen, Clock, AlertTriangle, Shield, Building2, MapPin, Image as ImageIcon
+  FileText, Info, Printer, Copy, XCircle, Users, Check, ChevronDown, Trash2, Download, User, BookOpen, Clock, AlertTriangle, Shield, Building2, MapPin, Image as ImageIcon, Loader2
 } from "lucide-react";
-import { mahasiswaList } from "../../data/mockData";
-
-const prodis = ["Teknik Informatika", "Teknik Industri", "Teknik Sipil", "Arsitektur", "Sistem Informasi"];
-const angkatanOptions = [2026, 2025, 2024, 2023, 2022, 2021, 2020];
+import { createMahasiswa, checkNim, getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 
 interface FormState {
   nomorSK: string;
@@ -28,6 +25,7 @@ interface Errors {
   nama?: string;
   prodi?: string;
   angkatan?: string;
+  umum?: string;
 }
 
 const initialForm: FormState = {
@@ -51,23 +49,52 @@ export default function TambahMahasiswa() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  const [prodiList, setProdiList] = useState<{id: number, nama: string, kode: string}[]>([]);
+  const [angkatanOptions, setAngkatanOptions] = useState<number[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
+  const [optionsError, setOptionsError] = useState("");
+  
+  const [generatedPassword, setGeneratedPassword] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [key]: e.target.value }));
 
   const generatedUsername = form.nim || "—";
-  const generatedPassword = form.nim ? `kip${form.nim}2026` : "kip[NIM]2026";
 
-  const checkNIM = () => {
+  useEffect(() => {
+    let active = true;
+    setOptionsLoading(true);
+    getMahasiswaFilterOptions()
+      .then((data) => {
+        if (active) {
+          setProdiList(data.prodis);
+          setAngkatanOptions(data.angkatans);
+          setOptionsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setOptionsError(err?.message ?? "Gagal memuat opsi");
+          setOptionsLoading(false);
+        }
+      });
+    return () => { active = false; };
+  }, []);
+
+  const checkNIM = async () => {
     if (!form.nim) return;
     setNimStatus("checking");
-    setTimeout(() => {
-      const exists = mahasiswaList.some(m => m.nim.endsWith(form.nim) || m.nim === form.nim);
+    try {
+      const result = await checkNim(form.nim);
+      const exists = result.exists;
       setNimStatus(exists ? "error" : "ok");
       if (exists) setErrors(e => ({ ...e, nim: "NIM sudah terdaftar dalam sistem." }));
       else setErrors(e => { const n = { ...e }; delete n.nim; return n; });
-    }, 700);
+    } catch (err: any) {
+      setNimStatus("idle");
+    }
   };
 
   const handleFile = (file: File) => {
@@ -103,18 +130,44 @@ export default function TambahMahasiswa() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (resetAfter = false) => {
+  const handleSubmit = async (resetAfter = false) => {
     if (!validate()) return;
     setSubmitting(true);
-    setTimeout(() => {
+    setErrors(e => { const n = { ...e }; delete n.umum; return n; });
+
+    const prodiObj = prodiList.find(p => p.nama === form.prodi);
+    if (!prodiObj) {
+      setErrors(e => ({ ...e, prodi: "Program Studi tidak valid." }));
+      setSubmitting(false);
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append("nim", form.nim);
+    payload.append("nama", form.nama);
+    payload.append("prodi_id", String(prodiObj.id));
+    payload.append("angkatan", form.angkatan);
+    payload.append("kategori", form.kategori);
+    payload.append("nomor_sk", form.nomorSK);
+    payload.append("tanggal_sk", form.tanggalSK);
+    if (form.fileSK) payload.append("file_sk", form.fileSK);
+
+    try {
+      const result = await createMahasiswa(payload as any);
+      setGeneratedPassword(result.credentials.password);
       setSubmitting(false);
       if (resetAfter) {
         setForm(initialForm);
         setNimStatus("idle");
+        setGeneratedPassword("");
       } else {
         setShowSuccessModal(true);
       }
-    }, 1000);
+    } catch (err: any) {
+      const msg = err?.message ?? "Gagal mendaftarkan mahasiswa.";
+      setErrors(e => ({ ...e, umum: msg }));
+      setSubmitting(false);
+    }
   };
 
   const copyCredentials = () => {
@@ -156,6 +209,20 @@ export default function TambahMahasiswa() {
         <h1 className="font-display font-700 text-2xl text-gray-900">Registrasi Mahasiswa KIP-K Baru</h1>
         <p className="text-gray-500 text-sm mt-0.5">Isi data SK dan informasi mahasiswa untuk membuat akun otomatis.</p>
       </div>
+
+      {errors.umum && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+          <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{errors.umum}</p>
+        </div>
+      )}
+
+      {optionsError && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
+          <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-700">{optionsError}</p>
+        </div>
+      )}
 
       {/* Section 1: Data SK */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -284,9 +351,14 @@ export default function TambahMahasiswa() {
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
                 Program Studi <span className="text-red-500">*</span>
               </label>
-              <select value={form.prodi} onChange={set("prodi")} className={inputClass(errors.prodi)}>
-                <option value="">Pilih Program Studi</option>
-                {prodis.map(p => <option key={p}>{p}</option>)}
+              <select
+                value={form.prodi}
+                onChange={set("prodi")}
+                disabled={optionsLoading}
+                className={inputClass(errors.prodi)}
+              >
+                <option value="">{optionsLoading ? "Memuat prodi…" : "Pilih Program Studi"}</option>
+                {prodiList.map(p => <option key={p.id} value={p.nama}>{p.nama}</option>)}
               </select>
               <FieldError msg={errors.prodi} />
             </div>
@@ -296,8 +368,8 @@ export default function TambahMahasiswa() {
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
                 Angkatan <span className="text-red-500">*</span>
               </label>
-              <select value={form.angkatan} onChange={set("angkatan")} className={inputClass(errors.angkatan)}>
-                <option value="">Pilih Angkatan</option>
+              <select value={form.angkatan} onChange={set("angkatan")} disabled={optionsLoading} className={inputClass(errors.angkatan)}>
+                <option value="">{optionsLoading ? "Memuat angkatan..." : "Pilih Angkatan"}</option>
                 {angkatanOptions.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
               <FieldError msg={errors.angkatan} />
@@ -352,7 +424,7 @@ export default function TambahMahasiswa() {
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
-                  value={generatedPassword}
+                  value={generatedPassword || "—"}
                   disabled
                   className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed font-mono"
                 />
@@ -379,17 +451,17 @@ export default function TambahMahasiswa() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => handleSubmit(true)}
-            disabled={submitting}
+            disabled={submitting || optionsLoading}
             className="px-4 py-2.5 border border-[#263F93] rounded-lg text-sm font-500 text-[#263F93] hover:bg-blue-50 disabled:opacity-50 transition-colors">
             Simpan & Tambah Lagi
           </button>
           <button
             onClick={() => handleSubmit(false)}
-            disabled={submitting}
+            disabled={submitting || optionsLoading}
             className="px-5 py-2.5 rounded-lg text-sm font-500 text-white disabled:opacity-50 transition-colors flex items-center gap-2"
             style={{ background: submitting ? "#94A3B8" : "#263F93" }}>
             {submitting
-              ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Menyimpan...</>
+              ? <><Loader2 size={15} className="animate-spin" /> Menyimpan...</>
               : "Simpan & Daftarkan"}
           </button>
         </div>

@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // Aktifkan Sanctum SPA mode untuk request dari frontend (5174)
+        // Frontend mengirim cookie XSRF + Authorization header Bearer
+        $middleware->statefulApi();
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'force_password_change' => \App\Http\Middleware\ForcePasswordChange::class,

@@ -1,6 +1,5 @@
 /**
- * Auth Service
- * TODO: Replace mock implementation with real API calls to backend
+ * Auth Service — handles login, logout, and session management.
  */
 import type { UserSession } from "@/types";
 import { ROLE_PATHS } from "@/data/mockUsers";
@@ -49,9 +48,14 @@ export async function login(payload: LoginPayload): Promise<LoginResult> {
 }
 
 /**
- * Logout — clears local session.
+ * Logout — calls backend to revoke token, then clears local session.
  */
-export function logout(): void {
+export async function logout(): Promise<void> {
+  try {
+    await api.post("/auth/logout", {});
+  } catch {
+    // Ignore network errors — clear local session regardless
+  }
   localStorage.removeItem("simkip_token");
   localStorage.removeItem("simkip_user");
 }

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, Plus, X, FileText, Calendar, MapPin, Building2, Tag, AlignLeft, Upload, CheckCircle, Clock } from "lucide-react";
+import { api } from "@/services/api";
 
 interface PelatihanItem {
   id: number;
@@ -10,50 +11,11 @@ interface PelatihanItem {
   tanggalSelesai: string;
   tempat: string;
   deskripsi: string;
-  status: "Disetujui" | "Menunggu";
+  status: "Disetujui" | "Menunggu" | "Ditolak";
   sertifikat?: string;
   fotoKegiatan?: string;
 }
 
-const MOCK_DATA: PelatihanItem[] = [
-  {
-    id: 1,
-    jenis: "Akademik",
-    nama: "Workshop Machine Learning dengan Python",
-    penyelenggara: "Dicoding Indonesia",
-    tanggalMulai: "2025-11-10",
-    tanggalSelesai: "2025-11-12",
-    tempat: "Online (Zoom)",
-    deskripsi: "Pelatihan intensif machine learning mencakup supervised learning, unsupervised learning, dan implementasi model menggunakan scikit-learn dan TensorFlow.",
-    status: "Disetujui",
-    sertifikat: "sertifikat-ml-python.pdf",
-  },
-  {
-    id: 2,
-    jenis: "Non-Akademik",
-    nama: "Pelatihan Kepemimpinan Nasional Pemuda",
-    penyelenggara: "Kemendikbudristek",
-    tanggalMulai: "2025-08-05",
-    tanggalSelesai: "2025-08-09",
-    tempat: "Balai Pelatihan Nasional, Jakarta",
-    deskripsi: "Program pengembangan kepemimpinan bagi mahasiswa penerima beasiswa KIP-K tingkat nasional. Mencakup public speaking, manajemen konflik, dan dinamika kelompok.",
-    status: "Disetujui",
-    sertifikat: "sertifikat-kepemimpinan.pdf",
-    fotoKegiatan: "foto-kepemimpinan.jpg",
-  },
-  {
-    id: 3,
-    jenis: "Akademik",
-    nama: "Bootcamp Web Development Full Stack",
-    penyelenggara: "Hacktiv8",
-    tanggalMulai: "2026-01-15",
-    tanggalSelesai: "2026-01-20",
-    tempat: "Gedung Cyber, Kuningan, Jakarta",
-    deskripsi: "Bootcamp intensif pengembangan web full stack menggunakan React, Node.js, dan PostgreSQL. Peserta membangun proyek nyata selama pelatihan.",
-    status: "Menunggu",
-    sertifikat: undefined,
-  },
-];
 
 const emptyForm = {
   jenis: "Akademik" as "Akademik" | "Non-Akademik",
@@ -74,12 +36,36 @@ function formatDate(d: string) {
 }
 
 export default function Pelatihan() {
-  const [items, setItems] = useState<PelatihanItem[]>(MOCK_DATA);
+  const [items, setItems] = useState<PelatihanItem[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [detail, setDetail] = useState<PelatihanItem | null>(null);
   const [fileLabel, setFileLabel] = useState("Pilih file PDF / gambar");
   const [fotoLabel, setFotoLabel] = useState("Pilih file gambar");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchPelatihan = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get<{ data: PelatihanItem[] }>("/pelatihan");
+      if (res && res.data && Array.isArray(res.data)) {
+        setItems(res.data);
+      } else if (res && Array.isArray(res.data)) {
+        setItems(res.data);
+      } else if (res && (res as any).data && Array.isArray((res as any).data.data)) {
+        setItems((res as any).data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPelatihan();
+  }, []);
 
   const handleFormChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -97,26 +83,40 @@ export default function Pelatihan() {
     setFotoLabel(file ? file.name : "Pilih file gambar");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newItem: PelatihanItem = {
-      id: Date.now(),
-      jenis: form.jenis,
-      nama: form.nama,
-      penyelenggara: form.penyelenggara,
-      tanggalMulai: form.tanggalMulai,
-      tanggalSelesai: form.tanggalSelesai,
-      tempat: form.tempat,
-      deskripsi: form.deskripsi,
-      status: "Menunggu",
-      sertifikat: form.sertifikat?.name,
-      fotoKegiatan: form.fotoKegiatan?.name,
-    };
-    setItems(prev => [newItem, ...prev]);
-    setForm({ ...emptyForm });
-    setFileLabel("Pilih file PDF / gambar");
-    setFotoLabel("Pilih file gambar");
-    setShowForm(false);
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("jenis", form.jenis);
+      formData.append("nama", form.nama);
+      formData.append("penyelenggara", form.penyelenggara);
+      if (form.tanggalMulai) formData.append("tanggal_mulai", form.tanggalMulai);
+      if (form.tanggalSelesai) formData.append("tanggal_selesai", form.tanggalSelesai);
+      formData.append("tempat", form.tempat);
+      if (form.deskripsi) formData.append("deskripsi", form.deskripsi);
+      if (form.sertifikat) formData.append("file_sertifikat", form.sertifikat);
+      if (form.fotoKegiatan) formData.append("foto_kegiatan", form.fotoKegiatan);
+
+      await api.post("/pelatihan", formData);
+
+      setForm({ ...emptyForm });
+      setFileLabel("Pilih file PDF / gambar");
+      setFotoLabel("Pilih file gambar");
+      setShowForm(false);
+      fetchPelatihan();
+    } catch (err: any) {
+      if (err.status === 422 && err.error?.errors) {
+        const msgs = Object.values(err.error.errors).flat().join("\n");
+        alert(msgs);
+      } else if (err.status === 403) {
+        alert(err.error?.message || "Data tidak dapat dimodifikasi.");
+      } else {
+        alert(err.message || "Terjadi kesalahan sistem saat menyimpan data.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -189,6 +189,8 @@ export default function Pelatihan() {
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 ${
                   item.status === "Disetujui"
                     ? "bg-green-100 text-green-700"
+                    : item.status === "Ditolak"
+                    ? "bg-red-100 text-red-700"
                     : "bg-amber-100 text-amber-700"
                 }`}
               >
@@ -360,10 +362,11 @@ export default function Pelatihan() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl text-sm font-600 text-white transition-opacity hover:opacity-90"
+                  disabled={isSubmitting}
+                  className="w-full py-3 rounded-xl text-sm font-600 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                   style={{ background: "#263F93" }}
                 >
-                  Ajukan Pelatihan
+                  {isSubmitting ? "Mengajukan..." : "Ajukan Pelatihan"}
                 </button>
               </div>
             </form>
@@ -386,7 +389,7 @@ export default function Pelatihan() {
               <div className="flex gap-2 flex-wrap">
                 <span
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 ${
-                    detail.status === "Disetujui" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                    detail.status === "Disetujui" ? "bg-green-100 text-green-700" : detail.status === "Ditolak" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
                   }`}
                 >
                   {detail.status === "Disetujui" ? <CheckCircle size={11} /> : <Clock size={11} />}
@@ -424,7 +427,7 @@ export default function Pelatihan() {
                   {detail.sertifikat ? (
                     <>
                       <FileText size={36} className="text-gray-300" />
-                      <p className="text-xs font-500 text-gray-500">{detail.sertifikat}</p>
+                      <p className="text-xs font-500 text-gray-500 max-w-full truncate px-2">{detail.sertifikat.split('/').pop()}</p>
                       <p className="text-xs text-gray-400">Pratinjau dokumen tidak tersedia. Gunakan tombol Unduh.</p>
                     </>
                   ) : (
@@ -434,12 +437,9 @@ export default function Pelatihan() {
                     </>
                   )}
                 </div>
-                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center">
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center justify-center gap-2 text-center relative overflow-hidden">
                   {detail.fotoKegiatan ? (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                      <p className="text-xs font-500 text-gray-500">{detail.fotoKegiatan}</p>
-                    </>
+                    <img src={detail.fotoKegiatan} alt="Foto Kegiatan" className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
                     <>
                       <span className="text-3xl">📷</span>
@@ -451,7 +451,7 @@ export default function Pelatihan() {
 
               <div className="flex gap-3 pt-1">
                 {detail.sertifikat && (
-                  <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                  <button onClick={() => window.open(detail.sertifikat, '_blank')} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
                     <FileText size={14} /> Unduh
                   </button>
                 )}

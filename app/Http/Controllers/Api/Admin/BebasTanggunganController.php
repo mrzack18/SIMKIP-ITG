@@ -15,52 +15,106 @@ class BebasTanggunganController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = BebasTanggungan::with(['mahasiswa.prodi']);
+        $baseQuery = BebasTanggungan::with([
+            'mahasiswa.prodi',
+            'mahasiswa.suratPeringatans' => fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']),
+            'mahasiswa.ipkSemestrs',
+            'mahasiswa.dokumens.jenis',
+        ]);
 
         if ($request->status && $request->status !== 'Semua') {
             $statusMap = [
-                'menunggu' => ['Menunggu', 'Diproses'],
+                'menunggu'    => ['Menunggu', 'Diproses'],
                 'diterbitkan' => ['Disetujui'],
-                'ditolak' => ['Ditolak']
+                'ditolak'     => ['Ditolak'],
             ];
             $dbStatus = $statusMap[$request->status] ?? [$request->status];
-            $query->whereIn('status', $dbStatus);
+            $baseQuery->whereIn('status', $dbStatus);
         }
 
         if ($s = $request->search) {
-            $query->whereHas('mahasiswa', fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
+            $baseQuery->whereHas('mahasiswa', fn($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
         }
 
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
-        $total = $query->count();
-        $data  = $query->latest()->skip(($page-1)*$limit)->take($limit)->get();
+        $limit = (int) ($request->limit ?? 10);
+        $page  = (int) ($request->page ?? 1);
+        $total = $baseQuery->count();
+        $data  = $baseQuery->latest()->skip(($page - 1) * $limit)->take($limit)->get();
+
+        // Per-status counts (always unfiltered by search/status to power the summary badge)
+        $countMenunggu   = BebasTanggungan::whereIn('status', ['Menunggu', 'Diproses'])->count();
+        $countDiterbitkan = BebasTanggungan::where('status', 'Disetujui')->count();
+        $countDitolak    = BebasTanggungan::where('status', 'Ditolak')->count();
 
         return response()->json([
-            'success' => true,
-            'data'    => BebasTanggunganResource::collection($data),
-            'total' => $total, 'page' => $page, 'limit' => $limit,
-            'total_pages' => (int) ceil($total/$limit),
+            'success'      => true,
+            'data'         => BebasTanggunganResource::collection($data),
+            'total'        => $total,
+            'page'         => $page,
+            'limit'        => $limit,
+            'total_pages'  => (int) ceil($total / max(1, $limit)),
+            'counts'       => [
+                'menunggu'    => $countMenunggu,
+                'diterbitkan' => $countDiterbitkan,
+                'ditolak'     => $countDitolak,
+            ],
         ]);
     }
+
 
     public function show(int $id): JsonResponse
     {
-        $b = BebasTanggungan::with('mahasiswa.prodi')->findOrFail($id);
-        $m = $b->mahasiswa;
+        $b = BebasTanggungan::with([
+            'mahasiswa.prodi',
+            'histories.reviewedBy',
+        ])->findOrFail($id);
+
+        $m        = $b->mahasiswa;
         $checklist = BebasTanggunganService::getChecklist($m);
+
+        $rejectionHistory = $b->histories->map(fn($h) => [
+            'tgl'    => $h->created_at->format('d M Y'),
+            'catatan'=> $h->catatan,
+            'oleh'   => $h->reviewedBy?->name ?? 'Sistem',
+        ]);
+
+        $statusMap = [
+            'Menunggu'  => 'menunggu',
+            'Diproses'  => 'menunggu',
+            'Disetujui' => 'diterbitkan',
+            'Ditolak'   => 'ditolak',
+        ];
 
         return response()->json([
             'success'    => true,
-            'permohonan' => $b,
+            'permohonan' => [
+                'id'            => $b->id,
+                'status'        => $statusMap[$b->status] ?? 'menunggu',
+                'tanggalAjukan' => $b->tanggal_ajukan?->format('d M Y'),
+                'tanggalTerbit' => $b->tanggal_terbit?->format('d M Y'),
+                'nomorSurat'    => $b->nomor_surat,
+                'catatanAdmin'  => $b->catatan_admin,
+            ],
             'mahasiswa'  => [
-                'id' => $m->id, 'nim' => $m->nim, 'nama' => $m->nama,
-                'prodi' => $m->prodi?->nama, 'angkatan' => $m->angkatan,
+                'id'       => $m->id,
+                'nim'      => $m->nim,
+                'nama'     => $m->nama,
+                'prodi'    => $m->prodi?->nama,
+                'angkatan' => $m->angkatan,
                 'semester' => $m->ipkSemestrs()->count(),
             ],
-            'checklist'  => $checklist,
+            'checklist'         => $checklist['checklist'],
+            'dokumen'           => $checklist['dokumen'],
+            'sksDitempuh'       => $checklist['sks_ditempuh'],
+            'sksMinimum'        => $checklist['sks_minimum'],
+            'ipkTerakhir'       => $checklist['ipk_terakhir'],
+            'ipkMinimum'        => $checklist['ipk_minimum'],
+            'canApply'          => $checklist['can_apply'],
+            'rejectionHistory'  => $rejectionHistory,
         ]);
     }
+
+
 
     public function approve(Request $request, int $id): JsonResponse
     {
@@ -107,12 +161,20 @@ class BebasTanggunganController extends Controller
             return response()->json(['success' => false, 'message' => 'Permohonan sudah diproses.'], 422);
         }
         
-        $b->update([
-            'status'       => 'Ditolak',
-            'reviewed_by'  => auth()->id(),
-            'reviewed_at'  => now(),
-            'catatan_admin'=> $request->alasan,
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($b, $request) {
+            $b->update([
+                'status'       => 'Ditolak',
+                'reviewed_by'  => auth()->id(),
+                'reviewed_at'  => now(),
+                'catatan_admin'=> $request->alasan,
+            ]);
+
+            $b->histories()->create([
+                'status'      => 'Ditolak',
+                'catatan'     => $request->alasan,
+                'reviewed_by' => auth()->id(),
+            ]);
+        });
 
         Notification::kirim(
             $b->mahasiswa->user_id,

@@ -48,9 +48,19 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/mahasiswa",                  [MahasiswaController::class, "index"]);
     Route::post("/mahasiswa",                 [MahasiswaController::class, "store"]);
     Route::get("/mahasiswa/check-nim/{nim}",  [MahasiswaController::class, "checkNim"]);
+    Route::get("/mahasiswa/filter-options",   [MahasiswaController::class, "filterOptions"]);
     Route::get("/mahasiswa/{id}",             [MahasiswaController::class, "show"]);
     Route::get("/mahasiswa/{id}/ipk",         [MahasiswaController::class, "ipk"]);
+
+    Route::get("/mahasiswa/{id}/dokumen",     [MahasiswaController::class, "dokumen"]);
     Route::delete("/mahasiswa/{id}",          [MahasiswaController::class, "destroy"]);
+    Route::patch("/mahasiswa/{id}/status",    [MahasiswaController::class, "updateStatus"]);
+    Route::patch("/mahasiswa/{id}/cabut-kipk",[MahasiswaController::class, "cabutKipk"]);
+
+    Route::get("/akademik/rekap-mahasiswa",   [MahasiswaController::class, "rekapAkademik"]);
+    Route::get("/akademik/prestasi",          [MahasiswaController::class, "rekapPrestasi"]);
+    Route::get("/akademik/organisasi",        [MahasiswaController::class, "rekapOrganisasi"]);
+    Route::get("/akademik/pelatihan",         [MahasiswaController::class, "rekapPelatihan"]);
 
     Route::get("/mahasiswa/{id}/prestasi",    [MahasiswaController::class, "prestasi"]);
     Route::get("/mahasiswa/{id}/organisasi",  [MahasiswaController::class, "organisasi"]);
@@ -83,14 +93,19 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/dokumen",              [DokumenController::class, "index"]);
     Route::post("/dokumen",             [DokumenController::class, "store"]);
     Route::delete("/dokumen/{id}",      [DokumenController::class, "destroy"]);
+
+    Route::get("/arsip", [\App\Http\Controllers\Api\Mahasiswa\ArsipController::class, "index"]);
     
     // Unified Admin Dokumen Queue
     Route::get("/admin/dokumen-queue", [DokumenController::class, "queue"]);
     Route::put("/admin/dokumen-queue/{id}/validate", [DokumenController::class, "validateDokumen"]);
 
-    Route::get("/sp",               [SPController::class, "index"]);
-    Route::post("/sp",              [SPController::class, "store"]);
-    Route::get("/mahasiswa/{id}/sp",[SPController::class, "history"]);
+    Route::get("/sp",                      [SPController::class, "index"]);
+    Route::post("/sp",                     [SPController::class, "store"]);
+    Route::get("/sp/{id}",                 [SPController::class, "show"]);
+    Route::patch("/sp/{id}/status",        [SPController::class, "updateStatus"]);
+    Route::get("/mahasiswa/{id}/sp",       [SPController::class, "history"]);
+    Route::get("/mahasiswa/{id}/bebas-tanggungan", [MahasiswaController::class, "bebasTanggungan"]);
 
     Route::get("/bebas-tanggungan",                [BebasTanggunganController::class, "index"]);
     Route::post("/bebas-tanggungan",               [BebasTanggunganController::class, "store"]);
@@ -100,9 +115,10 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::patch("/bebas-tanggungan/{id}/reject",  [BebasTanggunganController::class, "reject"]);
     Route::get("/bebas-tanggungan/{id}/pdf",       [BebasTanggunganController::class, "downloadPdfAdmin"]);
 
-    Route::get("/laporan",               [LaporanController::class, "index"]);
-    Route::post("/laporan",              [LaporanController::class, "store"]);
-    Route::get("/laporan/{id}",          [LaporanController::class, "show"]);
+    Route::get("/laporan",                     [LaporanController::class, "index"]);
+    Route::post("/laporan",                   [LaporanController::class, "store"]);
+    Route::get("/laporan/preview-statistics", [LaporanController::class, "previewStatistics"]);
+    Route::get("/laporan/{id}",               [LaporanController::class, "show"]);
     Route::put("/laporan/{id}",          [LaporanController::class, "update"]);
     Route::patch("/laporan/{id}/submit", [LaporanController::class, "submit"]);
     Route::patch("/laporan/{id}/approve",[LaporanController::class, "approve"]);

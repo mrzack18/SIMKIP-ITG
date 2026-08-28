@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/services/api";
 import { CheckCircle, FileText, X, Download, Phone, Mail, AlertTriangle } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
@@ -9,34 +10,16 @@ interface SP {
   level: SPLevel;
   nomorSurat: string;
   tanggal: string;
-  perihal: string;
+  perihal?: string;
   alasan: string;
-  konsekuensi: string;
-  dasarHukum: string;
+  konsekuensi?: string;
+  dasarHukum?: string;
   sisaHari: number;
   outcome?: string;
+  nama?: string;
+  nim?: string;
+  prodi?: string;
 }
-
-const HAS_SP = true;
-
-const SP_DATA: SP[] = [
-  {
-    id: 1,
-    level: "SP1",
-    nomorSurat: "001/SP/KIP-K/ITG/III/2026",
-    tanggal: "15 Maret 2026",
-    perihal: "Surat Peringatan Pertama (SP-1) Penerima KIP-K",
-    alasan:
-      "Indeks Prestasi Kumulatif (IPK) pada Semester IV Tahun Akademik 2024/2025 berada di bawah standar minimum yang ditetapkan, yaitu 2,80 dari standar minimum 3,00.",
-    konsekuensi:
-      "Diberikan masa perbaikan selama satu (1) semester. Apabila pada akhir masa perbaikan IPK tidak mencapai standar minimum 3,00, maka akan diterbitkan Surat Peringatan Kedua (SP-2).",
-    dasarHukum:
-      "Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 10 Tahun 2020 tentang Program Indonesia Pintar, serta Pedoman Pengelolaan KIP-K Institut Teknologi Garut Tahun 2023.",
-    sisaHari: 82,
-  },
-];
-
-const ACTIVE_SP = SP_DATA.find((s) => !s.outcome);
 
 const spBadgeColor: Record<SPLevel, string> = {
   SP1: "bg-amber-100 text-amber-700 border-amber-200",
@@ -54,6 +37,19 @@ const spLevelLabel: Record<SPLevel, string> = {
   SP1: "Pertama",
   SP2: "Kedua",
   SP3: "Ketiga",
+};
+
+
+const spKonsekuensi: Record<SPLevel, string> = {
+  SP1: "Diberikan masa perbaikan selama satu (1) semester. Apabila pada akhir masa perbaikan IPK tidak mencapai standar minimum 3,00, maka akan diterbitkan Surat Peringatan Kedua (SP-2).",
+  SP2: "Diberikan masa perbaikan selama satu (1) semester. Apabila pada akhir masa perbaikan tidak ada perubahan signifikan, maka akan diterbitkan Surat Peringatan Ketiga (SP-3).",
+  SP3: "Pengenaan sanksi berat berupa pencabutan status penerima Beasiswa KIP Kuliah."
+};
+
+const spDasarHukum: Record<SPLevel, string> = {
+  SP1: "Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 10 Tahun 2020 tentang Program Indonesia Pintar, serta Pedoman Pengelolaan KIP-K Institut Teknologi Garut Tahun 2023.",
+  SP2: "Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 10 Tahun 2020 tentang Program Indonesia Pintar, serta Pedoman Pengelolaan KIP-K Institut Teknologi Garut Tahun 2023.",
+  SP3: "Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 10 Tahun 2020 tentang Program Indonesia Pintar, serta Pedoman Pengelolaan KIP-K Institut Teknologi Garut Tahun 2023."
 };
 
 const spLevelIsi: Record<SPLevel, string> = {
@@ -99,9 +95,9 @@ function FormalSurat({ sp }: { sp: SP }) {
         {/* Kepada */}
         <div className="mb-5 text-xs space-y-0.5">
           <p>Kepada Yth.</p>
-          <p className="font-semibold">Ahmad Rifaldi</p>
-          <p>NIM: 2206001</p>
-          <p>Program Studi Teknik Informatika</p>
+          <p className="font-semibold">{sp.nama}</p>
+          <p>NIM: {sp.nim}</p>
+          <p>Program Studi {sp.prodi}</p>
           <p className="mt-1 italic">di Tempat</p>
         </div>
 
@@ -126,11 +122,11 @@ function FormalSurat({ sp }: { sp: SP }) {
           <p>Sebagai konsekuensi dari peringatan ini, saudara/i diberikan:</p>
 
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-4 py-3">
-            <p>{sp.konsekuensi}</p>
+            <p>{sp.konsekuensi || spKonsekuensi[sp.level]}</p>
           </div>
 
           <p>Surat Peringatan ini diterbitkan berdasarkan:</p>
-          <p className="pl-4">{sp.dasarHukum}</p>
+          <p className="pl-4">{sp.dasarHukum || spDasarHukum[sp.level]}</p>
 
           <p>
             Demikian surat peringatan ini disampaikan. Apabila saudara/i memiliki keberatan atau pertanyaan
@@ -175,6 +171,15 @@ function FormalSurat({ sp }: { sp: SP }) {
 export default function SPMahasiswa() {
   const [showModal, setShowModal] = useState(false);
   const [selectedSP, setSelectedSP] = useState<SP | null>(null);
+  const [list, setList] = useState<SP[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get<{success: boolean, data: SP[]}>("/sp").then((res) => {
+      setList(res.data || []);
+      setLoading(false);
+    });
+  }, []);
 
   const openDetail = (sp: SP) => {
     setSelectedSP(sp);
@@ -185,6 +190,11 @@ export default function SPMahasiswa() {
     setShowModal(false);
     setSelectedSP(null);
   };
+
+  const ACTIVE_SP = list.find((s) => s.status === 'Aktif' || s.status === 'Masa Tenggang');
+  const HAS_SP = list.length > 0;
+
+  if (loading) return null;
 
   if (!HAS_SP) {
     return (
@@ -264,7 +274,7 @@ export default function SPMahasiswa() {
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
             <div className="space-y-3">
-              {SP_DATA.map((sp) => (
+              {list.map((sp) => (
                 <div key={sp.id} className="relative pl-12">
                   <div className="absolute left-2.5 top-4 w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm" />
                   <button
@@ -389,7 +399,7 @@ export default function SPMahasiswa() {
                   </div>
                   <div className="col-span-2">
                     <p className="text-gray-400 font-600 uppercase tracking-wide mb-0.5">Perihal</p>
-                    <p className="text-gray-800 font-600">{selectedSP.perihal}</p>
+                    <p className="text-gray-800 font-600">{selectedSP.perihal || `Surat Peringatan ${spLevelLabel[selectedSP.level]} (${selectedSP.level})`}</p>
                   </div>
                 </div>
 
@@ -401,13 +411,13 @@ export default function SPMahasiswa() {
                 <div>
                   <p className="text-xs text-gray-400 font-600 uppercase tracking-wide mb-1">Yang Harus Dilakukan</p>
                   <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
-                    {selectedSP.konsekuensi}
+                    {selectedSP.konsekuensi || spKonsekuensi[selectedSP.level]}
                   </div>
                 </div>
 
                 <div>
                   <p className="text-xs text-gray-400 font-600 uppercase tracking-wide mb-1">Dasar Hukum</p>
-                  <p className="text-sm text-gray-500 leading-relaxed">{selectedSP.dasarHukum}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed">{selectedSP.dasarHukum || spDasarHukum[selectedSP.level]}</p>
                 </div>
 
                 {selectedSP.outcome && (
