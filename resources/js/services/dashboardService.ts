@@ -50,6 +50,50 @@ export const getAdminDashboardData = async (): Promise<DashboardResponse> => {
   return api.get<DashboardResponse>("/dashboard");
 };
 
+// Prodi Dashboard types
+export interface ProdiSpItem {
+  id: number;
+  nim: string;
+  nama: string;
+  sp: string;
+  alasan: string;
+  sisa: number;
+}
+
+export interface ProdiSemester7Item {
+  id: number;
+  nim: string;
+  nama: string;
+  sem: number;
+  ipk: number;
+}
+
+export interface ProdiTrendItem {
+  sem: string;
+  ipk: number;
+}
+
+export interface ProdiDashboardResponse {
+  success: boolean;
+  stats: {
+    total_aktif: number;
+    reguler: number;
+    aspirasi: number;
+    sp_aktif: number;
+    ipk_di_bawah_standar: number;
+    rata_ipk: number;
+  };
+  prodi: { id: number; nama: string };
+  sebaran_angkatan: ChartData[];
+  trend_ipk: ProdiTrendItem[];
+  sp_mahasiswa: ProdiSpItem[];
+  semester_7plus: ProdiSemester7Item[];
+}
+
+export const getProdiDashboardData = async (): Promise<ProdiDashboardResponse> => {
+  return api.get<ProdiDashboardResponse>("/dashboard");
+}
+
 export interface DokumenStatusItem {
   id_jenis: number;
   nama: string;

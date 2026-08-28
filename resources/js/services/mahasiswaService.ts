@@ -3,6 +3,7 @@
  */
 import type { Mahasiswa, PaginatedResponse, ApiResponse } from "@/types";
 import { api } from "./api";
+import { useAuth } from "@/context/AuthContext";
 
 export interface MahasiswaFilter {
   search?: string;
@@ -28,7 +29,25 @@ export async function getMahasiswaList(
     }
   });
 
-  return api.get<PaginatedResponse<Mahasiswa>>(`/mahasiswa?${params.toString()}`);
+  // Prodi uses scoped endpoint; Admin/Mahasiswa/Warek use the unified endpoint
+  const endpoint = "/mahasiswa";
+  return api.get<PaginatedResponse<Mahasiswa>>(`${endpoint}?${params.toString()}`);
+}
+
+/**
+ * Get prodi-scoped mahasiswa list. Used by Prodi role pages.
+ * Returns same shape as getMahasiswaList but via /prodi/mahasiswa.
+ */
+export async function getProdiMahasiswaList(
+  filter: MahasiswaFilter = {}
+): Promise<PaginatedResponse<Mahasiswa>> {
+  const params = new URLSearchParams();
+  Object.entries(filter).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.append(key, String(value));
+    }
+  });
+  return api.get<PaginatedResponse<Mahasiswa>>(`/prodi/mahasiswa?${params.toString()}`);
 }
 
 export interface MahasiswaFilterOptions {

@@ -4,31 +4,30 @@ namespace App\Services;
 
 use App\Models\MataKuliah;
 use App\Models\IpkSemestr;
+use App\Models\NilaiMutu;
+use Illuminate\Support\Facades\Cache;
 
 class IPKCalculatorService
 {
-    /** Grade → nilai mutu */
-    private static array $gradeMap = [
-        'A'  => 4.0,
-        'AB' => 3.5,
-        'B'  => 3.0,
-        'BC' => 2.5,
-        'C'  => 2.0,
-        'D'  => 1.0,
-        'E'  => 0.0,
-    ];
-
-    /** Nilai mutu → apakah lulus */
-    private static array $lulusGrade = ['A', 'AB', 'B', 'BC', 'C'];
+    private static function getNilaiMutuMap(): array
+    {
+        return Cache::remember('nilai_mutu_map', 3600, function () {
+            return NilaiMutu::all()->keyBy(fn($n) => strtoupper($n->huruf))->toArray();
+        });
+    }
 
     public static function nilaiMutu(string $nilaiHuruf): float
     {
-        return self::$gradeMap[strtoupper($nilaiHuruf)] ?? 0.0;
+        $map = self::getNilaiMutuMap();
+        $key = strtoupper($nilaiHuruf);
+        return isset($map[$key]) ? (float) $map[$key]['poin'] : 0.0;
     }
 
     public static function isLulus(string $nilaiHuruf): bool
     {
-        return in_array(strtoupper($nilaiHuruf), self::$lulusGrade);
+        $map = self::getNilaiMutuMap();
+        $key = strtoupper($nilaiHuruf);
+        return isset($map[$key]) ? (bool) $map[$key]['lulus'] : false;
     }
 
     /**

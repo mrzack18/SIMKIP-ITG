@@ -1,62 +1,98 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/services/api";
+import { getMahasiswaFilterOptions, getProdiMahasiswaList } from "@/services/mahasiswaService";
+import type { Mahasiswa } from "@/types";
 
-interface Mhs {
-  nim: string;
-  nama: string;
-  angkatan: number;
-  kategori: "Reguler" | "Aspirasi";
-  ipk: number;
-  semester: number;
-  status: "Aktif" | "Lulus" | "Dicabut" | "Nonaktif";
-  sp: number;
-}
-
-const DATA: Mhs[] = [
-  { nim: "2206001", nama: "Ahmad Rifaldi", angkatan: 2022, kategori: "Reguler", ipk: 3.35, semester: 8, status: "Aktif", sp: 0 },
-  { nim: "2206015", nama: "Budi Setiawan", angkatan: 2022, kategori: "Reguler", ipk: 2.85, semester: 8, status: "Aktif", sp: 1 },
-  { nim: "2206033", nama: "Citra Dewi", angkatan: 2022, kategori: "Aspirasi", ipk: 2.78, semester: 7, status: "Aktif", sp: 1 },
-  { nim: "2106003", nama: "Rizky Pratama", angkatan: 2021, kategori: "Reguler", ipk: 3.55, semester: 9, status: "Lulus", sp: 0 },
-  { nim: "2106010", nama: "Dina Fitriani", angkatan: 2021, kategori: "Aspirasi", ipk: 3.20, semester: 9, status: "Aktif", sp: 0 },
-  { nim: "2306005", nama: "Eka Saputra", angkatan: 2023, kategori: "Reguler", ipk: 3.42, semester: 6, status: "Aktif", sp: 0 },
-  { nim: "2306018", nama: "Fani Rahayu", angkatan: 2023, kategori: "Aspirasi", ipk: 3.10, semester: 5, status: "Aktif", sp: 0 },
-  { nim: "2006007", nama: "Hendra Gunawan", angkatan: 2020, kategori: "Reguler", ipk: 3.68, semester: 10, status: "Lulus", sp: 0 },
-];
-
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 export default function ProdiMahasiswaList() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");
-  const [filterStatus, setFilterStatus] = useState("Semua");
-  const [page, setPage] = useState(1);
+  const [filterStatus, setFilterStatus] = useState("Semua Status");
   const [sortBy, setSortBy] = useState("NIM (A-Z)");
+  const [page, setPage] = useState(1);
+  const [rows, setRows] = useState<Mahasiswa[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [angkatans, setAngkatans] = useState<number[]>([]);
+  const [exporting, setExporting] = useState(false);
 
-  const angkatanList = [...new Set(DATA.map(d => d.angkatan))].sort((a, b) => b - a);
+  // Load filter options (angkatans) once
+  useEffect(() => {
+    getMahasiswaFilterOptions()
+      .then((opt) => setAngkatans(opt.angkatans))
+      .catch(() => setAngkatans([]));
+  }, []);
 
-  const filtered = DATA.filter(m => {
-    const q = search.toLowerCase();
-    const matchSearch = m.nama.toLowerCase().includes(q) || m.nim.includes(q);
-    const matchAng = filterAngkatan === "Semua" || m.angkatan === parseInt(filterAngkatan);
-    const matchKat = filterKategori === "Semua" || m.kategori === filterKategori;
-    const matchSt = filterStatus === "Semua" || m.status === filterStatus;
-    return matchSearch && matchAng && matchKat && matchSt;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case "NIM (A-Z)": return a.nim.localeCompare(b.nim);
-      case "NIM (Z-A)": return b.nim.localeCompare(a.nim);
-      case "Nama (A-Z)": return a.nama.localeCompare(b.nama);
-      case "Nama (Z-A)": return b.nama.localeCompare(a.nama);
-      case "IPK (Tertinggi)": return b.ipk - a.ipk;
-      case "IPK (Terendah)": return a.ipk - b.ipk;
-      default: return 0;
+  // Load data with debounce
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    const timer = setTimeout(() => {
+      getProdiMahasiswaList({
+        search,
+        angkatan: filterAngkatan,
+        kategori: filterKategori,
+        status: filterStatus,
+        sortBy,
+        page,
+        limit: PAGE_SIZE,
+      } as any)
+        .then((res) => {
+          if (!active) return;
+          setRows((res.data ?? []) as unknown as Mahasiswa[]);
+          setTotal(res.total ?? 0);
+          setTotalPages(res.totalPages ?? 1);
+        })
+        .catch(() => { if (active) { setRows([]); setTotal(0); setTotalPages(1); } })
+        .finally(() => { if (active) setLoading(false); });
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [search, filterAngkatan, filterKategori, filterStatus, sortBy, page]);
+
+  const prodiNama = user?.prodi ?? "Program Studi";
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const params = new URLSearchParams({
+        angkatan: filterAngkatan,
+        kategori: filterKategori,
+        status: filterStatus === "Semua Status" ? "Semua" : filterStatus,
+        tahun_akademik: "2025/2026",
+        semester: "Genap",
+        sertakan_ipk: "true",
+        sertakan_dokumen: "true",
+        sertakan_sp: "false",
+        format: "xlsx",
+      });
+      const token = localStorage.getItem("simkip_token");
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/ekspor/mahasiswa/download?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Requested-With": "XMLHttpRequest" },
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh file.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Mahasiswa_KIP-K_${prodiNama.replace(/\s+/g, "_")}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("Gagal mengekspor data. Coba lagi nanti.");
+    } finally {
+      setExporting(false);
     }
-  });
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  };
 
   const statusBadge: Record<string, string> = {
     Aktif: "bg-green-100 text-green-700",
@@ -69,11 +105,12 @@ export default function ProdiMahasiswaList() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Mahasiswa KIP-K — Teknik Informatika</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{filtered.length} mahasiswa ditemukan (read-only)</p>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Mahasiswa KIP-K — {prodiNama}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50">
-          <Download size={15} /> Export Excel
+        <button onClick={handleExport} disabled={exporting}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+          <Download size={15} /> {exporting ? "Mengekspor..." : "Export Excel"}
         </button>
       </div>
 
@@ -88,9 +125,9 @@ export default function ProdiMahasiswaList() {
           </div>
           {[
             { label: "Urutkan", value: sortBy, setter: setSortBy, opts: ["NIM (A-Z)", "NIM (Z-A)", "Nama (A-Z)", "Nama (Z-A)", "IPK (Tertinggi)", "IPK (Terendah)"] },
-            { label: "Angkatan", value: filterAngkatan, setter: setFilterAngkatan, opts: ["Semua", ...angkatanList.map(String)] },
+            { label: "Angkatan", value: filterAngkatan, setter: setFilterAngkatan, opts: ["Semua", ...angkatans.map(String)] },
             { label: "Kategori", value: filterKategori, setter: setFilterKategori, opts: ["Semua", "Reguler", "Aspirasi"] },
-            { label: "Status", value: filterStatus, setter: setFilterStatus, opts: ["Semua", "Aktif", "Nonaktif", "Dicabut", "Lulus"] },
+            { label: "Status", value: filterStatus, setter: setFilterStatus, opts: ["Semua Status", "Aktif", "Nonaktif", "Dicabut", "Lulus"] },
           ].map(f => (
             <select key={f.label} value={f.value} onChange={e => { f.setter(e.target.value); setPage(1); }}
               className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none">
@@ -112,8 +149,11 @@ export default function ProdiMahasiswaList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginated.map((m, i) => (
-                <tr key={m.nim} className="hover:bg-gray-50/60">
+              {loading && (
+                <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-gray-400">Memuat data…</td></tr>
+              )}
+              {!loading && rows.map((m, i) => (
+                <tr key={m.id} className="hover:bg-gray-50/60">
                   <td className="px-4 py-3 text-gray-400 text-xs">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-600">{m.nim}</td>
                   <td className="px-4 py-3 font-500 text-gray-800">{m.nama}</td>
@@ -126,21 +166,21 @@ export default function ProdiMahasiswaList() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{m.semester}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs font-500 ${statusBadge[m.status]}`}>{m.status}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-500 ${statusBadge[m.status] ?? "bg-gray-100 text-gray-700"}`}>{m.status}</span>
                   </td>
                   <td className="px-4 py-3">
-                    {m.sp > 0 ? (
-                      <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-500">SP{m.sp}</span>
+                    {m.sp ? (
+                      <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-500">{m.sp}</span>
                     ) : <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <Link to={`/prodi/mahasiswa/${m.nim}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 w-fit">
+                    <Link to={`/prodi/mahasiswa/${m.id}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 w-fit">
                       <Eye size={12} /> Lihat
                     </Link>
                   </td>
                 </tr>
               ))}
-              {paginated.length === 0 && (
+              {!loading && rows.length === 0 && (
                 <tr><td colSpan={10} className="px-4 py-10 text-center text-sm text-gray-400">Tidak ada data.</td></tr>
               )}
             </tbody>

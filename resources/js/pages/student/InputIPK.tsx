@@ -55,21 +55,6 @@ interface PeriodeConfig {
 }
 
 // ─── Grade helpers ─────────────────────────────────────────────────────────────
-const nilaiMutuMap: Record<string, number> = {
-  A: 4.0,
-  AB: 3.5,
-  B: 3.0,
-  BC: 2.5,
-  C: 2.0,
-  D: 1.0,
-  E: 0.0,
-}
-
-function getNilaiMutu(nilai: NilaiHuruf): number | null {
-  if (!nilai) return null
-  return nilaiMutuMap[nilai] ?? null
-}
-
 function getLulus(nilai: NilaiHuruf): boolean | null {
   if (!nilai) return null
   return nilai !== "D" && nilai !== "E"
@@ -101,6 +86,11 @@ export default function InputIPK() {
   const [isLoading, setIsLoading] = useState(true)
   const [periode, setPeriode] = useState<PeriodeConfig | null>(null)
   const [periodeError, setPeriodeError] = useState(false)
+  const [nilaiMutuMap, setNilaiMutuMap] = useState<Record<string, number>>({})
+
+  const getNilaiMutu = (nilai: string) => {
+    return nilaiMutuMap[nilai] ?? null
+  }
 
   const fetchData = async () => {
     try {
@@ -112,6 +102,7 @@ export default function InputIPK() {
       setHistoryData(resIpk.data || [])
       setCarryOverData(resIpk.carry_over || [])
       if (resIpk.statistik) setStatistik(resIpk.statistik)
+      if (resPeriode.nilai_mutu) setNilaiMutuMap(resPeriode.nilai_mutu)
       
       setPeriode(resPeriode)
     } catch (error) {

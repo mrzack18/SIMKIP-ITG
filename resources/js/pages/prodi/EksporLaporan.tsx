@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileText, Table } from "lucide-react";
+import { api, API_BASE_URL } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface PreviewRow {
   nim: string;
@@ -12,40 +14,106 @@ interface PreviewRow {
   dokumenLengkap: string;
 }
 
-const PREVIEW_DATA: PreviewRow[] = [
-  { nim: "2206001", nama: "Ahmad Rifaldi", angkatan: 2022, kategori: "Reguler", ipkTerakhir: 3.35, semester: 8, sp: 0, dokumenLengkap: "5/5" },
-  { nim: "2206015", nama: "Budi Setiawan", angkatan: 2022, kategori: "Reguler", ipkTerakhir: 2.85, semester: 8, sp: 1, dokumenLengkap: "4/5" },
-  { nim: "2206033", nama: "Citra Dewi", angkatan: 2022, kategori: "Aspirasi", ipkTerakhir: 2.78, semester: 7, sp: 1, dokumenLengkap: "3/5" },
-  { nim: "2306005", nama: "Eka Saputra", angkatan: 2023, kategori: "Reguler", ipkTerakhir: 3.42, semester: 6, sp: 0, dokumenLengkap: "5/5" },
-];
+interface PreviewResponse {
+  success: boolean;
+  data: PreviewRow[];
+  summary: {
+    totalMahasiswa: number;
+    rataIpk: number;
+    mahasiswaDenganSp: number;
+  };
+}
+
+const DEFAULT_FORM = {
+  tahunAkademik: "2025/2026",
+  semester: "Genap",
+  angkatan: "Semua",
+  kategori: "Semua",
+  sertakanIPK: true,
+  sertakanDokumen: true,
+  sertakanSP: false,
+  format: "xlsx",
+};
 
 export default function EksporLaporan() {
-  const [form, setForm] = useState({
-    tahunAkademik: "2025/2026",
-    semester: "Genap",
-    angkatan: "Semua",
-    kategori: "Semua",
-    sertakanIPK: true,
-    sertakanDokumen: true,
-    sertakanSP: false,
-    format: "xlsx",
-  });
+  const { user } = useAuth();
+  const [form, setForm] = useState(DEFAULT_FORM);
   const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  // Pull available angkatan list once
+  useEffect(() => {
+    // intentionally empty: angkatan list driven by PREVIEW (only those that exist)
+  }, []);
+
+  const prodiNama = user?.prodi ?? "Program Studi";
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value }));
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setLoading(true);
-    setTimeout(() => { setLoading(false); setGenerated(true); }, 1000);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        angkatan: form.angkatan,
+        kategori: form.kategori,
+        status: "Semua",
+      });
+      const res = await api.get<PreviewResponse>(`/ekspor/mahasiswa/preview?${params.toString()}`);
+      setPreview(res);
+      setGenerated(true);
+    } catch (e: any) {
+      setError(e?.message ?? "Gagal membuat pratinjau.");
+      setPreview(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const params = new URLSearchParams({
+        angkatan: form.angkatan,
+        kategori: form.kategori,
+        tahun_akademik: form.tahunAkademik,
+        semester: form.semester,
+        sertakan_ipk: String(form.sertakanIPK),
+        sertakan_dokumen: String(form.sertakanDokumen),
+        sertakan_sp: String(form.sertakanSP),
+        format: form.format,
+      });
+      const token = localStorage.getItem("simkip_token");
+      const res = await fetch(`${API_BASE_URL}/ekspor/mahasiswa/download?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}`, "X-Requested-With": "XMLHttpRequest" } : { "X-Requested-With": "XMLHttpRequest" },
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const ext = form.format === "pdf" ? "pdf" : "xlsx";
+      a.href = url;
+      a.download = `Mahasiswa_KIP-K_${prodiNama.replace(/\s+/g, "_")}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setError(e?.message ?? "Gagal mengunduh laporan.");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="font-display font-700 text-2xl text-gray-900">Ekspor Laporan</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Generate dan download laporan mahasiswa KIP-K Teknik Informatika</p>
+        <p className="text-gray-500 text-sm mt-0.5">Generate dan download laporan mahasiswa KIP-K {prodiNama}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -116,20 +184,24 @@ export default function EksporLaporan() {
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
                   <h3 className="font-600 text-gray-800 text-sm">Pratinjau Laporan</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Teknik Informatika — {form.tahunAkademik} Semester {form.semester} — Angkatan {form.angkatan}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{prodiNama} — {form.tahunAkademik} Semester {form.semester} — Angkatan {form.angkatan}</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-700 text-white shadow-sm"
+                <button onClick={handleDownload} disabled={downloading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-700 text-white shadow-sm disabled:opacity-60"
                   style={{ background: "#263F93" }}>
-                  <Download size={14} /> Download {form.format.toUpperCase()}
+                  <Download size={14} /> {downloading ? "Mengunduh..." : `Download ${form.format.toUpperCase()}`}
                 </button>
               </div>
 
-              {/* Summary stats */}
+              {error && (
+                <div className="px-5 py-3 bg-red-50 border-b border-red-200 text-sm text-red-700">{error}</div>
+              )}
+
               <div className="grid grid-cols-3 gap-px bg-gray-100">
                 {[
-                  { label: "Total Mahasiswa", val: PREVIEW_DATA.length },
-                  { label: "Rata-rata IPK", val: (PREVIEW_DATA.reduce((s,r)=>s+r.ipkTerakhir,0)/PREVIEW_DATA.length).toFixed(2) },
-                  { label: "Mahasiswa dengan SP", val: PREVIEW_DATA.filter(r=>r.sp>0).length },
+                  { label: "Total Mahasiswa", val: preview?.summary?.totalMahasiswa ?? 0 },
+                  { label: "Rata-rata IPK",   val: Number(preview?.summary?.rataIpk ?? 0).toFixed(2) },
+                  { label: "Mahasiswa dengan SP", val: preview?.summary?.mahasiswaDenganSp ?? 0 },
                 ].map(s => (
                   <div key={s.label} className="bg-white px-4 py-3 text-center">
                     <p className="font-display font-700 text-2xl text-[#263F93]">{s.val}</p>
@@ -146,7 +218,10 @@ export default function EksporLaporan() {
                     ))}
                   </tr></thead>
                   <tbody className="divide-y divide-gray-50">
-                    {PREVIEW_DATA.map(r => (
+                    {(preview?.data ?? []).length === 0 && (
+                      <tr><td colSpan={form.sertakanDokumen ? 8 : 7} className="px-4 py-8 text-center text-sm text-gray-400">Tidak ada data untuk filter ini.</td></tr>
+                    )}
+                    {(preview?.data ?? []).map((r) => (
                       <tr key={r.nim} className="hover:bg-gray-50/60">
                         <td className="px-4 py-3 font-mono text-xs text-gray-600">{r.nim}</td>
                         <td className="px-4 py-3 font-500 text-gray-800">{r.nama}</td>
@@ -155,7 +230,7 @@ export default function EksporLaporan() {
                           <span className={`px-2 py-0.5 rounded text-xs font-500 ${r.kategori === "Reguler" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>{r.kategori}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`font-700 font-display ${r.ipkTerakhir >= 3.0 ? "text-green-600" : "text-red-500"}`}>{r.ipkTerakhir.toFixed(2)}</span>
+                          <span className={`font-700 font-display ${r.ipkTerakhir >= 3.0 ? "text-green-600" : "text-red-500"}`}>{Number(r.ipkTerakhir).toFixed(2)}</span>
                         </td>
                         <td className="px-4 py-3 text-gray-600">{r.semester}</td>
                         <td className="px-4 py-3">

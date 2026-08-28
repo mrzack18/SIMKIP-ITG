@@ -48,7 +48,7 @@ class SPController extends Controller
         $request->validate([
             'mahasiswa_id'      => 'required|exists:mahasiswas,id',
             'level'             => 'required|in:SP1,SP2,SP3',
-            'jenis_pelanggaran' => 'required|in:Akademik,Non-Akademik,Cuti Tanpa Izin',
+            'jenis_pelanggaran' => 'required|exists:jenis_pelanggarans,nama',
             'deskripsi'         => 'required|string|min:10',
             'tanggal_terbit'    => 'required|date',
             'batas_evaluasi'    => 'nullable|date|after:tanggal_terbit',
@@ -62,7 +62,8 @@ class SPController extends Controller
             return response()->json(['success' => false, 'message' => $error], 422);
         }
 
-        $level = $request->jenis_pelanggaran === 'Cuti Tanpa Izin' ? 'SP3' : $request->level;
+        $jp = \App\Models\JenisPelanggaran::where('nama', $request->jenis_pelanggaran)->first();
+        $level = ($jp && $jp->eskalasi === 'langsung_sp3') ? 'SP3' : $request->level;
 
         $sp = SuratPeringatan::create([
             'mahasiswa_id'      => $request->mahasiswa_id,

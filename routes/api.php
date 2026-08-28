@@ -165,9 +165,23 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::get("/mahasiswa/export", [\App\Http\Controllers\Api\Warek\MahasiswaController::class, "export"]);
     });
 
+    // Prodi-specific endpoints
+    Route::middleware("role:prodi")->prefix("prodi")->group(function () {
+        Route::get("/mahasiswa", function (Request $req) {
+            return app(ProdiMahasiswa::class)->index($req);
+        });
+        Route::get("/mahasiswa/{id}/detail", function (Request $req, $id) {
+            return app(ProdiMahasiswa::class)->detail($req, (int) $id);
+        });
+    });
+
     // Ekspor Prodi
     Route::get("/ekspor/mahasiswa", function (Request $req) {
         if ($req->user()->role === "prodi") return app(ProdiMahasiswa::class)->ekspor($req);
+        abort(403);
+    });
+    Route::get("/ekspor/mahasiswa/preview", function (Request $req) {
+        if ($req->user()->role === "prodi") return app(ProdiMahasiswa::class)->eksporPreview($req);
         abort(403);
     });
     Route::get("/ekspor/mahasiswa/download", function (Request $req) {
