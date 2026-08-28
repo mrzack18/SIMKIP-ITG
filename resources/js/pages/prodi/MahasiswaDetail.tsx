@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import logoItg from "@/imports/logo_itg.jpg"
 import { api, API_BASE_URL } from "@/services/api"
+import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -208,14 +209,6 @@ interface DetailResponse {
   sp: SpItem[]
 }
 
-const STATUS_BADGE_MAP: Record<string, string> = {
-  Disetujui: "bg-green-100 text-green-700",
-  Menunggu: "bg-amber-100 text-amber-700",
-  "Menunggu Validasi": "bg-amber-100 text-amber-700",
-  Ditolak: "bg-red-100 text-red-700",
-  "Belum Diunggah": "bg-gray-100 text-gray-500",
-}
-
 const TingkatBadge = ({ tingkat }: { tingkat: string }) => {
   if (tingkat === "Internasional") return "bg-purple-100 text-purple-700"
   if (tingkat === "Nasional") return "bg-blue-100 text-blue-700"
@@ -224,22 +217,6 @@ const TingkatBadge = ({ tingkat }: { tingkat: string }) => {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const statusBadge = (status: string) => STATUS_BADGE_MAP[status] ?? "bg-gray-100 text-gray-500"
-
-const StatusIcon = ({ status }: { status: string }) => {
-  if (status === "Disetujui") return <CheckCircle size={14} className="text-green-500" />
-  if (status === "Menunggu" || status === "Menunggu Validasi") return <Clock size={14} className="text-amber-500" />
-  if (status === "Ditolak") return <XCircle size={14} className="text-red-500" />
-  return <FileText size={14} className="text-gray-400" />
-}
-
-const dokBorderColor = (status: string) => {
-  if (status === "Disetujui") return "border-green-500"
-  if (status === "Menunggu" || status === "Menunggu Validasi") return "border-amber-500"
-  if (status === "Ditolak") return "border-red-500"
-  return "border-gray-300"
-}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 

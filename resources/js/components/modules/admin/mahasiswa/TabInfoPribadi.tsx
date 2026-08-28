@@ -1,0 +1,177 @@
+import { User, GraduationCap, Phone, Clock, Users } from "lucide-react"
+import type { Mahasiswa } from "@/types"
+
+export function TabInfoPribadi({ data }: { data: Mahasiswa | null }) {
+  if (!data) return null;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Basic Info Card */}
+        <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gray-50 px-6 py-4 border-b border-[#E2E8F0]">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <User size={18} className="text-gray-500" />
+              Informasi Dasar
+            </h3>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <span className="block text-sm text-gray-500 mb-1">Nama Lengkap</span>
+              <span className="block font-medium text-gray-900">{data.nama || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">NIM</span>
+              <span className="block font-medium text-gray-900">{data.nim || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Kategori KIP-K</span>
+              <span className="block font-medium text-gray-900">{data.kategori ? `KIP-K ${data.kategori}` : "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">NIK</span>
+              <span className="block font-medium text-gray-900">{data.nik || "—"}</span>
+            </div>
+
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Tempat Lahir</span>
+              <span className="block font-medium text-gray-900">{data.tempatLahir || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Tanggal Lahir</span>
+              <span className="block font-medium text-gray-900">{data.tanggalLahir || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Jenis Kelamin</span>
+              <span className="block font-medium text-gray-900">{data.jenisKelamin || "—"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Academic Info Card */}
+        <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gray-50 px-6 py-4 border-b border-[#E2E8F0]">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <GraduationCap size={18} className="text-gray-500" />
+              Informasi Akademik
+            </h3>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Program Studi</span>
+              <span className="block font-medium text-gray-900">{data.prodi || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Angkatan</span>
+              <span className="block font-medium text-gray-900">{data.angkatan || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Status Mahasiswa</span>
+              <span className="block font-medium text-gray-900">{data.status || "—"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Info Card */}
+        <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm md:col-span-2">
+          <div className="bg-gray-50 px-6 py-4 border-b border-[#E2E8F0]">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Phone size={18} className="text-gray-500" />
+              Kontak & Alamat
+            </h3>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Email</span>
+              <span className="block font-medium text-gray-900">{data.email || <span className="text-gray-400 italic">Belum ada data</span>}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Nomor HP</span>
+              <span className="block font-medium text-gray-900">{data.noHp || <span className="text-gray-400 italic">Belum ada data</span>}</span>
+            </div>
+            <div className="md:col-span-2">
+              <span className="block text-sm text-gray-500 mb-1">Alamat Lengkap</span>
+              <span className="block font-medium text-gray-900">{data.alamat || "—"}</span>
+            </div>
+            
+            <div className="md:col-span-2 mt-2 pt-4 border-t border-gray-100">
+              <span className="block text-sm font-semibold text-gray-700 mb-3">Riwayat Nomor HP</span>
+              <div className="space-y-0">
+                {data.noHp && (
+                  <div className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                    <div className="flex flex-col items-center self-stretch pt-1">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#16a34a" }} />
+                      {data?.contactHistories?.length > 0 && (
+                        <div className="w-px flex-1 mt-1" style={{ background: "#E2E8F0" }} />
+                      )}
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-500 text-gray-700">{data.noHp}</p>
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                          <Clock size={10} /> Saat Ini
+                        </p>
+                      </div>
+                      <span className="text-xs font-500 px-2 py-0.5 rounded-full bg-green-100 text-green-700">Aktif</span>
+                    </div>
+                  </div>
+                )}
+                {data?.contactHistories?.map((item: any, idx: number) => (
+                  <div key={idx} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                    <div className="flex flex-col items-center self-stretch pt-1">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#CBD5E1" }} />
+                      {idx < data.contactHistories.length - 1 && (
+                        <div className="w-px flex-1 mt-1" style={{ background: "#E2E8F0" }} />
+                      )}
+                    </div>
+                    <div className="flex-1 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-500 text-gray-700">{item.nomor}</p>
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                          <Clock size={10} /> {item.sem}
+                        </p>
+                      </div>
+                      <span className="text-xs font-500 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Tidak Aktif</span>
+                    </div>
+                  </div>
+                ))}
+                {!data.noHp && !data?.contactHistories?.length && (
+                  <p className="text-sm text-gray-400 italic">Belum ada riwayat kontak.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Family Info Card */}
+        <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm md:col-span-2">
+          <div className="bg-gray-50 px-6 py-4 border-b border-[#E2E8F0]">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Users size={18} className="text-gray-500" />
+              Informasi Orang Tua/Wali
+            </h3>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Nama Ayah</span>
+              <span className="block font-medium text-gray-900">{data.namaAyah || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">Nama Ibu</span>
+              <span className="block font-medium text-gray-900">{data.namaIbu || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">No. HP Ayah</span>
+              <span className="block font-medium text-gray-900">{data.telAyah || "—"}</span>
+            </div>
+            <div>
+              <span className="block text-sm text-gray-500 mb-1">No. HP Ibu</span>
+              <span className="block font-medium text-gray-900">{data.telIbu || "—"}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
