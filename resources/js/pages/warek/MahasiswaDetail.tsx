@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Link, useParams } from "react-router-dom"
 import {
   AreaChart,
@@ -39,8 +39,8 @@ import {
   Download,
   Info,
 } from "lucide-react"
-import { mahasiswaList, ipkHistory } from "@/data/mockData"
 import logoItg from "@/imports/logo_itg.jpg"
+import { api } from "@/services/api"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,469 +56,33 @@ interface MataKuliah {
 interface SemesterDetail {
   semester: number
   tahun: string
+  ips?: number
   ipk: number
   mataKuliah: MataKuliah[]
 }
 
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-
-const semesterDetails: SemesterDetail[] = [
-  {
-    semester: 1,
-    tahun: "2022/2023 Ganjil",
-    ipk: 3.2,
-    mataKuliah: [
-      {
-        kode: "IF101",
-        nama: "Pengantar Teknologi Informasi",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF102",
-        nama: "Kalkulus",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF103",
-        nama: "Pemrograman Dasar",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF104",
-        nama: "Bahasa Inggris Teknik",
-        sks: 2,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF105",
-        nama: "Pendidikan Pancasila",
-        sks: 2,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF205",
-        nama: "Fisika Dasar",
-        sks: 2,
-        nilaiHuruf: "D",
-        nilaiMutu: 1.0,
-        lulus: false,
-      },
-    ],
-  },
-  {
-    semester: 2,
-    tahun: "2022/2023 Genap",
-    ipk: 3.45,
-    mataKuliah: [
-      {
-        kode: "IF201",
-        nama: "Pemrograman Berorientasi Objek",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF202",
-        nama: "Aljabar Linear",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF203",
-        nama: "Sistem Digital",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF204",
-        nama: "Bahasa Indonesia",
-        sks: 2,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF205",
-        nama: "Fisika Dasar",
-        sks: 2,
-        nilaiHuruf: "D",
-        nilaiMutu: 1.0,
-        lulus: false,
-      },
-    ],
-  },
-  {
-    semester: 3,
-    tahun: "2023/2024 Ganjil",
-    ipk: 3.65,
-    mataKuliah: [
-      {
-        kode: "IF301",
-        nama: "Algoritma",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF302",
-        nama: "Basis Data",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF303",
-        nama: "Jarkom",
-        sks: 2,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF304",
-        nama: "Struktur Data",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF205",
-        nama: "Fisika Dasar (Perbaikan)",
-        sks: 2,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-    ],
-  },
-  {
-    semester: 4,
-    tahun: "2023/2024 Genap",
-    ipk: 3.3,
-    mataKuliah: [
-      {
-        kode: "IF301",
-        nama: "Algoritma",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF302",
-        nama: "Basis Data",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF303",
-        nama: "Jarkom",
-        sks: 2,
-        nilaiHuruf: "D",
-        nilaiMutu: 1.0,
-        lulus: false,
-      },
-      {
-        kode: "IF304",
-        nama: "Struktur Data",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF305",
-        nama: "Matematika Diskrit",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-    ],
-  },
-  {
-    semester: 5,
-    tahun: "2024/2025 Ganjil",
-    ipk: 3.1,
-    mataKuliah: [
-      {
-        kode: "IF501",
-        nama: "Kecerdasan Buatan",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF502",
-        nama: "Rekayasa Perangkat Lunak",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF503",
-        nama: "Jaringan Komputer (Perbaikan)",
-        sks: 2,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF504",
-        nama: "Pemrograman Web",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-    ],
-  },
-  {
-    semester: 6,
-    tahun: "2024/2025 Genap",
-    ipk: 3.45,
-    mataKuliah: [
-      {
-        kode: "IF601",
-        nama: "Proyek Perangkat Lunak",
-        sks: 4,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-      {
-        kode: "IF602",
-        nama: "Keamanan Jaringan",
-        sks: 3,
-        nilaiHuruf: "B",
-        nilaiMutu: 3.0,
-        lulus: true,
-      },
-      {
-        kode: "IF603",
-        nama: "Basis Data Lanjut",
-        sks: 3,
-        nilaiHuruf: "A",
-        nilaiMutu: 4.0,
-        lulus: true,
-      },
-    ],
-  },
-]
-
-const mkBelumLulus = [
-  {
-    kode: "IF303",
-    nama: "Jaringan Komputer",
-    sks: 2,
-    nilai: "D",
-    semesterAwal: 4,
-    statusPerbaikan: "belum" as const,
-  },
-  {
-    kode: "IF205",
-    nama: "Fisika Dasar",
-    sks: 2,
-    nilai: "D",
-    semesterAwal: 2,
-    statusPerbaikan: "lulus" as const,
-    lulusDiSem: 5,
-  },
-]
-
-const mockPrestasi = [
-  {
-    id: 1,
-    nama: "Juara 2 Hackathon Nasional",
-    tingkat: "Nasional" as const,
-    penyelenggara: "Kemendikbud",
-    pencapaian: "Juara 2",
-    tanggalMulai: "5 Jan 2026",
-    tanggalSelesai: "7 Jan 2026",
-    tempat: "Bandung",
-    deskripsi: "Kompetisi hackathon tingkat nasional diikuti 200 tim.",
-    link: "https://kemendikbud.go.id",
-    status: "Disetujui" as const,
-  },
-  {
-    id: 2,
-    nama: "Best Paper IEEE Conference",
-    tingkat: "Internasional" as const,
-    penyelenggara: "IEEE Indonesia",
-    pencapaian: "Best Paper",
-    tanggalMulai: "12 Mar 2026",
-    tanggalSelesai: "14 Mar 2026",
-    tempat: "Jakarta",
-    deskripsi: "Konferensi internasional IEEE bidang teknologi informasi.",
-    link: "https://ieee.org",
-    status: "Disetujui" as const,
-  },
-]
-
-const mockOrganisasi = [
-  {
-    id: 1,
-    nama: "BEM Institut Teknologi Garut",
-    jabatan: "Ketua Departemen Pendidikan",
-    periodeMulai: "September 2024",
-    periodeSelesai: "September 2025",
-    deskripsi:
-      "Bertanggung jawab atas program pendidikan dan kaderisasi BEM ITG.",
-    status: "Disetujui" as const,
-    jenis: "Organisasi",
-    fotoKegiatan: "foto1.jpg",
-  },
-  {
-    id: 2,
-    nama: "Himpunan Mahasiswa Teknik Informatika",
-    jabatan: "Sekretaris Umum",
-    periodeMulai: "September 2025",
-    periodeSelesai: "September 2026",
-    deskripsi: "Mengelola administrasi dan dokumentasi himpunan.",
-    status: "Disetujui" as const,
-    jenis: "Kepanitiaan",
-    fotoKegiatan: "foto2.jpg",
-  },
-]
-
-const mockPelatihanAkademik = [
-  {
-    id: 1,
-    nama: "Pelatihan Machine Learning Dasar",
-    penyelenggara: "Google DSC ITG",
-    tanggalMulai: "10 Agustus 2026",
-    tanggalSelesai: "12 Agustus 2026",
-    tempat: "Garut",
-    deskripsi: "Pelatihan pengenalan ML menggunakan Python.",
-    status: "Disetujui" as const,
-    fotoKegiatan: "foto_ml.jpg",
-  },
-]
-
-const mockPelatihanNonAkademik = [
-  {
-    id: 2,
-    nama: "Leadership Training",
-    penyelenggara: "ITG Career Center",
-    tanggalMulai: "20 Agustus 2025",
-    tanggalSelesai: "22 Agustus 2025",
-    tempat: "Garut",
-    deskripsi: "Pelatihan kepemimpinan untuk pengurus organisasi.",
-    status: "Disetujui" as const,
-    fotoKegiatan: "foto_lead.jpg",
-  },
-]
-
-const dokumenKewajiban = [
-  {
-    id: 1,
-    nama: "PKKMB",
-    icon: GraduationCap,
-    status: "Disetujui" as const,
-    tanggal: "15 Sep 2022",
-    catatan: null,
-    deskripsi: "Pengenalan Kehidupan Kampus bagi Mahasiswa Baru ITG.",
-    tipe: "Kegiatan Wajib",
-  },
-  {
-    id: 2,
-    nama: "Bela Negara",
-    icon: Shield,
-    status: "Disetujui" as const,
-    tanggal: "20 Nov 2022",
-    catatan: null,
-    deskripsi: "Kegiatan bela negara sebagai syarat penerima KIP-K.",
-    tipe: "Kegiatan Wajib",
-  },
-  {
-    id: 3,
-    nama: "MABIM",
-    icon: Star,
-    status: "Disetujui" as const,
-    tanggal: "10 Agu 2022",
-    catatan: null,
-    deskripsi: "Masa Bimbingan Mahasiswa Baru tingkat fakultas/prodi.",
-    tipe: "Kegiatan Wajib",
-  },
-  {
-    id: 4,
-    nama: "Berita Acara KP",
-    icon: Briefcase,
-    status: "Ditolak" as const,
-    tanggal: "5 Jul 2026",
-    catatan: "File buram, mohon upload ulang.",
-    deskripsi: "Berita acara pelaksanaan Kerja Praktek (KP).",
-    tipe: "Dokumen KP",
-  },
-  {
-    id: 5,
-    nama: "Sertifikasi",
-    icon: Award,
-    status: "Menunggu" as const,
-    tanggal: "10 Agu 2026",
-    catatan: null,
-    deskripsi: "Sertifikasi kompetensi bidang studi sesuai prodi.",
-    tipe: "Dokumen Kompetensi",
-  },
-  {
-    id: 6,
-    nama: "Bukti Sidang Skripsi",
-    icon: BookOpen,
-    status: "Belum Diunggah" as const,
-    tanggal: null,
-    catatan: null,
-    deskripsi: "Bukti pelaksanaan sidang tugas akhir/skripsi.",
-    tipe: "Dokumen Akademik",
-  },
-]
-
-const mockSP = {
-  nomor: "001/SP/KIP-K/ITG/III/2026",
-  tanggal: "15 Maret 2026",
-  perihal: "Surat Peringatan Pertama (SP1) Penerima KIP-K",
-  mahasiswa: {
-    nama: "Ahmad Rifaldi",
-    nim: "2206001",
-    prodi: "Teknik Informatika",
-    semester: 6,
-  },
-  alasan: "IPK turun dari 3.20 ke 2.78 pada Semester IV",
-  body: `Dengan hormat, sehubungan dengan hasil evaluasi akademik Semester IV Tahun Akademik 2023/2024, kami sampaikan bahwa Saudara/i mengalami penurunan Indeks Prestasi Kumulatif (IPK) dari 3.20 menjadi 2.78, yang berada di bawah standar minimum yang ditetapkan untuk penerima beasiswa KIP-K sebesar 3.00.\n\nSehubungan dengan hal tersebut, kami memberikan Surat Peringatan Pertama (SP1) sebagai bentuk pembinaan akademik. Saudara/i diwajibkan untuk:\n1. Meningkatkan IPK minimal menjadi 3.00 pada Semester V\n2. Aktif berkonsultasi dengan Dosen Wali\n3. Melaporkan perkembangan akademik kepada Pengelola KIP-K\n\nApabila pada evaluasi Semester V IPK belum mencapai standar minimum, maka akan diterbitkan Surat Peringatan Kedua (SP2).`,
+interface MahasiswaDetail {
+  id: number
+  nim: string
+  nama: string
+  prodi: string
+  prodiNama?: string
+  angkatan: number
+  kategori: "Reguler" | "Aspirasi"
+  status: "Aktif" | "Nonaktif" | "Lulus" | "Dicabut"
+  semester?: number
+  ipk?: number
+  sp?: string | null
+  semesterDicabut?: string | null
+  tempatLahir?: string | null
+  tanggalLahir?: string | null
+  alamat?: string | null
+  namaAyah?: string | null
+  namaIbu?: string | null
+  telAyah?: string | null
+  telIbu?: string | null
+  contactHistories?: { nomor: string; sem: string; aktif: boolean }[]
 }
-
-const syaratPenyelesaian = [
-  { nama: "IPK ≥ 3.00 pada semester akhir", terpenuhi: true },
-  { nama: "Semua dokumen kewajiban lengkap", terpenuhi: false },
-  { nama: "Tidak memiliki SP aktif", terpenuhi: true },
-  { nama: "Laporan akhir penggunaan beasiswa", terpenuhi: false },
-  { nama: "Surat keterangan lulus dari akademik", terpenuhi: false },
-  { nama: "Bukti yudisium / wisuda", terpenuhi: false },
-]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -690,7 +254,7 @@ function SemesterRow({
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {detail.mataKuliah.map((mk, idx) => (
-                    <tr key={mk.kode} className={mk.lulus ? "" : "bg-red-50"}>
+                    <tr key={`${detail.semester}-${mk.kode}-${idx}`} className={mk.lulus ? "" : "bg-red-50"}>
                       <td className="py-2 text-gray-400 text-xs">{idx + 1}</td>
                       <td className="py-2 text-gray-600 text-xs font-mono">
                         {mk.kode}
@@ -768,13 +332,77 @@ function CustomLegend() {
 
 // ── Tabs content ──────────────────────────────────────────────────────────────
 
-function TabRiwayatAkademik() {
-  const highest = ipkHistory.reduce((a, b) => (a.ipk > b.ipk ? a : b))
-  const lowest = ipkHistory.reduce((a, b) => (a.ipk < b.ipk ? a : b))
-  const avg = ipkHistory.reduce((s, h) => s + h.ipk, 0) / ipkHistory.length
+function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDetail[] }) {
+  const ipkHistory = useMemo(
+    () =>
+      [...semesterDetails]
+        .sort((a, b) => a.semester - b.semester)
+        .map((s) => ({ semester: s.semester, ipk: s.ipk })),
+    [semesterDetails]
+  )
+
+  const highest = ipkHistory.length > 0 ? ipkHistory.reduce((a, b) => (a.ipk > b.ipk ? a : b)) : null
+  const lowest = ipkHistory.length > 0 ? ipkHistory.reduce((a, b) => (a.ipk < b.ipk ? a : b)) : null
+  const avg = ipkHistory.length > 0 ? ipkHistory.reduce((s, h) => s + h.ipk, 0) / ipkHistory.length : 0
+
+  // Build mkBelumLulus from semesterDetails
+  const mkBelumLulus = useMemo(() => {
+    const seen = new Set<string>()
+    const result: {
+      kode: string
+      nama: string
+      sks: number
+      nilai: string
+      semesterAwal: number
+      statusPerbaikan: "belum" | "lulus"
+      lulusDiSem?: number
+    }[] = []
+
+    for (const sem of semesterDetails) {
+      for (const mk of sem.mataKuliah) {
+        if (mk.lulus) continue
+        if (!seen.has(mk.kode)) {
+          seen.add(mk.kode)
+          result.push({
+            kode: mk.kode,
+            nama: mk.nama,
+            sks: mk.sks,
+            nilai: mk.nilaiHuruf,
+            semesterAwal: sem.semester,
+            statusPerbaikan: "belum",
+          })
+        } else {
+          // already encountered as "belum" — check if a later entry shows "lulus"
+          const idx = result.findIndex((r) => r.kode === mk.kode)
+          if (idx >= 0) {
+            // If this entry is "lulus", update the previous
+            const prev = result[idx]
+            if (prev.statusPerbaikan === "belum") {
+              // Mark as lulus di sem ini
+              result[idx] = {
+                ...prev,
+                statusPerbaikan: "lulus",
+                lulusDiSem: sem.semester,
+              }
+            }
+          }
+        }
+      }
+    }
+    return result
+  }, [semesterDetails])
+
   const belumLulus = mkBelumLulus.filter((mk) => mk.statusPerbaikan === "belum")
 
   const chartData = ipkHistory.map((h) => ({ ...h, ipkVal: h.ipk }))
+
+  if (semesterDetails.length === 0) {
+    return (
+      <div className="py-10 text-center text-gray-400 text-sm">
+        Belum ada data akademik untuk mahasiswa ini.
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -783,17 +411,17 @@ function TabRiwayatAkademik() {
         {[
           {
             label: "IPK Tertinggi",
-            value: highest.ipk.toFixed(2),
-            sub: `di Sem ${highest.semester}`,
+            value: highest ? highest.ipk.toFixed(2) : "-",
+            sub: highest ? `di Sem ${highest.semester}` : "-",
           },
           {
             label: "IPK Terendah",
-            value: lowest.ipk.toFixed(2),
-            sub: `di Sem ${lowest.semester}`,
+            value: lowest ? lowest.ipk.toFixed(2) : "-",
+            sub: lowest ? `di Sem ${lowest.semester}` : "-",
           },
           {
             label: "IPK Rata-rata",
-            value: avg.toFixed(2),
+            value: avg > 0 ? avg.toFixed(2) : "-",
             sub: `dari ${ipkHistory.length} semester`,
           },
         ].map(({ label, value, sub }) => (
@@ -910,7 +538,7 @@ function TabRiwayatAkademik() {
       </div>
 
       {/* MK Belum Lulus */}
-      {belumLulus.length > 0 && (
+      {mkBelumLulus.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
             <AlertTriangle size={15} className="text-amber-500" />
@@ -948,9 +576,9 @@ function TabRiwayatAkademik() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {belumLulus.map((mk) => (
+                {mkBelumLulus.map((mk) => (
                   <tr
-                    key={mk.kode}
+                    key={`${mk.kode}-${mk.semesterAwal}`}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
                     <td className="py-2.5 px-3 font-mono text-xs text-gray-600">
@@ -990,21 +618,21 @@ function TabRiwayatAkademik() {
   )
 }
 
-function TabPrestasi() {
+function TabPrestasi({ items }: { items: any[] }) {
   const [subTab, setSubTab] =
     useState<"Internasional" | "Nasional" | "Wilayah">("Internasional")
-  const [modalItem, setModalItem] = useState<typeof mockPrestasi[0] | null>(
-    null,
-  )
+  const [modalItem, setModalItem] = useState<any | null>(null)
 
   const tiers = ["Internasional", "Nasional", "Wilayah"] as const
   const counts: Record<string, number> = {
-    Internasional: mockPrestasi.filter((p) => p.tingkat === "Internasional")
-      .length,
-    Nasional: mockPrestasi.filter((p) => p.tingkat === "Nasional").length,
-    Wilayah: 0,
+    Internasional: items.filter((p) => p.tingkat === "Internasional").length,
+    Nasional: items.filter((p) => p.tingkat === "Nasional").length,
+    Wilayah: items.filter((p) => p.tingkat === "Wilayah").length,
   }
-  const filtered = mockPrestasi.filter((p) => p.tingkat === subTab)
+  const filtered = items.filter((p) => p.tingkat === subTab)
+
+  const fmtDate = (s?: string) =>
+    s ? new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"
 
   return (
     <div className="space-y-4">
@@ -1040,7 +668,7 @@ function TabPrestasi() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.map((p) => (
+          {filtered.map((p: any) => (
             <div
               key={p.id}
               className="border border-[#E2E8F0] rounded-xl p-4 bg-white hover:shadow-sm transition-shadow space-y-3"
@@ -1051,7 +679,7 @@ function TabPrestasi() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm text-gray-900 leading-snug">
-                    {p.nama}
+                    {p.namaPrestasi}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     <span
@@ -1069,20 +697,22 @@ function TabPrestasi() {
                 <div className="flex items-center gap-1.5">
                   <Building2 size={11} className="text-gray-400" />
                   {p.penyelenggara}
-                  <a href={p.link} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink
-                      size={11}
-                      className="text-[#263F93] ml-auto cursor-pointer hover:opacity-70"
-                    />
-                  </a>
+                  {p.linkPenyelenggara && (
+                    <a href={p.linkPenyelenggara} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink
+                        size={11}
+                        className="text-[#263F93] ml-auto cursor-pointer hover:opacity-70"
+                      />
+                    </a>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Calendar size={11} className="text-gray-400" />
-                  {p.tanggalMulai} – {p.tanggalSelesai}
+                  {fmtDate(p.tanggalMulai)} – {fmtDate(p.tanggalSelesai)}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <MapPin size={11} className="text-gray-400" />
-                  {p.tempat}
+                  {p.tempat ?? "-"}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -1121,7 +751,7 @@ function TabPrestasi() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-lg leading-snug">
-                  {modalItem.nama}
+                  {modalItem.namaPrestasi}
                 </h3>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span
@@ -1161,40 +791,44 @@ function TabPrestasi() {
                 <div className="bg-gray-50 rounded-xl px-3 py-2.5">
                   <div className="text-xs text-gray-400 mb-0.5">Tanggal Mulai</div>
                   <div className="font-medium text-gray-800">
-                    {modalItem.tanggalMulai}
+                    {fmtDate(modalItem.tanggalMulai)}
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-xl px-3 py-2.5">
                   <div className="text-xs text-gray-400 mb-0.5">Tanggal Selesai</div>
                   <div className="font-medium text-gray-800">
-                    {modalItem.tanggalSelesai}
+                    {fmtDate(modalItem.tanggalSelesai)}
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-xl px-3 py-2.5">
                   <div className="text-xs text-gray-400 mb-0.5">Tempat</div>
                   <div className="font-medium text-gray-800">
-                    {modalItem.tempat}
+                    {modalItem.tempat ?? "-"}
                   </div>
                 </div>
+                {modalItem.linkPenyelenggara && (
+                  <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
+                    <div className="text-xs text-gray-400 mb-0.5">
+                      Link Penyelenggara
+                    </div>
+                    <a
+                      href={modalItem.linkPenyelenggara}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-[#263F93] hover:underline flex items-center gap-1 truncate"
+                    >
+                      <ExternalLink size={11} />
+                      {modalItem.linkPenyelenggara.replace("https://", "")}
+                    </a>
+                  </div>
+                )}
+              </div>
+              {modalItem.deskripsi && (
                 <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-                  <div className="text-xs text-gray-400 mb-0.5">
-                    Link Penyelenggara
-                  </div>
-                  <a
-                    href={modalItem.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-[#263F93] hover:underline flex items-center gap-1 truncate"
-                  >
-                    <ExternalLink size={11} />
-                    {modalItem.link.replace("https://", "")}
-                  </a>
+                  <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
+                  <div className="text-gray-800">{modalItem.deskripsi}</div>
                 </div>
-              </div>
-              <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-                <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
-                <div className="text-gray-800">{modalItem.deskripsi}</div>
-              </div>
+              )}
             </div>
 
             {/* File placeholders */}
@@ -1222,10 +856,14 @@ function TabPrestasi() {
   )
 }
 
-function TabOrganisasi() {
-  const [modalItem, setModalItem] = useState<typeof mockOrganisasi[0] | null>(
-    null,
-  )
+function TabOrganisasi({ items }: { items: any[] }) {
+  const [modalItem, setModalItem] = useState<any | null>(null)
+
+  const fmtMonthYear = (s?: string) => {
+    if (!s) return "-"
+    const d = new Date(s)
+    return d.toLocaleDateString("id-ID", { month: "long", year: "numeric" })
+  }
 
   return (
     <div className="space-y-4">
@@ -1234,7 +872,11 @@ function TabOrganisasi() {
           <Users size={15} className="text-[#263F93]" /> Keaktifan Organisasi
         </h4>
       </div>
-      {mockOrganisasi.map((o) => (
+      {items.length === 0 ? (
+        <div className="py-10 text-center text-gray-400 text-sm">
+          Belum ada data organisasi.
+        </div>
+      ) : items.map((o: any) => (
         <div
           key={o.id}
           className="border border-[#E2E8F0] rounded-xl p-4 bg-white hover:shadow-sm transition-shadow space-y-3"
@@ -1264,7 +906,7 @@ function TabOrganisasi() {
               </div>
               <div className="text-xs text-gray-500">{o.jabatan}</div>
               <div className="text-xs text-gray-400 mt-0.5">
-                {o.periodeMulai} – {o.periodeSelesai}
+                {fmtMonthYear(o.mulai ?? o.periode_mulai ?? o.periodeMulai)} – {fmtMonthYear(o.selesai ?? o.periode_selesai ?? o.periodeSelesai)}
               </div>
             </div>
           </div>
@@ -1351,7 +993,7 @@ function TabOrganisasi() {
                   Periode Mulai
                 </div>
                 <div className="font-medium text-gray-800 text-sm">
-                  {modalItem.periodeMulai}
+                  {fmtMonthYear(modalItem.mulai ?? modalItem.periode_mulai ?? modalItem.periodeMulai)}
                 </div>
               </div>
               <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
@@ -1359,15 +1001,17 @@ function TabOrganisasi() {
                   Periode Selesai
                 </div>
                 <div className="font-medium text-gray-800 text-sm">
-                  {modalItem.periodeSelesai}
+                  {fmtMonthYear(modalItem.selesai ?? modalItem.periode_selesai ?? modalItem.periodeSelesai)}
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
-                <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
-                <div className="text-gray-800 text-sm">
-                  {modalItem.deskripsi}
+              {modalItem.deskripsi && (
+                <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
+                  <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
+                  <div className="text-gray-800 text-sm">
+                    {modalItem.deskripsi}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* SK placeholder */}
@@ -1395,24 +1039,22 @@ function TabOrganisasi() {
   )
 }
 
-function TabPelatihan() {
+function TabPelatihan({ items }: { items: any[] }) {
   const [subTab, setSubTab] = useState<"Akademik" | "Non-Akademik">("Akademik")
-  const [modalItem, setModalItem] =
-    useState<typeof mockPelatihanAkademik[0] | null>(null)
-  const [modalJenis, setModalJenis] = useState<"Akademik" | "Non-Akademik">(
-    "Akademik",
-  )
+  const [modalItem, setModalItem] = useState<any | null>(null)
+  const [modalJenis, setModalJenis] = useState<"Akademik" | "Non-Akademik">("Akademik")
 
-  const items =
-    subTab === "Akademik" ? mockPelatihanAkademik : mockPelatihanNonAkademik
+  const itemsAkademik = items.filter((i) => i.jenis === "Akademik")
+  const itemsNonAkademik = items.filter((i) => i.jenis === "Non-Akademik")
+  const list = subTab === "Akademik" ? itemsAkademik : itemsNonAkademik
 
-  const openModal = (
-    item: typeof mockPelatihanAkademik[0],
-    jenis: "Akademik" | "Non-Akademik",
-  ) => {
+  const openModal = (item: any, jenis: "Akademik" | "Non-Akademik") => {
     setModalItem(item)
     setModalJenis(jenis)
   }
+
+  const fmtDate = (s?: string) =>
+    s ? new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "-"
 
   return (
     <div className="space-y-4">
@@ -1431,55 +1073,61 @@ function TabPelatihan() {
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="border border-[#E2E8F0] rounded-xl p-4 bg-white hover:shadow-sm transition-shadow space-y-3"
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
-                <GraduationCap size={18} className="text-[#263F93]" />
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-sm text-gray-900">
-                  {item.nama}
+      {list.length === 0 ? (
+        <div className="py-10 text-center text-gray-400 text-sm">
+          Belum ada data pelatihan {subTab.toLowerCase()}.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {list.map((item: any) => (
+            <div
+              key={item.id}
+              className="border border-[#E2E8F0] rounded-xl p-4 bg-white hover:shadow-sm transition-shadow space-y-3"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
+                  <GraduationCap size={18} className="text-[#263F93]" />
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {item.penyelenggara}
+                <div className="flex-1">
+                  <div className="font-semibold text-sm text-gray-900">
+                    {item.nama}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {item.penyelenggara}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="text-xs text-gray-500 space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Calendar size={11} className="text-gray-400" />
-                {item.tanggalMulai} – {item.tanggalSelesai}
+              <div className="text-xs text-gray-500 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={11} className="text-gray-400" />
+                  {fmtDate(item.tanggalMulai)} – {fmtDate(item.tanggalSelesai)}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <MapPin size={11} className="text-gray-400" />
+                  {item.tempat ?? "-"}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <MapPin size={11} className="text-gray-400" />
-                {item.tempat}
+              <div className="flex gap-2">
+                <PlaceholderThumb label="Sertifikat" />
+                <PlaceholderThumb label="Foto Kegiatan" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span
+                  className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge(item.status)}`}
+                >
+                  {item.status}
+                </span>
+                <button
+                  onClick={() => openModal(item, subTab)}
+                  className="text-xs text-[#263F93] font-medium hover:underline"
+                >
+                  Lihat Detail
+                </button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <PlaceholderThumb label="Sertifikat" />
-              <PlaceholderThumb label="Foto Kegiatan" />
-            </div>
-            <div className="flex items-center justify-between">
-              <span
-                className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge(item.status)}`}
-              >
-                {item.status}
-              </span>
-              <button
-                onClick={() => openModal(item, subTab)}
-                className="text-xs text-[#263F93] font-medium hover:underline"
-              >
-                Lihat Detail
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Detail Modal – read-only */}
       {modalItem && (
@@ -1537,7 +1185,7 @@ function TabPelatihan() {
                   Tanggal Mulai
                 </div>
                 <div className="font-medium text-gray-800 text-sm">
-                  {modalItem.tanggalMulai}
+                  {fmtDate(modalItem.tanggalMulai)}
                 </div>
               </div>
               <div className="bg-gray-50 rounded-xl px-3 py-2.5">
@@ -1545,21 +1193,23 @@ function TabPelatihan() {
                   Tanggal Selesai
                 </div>
                 <div className="font-medium text-gray-800 text-sm">
-                  {modalItem.tanggalSelesai}
+                  {fmtDate(modalItem.tanggalSelesai)}
                 </div>
               </div>
               <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
                 <div className="text-xs text-gray-400 mb-0.5">Tempat</div>
                 <div className="font-medium text-gray-800 text-sm">
-                  {modalItem.tempat}
+                  {modalItem.tempat ?? "-"}
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
-                <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
-                <div className="text-gray-800 text-sm">
-                  {modalItem.deskripsi}
+              {modalItem.deskripsi && (
+                <div className="bg-gray-50 rounded-xl px-3 py-2.5 col-span-2">
+                  <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
+                  <div className="text-gray-800 text-sm">
+                    {modalItem.deskripsi}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Sertifikat placeholder */}
@@ -1587,15 +1237,23 @@ function TabPelatihan() {
   )
 }
 
-function TabDokumen() {
-  const [modalItem, setModalItem] = useState<typeof dokumenKewajiban[0] | null>(
-    null,
-  )
+function TabDokumen({ items }: { items: any[] }) {
+  const [modalItem, setModalItem] = useState<any | null>(null)
 
-  const approved = dokumenKewajiban.filter(
-    (d) => d.status === "Disetujui",
-  ).length
-  const total = dokumenKewajiban.length
+  // Map of jenis → icon (preserve original icon mapping)
+  const ICON_MAP: Record<string, any> = {
+    "PKKMB": GraduationCap,
+    "Bela Negara": Shield,
+    "MABIM": Star,
+    "Berita Acara KP": Briefcase,
+    "Sertifikasi": Award,
+    "Bukti Sidang Skripsi": BookOpen,
+  }
+
+  // Backend may not include "Belum Diunggah" rows; we synthesize them by comparing
+  // the configured DokumenJenis vs uploaded ones.
+  const approved = items.filter((d: any) => d.status === "Disetujui").length
+  const total = items.length
 
   return (
     <div className="space-y-4">
@@ -1611,52 +1269,62 @@ function TabDokumen() {
         <div
           className="h-full rounded-full transition-all"
           style={{
-            width: `${(approved / total) * 100}%`,
+            width: `${total > 0 ? (approved / total) * 100 : 0}%`,
             background: "#22C55E",
           }}
         />
       </div>
-      <div className="space-y-2.5">
-        {dokumenKewajiban.map((d) => {
-          const Icon = d.icon
-          return (
-            <div
-              key={d.id}
-              className={`flex items-start gap-3 p-3.5 rounded-xl border-l-4 bg-white border border-[#E2E8F0] ${dokBorderColor(d.status)}`}
-            >
-              <Icon size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm text-gray-800">
-                  {d.nama}
+      {items.length === 0 ? (
+        <div className="py-10 text-center text-gray-400 text-sm">
+          Belum ada dokumen yang diunggah.
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {items.map((d: any) => {
+            const Icon = ICON_MAP[d.nama] ?? FileText
+            // Adapt BE field names → FE shape (BE uses `jenis`, `nama_file`, `tanggal_upload`, `file_url`)
+            const nama = d.nama ?? d.jenis ?? "Dokumen"
+            const tanggal = d.tanggal ?? d.tanggal_upload ?? null
+            const status = d.status ?? "Belum Diunggah"
+            return (
+              <div
+                key={d.id}
+                className={`flex items-start gap-3 p-3.5 rounded-xl border-l-4 bg-white border border-[#E2E8F0] ${dokBorderColor(status)}`}
+              >
+                <Icon size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm text-gray-800">
+                    {nama}
+                  </div>
+                  {tanggal && (
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {tanggal}
+                    </div>
+                  )}
+                  {d.catatan && (
+                    <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
+                      Catatan: {d.catatan}
+                    </div>
+                  )}
                 </div>
-                {d.tanggal && (
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    {d.tanggal}
-                  </div>
-                )}
-                {d.catatan && (
-                  <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
-                    Catatan: {d.catatan}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium ${statusBadge(status)}`}
+                  >
+                    {status}
+                  </span>
+                  <button
+                    onClick={() => setModalItem({ ...d, nama, tanggal, status })}
+                    className="text-xs text-[#263F93] font-medium hover:underline whitespace-nowrap"
+                  >
+                    Lihat Detail
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium ${statusBadge(d.status)}`}
-                >
-                  {d.status}
-                </span>
-                <button
-                  onClick={() => setModalItem(d)}
-                  className="text-xs text-[#263F93] font-medium hover:underline whitespace-nowrap"
-                >
-                  Lihat Detail
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Detail Modal – read-only */}
       {modalItem && (
@@ -1676,7 +1344,7 @@ function TabDokumen() {
                 </h3>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
-                    {modalItem.tipe}
+                    {modalItem.tipe ?? "Dokumen"}
                   </span>
                   <span
                     className={`px-2 py-0.5 text-xs font-semibold rounded-full ${statusBadge(modalItem.status)}`}
@@ -1703,12 +1371,14 @@ function TabDokumen() {
                   </div>
                 </div>
               )}
-              <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-                <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
-                <div className="text-gray-800 text-sm">
-                  {modalItem.deskripsi}
+              {modalItem.deskripsi && (
+                <div className="bg-gray-50 rounded-xl px-3 py-2.5">
+                  <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
+                  <div className="text-gray-800 text-sm">
+                    {modalItem.deskripsi}
+                  </div>
                 </div>
-              </div>
+              )}
               {modalItem.catatan && (
                 <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
                   <div className="text-xs text-red-500 mb-0.5">
@@ -1722,21 +1392,28 @@ function TabDokumen() {
             </div>
 
             {/* File placeholder */}
-            {modalItem.status !== "Belum Diunggah" && (
+            {modalItem.status !== "Belum Diunggah" && (modalItem.fileUrl || modalItem.file_url) && (
               <div className="space-y-2">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Berkas
                 </div>
-                <FilePlaceholderCard label={`Dokumen ${modalItem.nama}`} />
-              </div>
-            )}
-
-            {modalItem.status === "Belum Diunggah" && (
-              <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-4 text-center">
-                <FileText size={24} className="text-gray-300 mx-auto mb-1" />
-                <p className="text-xs text-gray-400">
-                  Belum ada berkas yang diunggah
-                </p>
+                <a
+                  href={modalItem.fileUrl ?? modalItem.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText size={14} className="text-gray-500" />
+                    </div>
+                    <span className="text-sm text-gray-700 font-medium">{modalItem.nama_file ?? `Dokumen ${modalItem.nama}`}</span>
+                  </div>
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
+                    <Download size={12} />
+                    Unduh
+                  </span>
+                </a>
               </div>
             )}
 
@@ -1756,8 +1433,26 @@ function TabDokumen() {
   )
 }
 
-function TabSP() {
+function TabSP({ items }: { items: any[] }) {
   const [expanded, setExpanded] = useState(true)
+
+  const fmtDate = (s?: string) => {
+    if (!s) return "-"
+    return new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="space-y-5">
+        <div className="py-10 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+          Belum ada Surat Peringatan untuk mahasiswa ini.
+        </div>
+      </div>
+    )
+  }
+
+  // Use the first/most recent SP as the "formal letter" (matches original FE pattern)
+  const primary = items[0]
 
   return (
     <div className="space-y-5">
@@ -1785,32 +1480,31 @@ function TabSP() {
             <div>
               Nomor:{" "}
               <span className="font-mono font-medium text-gray-700">
-                {mockSP.nomor}
+                {primary.nomorSurat ?? "-"}
               </span>
             </div>
             <div>
               Tanggal:{" "}
               <span className="font-medium text-gray-700">
-                {mockSP.tanggal}
+                {primary.tanggal ?? fmtDate(primary.tanggalTerbit)}
               </span>
             </div>
             <div>
               Perihal:{" "}
               <span className="font-medium text-gray-700">
-                {mockSP.perihal}
+                Surat Peringatan {primary.level} ({(primary.level ?? "")}) Penerima KIP-K
               </span>
             </div>
           </div>
           <div className="text-xs text-gray-500 space-y-0.5">
             <div className="font-medium text-gray-700">Kepada Yth.</div>
-            <div>Sdra/i. {mockSP.mahasiswa.nama}</div>
+            <div>Sdra/i. {primary.nama ?? "-"}</div>
             <div>
-              NIM: {mockSP.mahasiswa.nim} | {mockSP.mahasiswa.prodi} | Semester{" "}
-              {mockSP.mahasiswa.semester}
+              NIM: {primary.nim ?? "-"} | {primary.prodi ?? "-"} | Semester {primary.semester ?? "-"}
             </div>
           </div>
           <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-            {mockSP.body}
+            {primary.alasan ?? primary.deskripsi ?? "-"}
           </div>
         </div>
       </div>
@@ -1821,45 +1515,72 @@ function TabSP() {
           Riwayat Surat Peringatan
         </h4>
         <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-4">
-          <div className="relative">
-            <div className="absolute -left-[29px] top-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-white shadow" />
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="w-full text-left flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-xl"
-            >
-              <div>
-                <span className="text-xs font-semibold text-amber-700">
-                  SP1 — Aktif
-                </span>
-                <div className="text-xs text-amber-600 mt-0.5">
-                  {mockSP.tanggal} · {mockSP.alasan}
-                </div>
+          {items.map((sp: any, idx: number) => {
+            const isAktif = sp.status === "Aktif" || sp.status === "Masa Tenggang"
+            return (
+              <div key={sp.id ?? idx} className="relative">
+                <div className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${isAktif ? "bg-amber-400" : "bg-gray-300"}`} />
+                <button
+                  onClick={() => idx === 0 && setExpanded((v) => !v)}
+                  className={`w-full text-left flex items-center justify-between p-3 border rounded-xl ${
+                    isAktif
+                      ? "bg-amber-50 border-amber-200"
+                      : "bg-white border-[#E2E8F0]"
+                  }`}
+                >
+                  <div>
+                    <span className={`text-xs font-semibold ${isAktif ? "text-amber-700" : "text-gray-500"}`}>
+                      {sp.level ?? "SP"} — {sp.status}
+                    </span>
+                    <div className={`text-xs mt-0.5 ${isAktif ? "text-amber-600" : "text-gray-400"}`}>
+                      {sp.tanggal ?? fmtDate(sp.tanggalTerbit)} · {sp.alasan ?? sp.deskripsi ?? "-"}
+                    </div>
+                  </div>
+                  {idx === 0 && (expanded ? (
+                    <ChevronUp size={14} className="text-amber-500" />
+                  ) : (
+                    <ChevronDown size={14} className="text-amber-500" />
+                  ))}
+                </button>
+                {idx === 0 && expanded && (
+                  <div className="mt-2 p-3 bg-white border border-[#E2E8F0] rounded-xl text-xs text-gray-600 space-y-1">
+                    <div>
+                      <span className="font-medium">Nomor:</span> {sp.nomorSurat ?? "-"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Alasan:</span> {sp.alasan ?? sp.deskripsi ?? "-"}
+                    </div>
+                  </div>
+                )}
               </div>
-              {expanded ? (
-                <ChevronUp size={14} className="text-amber-500" />
-              ) : (
-                <ChevronDown size={14} className="text-amber-500" />
-              )}
-            </button>
-            {expanded && (
-              <div className="mt-2 p-3 bg-white border border-[#E2E8F0] rounded-xl text-xs text-gray-600 space-y-1">
-                <div>
-                  <span className="font-medium">Nomor:</span> {mockSP.nomor}
-                </div>
-                <div>
-                  <span className="font-medium">Alasan:</span> {mockSP.alasan}
-                </div>
-              </div>
-            )}
-          </div>
+            )
+          })}
         </div>
       </div>
     </div>
   )
 }
 
-// Tab 7 (Informasi Pribadi) – read-only: no save button, textarea is readonly
-function TabInfoPribadi() {
+// Tab 7 (Informasi Pribadi) – read-only
+function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetail }) {
+  const items = [
+    { icon: User, label: "Nama Lengkap", value: mhs.nama },
+    { icon: FileText, label: "NIM", value: mhs.nim },
+    {
+      icon: Calendar,
+      label: "Tempat, Tgl Lahir",
+      value:
+        mhs.tempatLahir && mhs.tanggalLahir
+          ? `${mhs.tempatLahir}, ${mhs.tanggalLahir}`
+          : mhs.tempatLahir ?? mhs.tanggalLahir ?? "-",
+    },
+    { icon: MapPin, label: "Alamat", value: mhs.alamat ?? "-" },
+    { icon: User, label: "Nama Ayah", value: mhs.namaAyah ?? "-" },
+    { icon: User, label: "Nama Ibu", value: mhs.namaIbu ?? "-" },
+    { icon: Phone, label: "No. Telepon Ayah", value: mhs.telAyah ?? "-" },
+    { icon: Phone, label: "No. Telepon Ibu", value: mhs.telIbu ?? "-" },
+  ]
+
   return (
     <div className="space-y-5">
       {/* Alert */}
@@ -1875,32 +1596,15 @@ function TabInfoPribadi() {
         {/* Avatar */}
         <div className="col-span-full flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-[#263F93] flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
-            A
+            {(mhs.nama ?? "?").charAt(0)}
           </div>
           <div>
-            <div className="font-semibold text-gray-900">Ahmad Rifaldi</div>
-            <div className="text-sm text-gray-500">NIM 2206001</div>
+            <div className="font-semibold text-gray-900">{mhs.nama}</div>
+            <div className="text-sm text-gray-500">NIM {mhs.nim}</div>
           </div>
         </div>
 
-        {[
-          { icon: User, label: "Nama Lengkap", value: "Ahmad Rifaldi" },
-          { icon: FileText, label: "NIM", value: "2206001" },
-          {
-            icon: Calendar,
-            label: "Tempat, Tgl Lahir",
-            value: "Garut, 15 Januari 2002",
-          },
-          {
-            icon: MapPin,
-            label: "Alamat",
-            value: "Jl. Raya Cibatu No. 45, Garut",
-          },
-          { icon: User, label: "Nama Ayah", value: "Hendra Rifaldi" },
-          { icon: User, label: "Nama Ibu", value: "Dewi Rahayu" },
-          { icon: Phone, label: "No. Telepon Ayah", value: "0813-1111-2222" },
-          { icon: Phone, label: "No. Telepon Ibu", value: "0812-3333-4444" },
-        ].map(({ icon: Icon, label, value }) => (
+        {items.map(({ icon: Icon, label, value }) => (
           <div
             key={label}
             className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3"
@@ -1919,58 +1623,53 @@ function TabInfoPribadi() {
         <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
           <Phone size={14} /> Riwayat Nomor Kontak
         </h4>
-        <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-3">
-          {[
-            {
-              nomor: "0856-1234-5678",
-              periode: "Sem 1–4",
-              status: "Tidak Aktif",
-              active: false,
-            },
-            {
-              nomor: "0812-9876-5432",
-              periode: "Sem 5–sekarang",
-              status: "Aktif",
-              active: true,
-            },
-          ].map((c, i) => (
-            <div key={i} className="relative">
-              <div
-                className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${
-                  c.active ? "bg-green-400" : "bg-gray-300"
-                }`}
-              />
-              <div className="flex items-center justify-between p-3 bg-white border border-[#E2E8F0] rounded-xl">
-                <div>
-                  <div className="text-sm font-medium text-gray-800">
-                    {c.nomor}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    {c.periode}
-                  </div>
-                </div>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    c.active
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-500"
+        {(!mhs.contactHistories || mhs.contactHistories.length === 0) ? (
+          <div className="py-6 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+            Belum ada riwayat kontak.
+          </div>
+        ) : (
+          <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-3">
+            {mhs.contactHistories.map((c, i) => (
+              <div key={i} className="relative">
+                <div
+                  className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${
+                    c.aktif ? "bg-green-400" : "bg-gray-300"
                   }`}
-                >
-                  {c.status}
-                </span>
+                />
+                <div className="flex items-center justify-between p-3 bg-white border border-[#E2E8F0] rounded-xl">
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">
+                      {c.nomor}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {c.sem}
+                    </div>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      c.aktif
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {c.aktif ? "Aktif" : "Tidak Aktif"}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-// Tab 8 (Surat Penyelesaian) – show status and checklist only, no action buttons
-function TabSuratPenyelesaian() {
-  const fulfilled = syaratPenyelesaian.filter((s) => s.terpenuhi).length
-  const total = syaratPenyelesaian.length
+// Tab 8 (Surat Penyelesaian)
+function TabSuratPenyelesaian({ checklist }: { checklist?: { nama?: string; syarat?: string; terpenuhi: boolean }[] }) {
+  // BE checklist uses `syarat` not `nama`. Normalize here.
+  const list = (checklist ?? []).map((s) => ({ nama: s.nama ?? s.syarat ?? "", terpenuhi: !!s.terpenuhi }))
+  const fulfilled = list.filter((s) => s.terpenuhi).length
+  const total = list.length
 
   return (
     <div className="space-y-5">
@@ -1980,9 +1679,13 @@ function TabSuratPenyelesaian() {
           <FileText size={22} className="text-gray-400" />
         </div>
         <div>
-          <div className="font-semibold text-gray-700">Belum Mengajukan</div>
+          <div className="font-semibold text-gray-700">
+            {total === 0 ? "Belum ada data" : fulfilled === total ? "Siap Mengajukan" : "Belum Mengajukan"}
+          </div>
           <div className="text-xs text-gray-400 mt-0.5">
-            Mahasiswa belum mengajukan permohonan Surat Penyelesaian
+            {total === 0
+              ? "Belum ada data surat penyelesaian untuk mahasiswa ini."
+              : `Mahasiswa ${fulfilled === total ? "siap" : "belum siap"} mengajukan permohonan Surat Penyelesaian`}
           </div>
         </div>
         <span className="ml-auto text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium whitespace-nowrap">
@@ -1995,34 +1698,40 @@ function TabSuratPenyelesaian() {
         <h4 className="text-sm font-semibold text-gray-700 mb-3">
           Persyaratan Surat Penyelesaian
         </h4>
-        <div className="space-y-2">
-          {syaratPenyelesaian.map((s, i) => (
-            <div
-              key={i}
-              className={`flex items-center gap-3 p-3 rounded-xl border ${
-                s.terpenuhi
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
-              }`}
-            >
-              {s.terpenuhi ? (
-                <CheckCircle
-                  size={15}
-                  className="text-green-500 flex-shrink-0"
-                />
-              ) : (
-                <XCircle size={15} className="text-red-400 flex-shrink-0" />
-              )}
-              <span
-                className={`text-sm ${
-                  s.terpenuhi ? "text-green-800" : "text-red-700"
+        {list.length === 0 ? (
+          <div className="py-8 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+            Belum ada persyaratan yang tercatat.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {list.map((s, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-3 p-3 rounded-xl border ${
+                  s.terpenuhi
+                    ? "bg-green-50 border-green-200"
+                    : "bg-red-50 border-red-200"
                 }`}
               >
-                {s.nama}
-              </span>
-            </div>
-          ))}
-        </div>
+                {s.terpenuhi ? (
+                  <CheckCircle
+                    size={15}
+                    className="text-green-500 flex-shrink-0"
+                  />
+                ) : (
+                  <XCircle size={15} className="text-red-400 flex-shrink-0" />
+                )}
+                <span
+                  className={`text-sm ${
+                    s.terpenuhi ? "text-green-800" : "text-red-700"
+                  }`}
+                >
+                  {s.nama}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2045,12 +1754,90 @@ export default function WarekMahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState(0)
 
-  const mhs = mahasiswaList.find((m) => m.id === Number(id)) ?? mahasiswaList[0]
+  const [mhs, setMhs] = useState<MahasiswaDetail | null>(null)
+  const [progress, setProgress] = useState<{ semesterAktif: number; totalSemester: number; progressPct: number } | null>(null)
+  const [semesterDetails, setSemesterDetails] = useState<SemesterDetail[]>([])
+  const [prestasi, setPrestasi] = useState<any[]>([])
+  const [organisasi, setOrganisasi] = useState<any[]>([])
+  const [pelatihan, setPelatihan] = useState<any[]>([])
+  const [dokumen, setDokumen] = useState<any[]>([])
+  const [spList, setSpList] = useState<any[]>([])
+  const [bebasTanggungan, setBebasTanggungan] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+
+    const fetchAll = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const [showRes, ipkRes, prestasiRes, organisasiRes, pelatihanRes, dokumenRes, spRes, bebasRes] = await Promise.all([
+          api.get<{ data: MahasiswaDetail; progress: any }>(`/mahasiswa/${id}`),
+          api.get<{ data: SemesterDetail[] }>(`/mahasiswa/${id}/ipk`),
+          api.get<{ data: any[] }>(`/mahasiswa/${id}/prestasi`),
+          api.get<{ data: any[] }>(`/mahasiswa/${id}/organisasi`),
+          api.get<{ data: any[] }>(`/mahasiswa/${id}/pelatihan`),
+          api.get<{ data: any[] }>(`/mahasiswa/${id}/dokumen`),
+          api.get<{ data: any[] }>(`/mahasiswa/${id}/sp`).catch(() => ({ data: [] as any[] })),
+          api.get<{ checklist: { nama: string; terpenuhi: boolean }[] }>(`/mahasiswa/${id}/bebas-tanggungan`).catch(() => ({ checklist: [] })),
+        ])
+
+        if (cancelled) return
+
+        setMhs(showRes.data)
+        setProgress(showRes.progress)
+        // Sort IPK ascending for display
+        const sems = (ipkRes.data ?? []).slice().sort((a, b) => a.semester - b.semester)
+        setSemesterDetails(sems)
+        setPrestasi(prestasiRes.data ?? [])
+        setOrganisasi(organisasiRes.data ?? [])
+        setPelatihan(pelatihanRes.data ?? [])
+        setDokumen(dokumenRes.data ?? [])
+        setSpList(spRes.data ?? [])
+        setBebasTanggungan(bebasRes)
+
+        setLoading(false)
+      } catch (e: any) {
+        if (cancelled) return
+        setError(e.message ?? "Gagal memuat detail mahasiswa.")
+        setLoading(false)
+      }
+    }
+    fetchAll()
+
+    return () => {
+      cancelled = true;
+    }
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="space-y-5 pb-10">
+        <div className="bg-white rounded-xl p-10 text-center text-sm text-gray-400">
+          Memuat data mahasiswa...
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !mhs) {
+    return (
+      <div className="space-y-5 pb-10">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">
+          {error ?? "Mahasiswa tidak ditemukan."}
+        </div>
+      </div>
+    )
+  }
+
   const hasSP2 = mhs.sp === "SP2" || mhs.sp === "SP3"
 
-  const semesterNum = mhs.semester ?? 6
-  const totalSem = 8
-  const progressPct = Math.round((semesterNum / totalSem) * 100)
+  const semesterNum = mhs.semester ?? progress?.semesterAktif ?? 0
+  const totalSem = progress?.totalSemester ?? 8
+  const progressPct = progress?.progressPct ?? (semesterNum > 0 ? Math.round((semesterNum / totalSem) * 100) : 0)
 
   return (
     <div className="space-y-5 pb-10">
@@ -2091,7 +1878,7 @@ export default function WarekMahasiswaDetail() {
         <div className="flex flex-wrap items-start gap-5">
           {/* Avatar */}
           <div className="w-16 h-16 rounded-full bg-[#263F93] flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
-            {mhs.nama.charAt(0)}
+            {(mhs.nama ?? "?").charAt(0)}
           </div>
 
           {/* Identity */}
@@ -2101,7 +1888,7 @@ export default function WarekMahasiswaDetail() {
               {/* SP Badges */}
               {mhs.sp && (
                 <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full flex items-center gap-1">
-                  <AlertTriangle size={11} /> SP1
+                  <AlertTriangle size={11} /> {mhs.sp}
                 </span>
               )}
               {hasSP2 && (
@@ -2111,7 +1898,7 @@ export default function WarekMahasiswaDetail() {
               )}
             </div>
             <p className="text-gray-500 text-sm mb-3">
-              {mhs.nim} · {mhs.prodi} · Angkatan {mhs.angkatan}
+              {mhs.nim} · {mhs.prodi ?? mhs.prodiNama} · Angkatan {mhs.angkatan}
             </p>
             <div className="flex flex-wrap gap-2">
               <span
@@ -2150,7 +1937,7 @@ export default function WarekMahasiswaDetail() {
               />
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              {totalSem - semesterNum} semester tersisa
+              {Math.max(0, totalSem - semesterNum)} semester tersisa
             </p>
           </div>
         </div>
@@ -2177,14 +1964,14 @@ export default function WarekMahasiswaDetail() {
 
       {/* Tab Content */}
       <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">
-        {activeTab === 0 && <TabRiwayatAkademik />}
-        {activeTab === 1 && <TabPrestasi />}
-        {activeTab === 2 && <TabOrganisasi />}
-        {activeTab === 3 && <TabPelatihan />}
-        {activeTab === 4 && <TabDokumen />}
-        {activeTab === 5 && <TabSP />}
-        {activeTab === 6 && <TabInfoPribadi />}
-        {activeTab === 7 && <TabSuratPenyelesaian />}
+        {activeTab === 0 && <TabRiwayatAkademik semesterDetails={semesterDetails} />}
+        {activeTab === 1 && <TabPrestasi items={prestasi} />}
+        {activeTab === 2 && <TabOrganisasi items={organisasi} />}
+        {activeTab === 3 && <TabPelatihan items={pelatihan} />}
+        {activeTab === 4 && <TabDokumen items={dokumen} />}
+        {activeTab === 5 && <TabSP items={spList} />}
+        {activeTab === 6 && <TabInfoPribadi mhs={mhs} />}
+        {activeTab === 7 && <TabSuratPenyelesaian checklist={bebasTanggungan?.checklist} />}
       </div>
     </div>
   )

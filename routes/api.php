@@ -159,6 +159,12 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::patch("/periode/{id}/activate",   [AdminConfig::class, "activatePeriode"]);
     });
 
+    // WAREK-specific endpoints (read-only dashboard & export)
+    Route::middleware("role:warek")->prefix("warek")->group(function () {
+        Route::get("/dashboard", [\App\Http\Controllers\Api\Warek\DashboardController::class, "index"]);
+        Route::get("/mahasiswa/export", [\App\Http\Controllers\Api\Warek\MahasiswaController::class, "export"]);
+    });
+
     // Ekspor Prodi
     Route::get("/ekspor/mahasiswa", function (Request $req) {
         if ($req->user()->role === "prodi") return app(ProdiMahasiswa::class)->ekspor($req);

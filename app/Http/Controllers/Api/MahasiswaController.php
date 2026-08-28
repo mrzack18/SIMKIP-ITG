@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\Admin\MahasiswaController as AdminMahasiswa;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
+use App\Http\Controllers\Api\Warek\MahasiswaController as WarekMahasiswa;
 use App\Models\Mahasiswa;
 
 class MahasiswaController extends Controller
@@ -12,7 +13,7 @@ class MahasiswaController extends Controller
         return match($req->user()->role) {
             "admin" => app(AdminMahasiswa::class)->index($req),
             "prodi" => app(ProdiMahasiswa::class)->index($req),
-            "warek" => $this->warekIndex($req),
+            "warek" => app(WarekMahasiswa::class)->index($req),
             default => abort(403),
         };
     }
@@ -26,7 +27,7 @@ class MahasiswaController extends Controller
         return match($req->user()->role) {
             "admin" => app(AdminMahasiswa::class)->show($id),
             "prodi" => app(ProdiMahasiswa::class)->show($req, $id),
-            "warek" => $this->warekShow($id),
+            "warek" => app(WarekMahasiswa::class)->show($id),
             "mahasiswa" => $this->mahasiswaShow($req, $id),
             default => abort(403),
         };

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FileText, CheckCircle, Clock, RotateCcw, Download } from "lucide-react";
+import { api } from "@/services/api";
 
 type LStatus = "Menunggu" | "Disetujui" | "Dikembalikan";
 
@@ -14,14 +15,6 @@ interface Laporan {
   status: LStatus;
   approvedDate?: string;
 }
-
-const DATA: Laporan[] = [
-  { id: 1, judul: "Laporan Evaluasi Semester Genap 2025/2026", nomor: "024/LAP/ITG/VIII/2026", periode: "Semester Genap 2025/2026", tanggal: "10 Agustus 2026", summary: "167 mahasiswa, rata-rata IPK 3.18, 3 SP aktif", status: "Menunggu" },
-  { id: 2, judul: "Laporan Evaluasi Semester Ganjil 2025/2026", nomor: "018/LAP/ITG/II/2026", periode: "Semester Ganjil 2025/2026", tanggal: "2 Februari 2026", summary: "161 mahasiswa, rata-rata IPK 3.22, 1 SP aktif", status: "Menunggu" },
-  { id: 3, judul: "Laporan Evaluasi Semester Genap 2024/2025", nomor: "012/LAP/ITG/VIII/2025", periode: "Semester Genap 2024/2025", tanggal: "15 Agustus 2025", summary: "148 mahasiswa, rata-rata IPK 3.19", status: "Disetujui", approvedDate: "18 Agustus 2025" },
-  { id: 4, judul: "Laporan Evaluasi Semester Ganjil 2024/2025", nomor: "006/LAP/ITG/II/2025", periode: "Semester Ganjil 2024/2025", tanggal: "3 Februari 2025", summary: "142 mahasiswa, rata-rata IPK 3.15", status: "Disetujui", approvedDate: "7 Februari 2025" },
-  { id: 5, judul: "Laporan Evaluasi Semester Genap 2023/2024", nomor: "010/LAP/ITG/VIII/2024", periode: "Semester Genap 2023/2024", tanggal: "12 Agustus 2024", summary: "135 mahasiswa, rata-rata IPK 3.21", status: "Dikembalikan" },
-];
 
 const TABS: { label: string; status: LStatus | "Semua" }[] = [
   { label: "Menunggu Approval", status: "Menunggu" },
@@ -37,10 +30,61 @@ const statusStyle: Record<LStatus, { badge: string; icon: React.ReactNode }> = {
 
 export default function WarekLaporanList() {
   const [activeTab, setActiveTab] = useState<LStatus>("Menunggu");
+  const [data, setData] = useState<Laporan[]>([]);
+  const [counts, setCounts] = useState<Record<LStatus, number>>({ Menunggu: 0, Disetujui: 0, Dikembalikan: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = DATA.filter(d => d.status === activeTab);
+  // Fetch counts for all tabs once
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const tabsToFetch: LStatus[] = ["Menunggu", "Disetujui", "Dikembalikan"];
+        const results = await Promise.all(
+          tabsToFetch.map((s) =>
+            api
+              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100`)
+              .then((r) => [s, r.total] as [LStatus, number])
+              .catch(() => [s, 0] as [LStatus, number])
+          )
+        );
+        if (cancelled) return;
+        const next = { Menunggu: 0, Disetujui: 0, Dikembalikan: 0 } as Record<LStatus, number>;
+        for (const [s, t] of results) next[s] = t;
+        setCounts(next);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const counts = Object.fromEntries(TABS.map(t => [t.status, DATA.filter(d => d.status === t.status).length]));
+  // Fetch data for active tab
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100`);
+        if (cancelled) return;
+        setData(res.data ?? []);
+        setLoading(false);
+      } catch (e: any) {
+        if (cancelled) return;
+        setError(e.message ?? "Gagal memuat laporan.");
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
+  const filtered = data;
 
   return (
     <div className="space-y-5">
@@ -55,19 +99,29 @@ export default function WarekLaporanList() {
           <button key={t.status}
             onClick={() => setActiveTab(t.status as LStatus)}
             className={`px-4 py-2 rounded-lg text-sm font-500 transition-colors ${activeTab === t.status ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
-            {t.label} ({counts[t.status] || 0})
+            {t.label} ({counts[t.status as LStatus] ?? 0})
           </button>
         ))}
       </div>
 
       {/* Cards */}
       <div className="space-y-4">
-        {filtered.length === 0 && (
+        {loading && (
+          <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
+            <p className="text-gray-400 text-sm">Memuat data...</p>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        {!loading && !error && filtered.length === 0 && (
           <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
             <p className="text-gray-400 text-sm">Tidak ada laporan dalam kategori ini.</p>
           </div>
         )}
-        {filtered.map(r => {
+        {!loading && !error && filtered.map(r => {
           const ss = statusStyle[r.status];
           return (
             <div key={r.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -97,9 +151,11 @@ export default function WarekLaporanList() {
                     </Link>
                   )}
                   {r.status === "Disetujui" && (
-                    <button className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                    <a href={`${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/laporan/${r.id}/pdf`}
+                       target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
                       <Download size={14} /> Unduh PDF
-                    </button>
+                    </a>
                   )}
                   {r.status === "Dikembalikan" && (
                     <Link to={`/warek/laporan/${r.id}`} className="px-4 py-2 rounded-lg text-sm border border-orange-200 text-orange-700 hover:bg-orange-50 text-center">

@@ -38,7 +38,7 @@ import WarekDashboard from "./pages/warek/Dashboard";
 import WarekLaporanList from "./pages/warek/LaporanList";
 import WarekLaporanDetail from "./pages/warek/LaporanDetail";
 import WarekMahasiswaList from "./pages/warek/MahasiswaList";
-import WarekMahasiswaDetail from "./pages/prodi/MahasiswaDetail";
+import WarekMahasiswaDetail from "./pages/warek/MahasiswaDetail";
 import Placeholder from "./pages/Placeholder";
 
 // Placeholder user props — these will be replaced by AuthContext values

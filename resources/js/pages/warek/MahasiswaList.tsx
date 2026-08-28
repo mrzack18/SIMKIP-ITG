@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { api } from "@/services/api";
 
 interface Mhs {
+  id: number;
   nim: string;
   nama: string;
   prodi: string;
@@ -10,32 +12,18 @@ interface Mhs {
   kategori: "Reguler" | "Aspirasi";
   ipk: number;
   semester: number;
-  status: "Aktif" | "Lulus" | "Dicabut";
-  sp: number;
+  status: "Aktif" | "Nonaktif" | "Lulus" | "Dicabut";
+  sp: string | null;
 }
 
-const DATA: Mhs[] = [
-  { nim: "2206001", nama: "Ahmad Rifaldi", prodi: "Teknik Informatika", angkatan: 2022, kategori: "Reguler", ipk: 3.35, semester: 8, status: "Aktif", sp: 0 },
-  { nim: "2206002", nama: "Sari Dewi Lestari", prodi: "Teknik Informatika", angkatan: 2022, kategori: "Aspirasi", ipk: 2.78, semester: 6, status: "Aktif", sp: 1 },
-  { nim: "2206015", nama: "Budi Setiawan", prodi: "Teknik Informatika", angkatan: 2022, kategori: "Reguler", ipk: 2.85, semester: 8, status: "Aktif", sp: 1 },
-  { nim: "2206033", nama: "Citra Dewi", prodi: "Teknik Informatika", angkatan: 2022, kategori: "Aspirasi", ipk: 2.78, semester: 7, status: "Aktif", sp: 1 },
-  { nim: "2106001", nama: "Gunawan Prakoso", prodi: "Teknik Informatika", angkatan: 2021, kategori: "Reguler", ipk: 2.90, semester: 8, status: "Aktif", sp: 2 },
-  { nim: "2106003", nama: "Rizky Pratama", prodi: "Teknik Informatika", angkatan: 2021, kategori: "Reguler", ipk: 3.55, semester: 9, status: "Lulus", sp: 0 },
-  { nim: "2106010", nama: "Dina Fitriani", prodi: "Teknik Informatika", angkatan: 2021, kategori: "Aspirasi", ipk: 3.20, semester: 9, status: "Aktif", sp: 0 },
-  { nim: "2306001", nama: "Krisna Bayu", prodi: "Teknik Informatika", angkatan: 2023, kategori: "Reguler", ipk: 3.32, semester: 4, status: "Aktif", sp: 0 },
-  { nim: "2306005", nama: "Eka Saputra", prodi: "Teknik Informatika", angkatan: 2023, kategori: "Reguler", ipk: 3.42, semester: 6, status: "Aktif", sp: 0 },
-  { nim: "2306018", nama: "Fani Rahayu", prodi: "Teknik Informatika", angkatan: 2023, kategori: "Aspirasi", ipk: 3.10, semester: 5, status: "Aktif", sp: 0 },
-  { nim: "2207001", nama: "Juwita Ramadhani", prodi: "Sistem Informasi", angkatan: 2022, kategori: "Aspirasi", ipk: 3.55, semester: 6, status: "Aktif", sp: 0 },
-  { nim: "2307001", nama: "Fitriyani Hasanah", prodi: "Sistem Informasi", angkatan: 2023, kategori: "Reguler", ipk: 3.78, semester: 4, status: "Aktif", sp: 0 },
-  { nim: "2303001", nama: "Budi Santoso", prodi: "Teknik Industri", angkatan: 2023, kategori: "Reguler", ipk: 3.62, semester: 4, status: "Aktif", sp: 0 },
-  { nim: "2303002", nama: "Hesti Rahayu", prodi: "Teknik Industri", angkatan: 2023, kategori: "Aspirasi", ipk: 3.25, semester: 4, status: "Aktif", sp: 0 },
-  { nim: "2211001", nama: "Rina Marlina", prodi: "Teknik Sipil", angkatan: 2022, kategori: "Reguler", ipk: 3.10, semester: 6, status: "Aktif", sp: 0 },
-  { nim: "2211002", nama: "Indra Permana", prodi: "Teknik Sipil", angkatan: 2022, kategori: "Reguler", ipk: 2.40, semester: 5, status: "Dicabut", sp: 3 },
-  { nim: "2420001", nama: "Deni Kurniawan", prodi: "Arsitektur", angkatan: 2024, kategori: "Aspirasi", ipk: 2.65, semester: 2, status: "Aktif", sp: 1 },
-  { nim: "2220001", nama: "Lena Pertiwi", prodi: "Arsitektur", angkatan: 2022, kategori: "Aspirasi", ipk: 3.48, semester: 6, status: "Aktif", sp: 0 },
-];
+interface ApiResponse {
+  data: Mhs[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
-const PRODI_LIST = ["Semua", "Teknik Informatika", "Sistem Informasi", "Teknik Industri", "Teknik Sipil", "Arsitektur"];
 const PAGE_SIZE = 8;
 
 export default function WarekMahasiswaList() {
@@ -46,24 +34,104 @@ export default function WarekMahasiswaList() {
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [page, setPage] = useState(1);
 
-  const angkatanList = [...new Set(DATA.map(d => d.angkatan))].sort((a, b) => b - a);
+  const [prodiList, setProdiList] = useState<string[]>(["Semua"]);
+  const [angkatanList, setAngkatanList] = useState<string[]>(["Semua"]);
+  const [data, setData] = useState<Mhs[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = DATA.filter(m => {
-    const q = search.toLowerCase();
-    return (
-      (m.nama.toLowerCase().includes(q) || m.nim.includes(q)) &&
-      (filterProdi === "Semua" || m.prodi === filterProdi) &&
-      (filterAngkatan === "Semua" || m.angkatan === parseInt(filterAngkatan)) &&
-      (filterKategori === "Semua" || m.kategori === filterKategori) &&
-      (filterStatus === "Semua" || m.status === filterStatus)
-    );
-  });
+  // Load filter options (prodi, angkatan)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get<{ success: boolean; prodis: { nama: string }[]; angkatans: number[] }>(
+          "/mahasiswa/filter-options"
+        );
+        if (cancelled) return;
+        setProdiList(["Semua", ...res.prodis.map(p => p.nama)]);
+        setAngkatanList(["Semua", ...res.angkatans.map(String)]);
+      } catch {
+        // ignore – will fall back to "Semua"
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Load data with server-side filters + pagination
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (search) params.set("search", search);
+        if (filterProdi !== "Semua") params.set("prodi", filterProdi);
+        if (filterAngkatan !== "Semua") params.set("angkatan", filterAngkatan);
+        if (filterKategori !== "Semua") params.set("kategori", filterKategori);
+        if (filterStatus !== "Semua") params.set("status", filterStatus);
+        params.set("page", String(page));
+        params.set("limit", String(PAGE_SIZE));
+
+        const res = await api.get<ApiResponse>(`/mahasiswa?${params.toString()}`);
+        if (cancelled) return;
+        setData(res.data ?? []);
+        setTotal(res.total ?? 0);
+        setTotalPages(res.totalPages ?? 1);
+        setLoading(false);
+      } catch (e: any) {
+        if (cancelled) return;
+        setError(e.message ?? "Gagal memuat data mahasiswa.");
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [search, filterProdi, filterAngkatan, filterKategori, filterStatus, page]);
+
+  const paginated = useMemo(() => data, [data]);
+
+  const handleExport = async () => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (filterProdi !== "Semua") params.set("prodi", filterProdi);
+    if (filterAngkatan !== "Semua") params.set("angkatan", filterAngkatan);
+    if (filterKategori !== "Semua") params.set("kategori", filterKategori);
+    if (filterStatus !== "Semua") params.set("status", filterStatus);
+
+    const token = localStorage.getItem("simkip_token");
+    const url = `${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/warek/mahasiswa/export?${params.toString()}`;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh file.");
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `Mahasiswa_KIP-K_${Date.now()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (e: any) {
+      alert(e.message ?? "Gagal mengunduh file.");
+    }
+  };
 
   const statusBadge: Record<string, string> = {
     Aktif: "bg-green-100 text-green-700",
+    Nonaktif: "bg-gray-100 text-gray-600",
     Lulus: "bg-blue-100 text-blue-700",
     Dicabut: "bg-red-100 text-red-700",
   };
@@ -81,9 +149,9 @@ export default function WarekMahasiswaList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">Data Mahasiswa KIP-K — Semua Prodi</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{filtered.length} mahasiswa ditemukan (read-only)</p>
+          <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50">
+        <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50">
           <Download size={15} /> Export Excel
         </button>
       </div>
@@ -98,10 +166,10 @@ export default function WarekMahasiswaList() {
               className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
           </div>
           {[
-            { label: "Prodi", value: filterProdi, setter: setFilterProdi, opts: PRODI_LIST },
-            { label: "Angkatan", value: filterAngkatan, setter: setFilterAngkatan, opts: ["Semua", ...angkatanList.map(String)] },
+            { label: "Prodi", value: filterProdi, setter: setFilterProdi, opts: prodiList },
+            { label: "Angkatan", value: filterAngkatan, setter: setFilterAngkatan, opts: angkatanList },
             { label: "Kategori", value: filterKategori, setter: setFilterKategori, opts: ["Semua", "Reguler", "Aspirasi"] },
-            { label: "Status", value: filterStatus, setter: setFilterStatus, opts: ["Semua", "Aktif", "Lulus", "Dicabut"] },
+            { label: "Status", value: filterStatus, setter: setFilterStatus, opts: ["Semua", "Aktif", "Nonaktif", "Lulus", "Dicabut"] },
           ].map(f => (
             <select key={f.label} value={f.value} onChange={e => { f.setter(e.target.value); setPage(1); }}
               className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none">
@@ -123,14 +191,20 @@ export default function WarekMahasiswaList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginated.map((m, i) => (
+              {loading && (
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-gray-400">Memuat data...</td></tr>
+              )}
+              {!loading && error && (
+                <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-red-500">{error}</td></tr>
+              )}
+              {!loading && !error && paginated.map((m, i) => (
                 <tr key={m.nim} className="hover:bg-gray-50/60">
                   <td className="px-4 py-3 text-gray-400 text-xs">{(page - 1) * PAGE_SIZE + i + 1}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-600">{m.nim}</td>
                   <td className="px-4 py-3 font-500 text-gray-800 whitespace-nowrap">{m.nama}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-500 ${prodiBadge[m.prodi] || "bg-gray-100 text-gray-600"}`}>
-                      {m.prodi.replace("Teknik ", "T.")}
+                      {(m.prodi ?? "").replace("Teknik ", "T.")}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-600">{m.angkatan}</td>
@@ -138,25 +212,25 @@ export default function WarekMahasiswaList() {
                     <span className={`px-2 py-0.5 rounded text-xs font-500 ${m.kategori === "Reguler" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>{m.kategori}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`font-700 font-display ${m.ipk >= 3.0 ? "text-green-600" : "text-red-500"}`}>{m.ipk.toFixed(2)}</span>
+                    <span className={`font-700 font-display ${m.ipk >= 3.0 ? "text-green-600" : "text-red-500"}`}>{(m.ipk ?? 0).toFixed(2)}</span>
                   </td>
                   <td className="px-4 py-3 text-gray-600">{m.semester}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs font-500 ${statusBadge[m.status]}`}>{m.status}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-500 ${statusBadge[m.status] ?? "bg-gray-100 text-gray-600"}`}>{m.status}</span>
                   </td>
                   <td className="px-4 py-3">
-                    {m.sp > 0 ? (
-                      <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-500">SP{m.sp}</span>
+                    {m.sp ? (
+                      <span className="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-500">{m.sp}</span>
                     ) : <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <Link to={`/warek/mahasiswa/${m.nim}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 w-fit">
+                    <Link to={`/warek/mahasiswa/${m.id}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 w-fit">
                       <Eye size={12} /> Lihat
                     </Link>
                   </td>
                 </tr>
               ))}
-              {paginated.length === 0 && (
+              {!loading && !error && paginated.length === 0 && (
                 <tr><td colSpan={11} className="px-4 py-10 text-center text-sm text-gray-400">Tidak ada data.</td></tr>
               )}
             </tbody>

@@ -11,6 +11,18 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class ExcelExportService
 {
     /**
+     * Stream a generic Excel file with given headers & rows.
+     * Used for read-only exports (e.g. WAREK mahasiswa list).
+     */
+    public static function stream(string $filename, array $headers, array $rows): BinaryFileResponse
+    {
+        return Excel::download(
+            new \App\Exports\GenericArrayExport($headers, $rows),
+            $filename,
+            \Maatwebsite\Excel\Excel::XLSX
+        );
+    }
+    /**
      * Export data mahasiswa untuk halaman Ekspor Laporan (Prodi)
      * Format sesuai form filter di EksporLaporan.tsx
      */
