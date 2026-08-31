@@ -42,6 +42,7 @@ import {
 import logoItg from "@/imports/logo_itg.jpg"
 import { api, API_BASE_URL } from "@/services/api"
 import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -577,25 +578,27 @@ function TabPrestasi({ items }: { items: PrestasiItem[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        {tiers.map((t) => (
-          <button
-            key={t}
-            onClick={() => setSubTab(t)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
-              subTab === t
-                ? "bg-[#263F93] text-white"
-                : "bg-[#F8FAFC] border border-[#E2E8F0] text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            {t}
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-              subTab === t ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
-            }`}>
-              {counts[t]}
-            </span>
-          </button>
-        ))}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex gap-2">
+          {tiers.map((t) => (
+            <button
+              key={t}
+              onClick={() => setSubTab(t)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                subTab === t
+                  ? "bg-[#263F93] text-white"
+                  : "bg-[#F8FAFC] border border-[#E2E8F0] text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {t}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                subTab === t ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
+              }`}>
+                {counts[t]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -619,6 +622,9 @@ function TabPrestasi({ items }: { items: PrestasiItem[] }) {
                         {p.pencapaian}
                       </span>
                     )}
+                    <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
+                      2024/2025 Genap
+                    </span>
                   </div>
                 </div>
               </div>
@@ -762,7 +768,7 @@ function TabOrganisasi({ items }: { items: OrganisasiItem[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
           <Users size={15} className="text-[#263F93]" /> Keaktifan Organisasi
         </h4>
@@ -783,6 +789,9 @@ function TabOrganisasi({ items }: { items: OrganisasiItem[] }) {
                       : "bg-teal-100 text-teal-700"
                   }`}>{o.jenis}</span>
                 )}
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full">
+                  2024/2025 Genap
+                </span>
               </div>
               <div className="text-xs text-gray-500">{o.jabatan}</div>
               <div className="text-xs text-gray-400 mt-0.5">{o.periodeMulai} – {o.periodeSelesai}</div>
@@ -1365,6 +1374,7 @@ const TAB_LABELS = [
 
 export default function MahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [activeTab, setActiveTab] = useState(0)
   const [data, setData] = useState<DetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1436,10 +1446,13 @@ export default function MahasiswaDetail() {
         </div>
       )}
 
-      <Link to="../mahasiswa" relative="path"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-        <ChevronLeft size={16} /> Manajemen Mahasiswa
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link to="../mahasiswa" relative="path"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <ChevronLeft size={16} /> Manajemen Mahasiswa
+        </Link>
+        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+      </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">
         <div className="flex flex-wrap items-start gap-5">

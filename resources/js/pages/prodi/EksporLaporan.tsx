@@ -38,6 +38,7 @@ const DEFAULT_FORM = {
 export default function EksporLaporan() {
   const { user } = useAuth();
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
@@ -111,9 +112,12 @@ export default function EksporLaporan() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Ekspor Laporan</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Generate dan download laporan mahasiswa KIP-K {prodiNama}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Ekspor Laporan</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Generate dan download laporan mahasiswa KIP-K {prodiNama}</p>
+        </div>
+        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

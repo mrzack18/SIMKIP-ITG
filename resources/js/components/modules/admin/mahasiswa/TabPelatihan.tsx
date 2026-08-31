@@ -47,9 +47,17 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
       </div>
     )
   }
+  
+  const HeaderCard = () => (
+    <div className="bg-white p-4 rounded-xl border border-[#E2E8F0]">
+      <span className="text-sm font-bold text-gray-800">Data Pelatihan</span>
+    </div>
+  )
+
   if (!data.length) {
     return (
       <div className="space-y-4">
+        <HeaderCard />
         <div className="flex gap-2">
           {(["Akademik", "Non-Akademik"] as const).map((t) => (
             <button
@@ -84,20 +92,23 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        {(["Akademik", "Non-Akademik"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setSubTab(t)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              subTab === t
-                ? "bg-[#263F93] text-white"
-                : "bg-[#F8FAFC] border border-[#E2E8F0] text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      <HeaderCard />
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {(["Akademik", "Non-Akademik"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setSubTab(t)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                subTab === t
+                  ? "bg-[#263F93] text-white"
+                  : "bg-[#F8FAFC] border border-[#E2E8F0] text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
       {items.length === 0 ? (
         <div className="py-10 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">

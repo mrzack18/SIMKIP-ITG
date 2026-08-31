@@ -32,6 +32,8 @@ class LaporanController extends Controller
                 $query->where('cakupan', $request->cakupan);
             }
         }
+        if ($request->prodi && $request->prodi !== 'Semua') $query->whereHas('dibuatOleh.prodi', fn($q) => $q->where('nama', $request->prodi));
+        if ($request->angkatan && $request->angkatan !== 'Semua') $query->whereHas('dibuatOleh', fn($q) => $q->where('angkatan', $request->angkatan));
 
         $limit = (int)($request->limit ?? 10);
         $page  = (int)($request->page ?? 1);
@@ -200,21 +202,36 @@ class LaporanController extends Controller
                 'kategori' => $m->kategori,
             ]);
 
-        $pctReguler  = $totalMahasiswa > 0 ? round($totalReguler / $totalMahasiswa * 100) : 0;
-        $pctAspirasi = $totalMahasiswa > 0 ? round($totalAspirasi / $totalMahasiswa * 100) : 0;
+        // Get SP count and names
+        $spList = SuratPeringatan::with('mahasiswa')
+            ->whereIn('mahasiswa_id', $mIds)
+            ->where('status', 'Aktif')
+            ->get();
+        $totalSp = $spList->count();
+        $namaSp = $spList->map(fn($sp) => $sp->mahasiswa->nama . ' (' . $sp->level . ')')->unique()->values();
+
+        // Get Prestasi count and names
+        $prestasiList = \App\Models\Prestasi::with('mahasiswa')
+            ->whereIn('mahasiswa_id', $mIds)
+            ->where('status_validasi', 'Valid')
+            ->get();
+        $totalPrestasi = $prestasiList->unique('mahasiswa_id')->count(); // How many unique students have achievements
+        $namaPrestasi = $prestasiList->map(fn($p) => $p->mahasiswa->nama . ' - ' . $p->nama_kompetisi)->unique()->values();
 
         return response()->json([
-            'success' => true,
-            'totalMahasiswa' => $totalMahasiswa,
-            'kipk' => [
-                'reguler'  => ['total' => $totalReguler, 'persen' => $pctReguler],
-                'aspirasi' => ['total' => $totalAspirasi, 'persen' => $pctAspirasi],
-            ],
-            'rataIpk' => $rataIpk,
-            'distribusiAngkatan' => $distribusi,
-            'ipkTrend' => $ipkBySemester,
-            'ipkBuckets' => $ipkBuckets,
-            'mahasiswas' => $mahasiswas,
+            'success'             => true,
+            'total_mahasiswa'     => $totalMahasiswa,
+            'total_reguler'       => $totalReguler,
+            'total_aspirasi'      => $totalAspirasi,
+            'rata_ipk'            => $rataIpk,
+            'distribusi_angkatan' => $distribusi,
+            'ipk_trend'           => $ipkBySemester,
+            'ipk_distribution'    => $ipkBuckets,
+            'mahasiswa'           => $mahasiswas,
+            'total_sp'            => $totalSp,
+            'nama_sp'             => $namaSp,
+            'total_prestasi'      => $totalPrestasi,
+            'nama_prestasi'       => $namaPrestasi,
         ]);
     }
 

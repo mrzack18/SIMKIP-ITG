@@ -26,25 +26,21 @@ export interface AuthResponse {
  * Login — calls the real backend API.
  */
 export async function login(payload: LoginPayload): Promise<LoginResult> {
-  try {
-    const res = await api.post<AuthResponse>("/auth/login", payload);
-    const { token, user } = res;
-    
-    if (!token || !user) {
-        throw new Error("Invalid response from server");
-    }
+  const res = await api.post<AuthResponse>("/auth/login", payload);
+  const { token, user } = res;
 
-    localStorage.setItem("simkip_token", token);
-    localStorage.setItem("simkip_user", JSON.stringify(user));
-
-    return {
-      user,
-      token,
-      redirectPath: ROLE_PATHS[user.role] ?? "/dashboard",
-    };
-  } catch (error: any) {
-    throw new Error(error.message ?? "NIM atau password salah.");
+  if (!token || !user) {
+    throw new Error("Invalid response from server");
   }
+
+  localStorage.setItem("simkip_token", token);
+  localStorage.setItem("simkip_user", JSON.stringify(user));
+
+  return {
+    user,
+    token,
+    redirectPath: ROLE_PATHS[user.role] ?? "/dashboard",
+  };
 }
 
 /**

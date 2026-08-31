@@ -32,8 +32,11 @@ export default function Login() {
   };
 
   const handleQuickLogin = (key: string) => {
-    setUsername(key);
-    setPassword("kip2026");
+    const mockData = MOCK_USERS[key];
+    if (mockData) {
+      setUsername(mockData.realUsername || key);
+      setPassword(mockData.password || "kip2026");
+    }
   };
 
   return (
@@ -190,16 +193,16 @@ export default function Login() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
             <p className="text-xs font-600 text-blue-700 mb-2">Demo — Klik untuk login cepat:</p>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(MOCK_USERS).map(([key, user]) => (
+              {Object.entries(MOCK_USERS).map(([key, mockData]) => (
                 <button
                   key={key}
                   onClick={() => handleQuickLogin(key)}
                   className="text-xs px-2 py-1 bg-white border border-blue-200 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
                 >
-                  {ROLE_LABELS[user.role]}
+                  {ROLE_LABELS[mockData.user.role]}
                 </button>
               ))}
-              <span className="text-xs text-blue-400 self-center">+ password: kip2026</span>
+              <span className="text-xs text-blue-400 self-center">+ akan diisi otomatis</span>
             </div>
           </div>
 

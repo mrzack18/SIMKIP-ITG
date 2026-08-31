@@ -1,12 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, AlertTriangle, Search, CheckCircle, X, Info, Loader2, XCircle } from "lucide-react";
-import { getMahasiswaList } from "@/services/mahasiswaService";
+import { getMahasiswaList, getMahasiswaSpHistory } from "@/services/mahasiswaService";
 import { terbitkanSP } from "@/services/spService";
+import { getPelanggaranList } from "@/services/konfigurasiService";
 import type { Mahasiswa } from "@/types";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 type SPLevel = "SP1" | "SP2" | "SP3";
-type JenisP = "" | "Akademik" | "Non-Akademik" | "Cuti Tanpa Izin";
 
 const levelColor: Record<SPLevel, string> = { SP1: "#F59E0B", SP2: "#EF4444", SP3: "#7F1D1D" };
 
@@ -28,11 +29,13 @@ export default function TerbitkanSP() {
 
   // Form state
   const [spLevel, setSpLevel]     = useState<SPLevel>("SP1");
-  const [jenisP, setJenisP]       = useState<JenisP>("");
+  const [jenisP, setJenisP]       = useState("");
+  const [jenisPelanggaranOptions, setJenisPelanggaranOptions] = useState<any[]>([]);
   const [deskripsi, setDeskripsi] = useState("");
   const [tanggalTerbit, setTanggalTerbit] = useState(() => new Date().toISOString().slice(0, 10));
   const [batasEvaluasi, setBatasEvaluasi] = useState("");
   const [catatan, setCatatan]     = useState("");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
 
   // UI state
   const [showConfirm, setShowConfirm]   = useState(false);
@@ -42,6 +45,19 @@ export default function TerbitkanSP() {
   const [errors, setErrors]             = useState<Record<string, string>>({});
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load active jenis pelanggaran options from API
+  useEffect(() => {
+    let active = true;
+    getPelanggaranList()
+      .then((list) => {
+        if (!active) return;
+        console.log("[TerbitkanSP] pelanggaran list:", list);
+        setJenisPelanggaranOptions(list.filter((jp) => jp.aktif));
+      })
+      .catch(() => {});
+    return () => { active = false };
+  }, []);
 
   const handleQueryChange = (val: string) => {
     setQuery(val);
@@ -62,12 +78,27 @@ export default function TerbitkanSP() {
     }, 350);
   };
 
-  const selectStudent = (m: Mahasiswa) => {
+  const [studentSpData, setStudentSpData] = useState<any[]>([]);
+
+  const selectStudent = async (m: Mahasiswa) => {
     setSelected(m);
     setQuery(m.nama);
     setShowDropdown(false);
     setSearchResults([]);
-    setSpLevel(getNextSP(m.sp));
+    
+    try {
+      const history = await getMahasiswaSpHistory(m.id);
+      setStudentSpData(history);
+      
+      const used = history.map((sp: any) => sp.level);
+      let defaultLevel = "SP1";
+      if (used.includes("SP1") && used.includes("SP2")) defaultLevel = "SP3";
+      else if (used.includes("SP1")) defaultLevel = "SP2";
+      setSpLevel(defaultLevel as SPLevel);
+    } catch (e) {
+      setStudentSpData([]);
+      setSpLevel(getNextSP(m.sp));
+    }
   };
 
   const validate = () => {
@@ -95,6 +126,7 @@ export default function TerbitkanSP() {
         tanggal_terbit:    tanggalTerbit,
         batas_evaluasi:    batasEvaluasi || null,
         catatan:           catatan || null,
+        tahun_ajaran:      tahunAjaran,
       } as any);
       setCreatedId((res as any)?.id ?? null);
       setShowConfirm(false);
@@ -217,12 +249,6 @@ export default function TerbitkanSP() {
                   <X size={15} />
                 </button>
               </div>
-              {selected.sp && (
-                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                  <Info size={14} className="inline mr-1" />
-                  Mahasiswa ini sudah memiliki <strong>{selected.sp} aktif</strong>. SP berikutnya yang disarankan adalah <strong>{getNextSP(selected.sp)}</strong>.
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -235,37 +261,60 @@ export default function TerbitkanSP() {
           <h2 className="font-600 text-gray-800 text-sm">Detail Pelanggaran</h2>
         </div>
         <div className="p-5 space-y-4">
-          {/* SP Level */}
+          {/* SP Level — only shown after student is selected */}
+          {selected && (
           <div>
             <label className="block text-sm font-500 text-gray-700 mb-2">Tingkat SP <span className="text-red-500">*</span></label>
-            <div className="flex gap-3">
-              {(["SP1", "SP2", "SP3"] as SPLevel[]).map((lvl) => (
-                <label key={lvl}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 border-2 rounded-xl cursor-pointer transition-all text-sm font-600 ${
-                    spLevel === lvl ? "border-transparent text-white" : "border-gray-200 text-gray-500 hover:border-gray-300"
-                  }`}
-                  style={spLevel === lvl ? { background: levelColor[lvl] } : {}}>
-                  <input type="radio" name="splevel" value={lvl} checked={spLevel === lvl}
-                    onChange={() => setSpLevel(lvl)} className="hidden" />
-                  {lvl}
-                </label>
-              ))}
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-3">
+                {(["SP1", "SP2", "SP3"] as SPLevel[]).map((lvl) => {
+                  const used = studentSpData.some((sp: any) => sp.level === lvl);
+                  return (
+                    <label key={lvl}
+                      className={`flex-1 flex flex-col items-center justify-center py-2.5 border-2 rounded-xl transition-all text-sm font-600 ${
+                        used ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200 text-gray-400" :
+                        spLevel === lvl ? "border-transparent text-white cursor-pointer" : "border-gray-200 text-gray-500 hover:border-gray-300 cursor-pointer"
+                      }`}
+                      style={!used && spLevel === lvl ? { background: levelColor[lvl] } : {}}>
+                      <input type="radio" name="splevel" value={lvl} checked={spLevel === lvl} disabled={used}
+                        onChange={() => !used && setSpLevel(lvl)} className="hidden" />
+                      <span>{lvl}</span>
+                      {used && <span className="text-[10px] font-normal mt-0.5">(Sudah Terbit)</span>}
+                    </label>
+                  );
+                })}
+              </div>
             </div>
+            {studentSpData.length > 0 && (
+              <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                <Info size={13} className="inline mr-1" />
+                Mahasiswa ini sudah menerima: <strong>{[...new Set(studentSpData.map((sp: any) => sp.level))].join(", ")}</strong>. Setiap tingkat SP hanya dapat diterbitkan sekali.
+              </div>
+            )}
           </div>
+          )}
 
           {/* Jenis Pelanggaran */}
-          <div>
-            <label className="block text-sm font-500 text-gray-700 mb-1.5">Jenis Pelanggaran <span className="text-red-500">*</span></label>
-            <select value={jenisP} onChange={(e) => setJenisP(e.target.value as JenisP)}
-              className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-colors ${
-                errors.jenis ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#263F93]/20"
-              }`}>
-              <option value="">Pilih Jenis Pelanggaran</option>
-              <option value="Akademik">Akademik (IPK di Bawah Standar)</option>
-              <option value="Non-Akademik">Non-Akademik (Pelanggaran Kode Etik)</option>
-              <option value="Cuti Tanpa Izin">Cuti Tanpa Izin (Langsung SP3)</option>
-            </select>
-            {errors.jenis && <p className="mt-1.5 text-xs text-red-600">{errors.jenis}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-500 text-gray-700 mb-1.5">Jenis Pelanggaran <span className="text-red-500">*</span></label>
+              <select value={jenisP} onChange={(e) => setJenisP(e.target.value)}
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-colors ${
+                  errors.jenis ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#263F93]/20"
+                }`}>
+                <option value="">Pilih Jenis Pelanggaran</option>
+                {jenisPelanggaranOptions.map((jp) => (
+                  <option key={jp.id} value={jp.nama}>{jp.nama}{jp.deskripsi ? ` (${jp.deskripsi})` : ""}</option>
+                ))}
+              </select>
+              {errors.jenis && <p className="mt-1.5 text-xs text-red-600">{errors.jenis}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Ajaran <span className="text-red-500">*</span></label>
+              <div className="w-full flex items-center justify-start border border-gray-200 rounded-lg h-[42px] px-1">
+                <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} className="w-full bg-white hover:bg-white" />
+              </div>
+            </div>
           </div>
 
           {jenisP === "Cuti Tanpa Izin" && (

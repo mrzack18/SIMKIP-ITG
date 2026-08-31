@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
+import { api } from "@/services/api"
 import {
   Save,
   Plus,
@@ -12,6 +12,8 @@ import {
   Pencil,
   X,
   XCircle,
+  Info,
+  Settings,
 } from "lucide-react"
 
 const Toast = ({ msg, onClose }: { msg: string; onClose: () => void }) => (
@@ -58,6 +60,59 @@ const formatTgl = (iso: string) => {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 };
 
+function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: () => void }) {
+  const [label, setLabel] = useState("");
+  const [tipe, setTipe] = useState("text");
+  const [isRequired, setIsRequired] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!label.trim()) return;
+    setSaving(true);
+    try {
+      await api.post(`/konfigurasi/dokumen-jenis/${dokumenId}/fields`, { label, tipe, is_required: isRequired });
+      setLabel("");
+      setIsRequired(false);
+      onAdded();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex gap-2 items-center flex-wrap">
+      <input
+        type="text"
+        placeholder="Nama Field (misal: Tanggal Sidang)"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        className="flex-1 min-w-0 text-xs px-2 py-1.5 border border-gray-200 rounded"
+      />
+      <select
+        value={tipe}
+        onChange={(e) => setTipe(e.target.value)}
+        className="w-32 text-xs px-2 py-1.5 border border-gray-200 rounded"
+      >
+        <option value="text">Teks Singkat</option>
+        <option value="date">Tanggal</option>
+        <option value="url">Link / URL</option>
+        <option value="number">Angka</option>
+        <option value="dropdown">Dropdown</option>
+      </select>
+      <label className="flex items-center gap-1 text-xs text-gray-600">
+        <input type="checkbox" checked={isRequired} onChange={(e) => setIsRequired(e.target.checked)} /> Wajib
+      </label>
+      <button
+        onClick={handleAdd}
+        disabled={saving || !label.trim()}
+        className="px-3 py-1.5 bg-[#263F93] text-white text-xs rounded hover:bg-blue-800 disabled:opacity-50"
+      >
+        {saving ? "..." : "Tambah"}
+      </button>
+    </div>
+  );
+}
+
 export default function Konfigurasi() {
   const [ipkMin, setIpkMin] = useState(3.0)
   const [showIpkWarning, setShowIpkWarning] = useState(false)
@@ -73,6 +128,7 @@ export default function Konfigurasi() {
   })
   const [newProdi, setNewProdi] = useState({ nama: "", kode: "" })
   const [showAddProdi, setShowAddProdi] = useState(false)
+  const [expandedDokumen, setExpandedDokumen] = useState<number | null>(null)
 
   // Nilai Mutu state
   const [nilaiMutu, setNilaiMutu] = useState<any[]>([])
@@ -112,21 +168,32 @@ export default function Konfigurasi() {
   
   const fetchData = async () => {
     try {
-      const res = await axios.get("/api/admin/konfigurasi/all")
-      if (res.data.success) {
-        const d = res.data.data
+      const res: any = await api.get("/konfigurasi/all")
+      if (res.success) {
+        const d = res.data
         setInstitusi(d.institusi)
-        setRegulasi(d.regulasi)
-        setNilaiMutu(d.nilai_mutu)
-        setJenisPelanggaran(d.jenis_pelanggaran)
-        setProdis(d.prodis)
-        setDokumens(d.dokumens)
-        setPeriodeHistory(d.periode_history)
         
-        const ipkMinObj = d.regulasi.find((r:any) => r.nama === "IPK Minimum")
+        // Map aturan_akademik to regulasi array for the UI
+        const regArr = d.regulasi || [
+          { id: 1, nama: "IPK Minimum", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester", nilai: d.aturan_akademik?.ipk_minimum || "3.00", tipe: "number", aktif: true },
+          { id: 2, nama: "Masa Tenggang SP", deskripsi: "Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan", nilai: d.aturan_akademik?.masa_tenggang_sp || "90", tipe: "number", aktif: true },
+          { id: 3, nama: "Batas Semester Studi", deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K", nilai: d.aturan_akademik?.max_semester || "8", tipe: "number", aktif: true },
+          { id: 4, nama: "Minimum SKS per Semester", deskripsi: "Jumlah SKS minimum yang harus diambil mahasiswa per semester", nilai: d.aturan_akademik?.sks_minimum_semester || "18", tipe: "number", aktif: true },
+          { id: 5, nama: "Total SKS Kelulusan", deskripsi: "Total minimum SKS untuk kelulusan mahasiswa KIP-K", nilai: d.aturan_akademik?.sks_minimum_lulus || "144", tipe: "number", aktif: true }
+        ];
+        setRegulasi(regArr)
+        
+        setNilaiMutu(d.nilai_mutu || [])
+        setJenisPelanggaran(d.jenis_pelanggaran || [])
+        setProdis(d.prodis || [])
+        setDokumens(d.dokumens || [])
+        const pHistory = d.periode_history || [];
+        setPeriodeHistory(pHistory)
+        
+        const ipkMinObj = regArr.find((r:any) => r.nama === "IPK Minimum")
         if (ipkMinObj) setIpkMin(parseFloat(ipkMinObj.nilai))
         
-        const pAktif = d.periode_history.find((p:any) => p.is_aktif)
+        const pAktif = pHistory.find((p:any) => p.is_aktif)
         if (pAktif) {
            setTglBuka(pAktif.tanggal_buka)
            setTglTutup(pAktif.tanggal_tutup)
@@ -168,7 +235,7 @@ export default function Konfigurasi() {
        if(r.nama === 'Total SKS Kelulusan') payload.sks_minimum_lulus = r.nilai;
     });
     payload.ipk_minimum = ipkMin; // from the dedicated UI
-    await axios.put('/api/admin/konfigurasi', payload);
+    await api.put('/konfigurasi', payload);
     fetchData();
     setShowIpkWarning(false);
     showToast("Konfigurasi berhasil disimpan");
@@ -176,7 +243,7 @@ export default function Konfigurasi() {
 
   const handleProdiSave = async () => {
      if(newProdi.nama && newProdi.kode) {
-        await axios.post('/api/admin/konfigurasi/prodi', newProdi);
+        await api.post('/konfigurasi/prodi', newProdi);
         setNewProdi({nama: '', kode: ''});
         setShowAddProdi(false);
         fetchData();
@@ -185,16 +252,16 @@ export default function Konfigurasi() {
   }
 
   const handleDeleteNilaiMutu = async (id: number) => {
-      await axios.delete('/api/admin/konfigurasi/nilai-mutu/'+id);
+      await api.delete('/konfigurasi/nilai-mutu/'+id);
       fetchData();
       showToast("Dihapus");
   }
   
   const handleSaveNilaiMutu = async (id: number, data: any) => {
       if(id === 0) {
-          await axios.post('/api/admin/konfigurasi/nilai-mutu', data);
+          await api.post('/konfigurasi/nilai-mutu', data);
       } else {
-          await axios.put('/api/admin/konfigurasi/nilai-mutu/'+id, data);
+          await api.put('/konfigurasi/nilai-mutu/'+id, data);
       }
       fetchData();
       showToast("Tersimpan");
@@ -204,15 +271,15 @@ export default function Konfigurasi() {
       // Actually we just update aktif
       const p = jenisPelanggaran.find(x => x.id === id);
       if(p) {
-          await axios.put('/api/admin/konfigurasi/pelanggaran/'+id, {...p, aktif: !aktif});
+          await api.put('/konfigurasi/pelanggaran/'+id, {...p, aktif: !aktif});
           fetchData();
       }
   }
   const handleSavePelanggaran = async (data: any, id: number|null = null) => {
       if(id) {
-          await axios.put('/api/admin/konfigurasi/pelanggaran/'+id, data);
+          await api.put('/konfigurasi/pelanggaran/'+id, data);
       } else {
-          await axios.post('/api/admin/konfigurasi/pelanggaran', data);
+          await api.post('/konfigurasi/pelanggaran', data);
       }
       fetchData();
       showToast("Tersimpan");
@@ -506,45 +573,76 @@ export default function Konfigurasi() {
           title="Jenis Dokumen Kewajiban"
           onSave={() => showToast("Konfigurasi dokumen disimpan")}
         />
-        <div className="p-5 space-y-2">
-          {dokumens.map((d) => (
-            <div
-              key={d.id}
-              className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0"
-            >
-              <button
-                onClick={() =>
-                  setDokumens((prev) =>
-                    prev.map((x) =>
-                      x.id === d.id ? { ...x, wajib: !x.wajib } : x,
-                    ),
-                  )
-                }
-              >
-                {d.wajib ? (
-                  <ToggleRight size={22} className="text-[#263F93]" />
-                ) : (
-                  <ToggleLeft size={22} className="text-gray-400" />
-                )}
-              </button>
-              <span className="flex-1 text-sm text-gray-700">{d.nama}</span>
-              <span
-                className={`text-xs px-2 py-0.5 rounded font-500 ${
-                  d.wajib
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                {d.wajib ? "Wajib" : "Tidak Wajib"}
-              </span>
-              <button className="p-1.5 text-gray-300 hover:text-red-400">
-                <Trash2 size={13} />
-              </button>
+        <div className="p-5 space-y-1">
+          {dokumens.map((d: any) => (
+            <div key={d.id} className="border-b border-gray-50 last:border-0">
+              <div className="flex items-center gap-3 py-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.patch('/konfigurasi/dokumen-jenis/' + d.id + '/toggle');
+                      fetchData();
+                    } catch { showToast("Gagal mengubah status dokumen"); }
+                  }}
+                >
+                  {d.is_wajib ? (
+                    <ToggleRight size={22} className="text-[#263F93]" />
+                  ) : (
+                    <ToggleLeft size={22} className="text-gray-400" />
+                  )}
+                </button>
+                <span className="flex-1 text-sm text-gray-700">{d.nama}</span>
+                <span className="text-xs font-mono text-gray-400">{d.kode}</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded font-500 ${
+                    d.is_wajib
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {d.is_wajib ? "Wajib" : "Tidak Wajib"}
+                </span>
+                <button
+                  onClick={() => setExpandedDokumen(expandedDokumen === d.id ? null : d.id)}
+                  className="p-1 text-gray-400 hover:text-[#263F93] rounded"
+                  title="Atur custom fields"
+                >
+                  <Settings size={16} />
+                </button>
+              </div>
+              {expandedDokumen === d.id && (
+                <div className="pl-10 pr-4 pb-4">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <h4 className="text-xs font-600 text-gray-700 mb-2">Custom Fields (Opsional)</h4>
+                    <div className="space-y-2 mb-3">
+                      {(d.fields || []).map((f: any) => (
+                        <div key={f.id} className="flex items-center gap-2 text-xs bg-white p-2 border border-gray-100 rounded">
+                          <span className="font-500 text-gray-700 flex-1">{f.label}</span>
+                          <span className="text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] uppercase">{f.tipe}</span>
+                          {f.is_required && <span className="text-red-500 bg-red-50 px-1.5 py-0.5 rounded text-[10px]">Wajib</span>}
+                          <button
+                            onClick={async () => {
+                              if (confirm("Hapus field ini?")) {
+                                await api.delete(`/konfigurasi/dokumen-jenis-fields/${f.id}`);
+                                fetchData();
+                              }
+                            }}
+                            className="text-red-400 hover:text-red-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {(!d.fields || d.fields.length === 0) && (
+                        <div className="text-xs text-gray-400 italic">Belum ada custom fields</div>
+                      )}
+                    </div>
+                    <AddFieldInline dokumenId={d.id} onAdded={fetchData} />
+                  </div>
+                </div>
+              )}
             </div>
           ))}
-          <button className="flex items-center gap-2 text-sm text-[#263F93] hover:underline mt-2">
-            <Plus size={14} /> Tambah Jenis Dokumen
-          </button>
         </div>
       </div>
 

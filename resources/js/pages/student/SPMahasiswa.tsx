@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
-import { CheckCircle, FileText, X, Download, Phone, Mail, AlertTriangle } from "lucide-react";
+import { FileText, Download, CheckCircle, AlertTriangle, X } from "lucide-react";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import logoItg from "@/imports/logo_itg.jpg";
 
 type SPLevel = "SP1" | "SP2" | "SP3";
@@ -19,6 +20,8 @@ interface SP {
   nama?: string;
   nim?: string;
   prodi?: string;
+  tahunAjaran?: string;
+  status?: string;
 }
 
 const spBadgeColor: Record<SPLevel, string> = {
@@ -168,9 +171,12 @@ function FormalSurat({ sp }: { sp: SP }) {
   );
 }
 
+const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
+
 export default function SPMahasiswa() {
   const [showModal, setShowModal] = useState(false);
   const [selectedSP, setSelectedSP] = useState<SP | null>(null);
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [list, setList] = useState<SP[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -196,28 +202,24 @@ export default function SPMahasiswa() {
 
   if (loading) return null;
 
-  if (!HAS_SP) {
-    return (
-      <div className="space-y-5">
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">Surat Peringatan</h1>
           <p className="text-gray-500 text-sm mt-0.5">Status surat peringatan KIP-K Anda</p>
         </div>
+        <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+      </div>
+
+      {!HAS_SP ? (
         <div className="bg-green-50 border border-green-200 rounded-2xl p-10 text-center">
           <CheckCircle size={48} className="text-green-500 mx-auto mb-3" />
           <h2 className="font-display font-700 text-xl text-green-800 mb-1">Tidak Ada Surat Peringatan</h2>
           <p className="text-green-600 text-sm">Anda tidak memiliki Surat Peringatan. Pertahankan prestasi Anda!</p>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Surat Peringatan</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Status surat peringatan KIP-K Anda</p>
-      </div>
+      ) : (
+        <>
 
       {/* Active SP banner */}
       {ACTIVE_SP && (
@@ -273,38 +275,52 @@ export default function SPMahasiswa() {
         <div className="p-5">
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
-            <div className="space-y-3">
-              {list.map((sp) => (
-                <div key={sp.id} className="relative pl-12">
-                  <div className="absolute left-2.5 top-4 w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm" />
-                  <button
-                    onClick={() => openDetail(sp)}
-                    className="w-full bg-gray-50 hover:bg-[#263F93]/5 border border-transparent hover:border-[#263F93]/20 rounded-xl transition-all text-left group"
-                  >
-                    <div className="flex items-center justify-between px-4 py-3.5">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 flex-shrink-0 ${spBadgeColor[sp.level]}`}
-                        >
-                          {sp.level}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-600 text-gray-800 truncate">{sp.perihal}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {sp.tanggal} · No. {sp.nomorSurat}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                        {sp.outcome && (
-                          <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 font-500">
-                            Diselesaikan
-                          </span>
-                        )}
-                        <FileText size={15} className="text-gray-300 group-hover:text-[#263F93] transition-colors" />
-                      </div>
+            <div className="space-y-6">
+              {[formatTA(taFilter)].map((ta) => (
+                <div key={ta} className="relative">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-200 shadow-sm flex items-center justify-center flex-shrink-0 z-10 text-gray-500 font-bold text-xs">
+                      {ta.split(" ")[0]}
                     </div>
-                  </button>
+                    <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                      Tahun Ajaran {ta}
+                    </h2>
+                  </div>
+                  <div className="space-y-3">
+                    {list.filter(sp => (sp.tahunAjaran || "2025/2026 Ganjil") === ta).map((sp) => (
+                      <div key={sp.id} className="relative pl-12">
+                        <div className="absolute left-2.5 top-4 w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm z-10" />
+                        <button
+                          onClick={() => openDetail(sp)}
+                          className="w-full bg-gray-50 hover:bg-[#263F93]/5 border border-transparent hover:border-[#263F93]/20 rounded-xl transition-all text-left group"
+                        >
+                          <div className="flex items-center justify-between px-4 py-3.5">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span
+                                className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 flex-shrink-0 ${spBadgeColor[sp.level]}`}
+                              >
+                                {sp.level}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm font-600 text-gray-800 truncate">{sp.perihal}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  {sp.tanggal} · No. {sp.nomorSurat}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                              {sp.outcome && (
+                                <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 font-500">
+                                  Diselesaikan
+                                </span>
+                              )}
+                              <FileText size={15} className="text-gray-300 group-hover:text-[#263F93] transition-colors" />
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -349,6 +365,8 @@ export default function SPMahasiswa() {
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* Detail + Formal letter modal */}
       {showModal && selectedSP && (

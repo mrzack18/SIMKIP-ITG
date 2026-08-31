@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FileText, CheckCircle, Clock, RotateCcw, Download } from "lucide-react";
 import { api } from "@/services/api";
-
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 type LStatus = "Menunggu" | "Disetujui" | "Dikembalikan";
 
 interface Laporan {
@@ -30,6 +30,7 @@ const statusStyle: Record<LStatus, { badge: string; icon: React.ReactNode }> = {
 
 export default function WarekLaporanList() {
   const [activeTab, setActiveTab] = useState<LStatus>("Menunggu");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<Laporan[]>([]);
   const [counts, setCounts] = useState<Record<LStatus, number>>({ Menunggu: 0, Disetujui: 0, Dikembalikan: 0 });
   const [loading, setLoading] = useState(true);
@@ -44,7 +45,7 @@ export default function WarekLaporanList() {
         const results = await Promise.all(
           tabsToFetch.map((s) =>
             api
-              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100`)
+              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100&tahun_ajaran=${filterTahunAjaran === "Semua" ? "" : filterTahunAjaran}`)
               .then((r) => [s, r.total] as [LStatus, number])
               .catch(() => [s, 0] as [LStatus, number])
           )
@@ -60,7 +61,7 @@ export default function WarekLaporanList() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [filterTahunAjaran]);
 
   // Fetch data for active tab
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function WarekLaporanList() {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100`);
+        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100&tahun_ajaran=${filterTahunAjaran === "Semua" ? "" : filterTahunAjaran}`);
         if (cancelled) return;
         setData(res.data ?? []);
         setLoading(false);
@@ -82,26 +83,32 @@ export default function WarekLaporanList() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab]);
+  }, [activeTab, filterTahunAjaran]);
 
   const filtered = data;
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Laporan Semester</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Review dan setujui laporan evaluasi semester dari Biro Kemahasiswaan</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Laporan Semester</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Review dan setujui laporan evaluasi semester dari Biro Kemahasiswaan</p>
+        </div>
+        <TahunAjaranFilter value={filterTahunAjaran} onChange={setFilterTahunAjaran} />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
-        {TABS.map(t => (
-          <button key={t.status}
-            onClick={() => setActiveTab(t.status as LStatus)}
-            className={`px-4 py-2 rounded-lg text-sm font-500 transition-colors ${activeTab === t.status ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
-            {t.label} ({counts[t.status as LStatus] ?? 0})
-          </button>
-        ))}
+      {/* Filters and Tabs */}
+      <div className="flex flex-wrap items-center gap-4">
+
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+          {TABS.map(t => (
+            <button key={t.status}
+              onClick={() => setActiveTab(t.status as LStatus)}
+              className={`px-4 py-2 rounded-lg text-sm font-500 transition-colors ${activeTab === t.status ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
+              {t.label} ({counts[t.status as LStatus] ?? 0})
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Cards */}

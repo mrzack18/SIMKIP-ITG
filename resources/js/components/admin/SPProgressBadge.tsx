@@ -32,7 +32,7 @@ function SPChain({ level }: { level: SPLevel }) {
           <span
             key={l}
             className={`px-1.5 py-0.5 rounded text-xs font-500 ${
-              isActive ? cfg.active : isPast ? "bg-gray-100 text-gray-400 line-through" : "bg-gray-50 text-gray-300"
+              (isActive || isPast) ? cfg.active : "bg-gray-50 text-gray-300"
             }`}
           >
             {l}

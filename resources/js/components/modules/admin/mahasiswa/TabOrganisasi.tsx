@@ -34,13 +34,14 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
       </div>
     )
   }
+  
   if (!data.length) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+        <div className="bg-white p-4 rounded-xl border border-[#E2E8F0]">
+          <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
             <Users size={15} className="text-[#263F93]" /> Keaktifan Organisasi
-          </h4>
+          </span>
         </div>
         <div className="py-10 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
           Belum ada data organisasi.
@@ -58,10 +59,10 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+      <div className="bg-white p-4 rounded-xl border border-[#E2E8F0]">
+        <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
           <Users size={15} className="text-[#263F93]" /> Keaktifan Organisasi
-        </h4>
+        </span>
       </div>
       {data.map((o) => (
         <div

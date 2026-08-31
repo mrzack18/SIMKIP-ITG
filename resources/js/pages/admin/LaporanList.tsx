@@ -3,7 +3,9 @@ import { Link } from "react-router-dom"
 import { Plus, Download, FileText, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { getLaporanList, type LaporanFilter } from "@/services/laporanService"
 import { getKonfigurasiAll } from "@/services/konfigurasiService"
+import { getMahasiswaFilterOptions } from "@/services/mahasiswaService"
 import type { Laporan } from "@/types"
+import { TahunAjaranFilter, getCurrentTahunAjaran, parseTahunAjaran } from "@/components/ui/TahunAjaranFilter"
 
 const statusStyle: Record<string, { badge: string; icon: React.ReactNode; label: string }> = {
   Disetujui: {
@@ -66,8 +68,12 @@ function formatDate(iso: string | undefined): string {
 
 export default function LaporanList() {
   const [search, setSearch] = useState("")
-  const [tahunFilter, setTahunFilter] = useState("")
+  const [tahunFilter, setTahunFilter] = useState(getCurrentTahunAjaran())
   const [semesterFilter, setSemesterFilter] = useState("")
+  const [selectedProdi, setSelectedProdi] = useState('Semua');
+  const [selectedAngkatan, setSelectedAngkatan] = useState('Semua');
+  const [prodiOptions, setProdiOptions] = useState<string[]>(['Semua']);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(['Semua']);
   const [statusFilter, setStatusFilter] = useState("")
   const [cakupanFilter, setCakupanFilter] = useState("")
   const [page, setPage] = useState(1)
@@ -80,11 +86,17 @@ export default function LaporanList() {
     getKonfigurasiAll()
       .then((res) => {
         if (!active) return;
-        const unique = Array.from(new Set(res.data.periode_history.map((p) => p.tahun_akademik)));
+        const unique = Array.from(new Set(res.data.periode_history.map((p: any) => p.tahun_akademik)));
         setTahunList(["", ...unique]);
       })
       .catch(() => { /* fallback ke default */ });
     return () => { active = false };
+  useEffect(() => {
+    getMahasiswaFilterOptions().then(res => {
+      setProdiOptions(['Semua', ...(res.prodis || []).map((p) => p.nama)]);
+      setAngkatanOptions(['Semua', ...(res.angkatans || [])]);
+    }).catch(() => {});
+  }, []);
   }, []);
 
   const [laporan, setLaporan] = useState<Laporan[]>([])
@@ -110,8 +122,18 @@ export default function LaporanList() {
       }
       filter.status = statusMap[statusFilter] ?? statusFilter
     }
-    if (tahunFilter) filter.tahunAkademik = tahunFilter
+    if (tahunFilter) {
+      const parsed = parseTahunAjaran(tahunFilter);
+      if (parsed) {
+        filter.tahunAkademik = parsed.tahun;
+        if (!semesterFilter) {
+          filter.semester = parsed.semester;
+        }
+      }
+    }
     if (semesterFilter) filter.semester = semesterFilter
+    if (selectedProdi !== 'Semua') filter.prodi = selectedProdi;
+    if (selectedAngkatan !== 'Semua') filter.angkatan = selectedAngkatan;
     if (cakupanFilter) filter.cakupan = CAKUPAN_MAP[cakupanFilter] ?? cakupanFilter
 
     getLaporanList(filter)
@@ -142,11 +164,11 @@ export default function LaporanList() {
       setPage(1)
     }, 150)
     return () => clearTimeout(timer)
-  }, [tahunFilter, semesterFilter, statusFilter, cakupanFilter])
+  }, [tahunFilter, semesterFilter, statusFilter, cakupanFilter, selectedProdi, selectedAngkatan])
 
   useEffect(() => {
     return loadData()
-  }, [search, tahunFilter, semesterFilter, statusFilter, cakupanFilter, page])
+  }, [search, tahunFilter, semesterFilter, statusFilter, cakupanFilter, selectedProdi, selectedAngkatan, page])
 
   const handleSearchChange = (val: string) => {
     setSearch(val)
@@ -175,7 +197,7 @@ export default function LaporanList() {
 
   return (
     <div className="space-y-5" style={{ background: "#F8FAFC", minHeight: "100%" }}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">
             Laporan Evaluasi Semester
@@ -184,13 +206,16 @@ export default function LaporanList() {
             Kelola laporan semester untuk persetujuan Warek III
           </p>
         </div>
-        <Link
-          to="/admin/laporan/baru"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
-          style={{ background: "#263F93" }}
-        >
-          <Plus size={15} /> Susun Laporan Baru
-        </Link>
+        <div className="flex items-center gap-2">
+          <TahunAjaranFilter value={tahunFilter} onChange={handleTahunChange} />
+          <Link
+            to="/admin/laporan/baru"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
+            style={{ background: "#263F93" }}
+          >
+            <Plus size={15} /> Susun Laporan Baru
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -208,23 +233,15 @@ export default function LaporanList() {
           placeholder="Cari judul / nomor surat..."
           className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600 min-w-48"
         />
-        <select
-          value={tahunFilter}
-          onChange={(e) => handleTahunChange(e.target.value)}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
-        >
-          {tahunList.map((o) => (
-            <option key={o} value={o}>{o === "" ? "Semua Tahun" : o}</option>
-          ))}
-        </select>
+
 
         <select
           value={semesterFilter}
           onChange={(e) => handleSemesterChange(e.target.value)}
           className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
         >
-          {["", "Ganjil", "Genap"].map((o) => (
-            <option key={o} value={o}>{o === "" ? "Semua Semester" : o}</option>
+          {["", "1", "2", "3", "4", "5", "6", "7", "8"].map((o) => (
+            <option key={o} value={o}>{o === "" ? "Semua Semester" : "Semester " + o}</option>
           ))}
         </select>
 
@@ -245,6 +262,26 @@ export default function LaporanList() {
         >
           {Object.entries(CAKUPAN_MAP).map(([label, value]) => (
             <option key={label} value={value === "" ? "" : label}>{label}</option>
+          ))}
+        </select>
+        
+        <select
+          value={selectedProdi}
+          onChange={(e) => { setSelectedProdi(e.target.value); setPage(1); }}
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+        >
+          {prodiOptions.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+        
+        <select
+          value={selectedAngkatan}
+          onChange={(e) => { setSelectedAngkatan(e.target.value); setPage(1); }}
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+        >
+          {angkatanOptions.map((o) => (
+            <option key={o} value={o}>{o}</option>
           ))}
         </select>
       </div>
@@ -282,6 +319,9 @@ export default function LaporanList() {
                         {l.nomorSurat}
                       </p>
                     )}
+                    <p className="text-xs text-gray-500 mb-1">
+                      Tahun Ajaran: {l.tahunAkademik ?? "—"} {l.semester ?? ""}
+                    </p>
 
                     {l.cakupan && (
                       <div className="flex items-center gap-2 mb-2">

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, CheckCircle, Search } from "lucide-react";
 import { api } from "@/services/api";
-
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 function formatTanggal(tanggal?: string | null) {
   if (!tanggal) return "-";
   try {
@@ -38,6 +38,7 @@ interface LaporanListResponse {
 export default function ProdiLaporanList() {
   const [items, setItems] = useState<LaporanItem[]>([]);
   const [search, setSearch] = useState("");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,7 @@ export default function ProdiLaporanList() {
     const timer = setTimeout(() => {
       const params = new URLSearchParams({
         search,
+        tahun_ajaran: filterTahunAjaran === "Semua" ? "" : filterTahunAjaran,
         page: String(page),
         limit: "10",
       });
@@ -61,22 +63,27 @@ export default function ProdiLaporanList() {
         .finally(() => { if (active) setLoading(false); });
     }, 250);
     return () => { active = false; clearTimeout(timer); };
-  }, [search, page]);
+  }, [search, filterTahunAjaran, page]);
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Laporan Evaluasi Semester</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Laporan monitoring mahasiswa KIP-K dari Pengelola</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Laporan Evaluasi Semester</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Laporan monitoring mahasiswa KIP-K dari Pengelola</p>
+        </div>
+        <TahunAjaranFilter value={filterTahunAjaran} onChange={v => { setFilterTahunAjaran(v); setPage(1); }} />
       </div>
 
       {/* Search */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <div className="relative max-w-md">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Cari judul atau nomor surat..."
-            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
+        <div className="flex flex-wrap gap-3">
+          <div className="relative flex-1 min-w-48 max-w-md">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Cari judul atau nomor surat..."
+              className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
+          </div>
         </div>
       </div>
 

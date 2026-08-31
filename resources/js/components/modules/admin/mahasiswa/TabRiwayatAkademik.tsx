@@ -10,7 +10,7 @@ import {
   ReferenceLine,
   Legend,
 } from "recharts"
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loader2 } from "lucide-react"
+import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loader2, Download } from "lucide-react"
 import type { SemesterDetailBE, SemesterDetail, MataKuliah } from "@/types"
 import { BackendNotReady } from "./Shared"
 
@@ -33,6 +33,11 @@ function SemesterRow({
           Semester {detail.semester}
         </td>
         <td className="py-3 px-3 text-sm text-gray-500">{detail.tahun}</td>
+        <td className="py-3 px-3">
+          <span className="font-semibold text-sm text-gray-700">
+            {detail.ips !== undefined && detail.ips !== null ? Number(detail.ips).toFixed(2) : "-"}
+          </span>
+        </td>
         <td className="py-3 px-3">
           <span
             className="font-semibold text-sm"
@@ -65,14 +70,21 @@ function SemesterRow({
         </td>
         <td className="py-3 px-3">
           <span
-            className={`text-xs px-2 py-0.5 rounded-full ${
-              detail.ipk >= 3.0
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              detail.status === 'Disetujui'
+                ? 'bg-green-100 text-green-700'
+                : detail.status === 'Ditolak'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-yellow-100 text-yellow-700'
             }`}
           >
-            {detail.ipk >= 3.0 ? "Terverifikasi" : "Perlu Tindakan"}
+            {detail.status === 'Disetujui' ? 'Disetujui'
+              : detail.status === 'Ditolak' ? 'Ditolak'
+              : 'Menunggu Validasi'}
           </span>
+          {detail.status === 'Ditolak' && detail.catatan_admin && (
+            <p className="text-xs text-red-500 mt-0.5 italic">"{detail.catatan_admin}"</p>
+          )}
         </td>
         <td className="py-3 px-3">
           <button
@@ -192,6 +204,7 @@ function CustomLegend() {
 }
 
 export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDetailBE[]; loading: boolean; error?: any }) {
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 text-gray-500">
@@ -211,10 +224,8 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
   }
   if (!data.length) {
     return (
-      <div className="space-y-5">
-        <div className="border border-[#E2E8F0] rounded-xl overflow-hidden p-6 bg-white text-center text-sm text-gray-500">
-          Belum ada riwayat akademik untuk mahasiswa ini.
-        </div>
+      <div className="border border-[#E2E8F0] rounded-xl overflow-hidden p-6 bg-white text-center text-sm text-gray-500">
+        Belum ada riwayat akademik untuk mahasiswa ini.
       </div>
     )
   }
@@ -222,7 +233,10 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
   const semesterDetails: SemesterDetail[] = data.map((s) => ({
     semester: s.semester,
     tahun: s.tahun,
+    ips: s.ips,
     ipk: s.ipk,
+    status: s.status,
+    catatan_admin: s.catatan_admin,
     mataKuliah: s.mataKuliah.map((mk) => ({
       kode: mk.kode,
       nama: mk.nama,
@@ -345,9 +359,15 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
       </div>
 
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">
-          Riwayat IPK per Semester
-        </h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold text-gray-700">
+            Riwayat IPK per Semester
+          </h4>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
+            <Download size={14} />
+            Tarik Data Mata Kuliah dari Sistem Akademik
+          </button>
+        </div>
         <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
           <table className="w-full text-sm">
             <thead>
@@ -355,6 +375,7 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
                 {[
                   "Semester",
                   "TA",
+                  "IPS",
                   "IPK",
                   "Perubahan",
                   "MK Belum Lulus",

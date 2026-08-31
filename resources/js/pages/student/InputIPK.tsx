@@ -10,6 +10,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts"
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import {
   TrendingUp,
   TrendingDown,
@@ -66,6 +67,8 @@ const initialMK: MataKuliah[] = []
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function InputIPK() {
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+
   const [mkList, setMkList] = useState<MataKuliah[]>(initialMK)
   const [nextId, setNextId] = useState(1)
   const [toast, setToast] = useState(false)
@@ -92,6 +95,10 @@ export default function InputIPK() {
     return nilaiMutuMap[nilai] ?? null
   }
 
+  const [targetSemester, setTargetSemester] = useState(1)
+  const [latestStatus, setLatestStatus] = useState<string | null>(null)
+  const [catatanRevisi, setCatatanRevisi] = useState<string | null>(null)
+
   const fetchData = async () => {
     try {
       const [resIpk, resPeriode]: any = await Promise.all([
@@ -99,12 +106,43 @@ export default function InputIPK() {
         api.get('/konfigurasi/periode')
       ])
       
-      setHistoryData(resIpk.data || [])
+      const history = resIpk.data || []
+      setHistoryData(history)
       setCarryOverData(resIpk.carry_over || [])
       if (resIpk.statistik) setStatistik(resIpk.statistik)
       if (resPeriode.nilai_mutu) setNilaiMutuMap(resPeriode.nilai_mutu)
       
       setPeriode(resPeriode)
+
+      // Determine form state based on latest semester
+      if (history.length > 0) {
+        const latest = history[0]; // because it's ordered by semester desc
+        if (latest.status === 'Menunggu') {
+           setLatestStatus('Menunggu')
+           setIsSaved(true)
+           setTargetSemester(latest.semester)
+        } else if (latest.status === 'Ditolak') {
+           setLatestStatus('Ditolak')
+           setCatatanRevisi(latest.catatan_admin)
+           setTargetSemester(latest.semester)
+           setIsSaved(false)
+           if (latest.mataKuliah && latest.mataKuliah.length > 0) {
+              setMkList(latest.mataKuliah.map((mk: any) => ({
+                 id: mk.id || Math.random(),
+                 kode: mk.kode,
+                 nama: mk.nama,
+                 sks: mk.sks,
+                 nilai: mk.nilaiHuruf || mk.nilai_huruf || "A"
+              })))
+           }
+        } else {
+           setLatestStatus('Disetujui')
+           setTargetSemester(latest.semester + 1)
+           setIsSaved(false)
+        }
+      } else {
+         setTargetSemester(1)
+      }
     } catch (error) {
       console.error(error)
       setPeriodeError(true)
@@ -117,14 +155,17 @@ export default function InputIPK() {
     fetchData()
   }, [])
 
-  // IPK semester calculation
+  // IPK/IPS semester calculation (auto, tidak bisa diisi manual)
   const validMK = mkList.filter((m) => m.nilai !== "" && m.sks > 0)
   const totalSKS = validMK.reduce((s, m) => s + m.sks, 0)
   const totalMutu = validMK.reduce((s, m) => {
     const mutu = getNilaiMutu(m.nilai)
     return s + (mutu !== null ? mutu * m.sks : 0)
   }, 0)
-  const ipkSemester = totalSKS > 0 ? (totalMutu / totalSKS).toFixed(2) : "0.00"
+  // IPS = bobot semester ini / SKS semester ini
+  const ipsSemester = totalSKS > 0 ? (totalMutu / totalSKS).toFixed(2) : "0.00"
+  // IPK kumulatif dihitung server setelah submit; di sini IPS = IPK semester ini
+  const ipkSemester = ipsSemester
 
   // Derived: MK semester ini yang bernilai D/E
   const mkDE = mkList.filter((m) => m.nilai === "D" || m.nilai === "E")
@@ -154,13 +195,10 @@ export default function InputIPK() {
 
   const handleSave = async () => {
     if (mkList.length === 0 || totalSKS === 0) return alert("Silakan tambahkan mata kuliah terlebih dahulu.")
-    const currentSemester = historyData.length > 0 
-      ? Math.max(...historyData.map(h => h.semester)) + 1 
-      : 1
     
     setIsSubmitting(true)
     const formData = new FormData()
-    formData.append('semester', String(currentSemester))
+    formData.append('semester', String(targetSemester))
     
     if (periode) {
       formData.append('tahun_ajaran', periode.tahun_akademik)
@@ -240,13 +278,18 @@ export default function InputIPK() {
       )}
 
       {/* ─── SECTION 1: Header & Status ─────────────────────────────── */}
-      <div>
-        <h1 className="font-bold text-2xl text-gray-900">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-bold text-2xl text-gray-900">
           Input Nilai Semester
         </h1>
-        <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 text-sm mt-1">
           Catat nilai mata kuliah dan pantau perkembangan akademik Anda
         </p>
+        </div>
+        <div>
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        </div>
       </div>
 
       {periodeError ? (
@@ -388,17 +431,34 @@ export default function InputIPK() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-5 border-b border-gray-100">
           <h2 className="font-bold text-gray-900 text-base">
-            Input Nilai Mata Kuliah &mdash; Semester {historyData.length > 0 ? Math.max(...historyData.map(h => h.semester)) + 1 : 1}
+            Input Nilai Mata Kuliah &mdash; Semester {targetSemester}
           </h2>
         </div>
+
 
         {!periode?.aktif ? (
           <div className="p-6 text-center text-gray-500 text-sm">
             Periode input nilai belum dibuka. Silakan tunggu pengumuman dari
             pengelola.
           </div>
+        ) : latestStatus === 'Menunggu' ? (
+          <div className="p-6 text-center">
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl inline-block max-w-xl mx-auto">
+              <h3 className="font-bold mb-1">Menunggu Validasi Pengelola</h3>
+              <p className="text-sm">Nilai Semester {targetSemester} sedang dievaluasi oleh pengelola. Anda tidak dapat melakukan perubahan saat ini.</p>
+            </div>
+          </div>
         ) : (
           <>
+            {latestStatus === 'Ditolak' && (
+              <div className="mx-5 mt-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+                <h3 className="font-bold text-sm flex items-center gap-2"><AlertTriangle size={16}/> Evaluasi Semester {targetSemester} Ditolak</h3>
+                <p className="text-sm mt-1">Silakan perbaiki isian nilai dan upload ulang KHS Anda.</p>
+                {catatanRevisi && (
+                   <p className="text-xs mt-2 bg-white/50 p-2 rounded text-red-800 italic">"{catatanRevisi}"</p>
+                )}
+              </div>
+            )}
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -543,12 +603,10 @@ export default function InputIPK() {
                 <Plus size={15} />
                 Tambah Mata Kuliah
               </button>
-              <div className="text-sm text-gray-600 font-medium">
-                Total SKS:{" "}
-                <span className="font-bold text-gray-900">{totalSKS}</span>
-                <span className="mx-3 text-gray-300">|</span>
-                IPK Semester:{" "}
-                <span className="font-bold text-[#263F93]">{ipkSemester}</span>
+              <div className="text-sm text-gray-600 font-medium flex items-center gap-4">
+                <span>Total SKS: <span className="font-bold text-gray-900">{totalSKS}</span></span>
+                <span className="text-gray-300">|</span>
+                <span>IPS: <span className="font-bold text-[#263F93]">{ipsSemester}</span> <span className="text-xs text-gray-400">(otomatis)</span></span>
               </div>
             </div>
 

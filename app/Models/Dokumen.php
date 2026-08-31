@@ -33,4 +33,9 @@ class Dokumen extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function fieldValues()
+    {
+        return $this->hasMany(DokumenFieldValue::class);
+    }
 }

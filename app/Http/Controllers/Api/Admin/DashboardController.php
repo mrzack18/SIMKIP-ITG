@@ -114,4 +114,30 @@ class DashboardController extends Controller
             'dokumen_queue'              => $dokumenQueue,
         ]);
     }
+
+    /**
+     * Badge counts untuk sidebar Admin.
+     * - Validasi Dokumen  = semua item queue (Dokumen+Prestasi+Organisasi+Pelatihan+IpkSemestr) berstatus Menunggu
+     * - Surat Penyelesaian = bebas tanggungan berstatus Menunggu
+     */
+    public function badgeCounts(): JsonResponse
+    {
+        // 1. Unified queue: semua tipe berstatus Menunggu
+        $dokumenCount    = \App\Models\Dokumen::where('status', 'Menunggu')->count();
+        $prestasiCount   = \App\Models\Prestasi::whereIn('status', ['Menunggu', 'Menunggu Validasi'])->count();
+        $organisasiCount = \App\Models\Organisasi::where('status', 'Menunggu')->count();
+        $pelatihanCount  = \App\Models\Pelatihan::where('status', 'Menunggu')->count();
+        $ipkCount        = \App\Models\IpkSemestr::where('status', 'Menunggu')->count();
+
+        $dokumenQueueMenunggu = $dokumenCount + $prestasiCount + $organisasiCount + $pelatihanCount + $ipkCount;
+
+        // 2. Bebas tanggungan berstatus Menunggu
+        $bebasMenunggu = \App\Models\BebasTanggungan::whereIn('status', ['Menunggu', 'Diproses'])->count();
+
+        return response()->json([
+            'success' => true,
+            'dokumen_queue_menunggu'  => $dokumenQueueMenunggu,
+            'bebas_tanggungan_menunggu' => $bebasMenunggu,
+        ]);
+    }
 }

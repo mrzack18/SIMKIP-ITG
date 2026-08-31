@@ -64,3 +64,16 @@ export async function getDokumenJenisList(): Promise<DokumenJenisItem[]> {
   const res = await api.get<{ success: boolean; data: DokumenJenisItem[] }>("/admin/konfigurasi/dokumen-jenis");
   return res.data ?? [];
 }
+
+export interface PelanggaranItem {
+  id: number;
+  nama: string;
+  deskripsi: string | null;
+  eskalasi: string;
+  aktif: boolean;
+}
+
+export async function getPelanggaranList(): Promise<PelanggaranItem[]> {
+  const res = await api.get<{ success: boolean; data: PelanggaranItem[] }>("/admin/konfigurasi/pelanggaran");
+  return res.data ?? [];
+}

@@ -72,6 +72,8 @@ class IPKController extends Controller
                     'tahun_ajaran' => $request->tahun_ajaran,
                     'ips'          => $ipsCalc,
                     'ipk'          => 0, // Fallback default untuk strict mode insert, direcalculate sesaat lagi
+                    'status'       => 'Menunggu',
+                    'catatan_admin'=> null,
                 ]
             );
 

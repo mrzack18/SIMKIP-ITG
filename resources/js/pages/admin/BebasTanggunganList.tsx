@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, AlertTriangle, Award, XCircle, Search, Loader2 } from "lucide-react";
 import { getBebasTanggunganList } from "@/services/bebasTanggunganService";
 import type { BebasTanggunganListItem, BebasTanggunganStatus } from "@/types";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 type Tab = "menunggu" | "diterbitkan" | "ditolak";
 
@@ -67,7 +68,7 @@ export default function BebasTanggunganList() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">
             Permohonan Surat Keterangan Penyelesaian Studi
@@ -76,11 +77,13 @@ export default function BebasTanggunganList() {
             Review permohonan penerbitan Surat Keterangan Penyelesaian Studi KIP-K
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5">
-          <Award size={16} className="text-purple-600" />
-          <span className="text-sm font-600 text-purple-700">
-            {counts.menunggu} menunggu review
-          </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5">
+            <Award size={16} className="text-purple-600" />
+            <span className="text-sm font-600 text-purple-700">
+              {counts.menunggu} menunggu review
+            </span>
+          </div>
         </div>
       </div>
 
@@ -138,6 +141,7 @@ export default function BebasTanggunganList() {
               Reset
             </button>
           )}
+
         </form>
       </div>
 

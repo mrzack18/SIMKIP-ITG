@@ -27,36 +27,36 @@ import {
   type MahasiswaFilter,
 } from "@/services/mahasiswaService";
 import type { Mahasiswa, PaginatedResponse } from "@/types";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
-// ── SP badges (accumulated) ────────────────────────────────────────────────
-function SpBadges({ level }: { level: "SP1" | "SP2" | "SP3" }) {
+// ─── SP badges (historical list with status) ─────────────────────────────────────────────────────────────────────────
+function SpBadges({ spList }: { spList?: { level: string; status: string }[] | null }) {
+  if (!spList || spList.length === 0) {
+    return <span className="text-gray-300 text-sm">—</span>;
+  }
+  
+  // Sort by level ascending
+  const sorted = [...spList].sort((a, b) => a.level.localeCompare(b.level));
+
   return (
     <div className="flex items-center gap-1">
-      <span
-        className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-          level === "SP1"
-            ? "bg-amber-100 text-amber-700"
-            : "bg-gray-100 text-gray-400 line-through"
-        }`}
-      >
-        SP1
-      </span>
-      {(level === "SP2" || level === "SP3") && (
-        <span
-          className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-            level === "SP2"
-              ? "bg-red-100 text-red-700"
-              : "bg-gray-100 text-gray-400 line-through"
-          }`}
-        >
-          SP2
-        </span>
-      )}
-      {level === "SP3" && (
-        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-red-900/10 text-red-900">
-          SP3
-        </span>
-      )}
+      {sorted.map(sp => {
+        const isActive = sp.status === "Aktif" || sp.status === "Masa Tenggang";
+        let bg = "bg-gray-100";
+        let text = "text-gray-400";
+        
+        if (isActive) {
+           if (sp.level === "SP1") { bg = "bg-amber-100"; text = "text-amber-700"; }
+           else if (sp.level === "SP2") { bg = "bg-red-100"; text = "text-red-700"; }
+           else { bg = "bg-red-900/10"; text = "text-red-900"; }
+        }
+        
+        return (
+          <span key={sp.level} className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${bg} ${text}`}>
+            {sp.level}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -89,6 +89,8 @@ function FilterSelect({
 
 const LIMIT = 10;
 
+
+
 export default function MahasiswaList() {
   // Filter options from BE
   const [prodiOptions, setProdiOptions]     = useState<string[]>([]);
@@ -96,16 +98,17 @@ export default function MahasiswaList() {
   const [optionsLoading, setOptionsLoading]  = useState(true);
 
   // Filters
-  const [searchInput,     setSearchInput]     = useState("");
-  const [search,          setSearch]          = useState("");
-  const [prodiFilter,     setProdiFilter]     = useState("Semua");
-  const [angkatanFilter,  setAngkatanFilter]  = useState("Semua");
-  const [spFilter,        setSpFilter]        = useState("Semua");
-  const [statusFilter,    setStatusFilter]    = useState("Semua Status");
-  const [kipFilter,       setKipFilter]       = useState("Semua");
-  const [ipkFilter,       setIpkFilter]       = useState("Semua");
-  const [sortBy,          setSortBy]          = useState("IPK Tertinggi → Terendah");
-  const [page,            setPage]            = useState(1);
+  const [searchInput,         setSearchInput]         = useState("");
+  const [search,              setSearch]              = useState("");
+  const [tahunAjaranFilter,   setTahunAjaranFilter]   = useState(getCurrentTahunAjaran());
+  const [prodiFilter,         setProdiFilter]         = useState("Semua Prodi");
+  const [angkatanFilter,      setAngkatanFilter]      = useState("Semua Angkatan");
+  const [spFilter,            setSpFilter]            = useState("Semua SP");
+  const [statusFilter,        setStatusFilter]        = useState("Semua Status");
+  const [kipFilter,           setKipFilter]           = useState("Semua Kategori");
+  const [ipkFilter,           setIpkFilter]           = useState("Semua IPK");
+  const [sortBy,              setSortBy]              = useState("IPK Tertinggi → Terendah");
+  const [page,                setPage]                = useState(1);
 
   // Data state
   const [students,   setStudents]   = useState<Mahasiswa[]>([]);
@@ -135,17 +138,17 @@ export default function MahasiswaList() {
   const [cabutError,      setCabutError]      = useState("");
 
   const isFiltered =
-    search || prodiFilter !== "Semua" || angkatanFilter !== "Semua" ||
-    spFilter !== "Semua" || statusFilter !== "Semua Status" ||
-    kipFilter !== "Semua" || ipkFilter !== "Semua" ||
-    sortBy !== "IPK Tertinggi → Terendah";
+    search || tahunAjaranFilter !== "Semua" || prodiFilter !== "Semua Prodi" ||
+    angkatanFilter !== "Semua Angkatan" || spFilter !== "Semua SP" ||
+    statusFilter !== "Semua Status" || kipFilter !== "Semua Kategori" ||
+    ipkFilter !== "Semua IPK" || sortBy !== "IPK Tertinggi → Terendah";
 
   // ── Load filter options from BE once on mount ──────────────────────────
   useEffect(() => {
     getMahasiswaFilterOptions()
       .then((opts) => {
-        setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
-        setAngkatanOptions(["Semua", ...opts.angkatans.map(String)]);
+        setProdiOptions(["Semua Prodi", ...opts.prodis.map((p) => p.nama)]);
+        setAngkatanOptions(["Semua Angkatan", ...opts.angkatans.map(String)]);
       })
       .catch(() => {
         // Fallback: keep empty — filters still work without dynamic options
@@ -156,16 +159,17 @@ export default function MahasiswaList() {
   // ── Build filter payload for BE ──────────────────────────────────────────
   const buildFilter = useCallback((): MahasiswaFilter => {
     const f: MahasiswaFilter = { page, limit: LIMIT };
-    if (search)                                         f.search     = search;
-    if (prodiFilter !== "Semua")                       f.prodi      = prodiFilter;
-    if (angkatanFilter !== "Semua")                    f.angkatan   = angkatanFilter;
-    if (spFilter !== "Semua")                          f.spFilter   = spFilter;
-    if (statusFilter !== "Semua Status")               f.status     = statusFilter;
-    if (kipFilter !== "Semua")                         f.kipFilter  = kipFilter;
-    if (ipkFilter !== "Semua")                         f.ipkFilter  = ipkFilter;
-    if (sortBy !== "IPK Tertinggi → Terendah")         f.sortBy     = sortBy;
+    if (search)                                        f.search        = search;
+    if (tahunAjaranFilter !== "Semua")                 f.tahun_ajaran  = tahunAjaranFilter;
+    if (prodiFilter !== "Semua Prodi")                 f.prodi         = prodiFilter;
+    if (angkatanFilter !== "Semua Angkatan")           f.angkatan      = angkatanFilter;
+    if (spFilter !== "Semua SP")                       f.spFilter      = spFilter;
+    if (statusFilter !== "Semua Status")               f.status        = statusFilter;
+    if (kipFilter !== "Semua Kategori")                f.kipFilter     = kipFilter;
+    if (ipkFilter !== "Semua IPK")                     f.ipkFilter     = ipkFilter;
+    if (sortBy !== "IPK Tertinggi → Terendah")         f.sortBy        = sortBy;
     return f;
-  }, [search, prodiFilter, angkatanFilter, spFilter, statusFilter, kipFilter, ipkFilter, sortBy, page]);
+  }, [search, tahunAjaranFilter, prodiFilter, angkatanFilter, spFilter, statusFilter, kipFilter, ipkFilter, sortBy, page]);
 
   // ── Fetch list on filter/page change ────────────────────────────────────
   useEffect(() => {
@@ -202,9 +206,10 @@ export default function MahasiswaList() {
 
   function resetFilters() {
     setSearchInput(""); setSearch("");
-    setProdiFilter("Semua"); setAngkatanFilter("Semua");
-    setSpFilter("Semua"); setStatusFilter("Semua Status");
-    setKipFilter("Semua"); setIpkFilter("Semua");
+    setTahunAjaranFilter(getCurrentTahunAjaran());
+    setProdiFilter("Semua Prodi"); setAngkatanFilter("Semua Angkatan");
+    setSpFilter("Semua SP"); setStatusFilter("Semua Status");
+    setKipFilter("Semua Kategori"); setIpkFilter("Semua IPK");
     setSortBy("IPK Tertinggi → Terendah"); setPage(1);
   }
 
@@ -290,6 +295,10 @@ export default function MahasiswaList() {
           <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa KIP-K terdaftar</p>
         </div>
         <div className="flex items-center gap-2">
+          <TahunAjaranFilter
+            value={tahunAjaranFilter}
+            onChange={(v) => { setTahunAjaranFilter(v); setPage(1); }}
+          />
           <button className="flex items-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
             <Download size={15} /> Import Massal
           </button>
@@ -324,6 +333,7 @@ export default function MahasiswaList() {
             />
           </div>
 
+
           {/* Prodi — from BE */}
           <FilterSelect
             value={prodiFilter}
@@ -343,7 +353,7 @@ export default function MahasiswaList() {
           <FilterSelect
             value={spFilter}
             onChange={(v) => { setSpFilter(v); setPage(1); }}
-            options={["Semua", "Tanpa SP", "SP1", "SP2", "SP3"]}
+            options={["Semua SP", "Tanpa SP", "SP1", "SP2", "SP3"]}
           />
 
           <FilterSelect
@@ -355,13 +365,13 @@ export default function MahasiswaList() {
           <FilterSelect
             value={kipFilter}
             onChange={(v) => { setKipFilter(v); setPage(1); }}
-            options={["Semua", "KIP-K Reguler", "KIP-K Aspirasi"]}
+            options={["Semua Kategori", "KIP-K Reguler", "KIP-K Aspirasi"]}
           />
 
           <FilterSelect
             value={ipkFilter}
             onChange={(v) => { setIpkFilter(v); setPage(1); }}
-            options={["Semua", "Di Bawah Standar (< 3.0)", "Di Atas Standar (≥ 3.0)"]}
+            options={["Semua IPK", "Di Bawah Standar (< 3.0)", "Di Atas Standar (≥ 3.0)"]}
           />
 
           <FilterSelect
@@ -415,7 +425,6 @@ export default function MahasiswaList() {
                 students.map((m, i) => {
                   const globalIdx = (page - 1) * LIMIT + i + 1;
                   const trend   = m.trendDelta ?? 0;
-                  const spLevel = (m.sp && (m.sp === "SP1" || m.sp === "SP2" || m.sp === "SP3")) ? m.sp : null;
                   return (
                     <tr
                       key={m.id}
@@ -443,15 +452,19 @@ export default function MahasiswaList() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                            m.ipk >= 3.0
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {m.ipk.toFixed(2)}
-                        </span>
+                        {m.ipk !== null ? (
+                          <span
+                            className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                              m.ipk >= 3.0
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {m.ipk.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className={`flex items-center gap-1 text-xs font-medium ${
@@ -486,11 +499,7 @@ export default function MahasiswaList() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {spLevel ? (
-                          <SpBadges level={spLevel} />
-                        ) : (
-                          <span className="text-gray-300 text-sm">—</span>
-                        )}
+                        <SpBadges spList={m.spList} />
                       </td>
                       <td className="px-4 py-3 relative">
                         <button

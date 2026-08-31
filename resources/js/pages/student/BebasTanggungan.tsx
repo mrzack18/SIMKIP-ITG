@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, Clock, AlertTriangle, Send, Download, XCircle } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, FileText, Download, User, CheckCircle2, ChevronRight, Loader2, Send, XCircle } from "lucide-react";
 import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import { useAuth } from "@/context/AuthContext";
 
 type AppState = "belum" | "menunggu" | "diterbitkan" | "ditolak";
@@ -41,6 +42,7 @@ export default function BebasTanggungan() {
   };
   
   const [state, setState] = useState<AppState>("belum");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [showConfirm, setShowConfirm] = useState(false);
   
   const [dokumenList, setDokumenList] = useState<Dokumen[]>([]);
@@ -102,9 +104,12 @@ export default function BebasTanggungan() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Surat Keterangan Penyelesaian Studi</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Mahasiswa KIP-K — {mahasiswa.prodi} · {mahasiswa.nim}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Surat Keterangan Penyelesaian Studi</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Mahasiswa KIP-K — {mahasiswa.prodi} · {mahasiswa.nim}</p>
+        </div>
+        <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
       </div>
 
       {state === "belum" && (

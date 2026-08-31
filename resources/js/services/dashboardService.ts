@@ -46,8 +46,19 @@ export interface DashboardResponse {
   dokumen_queue: DokumenQueueItem[];
 }
 
-export const getAdminDashboardData = async (): Promise<DashboardResponse> => {
-  return api.get<DashboardResponse>("/dashboard");
+export const getAdminDashboardData = async (tahunAjaran?: string): Promise<DashboardResponse> => {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  return api.get<DashboardResponse>(`/dashboard${qs}`);
+};
+
+export interface BadgeCountsResponse {
+  success: boolean;
+  dokumen_queue_menunggu: number;
+  bebas_tanggungan_menunggu: number;
+}
+
+export const getBadgeCounts = async (): Promise<BadgeCountsResponse> => {
+  return api.get<BadgeCountsResponse>("/admin/badge-counts");
 };
 
 // Prodi Dashboard types
@@ -90,8 +101,9 @@ export interface ProdiDashboardResponse {
   semester_7plus: ProdiSemester7Item[];
 }
 
-export const getProdiDashboardData = async (): Promise<ProdiDashboardResponse> => {
-  return api.get<ProdiDashboardResponse>("/dashboard");
+export const getProdiDashboardData = async (tahunAjaran?: string): Promise<ProdiDashboardResponse> => {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  return api.get<ProdiDashboardResponse>(`/dashboard${qs}`);
 }
 
 export interface DokumenStatusItem {

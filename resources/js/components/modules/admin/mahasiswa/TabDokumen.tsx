@@ -24,16 +24,29 @@ export function TabDokumen({ data, loading, error }: { data: any[]; loading: boo
       </div>
     )
   }
+
   if (!data || !data.length) {
     return (
-      <div className="py-12 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
-        Belum ada dokumen kewajiban.
+      <div className="space-y-4">
+        <div className="bg-white p-4 rounded-xl border border-[#E2E8F0]">
+          <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
+            <FileText size={15} className="text-[#263F93]" /> Data Dokumen Kewajiban
+          </span>
+        </div>
+        <div className="py-12 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+          Belum ada dokumen kewajiban.
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
+      <div className="bg-white p-4 rounded-xl border border-[#E2E8F0]">
+        <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
+          <FileText size={15} className="text-[#263F93]" /> Data Dokumen Kewajiban
+        </span>
+      </div>
       {data.map((doc) => (
         <div key={doc.id} className="p-4 border border-[#E2E8F0] rounded-xl flex items-start gap-4 hover:shadow-sm transition-shadow bg-white">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">

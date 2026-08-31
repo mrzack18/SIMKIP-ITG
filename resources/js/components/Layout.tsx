@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import Sidebar from "./Sidebar";
+import { getBadgeCounts } from "@/services/dashboardService";
 
 type Role = "admin" | "mahasiswa" | "prodi" | "warek";
 
@@ -17,26 +18,40 @@ const roleLabel: Record<Role, string> = {
   warek: "Wakil Rektor III",
 };
 
-const notifications = [
-  { id: 1, color: "bg-yellow-400", text: "Dokumen MABIM Ahmad Rifaldi menunggu validasi", time: "2 jam lalu" },
-  { id: 2, color: "bg-blue-400",   text: "SP1 Budi Santoso diterbitkan",                  time: "5 jam lalu" },
-  { id: 3, color: "bg-green-400",  text: "Laporan Semester telah disetujui Warek",         time: "1 hari lalu" },
-];
+
 
 export default function Layout({ role, user }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [badgeCounts, setBadgeCounts] = useState<{ dokumen_queue_menunggu: number; bebas_tanggungan_menunggu: number }>({
+    dokumen_queue_menunggu: 0,
+    bebas_tanggungan_menunggu: 0,
+  });
   const navigate = useNavigate();
 
-  const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => navigate("/");
 
+  // Fetch badge counts for admin sidebar
+  useEffect(() => {
+    if (role !== "admin") return;
+    let active = true;
+    getBadgeCounts()
+      .then((res) => {
+        if (active) {
+          setBadgeCounts({
+            dokumen_queue_menunggu: res.dokumen_queue_menunggu,
+            bebas_tanggungan_menunggu: res.bebas_tanggungan_menunggu,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [role]);
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotif(false);
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfile(false);
     }
     document.addEventListener("mousedown", handleClick);
@@ -45,7 +60,7 @@ export default function Layout({ role, user }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-[#F1F5F9]">
-      <Sidebar role={role} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onLogout={handleLogout} />
+      <Sidebar role={role} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onLogout={handleLogout} badgeCounts={badgeCounts} />
 
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? "ml-16" : "ml-64"}`}>
         {/* Topbar */}
@@ -62,42 +77,10 @@ export default function Layout({ role, user }: LayoutProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Bell */}
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => { setShowNotif(v => !v); setShowProfile(false); }}
-                className="relative w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <Bell size={16} className="text-gray-600" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-600">3</span>
-              </button>
-              {showNotif && (
-                <div className="absolute right-0 top-11 w-80 bg-white rounded-xl shadow-lg border border-[#E2E8F0] z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-600 text-gray-800">Notifikasi</p>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {notifications.map(n => (
-                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                        <span className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${n.color}`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-gray-700 leading-snug">{n.text}</p>
-                          <p className="text-[11px] text-gray-400 mt-0.5">{n.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="px-4 py-2.5 border-t border-gray-100 text-center">
-                    <button className="text-xs text-[#263F93] font-600 hover:underline">Lihat Semua Notifikasi</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Profile */}
             <div className="relative" ref={profileRef}>
               <div
-                onClick={() => { setShowProfile(v => !v); setShowNotif(false); }}
+                onClick={() => { setShowProfile(v => !v); }}
                 className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg px-2 py-1.5 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-[#263F93] flex items-center justify-center text-white text-sm font-600">

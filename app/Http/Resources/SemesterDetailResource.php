@@ -20,12 +20,15 @@ class SemesterDetailResource extends JsonResource
         }
 
         return [
-            'semester' => (int) $this->semester,
-            'tahun' => $this->tahun_ajaran,
-            'ips' => (float) $this->ips,
-            'ipk' => (float) $this->ipk,
-            'mkBelumLulus' => $mkBelumLulus,
-            'mataKuliah' => MataKuliahResource::collection($this->whenLoaded('mataKuliahs')),
+            'id'            => $this->id,
+            'semester'      => (int) $this->semester,
+            'tahun'         => $this->tahun_ajaran,
+            'ips'           => (float) $this->ips,
+            'ipk'           => (float) $this->ipk,
+            'status'        => $this->status,          // Menunggu | Disetujui | Ditolak
+            'catatan_admin' => $this->catatan_admin,
+            'mkBelumLulus'  => $mkBelumLulus,
+            'mataKuliah'    => MataKuliahResource::collection($this->whenLoaded('mataKuliahs')),
         ];
     }
 }

@@ -49,7 +49,7 @@ export default function TambahMahasiswa() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
-  
+
   const [prodiList, setProdiList] = useState<{id: number, nama: string, kode: string}[]>([]);
   const [angkatanOptions, setAngkatanOptions] = useState<number[]>([]);
   const [optionsLoading, setOptionsLoading] = useState(true);
@@ -196,13 +196,15 @@ export default function TambahMahasiswa() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link to="/admin/mahasiswa" className="hover:text-gray-700 flex items-center gap-1">
-          <ChevronLeft size={15} /> Manajemen Mahasiswa
-        </Link>
-        <span>/</span>
-        <span className="text-gray-800 font-500">Tambah Mahasiswa</span>
+      {/* Breadcrumb and Filter */}
+      <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
+        <div className="flex items-center gap-2">
+          <Link to="/admin/mahasiswa" className="hover:text-gray-700 flex items-center gap-1">
+            <ChevronLeft size={15} /> Manajemen Mahasiswa
+          </Link>
+          <span>/</span>
+          <span className="text-gray-800 font-500">Tambah Mahasiswa</span>
+        </div>
       </div>
 
       <div>

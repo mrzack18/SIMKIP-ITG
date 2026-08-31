@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import {
   Eye, EyeOff, CheckCircle, X, Pencil, Camera, Phone, AlertCircle, Clock,
 } from "lucide-react";
@@ -68,6 +69,8 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 /* ── Mahasiswa full layout ─────────────────────────────────────────────── */
 function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -205,9 +208,14 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
         </div>
       )}
 
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Profil Saya</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Profil Saya</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
+        </div>
+        <div>
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        </div>
       </div>
 
       {/* SECTION 1 — Informasi Pribadi */}

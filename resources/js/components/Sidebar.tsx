@@ -13,9 +13,9 @@ const adminNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/mahasiswa", icon: Users, label: "Manajemen Mahasiswa" },
   { to: "/admin/akademik", icon: BookOpen, label: "Data Akademik" },
-  { to: "/admin/dokumen", icon: FileCheck, label: "Validasi Dokumen", badge: 5 },
+  { to: "/admin/dokumen", icon: FileCheck, label: "Validasi Dokumen" },
   { to: "/admin/sp", icon: AlertTriangle, label: "Surat Peringatan" },
-  { to: "/admin/bebas-tanggungan", icon: Award, label: "Surat Penyelesaian", badge: 5 },
+  { to: "/admin/bebas-tanggungan", icon: Award, label: "Surat Penyelesaian" },
   { to: "/admin/laporan", icon: BarChart3, label: "Laporan Semester" },
   { to: "/admin/konfigurasi", icon: Settings, label: "Konfigurasi" },
   { to: "/admin/audit", icon: History, label: "Audit Log" },
@@ -56,14 +56,20 @@ const navMap: Record<Role, typeof adminNav> = {
   warek: warekNav,
 };
 
+interface BadgeCounts {
+  dokumen_queue_menunggu: number;
+  bebas_tanggungan_menunggu: number;
+}
+
 interface SidebarProps {
   role: Role;
   collapsed: boolean;
   onToggle: () => void;
   onLogout: () => void;
+  badgeCounts?: BadgeCounts;
 }
 
-export default function Sidebar({ role, collapsed, onToggle, onLogout }: SidebarProps) {
+export default function Sidebar({ role, collapsed, onToggle, onLogout, badgeCounts }: SidebarProps) {
   const nav = navMap[role];
 
   const roleLabel: Record<Role, string> = {
@@ -98,37 +104,52 @@ export default function Sidebar({ role, collapsed, onToggle, onLogout }: Sidebar
 
       {/* Nav items */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {nav.map(({ to, icon: Icon, label, badge }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to.split("/").length <= 2}
-            className={({ isActive }) =>
-              `relative flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 group
-              ${isActive
-                ? "bg-[#D4A72C] text-[#263F93]"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={18} className="flex-shrink-0" />
-                {!collapsed && <span className="text-sm font-500 truncate">{label}</span>}
-                {badge && !collapsed && (
-                  <span className={`ml-auto text-xs font-600 px-1.5 py-0.5 rounded-full ${isActive ? "bg-[#263F93] text-[#D4A72C]" : "bg-[#D4A72C] text-[#263F93]"}`}>
-                    {badge}
-                  </span>
-                )}
-                {collapsed && (
-                  <span className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-                    {label}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
+        {nav.map(({ to, icon: Icon, label }) => {
+          // Determine badge count for admin routes
+          const badgeCount = (() => {
+            if (role !== "admin" || !badgeCounts) return undefined;
+            if (to === "/admin/dokumen") return badgeCounts.dokumen_queue_menunggu;
+            if (to === "/admin/bebas-tanggungan") return badgeCounts.bebas_tanggungan_menunggu;
+            return undefined;
+          })();
+
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={to.split("/").length <= 2}
+              className={({ isActive }) =>
+                `relative flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 transition-all duration-150 group
+                ${isActive
+                  ? "bg-[#D4A72C] text-[#263F93]"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={18} className="flex-shrink-0" />
+                  {!collapsed && <span className="text-sm font-500 truncate">{label}</span>}
+                  {badgeCount !== undefined && badgeCount > 0 && !collapsed && (
+                    <span className={`ml-auto text-xs font-600 px-1.5 py-0.5 rounded-full ${isActive ? "bg-[#263F93] text-[#D4A72C]" : "bg-[#D4A72C] text-[#263F93]"}`}>
+                      {badgeCount}
+                    </span>
+                  )}
+                  {collapsed && (
+                    <span className="absolute left-14 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                      {label}
+                      {badgeCount !== undefined && badgeCount > 0 && (
+                        <span className="ml-1.5 bg-[#D4A72C] text-[#263F93] text-[10px] font-600 px-1.5 py-0.5 rounded-full">
+                          {badgeCount}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Bottom */}

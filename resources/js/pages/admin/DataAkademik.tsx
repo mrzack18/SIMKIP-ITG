@@ -28,8 +28,9 @@ import {
   getMahasiswaFilterOptions,
 } from "@/services/mahasiswaService"
 import { getKonfigurasiAll } from "@/services/konfigurasiService"
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter"
 
-const kipkOptions = ["Semua", "KIP-K Reguler", "KIP-K Aspirasi"]
+const kipkOptions = ["Semua Kategori", "KIP-K Reguler", "KIP-K Aspirasi"]
 
 // ── Data Akademik & Non-Akademik ─────────────────────────────────────────────
 
@@ -578,13 +579,14 @@ export default function DataAkademik() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [akademikRows, setAkademikRows] = useState<any[]>([])
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [prestasiData, setPrestasiData] = useState<any[]>([])
   const [organisasiData, setOrganisasiData] = useState<any[]>([])
   const [pelatihanData, setPelatihanData] = useState<any[]>([])
 
   // Filter options loaded from BE
-  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua"])
-  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua"])
+  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua Prodi"])
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua Angkatan"])
   const [periodeAktifRange, setPeriodeAktifRange] = useState<string>("—")
 
   // Load filter options from BE
@@ -593,23 +595,27 @@ export default function DataAkademik() {
     getMahasiswaFilterOptions()
       .then((opts) => {
         if (!active) return;
-        setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
-        setAngkatanOptions(["Semua", ...opts.angkatans.map(String)]);
+        setProdiOptions(["Semua Prodi", ...opts.prodis.map((p) => p.nama)]);
+        setAngkatanOptions(["Semua Angkatan", ...opts.angkatans.map(String)]);
       })
       .catch(() => { /* fallback to defaults */ });
     getKonfigurasiAll()
       .then((res) => {
         if (!active) return;
-        const periode = res?.data?.periode_history?.find((p: any) => p.is_aktif);
-        if (periode) {
-          const buka = new Date(periode.tanggal_buka).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-          const tutup = new Date(periode.tanggal_tutup).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-          setPeriodeAktifRange(`${buka} – ${tutup}`);
+        if (res?.data) {
+          const config = res.data;
+          const bukaStr = config.periode_input_buka?.value;
+          const tutupStr = config.periode_input_tutup?.value;
+          if (bukaStr && tutupStr) {
+             const buka = new Date(bukaStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+             const tutup = new Date(tutupStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+             setPeriodeAktifRange(`${buka} - ${tutup}`);
+          }
         }
       })
       .catch(() => { /* fallback */ });
     return () => { active = false; };
-  }, []);
+  }, [tahunAjaran]);
 
   // ── Fetch Data ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -617,10 +623,10 @@ export default function DataAkademik() {
     setLoading(true)
     setError("")
     Promise.all([
-      getRekapAkademik(),
-      getRekapPrestasi(),
-      getRekapOrganisasi(),
-      getRekapPelatihan(),
+      getRekapAkademik(tahunAjaran),
+      getRekapPrestasi(tahunAjaran),
+      getRekapOrganisasi(tahunAjaran),
+      getRekapPelatihan(tahunAjaran),
     ])
       .then(([akademik, prestasi, organisasi, pelatihan]) => {
         if (!active) return
@@ -631,7 +637,14 @@ export default function DataAkademik() {
             mkBelumLulus: r.mkBelumLulus ?? 0,
           })),
         )
-        setPrestasiData(prestasi.data || [])
+        setPrestasiData(
+          (prestasi.data || []).map((p: any) => ({
+            ...p,
+            tanggal: p.tanggalMulai && p.tanggalSelesai
+              ? `${p.tanggalMulai} - ${p.tanggalSelesai}`
+              : p.tanggalMulai || "-",
+          }))
+        )
         setOrganisasiData(
           (organisasi.data || []).map((o: any) => ({
             ...o,
@@ -656,17 +669,17 @@ export default function DataAkademik() {
       })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [])
+  }, [tahunAjaran])
 
   const fetchData = () => {
     let active = true
     setLoading(true)
     setError("")
     Promise.all([
-      getRekapAkademik(),
-      getRekapPrestasi(),
-      getRekapOrganisasi(),
-      getRekapPelatihan(),
+      getRekapAkademik(tahunAjaran),
+      getRekapPrestasi(tahunAjaran),
+      getRekapOrganisasi(tahunAjaran),
+      getRekapPelatihan(tahunAjaran),
     ])
       .then(([akademik, prestasi, organisasi, pelatihan]) => {
         if (!active) return
@@ -677,7 +690,14 @@ export default function DataAkademik() {
             mkBelumLulus: r.mkBelumLulus ?? 0,
           })),
         )
-        setPrestasiData(prestasi.data || [])
+        setPrestasiData(
+          (prestasi.data || []).map((p: any) => ({
+            ...p,
+            tanggal: p.tanggalMulai && p.tanggalSelesai
+              ? `${p.tanggalMulai} - ${p.tanggalSelesai}`
+              : p.tanggalMulai || "-",
+          }))
+        )
         setOrganisasiData(
           (organisasi.data || []).map((o: any) => ({
             ...o,
@@ -742,33 +762,33 @@ export default function DataAkademik() {
 
   // Akademik filters
   const [search, setSearch] = useState("")
-  const [prodiFilter, setProdiFilter] = useState("Semua")
-  const [angkatanFilter, setAngkatanFilter] = useState("Semua")
-  const [spFilter, setSpFilter] = useState("Semua")
-  const [kipkFilter, setKipkFilter] = useState("Semua")
-  const [ipkFilter, setIpkFilter] = useState("Semua")
+  const [prodiFilter, setProdiFilter] = useState("Semua Prodi")
+  const [angkatanFilter, setAngkatanFilter] = useState("Semua Angkatan")
+  const [spFilter, setSpFilter] = useState("Semua SP")
+  const [kipkFilter, setKipkFilter] = useState("Semua Kategori")
+  const [ipkFilter, setIpkFilter] = useState("Semua IPK")
   const [sortAkademik, setSortAkademik] = useState("IPK Tertinggi→Terendah")
 
   // Prestasi filters
   const [pSearch, setPSearch] = useState("")
-  const [pProdi, setPProdi] = useState("Semua")
-  const [pAngkatan, setPAngkatan] = useState("Semua")
-  const [pKipk, setPKipk] = useState("Semua")
-  const [pTingkat, setPTingkat] = useState("Semua")
-  const [pStatus, setPStatus] = useState("Semua")
+  const [pProdi, setPProdi] = useState("Semua Prodi")
+  const [pAngkatan, setPAngkatan] = useState("Semua Angkatan")
+  const [pKipk, setPKipk] = useState("Semua Kategori")
+  const [pTingkat, setPTingkat] = useState("Semua Tingkat")
+  const [pStatus, setPStatus] = useState("Semua Status")
   const [pSort, setPSort] = useState("Tanggal Terbaru")
 
   // Organisasi filters
-  const [oProdi, setOProdi] = useState("Semua")
-  const [oAngkatan, setOAngkatan] = useState("Semua")
-  const [oKipk, setOKipk] = useState("Semua")
-  const [oStatus, setOStatus] = useState("Semua")
+  const [oProdi, setOProdi] = useState("Semua Prodi")
+  const [oAngkatan, setOAngkatan] = useState("Semua Angkatan")
+  const [oKipk, setOKipk] = useState("Semua Kategori")
+  const [oStatus, setOStatus] = useState("Semua Status")
 
   // Pelatihan filters
-  const [pelProdi, setPelProdi] = useState("Semua")
-  const [pelAngkatan, setPelAngkatan] = useState("Semua")
-  const [pelKipk, setPelKipk] = useState("Semua")
-  const [pelStatus, setPelStatus] = useState("Semua")
+  const [pelProdi, setPelProdi] = useState("Semua Prodi")
+  const [pelAngkatan, setPelAngkatan] = useState("Semua Angkatan")
+  const [pelKipk, setPelKipk] = useState("Semua Kategori")
+  const [pelStatus, setPelStatus] = useState("Semua Status")
 
   // Modal state
   const [prestasiModal, setPrestasiModal] = useState<any | null>(null)
@@ -790,18 +810,18 @@ export default function DataAkademik() {
     .filter((r) => {
       const q = search.toLowerCase()
       const matchQ = r.nama.toLowerCase().includes(q) || r.nim.includes(q)
-      const matchProdi = prodiFilter === "Semua" || r.prodi === prodiFilter
+      const matchProdi = prodiFilter === "Semua Prodi" || r.prodi === prodiFilter
       const matchAngkatan =
-        angkatanFilter === "Semua" || String(r.angkatan) === angkatanFilter
+        angkatanFilter === "Semua Angkatan" || String(r.angkatan) === angkatanFilter
       const matchSP =
-        spFilter === "Semua"
+        spFilter === "Semua SP"
           ? true
           : spFilter === "Tanpa SP"
             ? !r.sp
             : r.sp === spFilter
-      const matchKipk = kipkFilter === "Semua" || r.kipkLabel === kipkFilter
+      const matchKipk = kipkFilter === "Semua Kategori" || r.kipkLabel === kipkFilter
       const matchIPK =
-        ipkFilter === "Semua"
+        ipkFilter === "Semua IPK"
           ? true
           : ipkFilter.includes("< 3.0")
             ? r.ipk < 3.0
@@ -828,11 +848,11 @@ export default function DataAkademik() {
 
   const resetAkademik = () => {
     setSearch("")
-    setProdiFilter("Semua")
-    setAngkatanFilter("Semua")
-    setSpFilter("Semua")
-    setKipkFilter("Semua")
-    setIpkFilter("Semua")
+    setProdiFilter("Semua Prodi")
+    setAngkatanFilter("Semua Angkatan")
+    setSpFilter("Semua SP")
+    setKipkFilter("Semua Kategori")
+    setIpkFilter("Semua IPK")
     setSortAkademik("IPK Tertinggi→Terendah")
   }
 
@@ -842,41 +862,41 @@ export default function DataAkademik() {
     return (
       (p.nama.toLowerCase().includes(q) ||
         p.namaPrestasi.toLowerCase().includes(q)) &&
-      (pProdi === "Semua" || p.prodi === pProdi) &&
-      (pAngkatan === "Semua" || String(p.angkatan) === pAngkatan) &&
-      (pKipk === "Semua" || p.kipk === pKipk) &&
-      (pTingkat === "Semua" || p.tingkat === pTingkat) &&
-      (pStatus === "Semua" || p.status === pStatus)
+      (pProdi === "Semua Prodi" || p.prodi === pProdi) &&
+      (pAngkatan === "Semua Angkatan" || String(p.angkatan) === pAngkatan) &&
+      (pKipk === "Semua Kategori" || p.kipk === pKipk) &&
+      (pTingkat === "Semua Tingkat" || p.tingkat === pTingkat) &&
+      (pStatus === "Semua Status" || p.status === pStatus)
     )
   })
 
   const resetPrestasi = () => {
     setPSearch("")
-    setPProdi("Semua")
-    setPAngkatan("Semua")
-    setPKipk("Semua")
-    setPTingkat("Semua")
-    setPStatus("Semua")
+    setPProdi("Semua Prodi")
+    setPAngkatan("Semua Angkatan")
+    setPKipk("Semua Kategori")
+    setPTingkat("Semua Tingkat")
+    setPStatus("Semua Status")
     setPSort("Tanggal Terbaru")
   }
 
   // Filter organisasi
   const filteredOrganisasi = organisasiData.filter(
     (o) =>
-      (oProdi === "Semua" || o.prodi === oProdi) &&
-      (oAngkatan === "Semua" || String(o.angkatan) === oAngkatan) &&
-      (oKipk === "Semua" || o.kipk === oKipk) &&
-      (oStatus === "Semua" || o.status === oStatus),
+      (oProdi === "Semua Prodi" || o.prodi === oProdi) &&
+      (oAngkatan === "Semua Angkatan" || String(o.angkatan) === oAngkatan) &&
+      (oKipk === "Semua Kategori" || o.kipk === oKipk) &&
+      (oStatus === "Semua Status" || o.status === oStatus),
   )
 
   // Filter pelatihan
   const pelData = pelatihanTab === "akademik" ? pelatihanAkademikData : pelatihanNonAkademikData
   const filteredPelatihan = pelData.filter(
     (p) =>
-      (pelProdi === "Semua" || p.prodi === pelProdi) &&
-      (pelAngkatan === "Semua" || String(p.angkatan) === pelAngkatan) &&
-      (pelKipk === "Semua" || p.kipk === pelKipk) &&
-      (pelStatus === "Semua" || p.status === pelStatus),
+      (pelProdi === "Semua Prodi" || p.prodi === pelProdi) &&
+      (pelAngkatan === "Semua Angkatan" || String(p.angkatan) === pelAngkatan) &&
+      (pelKipk === "Semua Kategori" || p.kipk === pelKipk) &&
+      (pelStatus === "Semua Status" || p.status === pelStatus),
   )
 
   const thCls =
@@ -884,10 +904,10 @@ export default function DataAkademik() {
   const tdCls = "px-4 py-3"
 
   return (
-    <div className="space-y-5">
+    <div className="relative space-y-5">
       {loading && (
-        <div className="flex items-center justify-center p-12 bg-white rounded-2xl shadow-sm border border-gray-100 mb-5">
-          <Loader2 className="w-8 h-8 text-[#263F93] animate-spin" />
+        <div className="absolute inset-0 z-50 flex items-start justify-center pt-[20vh] pointer-events-none">
+          <Loader2 className="w-10 h-10 text-[#263F93] animate-spin" />
         </div>
       )}
       {error && (
@@ -898,13 +918,16 @@ export default function DataAkademik() {
       )}
       
       {/* Header */}
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">
-          Data Akademik &amp; Non-Akademik Mahasiswa
-        </h1>
-        <p className="text-gray-500 text-sm mt-0.5">
-          Pantau IPK, nilai mata kuliah, prestasi, organisasi, dan pelatihan
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">
+            Data Akademik &amp; Non-Akademik Mahasiswa
+          </h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Pantau IPK, nilai mata kuliah, prestasi, organisasi, dan pelatihan
+          </p>
+        </div>
+        <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
       </div>
 
       {/* Main tabs */}
@@ -1001,7 +1024,7 @@ export default function DataAkademik() {
               <FilterSelect
                 value={spFilter}
                 onChange={setSpFilter}
-                options={["Semua", "Tanpa SP", "SP1", "SP2", "SP3"]}
+                options={["Semua SP", "Tanpa SP", "SP1", "SP2", "SP3"]}
               />
               <FilterSelect
                 value={kipkFilter}
@@ -1011,11 +1034,7 @@ export default function DataAkademik() {
               <FilterSelect
                 value={ipkFilter}
                 onChange={setIpkFilter}
-                options={[
-                  "Semua",
-                  "Di Bawah Standar (< 3.0)",
-                  "Di Atas Standar (≥ 3.0)",
-                ]}
+                options={["Semua IPK", "Di Bawah Standar (< 3.0)", "Di Atas Standar (≥ 3.0)"]}
               />
               <FilterSelect
                 value={sortAkademik}
@@ -1105,24 +1124,25 @@ export default function DataAkademik() {
                         </td>
                         <td className={tdCls}>
                           <div className="flex gap-1 flex-wrap">
-                            {r.sp ? (
-                              <>
-                                {(r.sp === "SP2" || r.sp === "SP3") && (
-                                  <span className="px-1.5 py-0.5 rounded text-xs font-600 bg-gray-100 text-gray-700">
-                                    SP1
+                            {r.spList ? (
+                              r.spList.map((sp: any, idx: number) => {
+                                const isActive = sp.status === 'Aktif';
+                                let colorClass = 'bg-gray-100 text-gray-500'; // inactive
+                                if (isActive) {
+                                  if (sp.level === 'SP1') colorClass = 'bg-orange-100 text-orange-700';
+                                  else if (sp.level === 'SP2') colorClass = 'bg-red-100 text-red-700';
+                                  else if (sp.level === 'SP3') colorClass = 'bg-red-900 text-red-100';
+                                }
+                                return (
+                                  <span
+                                    key={idx}
+                                    className={`px-1.5 py-0.5 rounded text-xs font-600 ${colorClass}`}
+                                    title={isActive ? 'Aktif' : 'Tidak Aktif (Kadaluarsa)'}
+                                  >
+                                    {sp.level}
                                   </span>
-                                )}
-                                {r.sp === "SP3" && (
-                                  <span className="px-1.5 py-0.5 rounded text-xs font-600 bg-red-100 text-red-700">
-                                    SP2
-                                  </span>
-                                )}
-                                <span
-                                  className={`px-1.5 py-0.5 rounded text-xs font-600 ${spColors[r.sp]}`}
-                                >
-                                  {r.sp}
-                                </span>
-                              </>
+                                );
+                              })
                             ) : (
                               <span className="text-xs text-gray-400">—</span>
                             )}
@@ -1224,12 +1244,12 @@ export default function DataAkademik() {
                   <FilterSelect
                     value={pTingkat}
                     onChange={setPTingkat}
-                    options={["Semua", "Internasional", "Nasional", "Wilayah"]}
+                    options={["Semua Tingkat", "Internasional", "Nasional", "Wilayah"]}
                   />
                   <FilterSelect
                     value={pStatus}
                     onChange={setPStatus}
-                    options={["Semua", "Disetujui", "Menunggu", "Ditolak"]}
+                    options={["Semua Status", "Disetujui", "Menunggu", "Ditolak"]}
                   />
                   <FilterSelect
                     value={pSort}
@@ -1375,7 +1395,7 @@ export default function DataAkademik() {
                   <FilterSelect
                     value={oStatus}
                     onChange={setOStatus}
-                    options={["Semua", "Disetujui", "Menunggu", "Ditolak"]}
+                    options={["Semua Status", "Disetujui", "Menunggu", "Ditolak"]}
                   />
                   <FilterSelect
                     value="Tanggal Terbaru"
@@ -1384,10 +1404,10 @@ export default function DataAkademik() {
                   />
                   <button
                     onClick={() => {
-                      setOProdi("Semua")
-                      setOAngkatan("Semua")
-                      setOKipk("Semua")
-                      setOStatus("Semua")
+                      setOProdi("Semua Prodi")
+                      setOAngkatan("Semua Angkatan")
+                      setOKipk("Semua Kategori")
+                      setOStatus("Semua Status")
                     }}
                     className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
                   >
@@ -1520,7 +1540,7 @@ export default function DataAkademik() {
                   <FilterSelect
                     value={pelStatus}
                     onChange={setPelStatus}
-                    options={["Semua", "Disetujui", "Menunggu", "Ditolak"]}
+                    options={["Semua Status", "Disetujui", "Menunggu", "Ditolak"]}
                   />
                   <FilterSelect
                     value="Tanggal Terbaru"
@@ -1529,10 +1549,10 @@ export default function DataAkademik() {
                   />
                   <button
                     onClick={() => {
-                      setPelProdi("Semua")
-                      setPelAngkatan("Semua")
-                      setPelKipk("Semua")
-                      setPelStatus("Semua")
+                      setPelProdi("Semua Prodi")
+                      setPelAngkatan("Semua Angkatan")
+                      setPelKipk("Semua Kategori")
+                      setPelStatus("Semua Status")
                     }}
                     className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
                   >

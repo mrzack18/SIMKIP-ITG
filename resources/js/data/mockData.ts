@@ -54,3 +54,13 @@ export const angkatanStats = [
   { angkatan: "2025", reguler: 8, aspirasi: 5 },
   { angkatan: "2026", reguler: 3, aspirasi: 3 },
 ];
+
+export const spHistoryData = [
+  { level: "SP1", tahunAjaran: "2025/2026 Ganjil", alasan: "IPK 2.50 (di bawah 3.00)", tanggal: "15 Okt 2025" },
+  { level: "SP2", tahunAjaran: "2025/2026 Genap", alasan: "IPK 2.45 (tidak ada perbaikan dari SP1)", tanggal: "20 Mar 2026" },
+];
+
+export const kendalaList = [
+  { id: 1, tahunAjaran: "2025/2026 Ganjil", kategori: "Finansial", deskripsi: "Mahasiswa kesulitan biaya hidup sehingga harus bekerja paruh waktu yang cukup menguras waktu belajar.", tanggal: "05 Nov 2025" },
+  { id: 2, tahunAjaran: "2025/2026 Genap", kategori: "Akademik", deskripsi: "Tertinggal di beberapa mata kuliah praktikum karena tidak memiliki laptop yang memadai.", tanggal: "10 Apr 2026" },
+];

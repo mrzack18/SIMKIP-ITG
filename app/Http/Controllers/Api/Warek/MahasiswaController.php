@@ -60,7 +60,7 @@ class MahasiswaController extends Controller
             ->findOrFail($id);
 
         // Hitung total semester (asumsi 8 semester untuk S1)
-        $semesterNum = (int) ($m->semester_calc ?? 0);
+        $semesterNum = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan);
 
         return response()->json([
             'data'       => new \App\Http\Resources\MahasiswaResource($m),
@@ -125,7 +125,7 @@ class MahasiswaController extends Controller
                 $m->angkatan,
                 $m->kategori,
                 (float) ($m->ipk_calc ?? 0),
-                (int) ($m->semester_calc ?? 0),
+                \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                 $m->status,
                 $m->sp_calc ?? '-',
             ];

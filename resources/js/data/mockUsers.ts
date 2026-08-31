@@ -1,32 +1,29 @@
 import type { UserSession } from "@/types";
 
-export const MOCK_USERS: Record<string, UserSession> = {
+export const MOCK_USERS: Record<string, { user: UserSession; password?: string; realUsername?: string }> = {
   admin: {
-    id: "ADM001",
-    nama: "Encep Jianul Hayat, S.T., M.T.",
-    role: "admin",
+    user: { id: "ADM001", nama: "Encep Jianul Hayat, S.T., M.T.", role: "admin" },
+    password: "admin123",
+    realUsername: "admin",
   },
   mahasiswa: {
-    id: "2206001",
-    nama: "Ahmad Rifaldi",
-    nim: "2206001",
-    role: "mahasiswa",
-    prodi: "Teknik Informatika",
+    user: { id: "2206001", nama: "Ahmad Rifaldi", nim: "2206001", role: "mahasiswa", prodi: "Teknik Informatika" },
+    password: "kip22060012026",
+    realUsername: "2206001",
   },
   prodi: {
-    id: "PRD001",
-    nama: "Teknik Informatika",
-    role: "prodi",
-    prodi: "Teknik Informatika",
+    user: { id: "PRD001", nama: "Teknik Informatika", role: "prodi", prodi: "Teknik Informatika" },
+    password: "prodi123",
+    realUsername: "prodi_ti",
   },
   warek: {
-    id: "WRK001",
-    nama: "Dr. Rina Kurniawati, S.E., M.Si.",
-    role: "warek",
+    user: { id: "WRK001", nama: "Dr. Rina Kurniawati, S.E., M.Si.", role: "warek" },
+    password: "warek123",
+    realUsername: "warek3",
   },
 };
 
-export const DEMO_PASSWORD = "kip2026";
+export const DEMO_PASSWORD = "admin123";
 
 export const ROLE_LABELS: Record<string, string> = {
   admin: "Pengelola KIP-K",

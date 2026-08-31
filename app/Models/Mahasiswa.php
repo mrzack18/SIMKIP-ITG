@@ -70,33 +70,88 @@ class Mahasiswa extends Model
         return $this->hasOne(BebasTanggungan::class);
     }
 
-    public function scopeWithDetails($query)
+    public function catatanInternals()
+    {
+        return $this->hasMany(CatatanInternal::class);
+    }
+
+    public function scopeWithDetails($query, $tahunAjaran = null)
     {
         $query->addSelect([
             'ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
+                ->where('status', 'Disetujui')
+                ->when($tahunAjaran, function($q) use ($tahunAjaran) {
+                    $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+                    if ($range) $q->where('created_at', '<=', $range[1]);
+                })
                 ->orderByDesc('semester')
                 ->limit(1),
 
             'prev_ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
+                ->where('status', 'Disetujui')
+                ->when($tahunAjaran, function($q) use ($tahunAjaran) {
+                    $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+                    if ($range) $q->where('created_at', '<=', $range[1]);
+                })
                 ->orderByDesc('semester')
                 ->skip(1)
                 ->limit(1),
 
             'sp_calc' => \App\Models\SuratPeringatan::select('level')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
-                ->whereIn('status', ['Aktif', 'Masa Tenggang'])
+                ->when($tahunAjaran, function($q) use ($tahunAjaran) {
+                     $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+                     if ($range) {
+                         $q->where('tanggal_terbit', '<=', $range[1])
+                           ->where(function($sub) use ($range) {
+                               $sub->whereIn('status', ['Aktif', 'Masa Tenggang'])
+                                   ->orWhere(function($sub2) use ($range) {
+                                       $sub2->where('status', 'Selesai')
+                                            ->where('updated_at', '>=', $range[0]);
+                                   });
+                           });
+                     }
+                }, function($q) {
+                     $q->whereIn('status', ['Aktif', 'Masa Tenggang']);
+                })
                 ->orderByDesc('level')
                 ->limit(1),
 
             'mk_belum_lulus' => \App\Models\MataKuliah::selectRaw('COUNT(*)')
                 ->whereIn('ipk_semester_id', \App\Models\IpkSemestr::select('id')
-                    ->whereColumn('mahasiswa_id', 'mahasiswas.id'))
+                    ->whereColumn('mahasiswa_id', 'mahasiswas.id')
+                    ->where('status', 'Disetujui')
+                    ->when($tahunAjaran, function($q) use ($tahunAjaran) {
+                        $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+                        if ($range) $q->where('created_at', '<=', $range[1]);
+                    }))
                 ->where('lulus', false),
         ])
-        ->withCount('ipkSemestrs as semester_calc')
         ->with('prodi');
+
+        if ($tahunAjaran) {
+            if (preg_match('/^(\d{4})\/\d{4}\s+(Ganjil|Genap)$/', $tahunAjaran, $matches)) {
+                $startYear = (int) $matches[1];
+                
+                // Exclude students who haven't entered yet
+                $query->where('angkatan', '<=', $startYear);
+                
+                // Exclude students who graduated/were revoked BEFORE this academic year started
+                // A Ganjil semester starts Sep 1 of $startYear. A Genap semester starts Feb 1 of $startYear+1.
+                $startDate = $matches[2] === 'Ganjil' 
+                    ? \Carbon\Carbon::create($startYear, 9, 1) 
+                    : \Carbon\Carbon::create($startYear + 1, 2, 1);
+                    
+                $query->where(function($q) use ($startDate) {
+                    $q->where('status', 'Aktif')
+                      ->orWhereNull('tanggal_nonaktif')
+                      ->orWhere('tanggal_nonaktif', '>=', $startDate)
+                      ->orWhere('tanggal_dicabut', '>=', $startDate);
+                });
+            }
+        }
     }
 
     /** IPK semester terakhir */
@@ -105,17 +160,13 @@ class Mahasiswa extends Model
         if (isset($this->attributes['ipk_calc'])) {
             return (float) $this->attributes['ipk_calc'];
         }
-        $last = $this->ipkSemestrs()->latest('semester')->first();
+        $last = $this->ipkSemestrs()->where('status', 'Disetujui')->latest('semester')->first();
         return $last ? (float) $last->ipk : 0.0;
     }
 
-    /** Semester aktif (jumlah semester yang sudah diinput) */
     public function getSemesterAktifAttribute(): int
     {
-        if (isset($this->attributes['semester_calc'])) {
-            return (int) $this->attributes['semester_calc'];
-        }
-        return $this->ipkSemestrs()->count();
+        return \App\Helpers\TahunAjaranHelper::calculateSemester((int) $this->angkatan);
     }
 
     /** SP aktif tertinggi */

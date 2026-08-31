@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { getDokumenQueue, approveDokumen, rejectDokumen } from "@/services/dokumenService";
-import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan, getMahasiswaFilterOptions } from "@/services/mahasiswaService";
-import { getDokumenJenisList } from "@/services/konfigurasiService";
+import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan, getMahasiswaFilterOptions, getMahasiswaIpk, getMahasiswaDokumen } from "@/services/mahasiswaService";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import type { DokumenQueue as DokumenQueueType } from "@/types";
 
 type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
@@ -10,6 +10,29 @@ type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
 type RejectionEntry = { date: string; catatan: string; reviewer: string };
 
 const REVIEWER_NAME = "Encep Jianul Hayat, S.T., M.T.";
+
+// ─── FilterSelect (reusable, matching DataAkademik pattern) ──────────────────
+function FilterSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600"
+    >
+      {options.map((o) => (
+        <option key={o}>{o}</option>
+      ))}
+    </select>
+  );
+}
 
 const typeIcon = (jenis: string, className?: string) => {
   const cn = className || "text-blue-600";
@@ -261,7 +284,72 @@ function PelatihanPreview({ doc, data }: { doc: DokumenQueueType; data: any | nu
   );
 }
 
-function GenericPreview({ doc }: { doc: DokumenQueueType }) {
+function EvaluasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | null }) {
+  const mkList = data?.mataKuliah || [];
+  return (
+    <div className="space-y-3">
+      {/* Section 1: Data Nilai & KHS */}
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
+        <BlueHeader icon={<ClipboardList size={15} />} title={`Evaluasi Semester ${data?.semester ?? '?'}`} />
+        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+          <InfoRow label="IPK" value={data?.ipk ?? "???"} />
+          <InfoRow label="IPS" value={data?.ips ?? "???"} />
+          <InfoRow label="Tahun Ajaran" value={data?.tahun ?? "???"} colSpan={2} />
+        </div>
+      </div>
+      
+      {/* Mata Kuliah Table */}
+      <div className="rounded-xl border overflow-hidden bg-white" style={{ borderColor: "#E2E8F0" }}>
+         <div className="bg-gray-50 border-b border-gray-200 px-4 py-2 text-xs font-600 text-gray-700">Daftar Mata Kuliah</div>
+         <div className="p-0 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+               <thead className="bg-gray-50 text-gray-500">
+                  <tr>
+                     <th className="px-4 py-2 font-500">Kode</th>
+                     <th className="px-4 py-2 font-500">Mata Kuliah</th>
+                     <th className="px-4 py-2 font-500">SKS</th>
+                     <th className="px-4 py-2 font-500">Nilai</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-gray-100">
+                  {mkList.length > 0 ? mkList.map((mk: any, i: number) => (
+                     <tr key={i}>
+                        <td className="px-4 py-2 font-mono text-xs text-gray-500">{mk.kode}</td>
+                        <td className="px-4 py-2 font-500 text-gray-700">{mk.nama}</td>
+                        <td className="px-4 py-2">{mk.sks}</td>
+                        <td className="px-4 py-2 font-500 text-blue-700">{mk.nilaiHuruf}</td>
+                     </tr>
+                  )) : (
+                     <tr><td colSpan={4} className="px-4 py-4 text-center text-gray-400 text-xs">Belum ada mata kuliah</td></tr>
+                  )}
+               </tbody>
+            </table>
+         </div>
+      </div>
+
+      {/* Section 2: Data Mahasiswa */}
+      <MahasiswaSection doc={doc} />
+
+      {/* Section 3: File KHS */}
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
+        <GrayHeader title="File KHS Fisik" />
+        <div className="p-4 bg-white">
+          {data?.file_khs ? (
+             <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                <FileText size={48} className="text-[#263F93] mb-3" />
+                <p className="text-sm font-500 text-gray-700 mb-1">Dokumen KHS</p>
+                <a href={`/storage/${data.file_khs}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Unduh File</a>
+             </div>
+          ) : (
+             <DocPlaceholderCard icon={<FileCheck size={32} className="text-gray-400" />} label="Scan KHS" />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GenericPreview({ doc, data }: { doc: DokumenQueueType; data: any | null }) {
   return (
     <div className="space-y-3">
       {/* Section 1: Informasi Dokumen */}
@@ -270,6 +358,9 @@ function GenericPreview({ doc }: { doc: DokumenQueueType }) {
         <div className="p-4 grid grid-cols-2 gap-3 bg-white">
           <InfoRow label="Jenis Dokumen" value={doc.jenis} colSpan={2} />
           <InfoRow label="Tanggal Diunggah" value={formatDate(doc.tanggalUpload)} colSpan={2} />
+          {data?.fields?.map((f: any, i: number) => (
+             <InfoRow key={i} label={f.label} value={f.tipe === 'url' ? <a href={f.value} target="_blank" rel="noreferrer" className="text-blue-600 underline">Buka Tautan</a> : f.value || '-'} colSpan={2} />
+          ))}
         </div>
       </div>
 
@@ -310,8 +401,10 @@ export default function DokumenQueue() {
   const [search, setSearch] = useState("");
   const [jenis, setJenis] = useState("Semua");
   const [prodi, setProdi] = useState("Semua");
+  const [angkatan, setAngkatan] = useState("Semua");
   const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua"]);
   const [jenisDokumenOptions, setJenisDokumenOptions] = useState<string[]>(["Semua"]);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua"]);
   const [reviewing, setReviewing] = useState<DokumenQueueType | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
@@ -323,7 +416,7 @@ export default function DokumenQueue() {
   const [error, setError] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [queue, setQueue] = useState<DokumenQueueType[]>([]);
   const [fullQueue, setFullQueue] = useState<DokumenQueueType[]>([]); // all items for accurate tab counts
   const [currentPage, setCurrentPage] = useState(1);
@@ -332,6 +425,8 @@ export default function DokumenQueue() {
   const [previewPrestasi, setPreviewPrestasi] = useState<any | null>(null);
   const [previewOrganisasi, setPreviewOrganisasi] = useState<any | null>(null);
   const [previewPelatihan, setPreviewPelatihan] = useState<any | null>(null);
+  const [previewIpk, setPreviewIpk] = useState<any | null>(null);
+  const [previewGeneric, setPreviewGeneric] = useState<any | null>(null);
 
   // Load filter options from BE
   useEffect(() => {
@@ -340,30 +435,34 @@ export default function DokumenQueue() {
       .then((opts) => {
         if (!active) return;
         setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
-      })
-      .catch(() => {});
-    getDokumenJenisList()
-      .then((list) => {
-        if (!active) return;
-        setJenisDokumenOptions(["Semua", ...list.map((d) => d.nama)]);
+        if (opts.angkatans && opts.angkatans.length > 0) {
+          setAngkatanOptions(["Semua", ...opts.angkatans.map(String)]);
+        }
       })
       .catch(() => {});
     return () => { active = false };
   }, []);
 
-  // Load all items (no status filter) for accurate tab counts
+  // Derive unique jenis options from queue data
+  useEffect(() => {
+    if (fullQueue.length === 0) return;
+    const unique = Array.from(new Set(fullQueue.map(d => d.jenis))).sort();
+    setJenisDokumenOptions(["Semua", ...unique]);
+  }, [fullQueue]);
+
+  // Load all items (no status/jenis filter) for accurate tab counts + jenis options
   useEffect(() => {
     let active = true;
     getDokumenQueue({
       page: 1,
       limit: 9999,
       search: search || undefined,
-      jenis: jenis !== "Semua" ? jenis : undefined,
+      tahun_ajaran: tahunAjaran !== "Semua" ? tahunAjaran : undefined,
     })
       .then((res) => { if (active) setFullQueue(res.data); })
       .catch(() => {});
     return () => { active = false };
-  }, [search, jenis]);
+  }, [search, jenis, tahunAjaran]);
 
   // Load paginated queue for display
   useEffect(() => {
@@ -377,6 +476,7 @@ export default function DokumenQueue() {
       search: search || undefined,
       status: statusParam as any,
       jenis: jenis !== "Semua" ? jenis : undefined,
+      tahun_ajaran: tahunAjaran !== "Semua" ? tahunAjaran : undefined,
     })
       .then((res) => {
         if (!active) return;
@@ -387,7 +487,7 @@ export default function DokumenQueue() {
       .catch((err) => { if (active) setError(err?.message ?? "Gagal memuat antrian dokumen"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false };
-  }, [currentPage, tab, search, jenis]);
+  }, [currentPage, tab, search, jenis, tahunAjaran]);
   // Reset page when tab/search/jenis changes
   const handleTabChange = (t: Tab) => {
     setTab(t);
@@ -404,12 +504,26 @@ export default function DokumenQueue() {
     setCurrentPage(1);
   };
 
+  const handleAngkatanChange = (val: string) => {
+    setAngkatan(val);
+    setCurrentPage(1);
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setProdi("Semua");
+    setAngkatan("Semua");
+    setJenis("Semua");
+    setCurrentPage(1);
+  };
+
   // Load preview data when reviewing changes
   useEffect(() => {
     if (!reviewing) {
       setPreviewPrestasi(null);
       setPreviewOrganisasi(null);
       setPreviewPelatihan(null);
+      setPreviewIpk(null);
       return;
     }
     const mhsId = reviewing.mahasiswas_id;
@@ -418,18 +532,40 @@ export default function DokumenQueue() {
     const idPrefix = String(reviewing.id);
     if (idPrefix.startsWith("prestasi_")) {
       const itemId = Number(idPrefix.replace("prestasi_", ""));
-      getMahasiswaPrestasi(mhsId)
+      getMahasiswaPrestasi(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined)
         .then((list) => setPreviewPrestasi(list.find((p: any) => p.id === itemId) || null));
     } else if (idPrefix.startsWith("organisasi_")) {
       const itemId = Number(idPrefix.replace("organisasi_", ""));
-      getMahasiswaOrganisasi(mhsId)
+      getMahasiswaOrganisasi(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined)
         .then((list) => setPreviewOrganisasi(list.find((o: any) => o.id === itemId) || null));
     } else if (idPrefix.startsWith("pelatihan_")) {
       const itemId = Number(idPrefix.replace("pelatihan_", ""));
-      getMahasiswaPelatihan(mhsId)
+      getMahasiswaPelatihan(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined)
         .then((list) => setPreviewPelatihan(list.find((p: any) => p.id === itemId) || null));
+        } else if (idPrefix.startsWith("ipk_")) {
+      const itemId = Number(idPrefix.replace("ipk_", ""));
+      getMahasiswaIpk(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined).then(list => {
+        setPreviewIpk(list.find((ipk: any) => ipk.id === itemId) || null);
+      });
+    } else if (idPrefix.startsWith("doc_")) {
+      const itemId = Number(idPrefix.replace("doc_", ""));
+      getMahasiswaDokumen(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined).then(list => {
+        setPreviewGeneric(list.find((d: any) => d.id === itemId) || null);
+      });
+
+      if (reviewing.jenis === "KHS") {
+        getMahasiswaIpk(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined).then(list => {
+          const semMatch = reviewing.catatan?.match(/Semester\s+(\d+)/i);
+          if (semMatch) {
+            const sem = Number(semMatch[1]);
+            setPreviewIpk(list.find((ipk: any) => ipk.semester === sem) || null);
+          } else {
+            setPreviewIpk(list[0] || null); // fallback to the first one if we can't parse
+          }
+        });
+      }
     }
-  }, [reviewing]);
+  }, [reviewing, tahunAjaran]);
 
   const getStatus = (d: DokumenQueueType) => processed[String(d.id)] || d.status;
 
@@ -440,6 +576,7 @@ export default function DokumenQueue() {
       (tab === "Semua" || (tab === "Menunggu" ? status === "Menunggu" : tab === "Disetujui" ? status === "Disetujui" : status === "Ditolak")) &&
       (jenis === "Semua" || d.jenis.toLowerCase().includes(jenis.toLowerCase())) &&
       (prodi === "Semua" || d.prodi === prodi) &&
+      (angkatan === "Semua" || String(d.angkatan) === angkatan) &&
       (d.nama.toLowerCase().includes(q) || d.nim.toLowerCase().includes(q))
     );
   });
@@ -545,7 +682,8 @@ export default function DokumenQueue() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900 flex items-center gap-3">
             Antrian Validasi Dokumen
@@ -557,6 +695,7 @@ export default function DokumenQueue() {
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">Review dan validasi dokumen yang diunggah mahasiswa KIP-K</p>
         </div>
+        <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
       </div>
 
       {/* Tabs */}
@@ -576,27 +715,23 @@ export default function DokumenQueue() {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Filter bar */}
       <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-        <button onClick={() => setFilterOpen(!filterOpen)}
-          className="flex items-center gap-2 text-sm text-gray-600 sm:hidden mb-2">
-          <Search size={14} /> Filter & Pencarian {filterOpen ? "▲" : "▼"}
-        </button>
-        <div className={`flex flex-wrap gap-3 ${!filterOpen ? "hidden sm:flex" : "flex"}`}>
+        <div className="flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-48">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => handleSearchChange(e.target.value)} placeholder="Cari NIM atau Nama..."
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
           </div>
-          <select value={jenis} onChange={e => handleJenisChange(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600">
-            {jenisDokumenOptions.map(j => <option key={j}>{j}</option>)}
-          </select>
-          <select value={prodi} onChange={e => setProdi(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600">
-            {prodiOptions.map(p => <option key={p}>{p}</option>)}
-          </select>
-          <input type="date" className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-500" placeholder="Tgl. Upload" />
+          <FilterSelect value={prodi} onChange={(v) => { setProdi(v); setCurrentPage(1); }} options={prodiOptions} />
+          <FilterSelect value={angkatan} onChange={handleAngkatanChange} options={angkatanOptions} />
+          <FilterSelect value={jenis} onChange={handleJenisChange} options={jenisDokumenOptions} />
+          <button
+            onClick={resetFilters}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            Reset Filter
+          </button>
         </div>
       </div>
 
@@ -605,9 +740,31 @@ export default function DokumenQueue() {
         <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl p-16 text-center border border-gray-100 shadow-sm">
-          <div className="text-5xl mb-4">🎉</div>
-          <p className="font-display font-700 text-xl text-gray-700">Semua dokumen telah divalidasi!</p>
-          <p className="text-sm text-gray-400 mt-1">Tidak ada dokumen dalam antrian saat ini.</p>
+          {tab === "Menunggu" ? (
+            <>
+              <CheckCircle size={40} className="text-green-400 mx-auto mb-3" />
+              <p className="font-display font-700 text-xl text-gray-700">Semua dokumen sudah tervalidasi</p>
+              <p className="text-sm text-gray-400 mt-1">Tidak ada dokumen yang menunggu validasi saat ini.</p>
+            </>
+          ) : tab === "Disetujui" ? (
+            <>
+              <AlertCircle size={40} className="text-gray-300 mx-auto mb-3" />
+              <p className="font-display font-700 text-xl text-gray-700">Belum ada dokumen yang disetujui</p>
+              <p className="text-sm text-gray-400 mt-1">Belum ada dokumen yang telah mendapat persetujuan.</p>
+            </>
+          ) : tab === "Ditolak" ? (
+            <>
+              <XCircle size={40} className="text-gray-300 mx-auto mb-3" />
+              <p className="font-display font-700 text-xl text-gray-700">Tidak ada dokumen yang ditolak</p>
+              <p className="text-sm text-gray-400 mt-1">Tidak ada dokumen yang berstatus ditolak.</p>
+            </>
+          ) : (
+            <>
+              <AlertCircle size={40} className="text-gray-300 mx-auto mb-3" />
+              <p className="font-display font-700 text-xl text-gray-700">Tidak ada dokumen ditemukan</p>
+              <p className="text-sm text-gray-400 mt-1">Coba ubah filter atau kata kunci pencarian.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -749,9 +906,11 @@ export default function DokumenQueue() {
                 <OrganisasiPreview doc={reviewing} data={previewOrganisasi} />
               ) : isPelatihan(reviewing.jenis) ? (
                 <PelatihanPreview doc={reviewing} data={previewPelatihan} />
+              ) : reviewing.id.toString().startsWith("ipk_") || reviewing.jenis === "KHS" ? (
+                <EvaluasiPreview doc={reviewing} data={previewIpk} />
               ) : (
                 <>
-                  <GenericPreview doc={reviewing} />
+                  <GenericPreview doc={reviewing} data={previewGeneric} />
                   {/* Zoom controls for generic only */}
                   <div className="flex items-center justify-center gap-2">
                     <button onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
@@ -846,3 +1005,6 @@ export default function DokumenQueue() {
     </div>
   );
 }
+
+
+

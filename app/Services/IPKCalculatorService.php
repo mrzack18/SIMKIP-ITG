@@ -90,24 +90,38 @@ class IPKCalculatorService
     }
 
     /**
-     * Recalculate IPK Kumulatif for all semesters of a student
+     * Recalculate IPK Kumulatif and IPS per semester for all semesters of a student.
+     * IPK = kumulatif dari semester 1 sampai N (rata-rata berbobot seluruh MK lulus)
+     * IPS = nilai semester itu saja (rata-rata berbobot MK semester tersebut saja)
      */
     public static function recalculateAllIPK(int $mahasiswaId): void
     {
-        $semesters = IpkSemestr::where('mahasiswa_id', $mahasiswaId)->orderBy('semester', 'asc')->get();
-        
+        $semesters = IpkSemestr::where('mahasiswa_id', $mahasiswaId)
+            ->with('mataKuliahs')
+            ->orderBy('semester', 'asc')
+            ->get();
+
         foreach ($semesters as $sem) {
-            $uniqueMks = self::getUniqueCoursesUpToSemester($mahasiswaId, $sem->semester);
-            $totalBobot = 0.0;
-            $totalSKS = 0;
-            
-            foreach ($uniqueMks as $mk) {
-                $totalBobot += $mk->nilai_mutu * $mk->sks;
-                $totalSKS += $mk->sks;
+            // --- IPS: hitung dari mata kuliah semester ini saja ---
+            $ipsBobot = 0.0;
+            $ipsSks = 0;
+            foreach ($sem->mataKuliahs as $mk) {
+                $ipsBobot += $mk->nilai_mutu * $mk->sks;
+                $ipsSks += $mk->sks;
             }
-            
-            $ipk = $totalSKS > 0 ? round($totalBobot / $totalSKS, 2) : 0.0;
-            $sem->update(['ipk' => $ipk]);
+            $ips = $ipsSks > 0 ? round($ipsBobot / $ipsSks, 2) : 0.0;
+
+            // --- IPK: kumulatif dari semester 1 sampai semester ini ---
+            $uniqueMks = self::getUniqueCoursesUpToSemester($mahasiswaId, $sem->semester);
+            $ipkBobot = 0.0;
+            $ipkSks = 0;
+            foreach ($uniqueMks as $mk) {
+                $ipkBobot += $mk->nilai_mutu * $mk->sks;
+                $ipkSks += $mk->sks;
+            }
+            $ipk = $ipkSks > 0 ? round($ipkBobot / $ipkSks, 2) : 0.0;
+
+            $sem->update(['ipk' => $ipk, 'ips' => $ips]);
         }
     }
 

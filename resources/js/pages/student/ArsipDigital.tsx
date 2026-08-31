@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { api } from "../../services/api";
-import { Download, Eye, ChevronDown, ChevronUp, FileText, Search, Filter, X, Calendar, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Folder, CheckCircle, Image as ImageIcon, ExternalLink, Award, Loader } from "lucide-react";
+import { Download, Search, Filter, Folder, FileText, ChevronDown, ChevronRight, X, ExternalLink, Calendar, CheckCircle, Upload, Eye, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Image as ImageIcon, Award, Loader, ChevronUp } from "lucide-react";
+import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 export interface FileItem {
   id: string;
@@ -29,6 +30,7 @@ export interface FileItem {
   deskripsi?: string;
   tanggalMulai?: string;
   tanggalSelesai?: string;
+  tahunAjaran?: string;
 }
 
 
@@ -313,10 +315,13 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
   );
 }
 
+const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
+
 export default function ArsipDigital() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [preview, setPreview] = useState<FileItem | null>(null);
 
   const [data, setData] = useState<FileItem[]>([]);
@@ -340,7 +345,8 @@ export default function ArsipDigital() {
   const filtered = data.filter(f => {
     const matchSearch = f.nama.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCat === "Semua" || f.kategori === filterCat;
-    return matchSearch && matchCat;
+    const matchTa = (f.tahunAjaran || "2025/2026 Ganjil") === formatTA(filterTahunAjaran);
+    return matchSearch && matchCat && matchTa;
   });
 
   const grouped = CATEGORIES.map(cat => ({
@@ -368,12 +374,19 @@ export default function ArsipDigital() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari dokumen..."
             className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
         </div>
+        <TahunAjaranFilter value={filterTahunAjaran} onChange={setFilterTahunAjaran} />
         <div className="relative">
           <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
             className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none appearance-none">
             <option value="Semua">Semua Kategori</option>
-            {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            <option value="SK Penetapan KIP-K">SK Penetapan KIP-K</option>
+            <option value="Kartu Hasil Studi">Kartu Hasil Studi</option>
+            <option value="Sertifikat Prestasi">Sertifikat Prestasi</option>
+            <option value="Bukti Keaktifan Organisasi">Bukti Keaktifan Organisasi</option>
+            <option value="Sertifikat Pelatihan">Sertifikat Pelatihan</option>
+            <option value="Dokumen Kewajiban">Dokumen Kewajiban</option>
+            <option value="Surat Surat Penyelesaian">Surat Surat Penyelesaian</option>
           </select>
         </div>
       </div>

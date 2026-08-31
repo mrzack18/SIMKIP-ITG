@@ -16,7 +16,7 @@ class DokumenController extends Controller
     {
         $m = $request->user()->mahasiswa;
         
-        $jenis = DokumenJenis::with(['dokumens' => function ($q) use ($m) {
+        $jenis = DokumenJenis::with(['fields', 'dokumens' => function ($q) use ($m) {
             $q->where('mahasiswa_id', $m->id)->latest();
         }])->orderBy('urutan')->get();
 
@@ -73,6 +73,17 @@ class DokumenController extends Controller
             'status'           => 'Menunggu',
             'metadata'         => $metadataArray,
         ]);
+
+        if (is_array($metadataArray)) {
+            foreach ($metadataArray as $fieldId => $value) {
+                if (is_numeric($fieldId)) {
+                    $dok->fieldValues()->create([
+                        'dokumen_jenis_field_id' => $fieldId,
+                        'value' => is_array($value) ? json_encode($value) : $value
+                    ]);
+                }
+            }
+        }
 
         // Notifikasi ke admin
         User::where('role', 'admin')->each(function ($admin) use ($m, $jenis) {

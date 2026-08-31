@@ -41,23 +41,11 @@ type SPLevel = "SP1" | "SP2" | "SP3";
 export function SPBadge({ level }: { level: SPLevel }) {
   return (
     <div className="flex items-center gap-1">
-      <span
-        className={`px-1.5 py-0.5 rounded text-xs font-500 ${
-          level === "SP1"
-            ? "bg-amber-100 text-amber-700"
-            : "bg-gray-100 text-gray-400 line-through"
-        }`}
-      >
+      <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-amber-100 text-amber-700">
         SP1
       </span>
       {(level === "SP2" || level === "SP3") && (
-        <span
-          className={`px-1.5 py-0.5 rounded text-xs font-500 ${
-            level === "SP2"
-              ? "bg-red-100 text-red-700"
-              : "bg-gray-100 text-gray-400 line-through"
-          }`}
-        >
+        <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-red-100 text-red-700">
           SP2
         </span>
       )}

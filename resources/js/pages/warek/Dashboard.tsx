@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Users, FileCheck, ArrowRight, Download, CheckCircle, ClipboardList } from "lucide-react";
 import { api } from "@/services/api";
-
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 interface PendingReport {
   id: number;
   judul: string;
@@ -33,6 +33,7 @@ interface DashboardData {
 }
 
 export default function WarekDashboard() {
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function WarekDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get<DashboardData>("/warek/dashboard");
+        const res = await api.get<DashboardData>(`/warek/dashboard?tahun_ajaran=${filterTahunAjaran === "Semua" ? "" : filterTahunAjaran}`);
         if (!cancelled) {
           setData(res);
           setLoading(false);
@@ -56,7 +57,7 @@ export default function WarekDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [filterTahunAjaran]);
 
   const stats = data
     ? [
@@ -108,9 +109,15 @@ export default function WarekDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard Warek III</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Overview KIP-K Institut Teknologi Garut</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard Warek III</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Overview KIP-K Institut Teknologi Garut</p>
+        </div>
+        <TahunAjaranFilter
+          value={filterTahunAjaran}
+          onChange={setFilterTahunAjaran}
+        />
       </div>
 
       {/* Notification */}

@@ -37,7 +37,11 @@ class MahasiswaController extends Controller
             $query->where('kategori', $request->kategori);
         }
         if ($request->status && $request->status !== 'Semua Status') {
-            $query->where('status', $request->status);
+            if ($tahunAjaran && $request->status === 'Aktif') {
+                // Historically active, skip strict current status filter
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         if ($request->kipFilter && $request->kipFilter !== 'Semua') {
             $kategori = $request->kipFilter === 'KIP-K Reguler' ? 'Reguler' : 'Aspirasi';
@@ -127,7 +131,6 @@ class MahasiswaController extends Controller
             ->where('prodi_id', $prodiId)
             ->findOrFail($id);
 
-        $m->loadCount(['ipkSemestrs as semester_calc']);
 
         // Compute IPK stats
         $ipkHistory = $m->ipkSemestrs;
@@ -294,7 +297,7 @@ class MahasiswaController extends Controller
                 'angkatan'        => (int) $m->angkatan,
                 'kategori'        => $m->kategori,
                 'status'          => $m->status,
-                'semester'        => (int) ($m->semester_calc ?? 0),
+                'semester'        => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                 'semesterDicabut' => $m->status === 'Dicabut' ? $m->semester_dicabut : null,
                 'tanggalDicabut'  => $m->status === 'Dicabut' && $m->tanggal_dicabut ? $m->tanggal_dicabut->format('d M Y') : null,
                 'alasanDicabut'   => $m->status === 'Dicabut' ? $m->alasan_dicabut : null,

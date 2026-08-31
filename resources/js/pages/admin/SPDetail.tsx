@@ -8,6 +8,7 @@ import logoItg from "@/imports/logo_itg.jpg";
 import { getSPDetail, updateSPStatus, type SPDetailResponse } from "@/services/spService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { SuratPeringatan } from "@/types";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 // ── Static UI mappings ───────────────────────────────────────────────────────
 const levelColor: Record<string, { bg: string; text: string; border: string }> = {
@@ -66,6 +67,7 @@ export default function SPDetail() {
   const [notFound, setNotFound]       = useState(false);
   const [signature, setSignature]     = useState<SignatureConfig | null>(null);
   const [masaTenggang, setMasaTenggang] = useState<number>(180);
+  
 
   const [expandedTimeline, setExpandedTimeline] = useState<number | null>(null);
   const [showMarkDone, setShowMarkDone]         = useState(false);
@@ -93,15 +95,6 @@ export default function SPDetail() {
   }, [spId]);
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
-
-  // Load signature config from BE
-  useEffect(() => {
-    getKonfigurasiAll()
-      .then((res) => {
-        if (res?.data?.signature) setSignature(res.data.signature);
-      })
-      .catch(() => { /* fallback */ });
-  }, []);
 
   const handleMarkDone = async () => {
     if (!detail || markDoneLoading) return;
@@ -184,14 +177,16 @@ export default function SPDetail() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link to="/admin/sp" className="hover:text-gray-700 flex items-center gap-1">
-          <ChevronLeft size={15} /> Surat Peringatan
-        </Link>
-        <span>/</span>
-        <span className="text-gray-800 font-500">Detail SP — {sp.nama ?? "—"}</span>
-      </div>
+      {/* Breadcrumb and Filter */}
+      <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
+        <div className="flex items-center gap-2">
+          <Link to="/admin/sp" className="hover:text-gray-700 flex items-center gap-1">
+            <ChevronLeft size={15} /> Surat Peringatan
+          </Link>
+          <span>/</span>
+          <span className="text-gray-800 font-500">Detail SP — {sp.nama ?? "—"}</span>
+        </div>
+              </div>
 
       {/* Header Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -268,6 +263,10 @@ export default function SPDetail() {
             <span className="text-xs text-gray-400 uppercase tracking-wide">Diterbitkan Oleh</span>
             <div className="mt-1 font-500 text-gray-700">{extra.diterbitkanOleh ?? "—"}</div>
             <div className="text-xs text-gray-400">{formatTanggal(sp.tanggalTerbit)}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-400 uppercase tracking-wide">Tahun Ajaran</span>
+            <div className="mt-1 font-500 text-gray-700">{sp.tahunAjaran ?? "—"}</div>
           </div>
           <div className="sm:col-span-2">
             <span className="text-xs text-gray-400 uppercase tracking-wide">Alasan / Deskripsi</span>
@@ -472,6 +471,7 @@ export default function SPDetail() {
                   <div className="grid grid-cols-[120px_8px_1fr] gap-y-1 text-sm mb-6">
                     <span>Nomor</span><span>:</span><span>{nSurat}</span>
                     <span>Tanggal</span><span>:</span><span>{formatTanggal(sp.tanggalTerbit)}</span>
+                    <span>Tahun Ajaran</span><span>:</span><span>{sp.tahunAjaran ?? "—"}</span>
                     <span>Perihal</span><span>:</span>
                     <span className="font-semibold">
                       Surat Peringatan {sp.level} — {(sp.alasan ?? "").split(" ").slice(0, 6).join(" ")}...

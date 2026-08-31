@@ -94,20 +94,31 @@ class DashboardController extends Controller
                 'sisa'   => $sp->sisa_hari,
             ]);
 
-        // 4. Mahasiswa Semester ≥ 7 (semester dihitung dari jumlah ipkSemestrs)
+        // 4. Mahasiswa Semester ≥ 7 (semester dihitung secara matematis)
+        $currentTa = \App\Models\Konfigurasi::get('tahun_ajaran_aktif');
+        $currentTaParsed = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $currentTa);
+        $maxAngkatan = 9999;
+        if (preg_match('/^(\d{4})\/\d{4}\s+(Ganjil|Genap)$/', $currentTaParsed, $matches)) {
+            $year = (int)$matches[1];
+            $term = $matches[2] === 'Genap' ? 2 : 1;
+            // 7 <= (year - angkatan)*2 + term
+            // (7 - term)/2 <= year - angkatan
+            // angkatan <= year - (7 - term)/2
+            $maxAngkatan = floor($year - ((7 - $term) / 2));
+        }
+
         $semester7plus = Mahasiswa::where('prodi_id', $prodiId)
             ->where('status', 'Aktif')
-            ->withCount(['ipkSemestrs as semester_calc'])
+            ->where('angkatan', '<=', $maxAngkatan)
             ->with(['ipkSemestrs' => fn($q) => $q->orderByDesc('semester')->limit(1)])
-            ->having('semester_calc', '>=', 7)
-            ->orderByDesc('semester_calc')
+            ->orderBy('angkatan', 'asc') // Oldest students first
             ->take(5)
             ->get()
             ->map(fn($m) => [
                 'id'       => $m->id,
                 'nim'      => $m->nim,
                 'nama'     => $m->nama,
-                'sem'      => (int) $m->semester_calc,
+                'sem'      => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                 'ipk'      => (float) ($m->ipkSemestrs->first()?->ipk ?? 0),
             ]);
 

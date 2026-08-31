@@ -25,6 +25,7 @@ class DokumenJenisResource extends JsonResource
             'fileUrl' => $dokumen ? Storage::url($dokumen->path_file) : null,
             'metadata' => $dokumen ? $dokumen->metadata : null,
             'isWajib' => (bool) $this->is_wajib,
+            'fields' => $this->fields ?? [],
         ];
     }
 }

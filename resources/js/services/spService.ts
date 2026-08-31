@@ -6,10 +6,13 @@ import { api } from "./api";
 
 export interface SPFilter {
   search?: string;
+  prodi?: string;
+  angkatan?: string | number;
   level?: string;
   status?: string;
   page?: number;
   limit?: number;
+  tahun_ajaran?: string; // added snake_case for backend
 }
 
 export async function getSPList(filter: SPFilter = {}): Promise<PaginatedResponse<SuratPeringatan>> {

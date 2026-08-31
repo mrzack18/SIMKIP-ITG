@@ -42,6 +42,8 @@ import {
 import logoItg from "@/imports/logo_itg.jpg"
 import { api } from "@/services/api"
 import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
+import { spHistoryData } from "@/data/mockData"
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -608,30 +610,32 @@ function TabPrestasi({ items }: { items: any[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Sub-tabs */}
-      <div className="flex gap-2">
-        {tiers.map((t) => (
-          <button
-            key={t}
-            onClick={() => setSubTab(t)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
-              subTab === t
-                ? "bg-[#263F93] text-white"
-                : "bg-[#F8FAFC] border border-[#E2E8F0] text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            {t}
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+      {/* Sub-tabs & Filter */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex gap-2">
+          {tiers.map((t) => (
+            <button
+              key={t}
+              onClick={() => setSubTab(t)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
                 subTab === t
-                  ? "bg-white/20 text-white"
-                  : "bg-gray-200 text-gray-600"
+                  ? "bg-[#263F93] text-white"
+                  : "bg-[#F8FAFC] border border-[#E2E8F0] text-gray-600 hover:bg-gray-100"
               }`}
             >
-              {counts[t]}
-            </span>
-          </button>
-        ))}
+              {t}
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                  subTab === t
+                    ? "bg-white/20 text-white"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {counts[t]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -659,8 +663,13 @@ function TabPrestasi({ items }: { items: any[] }) {
                     >
                       {p.tingkat}
                     </span>
-                    <span className="inline-block px-2 py-0.5 bg-[#D4A72C]/10 text-[#92700A] text-xs font-semibold rounded-full">
-                      {p.pencapaian}
+                    {p.pencapaian && (
+                      <span className="inline-block px-2 py-0.5 bg-[#D4A72C]/10 text-[#92700A] text-xs font-semibold rounded-full">
+                        {p.pencapaian}
+                      </span>
+                    )}
+                    <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
+                      2024/2025 Genap
                     </span>
                   </div>
                 </div>
@@ -1487,43 +1496,20 @@ function TabSP({ items }: { items: any[] }) {
           Riwayat Surat Peringatan
         </h4>
         <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-4">
-          {items.map((sp: any, idx: number) => {
-            const isAktif = sp.status === "Aktif" || sp.status === "Masa Tenggang"
+          {spHistoryData.map((sp: any, idx: number) => {
             return (
-              <div key={sp.id ?? idx} className="relative">
-                <div className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${isAktif ? "bg-amber-400" : "bg-gray-300"}`} />
-                <button
-                  onClick={() => idx === 0 && setExpanded((v) => !v)}
-                  className={`w-full text-left flex items-center justify-between p-3 border rounded-xl ${
-                    isAktif
-                      ? "bg-amber-50 border-amber-200"
-                      : "bg-white border-[#E2E8F0]"
-                  }`}
-                >
+              <div key={idx} className="relative">
+                <div className="absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow bg-amber-400" />
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <div>
-                    <span className={`text-xs font-semibold ${isAktif ? "text-amber-700" : "text-gray-500"}`}>
-                      {sp.level ?? "SP"} — {sp.status}
+                    <span className="text-xs font-semibold text-amber-700">
+                      {sp.level} — {sp.tahunAjaran}
                     </span>
-                    <div className={`text-xs mt-0.5 ${isAktif ? "text-amber-600" : "text-gray-400"}`}>
-                      {sp.tanggal ?? fmtDate(sp.tanggalTerbit)} · {sp.alasan ?? sp.deskripsi ?? "-"}
+                    <div className="text-xs text-amber-600 mt-0.5">
+                      {sp.tanggal} · {sp.alasan}
                     </div>
                   </div>
-                  {idx === 0 && (expanded ? (
-                    <ChevronUp size={14} className="text-amber-500" />
-                  ) : (
-                    <ChevronDown size={14} className="text-amber-500" />
-                  ))}
-                </button>
-                {idx === 0 && expanded && (
-                  <div className="mt-2 p-3 bg-white border border-[#E2E8F0] rounded-xl text-xs text-gray-600 space-y-1">
-                    <div>
-                      <span className="font-medium">Nomor:</span> {sp.nomorSurat ?? "-"}
-                    </div>
-                    <div>
-                      <span className="font-medium">Alasan:</span> {sp.alasan ?? sp.deskripsi ?? "-"}
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             )
           })}
@@ -1724,6 +1710,7 @@ const TAB_LABELS = [
 
 export default function WarekMahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [activeTab, setActiveTab] = useState(0)
 
   const [mhs, setMhs] = useState<MahasiswaDetail | null>(null)
@@ -1837,13 +1824,13 @@ export default function WarekMahasiswaDetail() {
       )}
 
       {/* Breadcrumb */}
-      <Link
-        to="../mahasiswa"
-        relative="path"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-      >
-        <ChevronLeft size={16} /> Manajemen Mahasiswa
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link to="../mahasiswa" relative="path"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <ChevronLeft size={16} /> Data Mahasiswa
+        </Link>
+        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+      </div>
 
       {/* Profile Header Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">

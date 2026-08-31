@@ -20,6 +20,8 @@ export interface LaporanFilter {
   status?: string;
   tahunAkademik?: string;
   semester?: string;
+  prodi?: string;
+  angkatan?: string;
   cakupan?: string;
   page?: number;
   limit?: number;
@@ -64,16 +66,14 @@ export interface LaporanDetailResponse {
 
 export interface LaporanPreviewStatistics {
   success: boolean;
-  totalMahasiswa: number;
-  kipk: {
-    reguler: { total: number; persen: number };
-    aspirasi: { total: number; persen: number };
-  };
-  rataIpk: number | null;
-  distribusiAngkatan: { angkatan: string; total: number }[];
-  ipkTrend: { semester: string; ipk: number }[];
-  ipkBuckets: { range: string; count: number }[];
-  mahasiswas: {
+  total_mahasiswa: number;
+  total_reguler: number;
+  total_aspirasi: number;
+  rata_ipk: number | null;
+  distribusi_angkatan: { angkatan: string; total: number }[];
+  ipk_trend: { semester: string; ipk: number }[];
+  ipk_distribution: { range: string; count: number }[];
+  mahasiswa: {
     id: number;
     nim: string;
     nama: string;
@@ -84,6 +84,10 @@ export interface LaporanPreviewStatistics {
     status: string;
     kategori: string;
   }[];
+  total_sp: number;
+  nama_sp: string[];
+  total_prestasi: number;
+  nama_prestasi: string[];
 }
 
 export async function getPreviewStatistics(cakupan: string, angkatan?: string, prodi?: string): Promise<LaporanPreviewStatistics> {

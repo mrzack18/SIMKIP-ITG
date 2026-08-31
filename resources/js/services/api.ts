@@ -45,7 +45,16 @@ export async function apiCall<T>(
     throw err;
   }
 
-  return response.json();
+  const text = await response.text();
+  // If the "JSON" response is actually HTML (e.g. Laravel redirect to login),
+  // the token is missing/expired — throw an auth error so the caller can redirect.
+  if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+    const authErr = new Error("UNAUTHENTICATED");
+    (authErr as any).status = 401;
+    throw authErr;
+  }
+
+  return JSON.parse(text);
 }
 
 export const api = {

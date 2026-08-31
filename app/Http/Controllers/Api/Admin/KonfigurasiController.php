@@ -71,14 +71,24 @@ class KonfigurasiController extends Controller
     // --- Master Dokumen Jenis ---
     public function indexDokumenJenis(): JsonResponse
     {
-        return response()->json(['success' => true, 'data' => DokumenJenis::orderBy('urutan')->get()]);
+        return response()->json(['success' => true, 'data' => DokumenJenis::with('fields')->orderBy('urutan')->get()]);
     }
 
     public function storeDokumenJenis(Request $request): JsonResponse
     {
-        $request->validate(['nama' => 'required|string|unique:dokumen_jenis,nama']);
+        $request->validate([
+            'nama' => 'required|string|unique:dokumen_jenis,nama',
+            'kode' => 'required|string|max:20',
+            'deskripsi' => 'nullable|string',
+        ]);
         $max = DokumenJenis::max('urutan') ?? 0;
-        $d = DokumenJenis::create(['nama' => $request->nama, 'is_wajib' => true, 'urutan' => $max + 1]);
+        $d = DokumenJenis::create([
+            'nama' => $request->nama,
+            'kode' => strtoupper($request->kode),
+            'deskripsi' => $request->deskripsi,
+            'is_wajib' => true,
+            'urutan' => $max + 1,
+        ]);
         return response()->json(['success' => true, 'data' => $d], 201);
     }
 
@@ -91,8 +101,29 @@ class KonfigurasiController extends Controller
     public function toggleDokumenJenis(int $id): JsonResponse
     {
         $d = DokumenJenis::findOrFail($id);
-        $d->update(['is_wajib' => ! $d->is_wajib]);
-        return response()->json(['success' => true, 'is_wajib' => $d->is_wajib]);
+        $d->update(['is_wajib' => !$d->is_wajib]);
+        return response()->json(['success' => true]);
+    }
+
+    public function storeDokumenJenisField(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'label' => 'required|string',
+            'tipe' => 'required|in:text,number,date,url,dropdown,checkbox',
+            'opsi' => 'nullable|array',
+            'is_required' => 'boolean'
+        ]);
+
+        $dok = DokumenJenis::findOrFail($id);
+        $field = $dok->fields()->create($request->only(['label', 'tipe', 'opsi', 'is_required']));
+
+        return response()->json(['success' => true, 'data' => $field]);
+    }
+
+    public function destroyDokumenJenisField(int $id): JsonResponse
+    {
+        \App\Models\DokumenJenisField::findOrFail($id)->delete();
+        return response()->json(['success' => true]);
     }
 
     // --- Facade Endpoint ---
@@ -106,6 +137,7 @@ class KonfigurasiController extends Controller
                     'nama' => $konfig['nama_institusi'] ?? '',
                     'alamat' => $konfig['alamat_institusi'] ?? '',
                     'telp' => $konfig['telp_institusi'] ?? '',
+                    'logo' => $konfig['logo_institusi'] ?? '',
                 ],
                 'signature' => [
                     'pengelola_nama' => $konfig['pengelola_nama'] ?? 'Encep Jianul Hayat, S.T., M.T.',
@@ -113,18 +145,22 @@ class KonfigurasiController extends Controller
                     'warek_nama'     => $konfig['warek_nama'] ?? 'Dr. Rina Kurniawati, S.E., M.Si.',
                     'warek_nip'      => $konfig['warek_nip'] ?? '198203252008012002',
                 ],
-                'regulasi' => [
-                    ['id' => 1, 'nama' => 'IPK Minimum', 'deskripsi' => 'Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester', 'nilai' => $konfig['ipk_minimum'] ?? '3.00', 'tipe' => 'number', 'aktif' => true],
-                    ['id' => 2, 'nama' => 'Masa Tenggang SP', 'deskripsi' => 'Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan', 'nilai' => $konfig['masa_tenggang_sp'] ?? '90', 'tipe' => 'number', 'aktif' => true],
-                    ['id' => 3, 'nama' => 'Batas Semester Studi', 'deskripsi' => 'Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K', 'nilai' => $konfig['max_semester'] ?? '8', 'tipe' => 'number', 'aktif' => true],
-                    ['id' => 4, 'nama' => 'Minimum SKS per Semester', 'deskripsi' => 'Jumlah SKS minimum yang harus diambil mahasiswa per semester', 'nilai' => $konfig['sks_minimum_semester'] ?? '18', 'tipe' => 'number', 'aktif' => true],
-                    ['id' => 5, 'nama' => 'Total SKS Kelulusan', 'deskripsi' => 'Total SKS minimum untuk syarat kelulusan', 'nilai' => $konfig['sks_minimum_lulus'] ?? '144', 'tipe' => 'number', 'aktif' => true],
+                'aturan_akademik' => [
+                    'ipk_minimum' => $konfig['ipk_minimum'] ?? '3.00',
+                    'sks_minimum_lulus' => $konfig['sks_minimum_lulus'] ?? '144',
+                ],
+                'periode_aktif' => [
+                    'tahun_akademik' => $konfig['tahun_akademik_aktif'] ?? '',
+                    'semester' => $konfig['semester_aktif'] ?? '',
+                    'buka' => $konfig['periode_input_buka'] ?? '',
+                    'tutup' => $konfig['periode_input_tutup'] ?? '',
+                    'is_aktif' => ($konfig['periode_input_aktif'] ?? '0') === '1',
                 ],
                 'nilai_mutu' => NilaiMutu::orderByDesc('poin')->get(),
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
                 'prodis' => Prodi::all(),
-                'dokumens' => DokumenJenis::orderBy('urutan')->get(),
+                'dokumens' => DokumenJenis::with('fields')->orderBy('urutan')->get(),
             ]
         ]);
     }
@@ -167,11 +203,29 @@ class KonfigurasiController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function togglePelanggaran(int $id): JsonResponse
+    {
+        $j = JenisPelanggaran::findOrFail($id);
+        $j->update(['aktif' => !$j->aktif]);
+        return response()->json(['success' => true, 'data' => $j]);
+    }
+
+    public function indexPelanggaran(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => JenisPelanggaran::orderBy('nama')->get(),
+        ]);
+    }
+
     // --- Master Periode Akademik ---
     public function storePeriode(Request $request): JsonResponse
     {
         $request->validate(['tahun_akademik' => 'required|string', 'semester' => 'required|string', 'tanggal_buka' => 'required|date', 'tanggal_tutup' => 'required|date']);
-        $p = PeriodeAkademik::create($request->all());
+        $p = PeriodeAkademik::updateOrCreate(
+            ['tahun_akademik' => $request->tahun_akademik, 'semester' => $request->semester],
+            ['tanggal_buka' => $request->tanggal_buka, 'tanggal_tutup' => $request->tanggal_tutup]
+        );
         return response()->json(['success' => true, 'data' => $p]);
     }
     public function updatePeriode(Request $request, int $id): JsonResponse
@@ -199,5 +253,17 @@ class KonfigurasiController extends Controller
         Konfigurasi::where('key', 'semester_aktif')->update(['value' => $p->semester]);
 
         return response()->json(['success' => true, 'data' => $p]);
+    }
+
+    // --- Upload Logo Institusi ---
+    public function uploadLogo(Request $request): JsonResponse
+    {
+        $request->validate(['logo' => 'required|image|mimes:png,jpg,jpeg,gif,svg|max:2048']);
+        $path = $request->file('logo')->store('logos', 'public');
+        Konfigurasi::updateOrCreate(
+            ['key' => 'logo_institusi'],
+            ['value' => '/storage/'.$path, 'label' => 'logo_institusi', 'tipe' => 'text']
+        );
+        return response()->json(['success' => true, 'url' => '/storage/'.$path]);
     }
 }

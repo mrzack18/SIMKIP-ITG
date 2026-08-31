@@ -53,6 +53,16 @@ class MahasiswaController extends Controller
         abort(403);
     }
 
+    public function getCatatanInternal(Request $req, $id) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->getCatatanInternal($req, $id);
+        abort(403);
+    }
+
+    public function storeCatatanInternal(Request $req, $id) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->storeCatatanInternal($req, $id);
+        abort(403);
+    }
+
     public function filterOptions(Request $req) {
         if (!in_array($req->user()->role, ['admin', 'prodi', 'warek'])) abort(403);
 
@@ -64,7 +74,14 @@ class MahasiswaController extends Controller
         $angkatans = Mahasiswa::select('angkatan')
             ->distinct()
             ->orderByDesc('angkatan')
-            ->pluck('angkatan');
+            ->pluck('angkatan')
+            ->toArray();
+            
+        // Ensure some default years exist if DB is empty
+        $currentYear = (int) date('Y');
+        $defaultYears = range($currentYear - 4, $currentYear + 1);
+        $angkatans = array_unique(array_merge($angkatans, $defaultYears));
+        rsort($angkatans);
 
         return response()->json([
             'success'   => true,
@@ -101,8 +118,22 @@ class MahasiswaController extends Controller
         }
 
         $data = $m->ipkSemestrs()->with('mataKuliahs')->orderByDesc('semester')->get();
+        
+        if ($req->tahun_ajaran && $req->tahun_ajaran !== 'Semua') {
+            $filterRange = \App\Helpers\TahunAjaranHelper::getDateRange($req->tahun_ajaran);
+            if ($filterRange) {
+                $data = $data->filter(function($item) use ($filterRange) {
+                    $itemRange = \App\Helpers\TahunAjaranHelper::getDateRange($item->tahun_ajaran);
+                    if ($itemRange) {
+                        return $itemRange[1] <= $filterRange[1];
+                    }
+                    return true;
+                });
+            }
+        }
+
         return response()->json([
-            'data' => \App\Http\Resources\SemesterDetailResource::collection($data)
+            'data' => \App\Http\Resources\SemesterDetailResource::collection($data->values())
         ]);
     }
 
@@ -115,27 +146,28 @@ class MahasiswaController extends Controller
 
     public function prestasi(Request $req, $id) {
         $m = $this->checkAccessAndGetMahasiswa($req, $id);
-        $data = $m->prestasis()->with('mahasiswa.prodi')->latest()->get();
-        return response()->json(['data' => \App\Http\Resources\PrestasiResource::collection($data)]);
+        $q = $m->prestasis()->with('mahasiswa.prodi');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'prestasis.tanggal_mulai', $req->tahun_ajaran);
+        return response()->json(['data' => \App\Http\Resources\PrestasiResource::collection($q->latest()->get())]);
     }
 
     public function organisasi(Request $req, $id) {
         $m = $this->checkAccessAndGetMahasiswa($req, $id);
-        $data = $m->organisasis()->with('mahasiswa.prodi')->latest()->get();
-        return response()->json(['data' => \App\Http\Resources\OrganisasiResource::collection($data)]);
+        $q = $m->organisasis()->with('mahasiswa.prodi');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'organisasis.periode_mulai', $req->tahun_ajaran);
+        return response()->json(['data' => \App\Http\Resources\OrganisasiResource::collection($q->latest()->get())]);
     }
 
     public function pelatihan(Request $req, $id) {
         $m = $this->checkAccessAndGetMahasiswa($req, $id);
-        $data = $m->pelatihans()->with('mahasiswa.prodi')->latest()->get();
-        return response()->json(['data' => \App\Http\Resources\PelatihanResource::collection($data)]);
+        $q = $m->pelatihans()->with('mahasiswa.prodi');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'pelatihans.tanggal_mulai', $req->tahun_ajaran);
+        return response()->json(['data' => \App\Http\Resources\PelatihanResource::collection($q->latest()->get())]);
     }
 
     public function dokumen(Request $req, $id) {
         $m = $this->checkAccessAndGetMahasiswa($req, $id);
-        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->dokumen($req, $id);
-        
-        // Fallback for Prodi if they also need to view documents
+        // Delegate to AdminMahasiswa which should also be updated
         return app(AdminMahasiswa::class)->dokumen($req, $id);
     }
 
@@ -172,6 +204,12 @@ class MahasiswaController extends Controller
         if ($request->user()->role === "prodi" && $m->prodi_id !== $request->user()->prodi_id) abort(403);
 
         $permohonan = $m->bebasTanggungan;
+        if ($request->tahun_ajaran && $permohonan) {
+            $range = \App\Helpers\TahunAjaranHelper::getDateRange($request->tahun_ajaran);
+            if ($range && $permohonan->created_at > $range[1]) {
+                $permohonan = null; // Requested year is before they submitted it!
+            }
+        }
         $checklist = \App\Services\BebasTanggunganService::getChecklist($m);
         
         $history = [];
@@ -216,7 +254,11 @@ class MahasiswaController extends Controller
             $query->where('kategori', $request->kategori);
         }
         if ($request->status && $request->status !== 'Semua Status') {
-            $query->where('status', $request->status);
+            if ($tahunAjaran && $request->status === 'Aktif') {
+                // Historically active, skip strict current status filter
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         if ($request->kipFilter && $request->kipFilter !== 'Semua') {
             $kategori = $request->kipFilter === 'KIP-K Reguler' ? 'Reguler' : 'Aspirasi';

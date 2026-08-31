@@ -126,6 +126,7 @@ function FormalSurat({ data, signature }: { data: BebasTanggunganDetailResponse;
             ["NIM", mahasiswa.nim],
             ["Program Studi", mahasiswa.prodi ?? "—"],
             ["Angkatan", String(mahasiswa.angkatan)],
+            ["Tahun Ajaran", permohonan.tahunAjaran ?? "—"],
             ["Semester", String(mahasiswa.semester)],
           ].map(([k, v]) => (
             <div key={k} className="grid grid-cols-[5rem_0.5rem_1fr] gap-x-2 text-xs">
@@ -189,6 +190,7 @@ export default function BebasTanggunganDetail() {
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [signature, setSignature] = useState<SignatureConfig | null>(null);
+  
 
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
@@ -323,14 +325,16 @@ export default function BebasTanggunganDetail() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500">
-        <Link to="/admin/bebas-tanggungan" className="hover:text-gray-700 flex items-center gap-1">
-          <ChevronLeft size={15} /> Surat Penyelesaian
-        </Link>
-        <span>/</span>
-        <span className="text-gray-800 font-500">Review {mahasiswa.nim}</span>
-      </div>
+      {/* Breadcrumb and Filter */}
+      <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
+        <div className="flex items-center gap-2">
+          <Link to="/admin/bebas-tanggungan" className="hover:text-gray-700 flex items-center gap-1">
+            <ChevronLeft size={15} /> Surat Penyelesaian
+          </Link>
+          <span>/</span>
+          <span className="text-gray-800 font-500">Review {mahasiswa.nim}</span>
+        </div>
+              </div>
 
       {/* Student card */}
       <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-5">
@@ -343,7 +347,7 @@ export default function BebasTanggunganDetail() {
             <p className="text-sm text-gray-500">
               {mahasiswa.nim} · {mahasiswa.prodi ?? "—"} · Angkatan {mahasiswa.angkatan}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">Diajukan: {permohonan.tanggalAjukan ?? "—"}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Tahun Ajaran: {permohonan.tahunAjaran ?? "—"} · Diajukan: {permohonan.tanggalAjukan ?? "—"}</p>
           </div>
           <div className="text-right flex-shrink-0">
             {currentStatus === "diterbitkan" && (

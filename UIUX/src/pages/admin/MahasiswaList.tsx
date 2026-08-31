@@ -52,6 +52,15 @@ const students = mahasiswaList.map((m) => {
 
 const PAGE_SIZE = 10;
 
+const tahunAjaranOptions = [
+  "Semua",
+  "2024/2025 Ganjil",
+  "2024/2025 Genap",
+  "2025/2026 Ganjil",
+  "2025/2026 Genap",
+  "2026/2027 Ganjil",
+];
+
 // ── SP badges (accumulated) ────────────────────────────────────────────────
 function SpBadges({ level }: { level: "SP1" | "SP2" | "SP3" }) {
   return (
@@ -110,14 +119,15 @@ function FilterSelect({
 
 export default function MahasiswaList() {
   // Filters
-  const [search,        setSearch]        = useState("");
-  const [prodiFilter,   setProdiFilter]   = useState("Semua");
-  const [angkatanFilter, setAngkatanFilter] = useState("Semua");
-  const [spFilter,      setSpFilter]      = useState("Semua");
-  const [kipFilter,     setKipFilter]     = useState("Semua");
-  const [ipkFilter,     setIpkFilter]     = useState("Semua");
-  const [sortBy,        setSortBy]        = useState("IPK Tertinggi → Terendah");
-  const [page,          setPage]          = useState(1);
+  const [search,            setSearch]            = useState("");
+  const [tahunAjaranFilter, setTahunAjaranFilter] = useState("Semua");
+  const [prodiFilter,       setProdiFilter]       = useState("Semua");
+  const [angkatanFilter,    setAngkatanFilter]    = useState("Semua");
+  const [spFilter,          setSpFilter]          = useState("Semua");
+  const [kipFilter,         setKipFilter]         = useState("Semua");
+  const [ipkFilter,         setIpkFilter]         = useState("Semua");
+  const [sortBy,            setSortBy]            = useState("IPK Tertinggi → Terendah");
+  const [page,              setPage]              = useState(1);
 
   // Action menu & delete modal
   const [openMenu,         setOpenMenu]         = useState<number | null>(null);
@@ -125,12 +135,13 @@ export default function MahasiswaList() {
   const [deleteConfirmNim, setDeleteConfirmNim] = useState("");
 
   const isFiltered =
-    search || prodiFilter !== "Semua" || angkatanFilter !== "Semua" ||
-    spFilter !== "Semua" || kipFilter !== "Semua" || ipkFilter !== "Semua" ||
+    search || tahunAjaranFilter !== "Semua" || prodiFilter !== "Semua" ||
+    angkatanFilter !== "Semua" || spFilter !== "Semua" ||
+    kipFilter !== "Semua" || ipkFilter !== "Semua" ||
     sortBy !== "IPK Tertinggi → Terendah";
 
   function resetFilters() {
-    setSearch(""); setProdiFilter("Semua"); setAngkatanFilter("Semua");
+    setSearch(""); setTahunAjaranFilter("Semua"); setProdiFilter("Semua"); setAngkatanFilter("Semua");
     setSpFilter("Semua"); setKipFilter("Semua"); setIpkFilter("Semua");
     setSortBy("IPK Tertinggi → Terendah"); setPage(1);
   }
@@ -207,6 +218,13 @@ export default function MahasiswaList() {
               className="w-full pl-9 pr-4 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]/30"
             />
           </div>
+
+          {/* Tahun Ajaran */}
+          <FilterSelect
+            value={tahunAjaranFilter}
+            onChange={(v) => { setTahunAjaranFilter(v); setPage(1); }}
+            options={tahunAjaranOptions}
+          />
 
           <FilterSelect
             value={prodiFilter}

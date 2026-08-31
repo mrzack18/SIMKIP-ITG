@@ -21,6 +21,8 @@ class BebasTanggunganController extends Controller
             'mahasiswa.ipkSemestrs',
             'mahasiswa.dokumens.jenis',
         ]);
+        
+        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($baseQuery, 'bebas_tanggungans.created_at', $request->tahun_ajaran);
 
         if ($request->status && $request->status !== 'Semua') {
             $statusMap = [

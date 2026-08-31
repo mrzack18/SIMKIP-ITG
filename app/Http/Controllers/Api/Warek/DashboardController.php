@@ -161,7 +161,6 @@ class DashboardController extends Controller
 
         // Sample mahasiswa (top 8 sorted by IPK desc) for "Sample" table
         $samples = Mahasiswa::with(['prodi'])
-            ->withCount(['ipkSemestrs as semester_calc'])
             ->addSelect([
                 'ipk_calc' => IpkSemestr::select('ipk')
                     ->whereColumn('mahasiswa_id', 'mahasiswas.id')

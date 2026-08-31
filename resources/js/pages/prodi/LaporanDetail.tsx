@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import logoItg from "@/imports/logo_itg.jpg";
 import { api, API_BASE_URL } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 interface LaporanDetailData {
   id: number;
@@ -46,6 +47,7 @@ interface DetailResponse {
 
 export default function ProdiLaporanDetail() {
   const { id } = useParams<{ id: string }>();
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<DetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,10 +116,11 @@ export default function ProdiLaporanDetail() {
 
   return (
     <div className="space-y-5 pb-24">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <Link to="/prodi/laporan" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Link>
+        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -134,6 +137,7 @@ export default function ProdiLaporanDetail() {
           <div className="text-center mb-6">
             <p className="font-bold text-base text-gray-800 uppercase underline">LAPORAN EVALUASI KIP-K</p>
             <p className="text-xs text-gray-500 mt-1">Nomor: {l.nomorSurat}</p>
+            <p className="text-xs font-semibold text-[#263F93] mt-1">Tahun Ajaran: {l.periode || (l.tahunAkademik + " " + l.semester)}</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

@@ -1,6 +1,15 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Users, TrendingUp, ArrowRight } from "lucide-react";
+import { Users, TrendingUp, ArrowRight, Calendar } from "lucide-react";
+
+const tahunAjaranList = [
+  "2024/2025 Ganjil",
+  "2024/2025 Genap",
+  "2025/2026 Ganjil",
+  "2025/2026 Genap",
+  "2026/2027 Ganjil",
+];
 
 const angkatanData = [
   { name: "2022", Reguler: 14, Aspirasi: 8 },
@@ -31,6 +40,8 @@ const semester7plus = [
 ];
 
 export default function ProdiDashboard() {
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>("2024/2025 Ganjil");
+
   const stats = [
     { label: "Mahasiswa KIP-K Aktif (TI)", value: "42", icon: <Users size={20} className="text-[#263F93]" />, color: "text-[#263F93]" },
     { label: "Reguler", value: "28", icon: <Users size={20} className="text-blue-500" />, color: "text-blue-600" },
@@ -40,9 +51,25 @@ export default function ProdiDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard — Teknik Informatika</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Pantau perkembangan mahasiswa KIP-K di program studi Anda (read-only)</p>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard — Teknik Informatika</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Pantau perkembangan mahasiswa KIP-K di program studi Anda (read-only)</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-xl shadow-sm">
+          <Calendar size={15} className="text-[#263F93]" />
+          <label className="text-xs font-semibold text-gray-600">Tahun Ajaran:</label>
+          <select
+            value={selectedTahunAjaran}
+            onChange={(e) => setSelectedTahunAjaran(e.target.value)}
+            className="text-xs font-medium text-gray-800 bg-transparent focus:outline-none cursor-pointer pr-1"
+          >
+            {tahunAjaranList.map((ta) => (
+              <option key={ta} value={ta}>{ta}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Stat cards */}

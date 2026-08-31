@@ -9,6 +9,28 @@ class MahasiswaResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $spList = [];
+        if ($this->relationLoaded('suratPeringatans')) {
+            $range = \App\Helpers\TahunAjaranHelper::getDateRange($request->tahun_ajaran);
+            foreach ($this->suratPeringatans as $surat) {
+                if ($range && $surat->tanggal_terbit <= $range[1]) {
+                    $active = in_array($surat->status, ['Aktif', 'Masa Tenggang']);
+                    if (!$active && $surat->status === 'Selesai' && $surat->updated_at >= $range[0]) {
+                        $active = true;
+                    }
+                    $spList[] = [
+                        'level' => $surat->level,
+                        'status' => $active ? 'Aktif' : 'Selesai'
+                    ];
+                } elseif (!$range) {
+                    $spList[] = [
+                        'level' => $surat->level,
+                        'status' => $surat->status
+                    ];
+                }
+            }
+        }
+
         return [
             'id' => $this->id,
             'nim' => $this->nim,
@@ -16,13 +38,15 @@ class MahasiswaResource extends JsonResource
             'prodi' => $this->prodi_nama ?? ($this->relationLoaded('prodi') ? $this->prodi->nama : ''),
             'angkatan' => (int) $this->angkatan,
             'kategori' => $this->kategori,
-            'status' => $this->status,
+            'status' => $this->getHistoricalStatus($request->tahun_ajaran),
             
             // Calculated fields (aliased from query)
-            'ipk' => (float) ($this->ipk_calc ?? 0),
-            'trendDelta' => (float) ($this->trend_delta_calc ?? 0),
-            'semester' => (int) ($this->semester_calc ?? 1),
+            'ipk' => $this->ipk_calc !== null ? (float)$this->ipk_calc : null,
+            'trendDelta' => ($this->ipk_calc !== null && $this->prev_ipk_calc !== null) ? (float)($this->ipk_calc - $this->prev_ipk_calc) : 0,
+            'semester' => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $this->angkatan, $request->tahun_ajaran),
             'sp' => $this->sp_calc ?? null,
+            'spList' => count($spList) > 0 ? $spList : null,
+            'mk_belum_lulus' => (int)($this->mk_belum_lulus ?? 0),
 
             // Additional DB Fields
             'nik' => $this->nik,
@@ -59,5 +83,28 @@ class MahasiswaResource extends JsonResource
             'alasanNonaktif' => $this->status === 'Nonaktif' ? $this->alasan_nonaktif : null,
             'tanggalNonaktif' => $this->status === 'Nonaktif' && $this->tanggal_nonaktif ? $this->tanggal_nonaktif->format('d M Y') : null,
         ];
+    }
+
+    private function getHistoricalStatus($tahunAjaran)
+    {
+        if (!$tahunAjaran || $tahunAjaran === 'Semua' || $this->status === 'Aktif') {
+            return $this->status;
+        }
+
+        // If historically filtered, and they were revoked/nonaktif, 
+        // we check if their revocation date was AFTER the requested academic year.
+        // If they were revoked AFTER this year ended, they were 'Aktif' during this year!
+        $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+        if ($range) {
+            $endOfYear = $range[1];
+            if ($this->tanggal_nonaktif && $this->tanggal_nonaktif > $endOfYear) {
+                return 'Aktif';
+            }
+            if ($this->tanggal_dicabut && $this->tanggal_dicabut > $endOfYear) {
+                return 'Aktif';
+            }
+        }
+        
+        return $this->status;
     }
 }

@@ -34,6 +34,7 @@ import { TabPelatihan } from "@/components/modules/admin/mahasiswa/TabPelatihan"
 import { TabDokumen } from "@/components/modules/admin/mahasiswa/TabDokumen"
 import { TabSP } from "@/components/modules/admin/mahasiswa/TabSP"
 import { TabSuratPenyelesaian } from "@/components/modules/admin/mahasiswa/TabSuratPenyelesaian"
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter"
 
 
 
@@ -57,6 +58,7 @@ export default function MahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [showSpModal, setShowSpModal] = useState(false)
   const [selectedSpLevel, setSelectedSpLevel] = useState<"SP1" | "SP2" | "SP3">("SP1")
   const [nonaktifModal, setNonaktifModal] = useState(false)
@@ -161,13 +163,12 @@ export default function MahasiswaDetail() {
   useEffect(() => {
     let active = true
     setLoadingMain(true)
-    setError("")
-    getMahasiswaById(mhsId)
+    getMahasiswaById(mhsId, tahunAjaran)
       .then((data) => { if (active) setMhs(data) })
       .catch((err) => { if (active) setError(err?.message ?? "Gagal memuat data mahasiswa") })
       .finally(() => { if (active) setLoadingMain(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   // Load signature config from BE
   useEffect(() => {
@@ -184,7 +185,7 @@ export default function MahasiswaDetail() {
     let active = true
     setLoadingIpk(true)
     setIpkError(null)
-    getMahasiswaIpk(mhsId)
+    getMahasiswaIpk(mhsId, tahunAjaran)
       .then((data) => { if (active) setIpkData(data) })
       .catch((err) => { 
         if (active) {
@@ -194,13 +195,13 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingIpk(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
     setLoadingPrestasi(true)
     setPrestasiError(null)
-    getMahasiswaPrestasi(mhsId)
+    getMahasiswaPrestasi(mhsId, tahunAjaran)
       .then((data) => { if (active) setPrestasiData(data) })
       .catch((err) => { 
         if (active) {
@@ -210,15 +211,15 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingPrestasi(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
     setLoadingOrganisasi(true)
     setOrganisasiError(null)
-    getMahasiswaOrganisasi(mhsId)
+    getMahasiswaOrganisasi(mhsId, tahunAjaran)
       .then((data) => { if (active) setOrganisasiData(data) })
-      .catch((err) => { 
+      .catch((err) => {
         if (active) {
           setOrganisasiError(err)
           setOrganisasiData([])
@@ -226,15 +227,15 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingOrganisasi(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
     setLoadingPelatihan(true)
     setPelatihanError(null)
-    getMahasiswaPelatihan(mhsId)
+    getMahasiswaPelatihan(mhsId, tahunAjaran)
       .then((data) => { if (active) setPelatihanData(data) })
-      .catch((err) => { 
+      .catch((err) => {
         if (active) {
           setPelatihanError(err)
           setPelatihanData([])
@@ -242,15 +243,15 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingPelatihan(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
     setLoadingSp(true)
     setSpError(null)
-    getMahasiswaSpHistory(mhsId)
+    getMahasiswaSpHistory(mhsId, tahunAjaran)
       .then((data) => { if (active) setSpData(data) })
-      .catch((err) => { 
+      .catch((err) => {
         if (active) {
           setSpError(err)
           setSpData([])
@@ -258,15 +259,15 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingSp(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
     setLoadingDokumen(true)
     setDokumenError(null)
-    getMahasiswaDokumen(mhsId)
+    getMahasiswaDokumen(mhsId, tahunAjaran)
       .then((data) => { if (active) setDokumenData(data) })
-      .catch((err) => { 
+      .catch((err) => {
         if (active) {
           setDokumenError(err)
           setDokumenData([])
@@ -274,13 +275,13 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingDokumen(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
     setLoadingBt(true)
     setBtError(null)
-    getMahasiswaBebasTanggungan(mhsId)
+    getMahasiswaBebasTanggungan(mhsId, tahunAjaran)
       .then((res) => { if (active) setBtData(res) })
       .catch((err) => {
         if (active) {
@@ -290,7 +291,7 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingBt(false) })
     return () => { active = false }
-  }, [mhsId])
+  }, [mhsId, tahunAjaran])
 
   if (loadingMain) {
     return (
@@ -325,13 +326,16 @@ export default function MahasiswaDetail() {
 
   return (
     <div className="space-y-5 pb-10">
-      {/* Breadcrumb */}
-      <Link
-        to="/admin/mahasiswa"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-      >
-        <ChevronLeft size={16} /> Manajemen Mahasiswa
-      </Link>
+      {/* Breadcrumb and Filter */}
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          to="/admin/mahasiswa"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronLeft size={16} /> Manajemen Mahasiswa
+        </Link>
+        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+      </div>
 
       {/* Status Banner */}
       {mhs.status === "Nonaktif" && (
@@ -454,7 +458,14 @@ export default function MahasiswaDetail() {
             )}
             {mhs.status === "Aktif" && (
               <button
-                onClick={() => setShowSpModal(true)}
+                onClick={() => {
+                  const used = spData ? spData.map((sp: any) => sp.level) : []
+                  let defaultLevel = "SP1"
+                  if (used.includes("SP1") && used.includes("SP2")) defaultLevel = "SP3"
+                  else if (used.includes("SP1")) defaultLevel = "SP2"
+                  setSelectedSpLevel(defaultLevel as "SP1"|"SP2"|"SP3")
+                  setShowSpModal(true)
+                }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-red-400 text-red-600 hover:bg-red-50 transition-colors"
               >
                 <AlertTriangle size={14} /> Terbitkan SP
@@ -491,7 +502,7 @@ export default function MahasiswaDetail() {
         {activeTab === 3 && <TabPelatihan data={pelatihanData} loading={loadingPelatihan} error={pelatihanError} />}
         {activeTab === 4 && <TabDokumen data={dokumenData} loading={loadingDokumen} error={dokumenError} />}
         {activeTab === 5 && <TabSP data={spData} loading={loadingSp} error={spError} />}
-        {activeTab === 6 && <TabInfoPribadi data={mhs} />}
+        {activeTab === 6 && <TabInfoPribadi data={mhs} tahunAjaran={tahunAjaran} />}
         {activeTab === 7 && <TabSuratPenyelesaian data={btData} loading={loadingBt} error={btError} signature={signature} />}
       </div>
 
@@ -525,26 +536,33 @@ export default function MahasiswaDetail() {
                 Pilih level SP:
               </p>
               <div className="space-y-2">
-                {(["SP1", "SP2", "SP3"] as const).map((level) => (
-                  <label
-                    key={level}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                      selectedSpLevel === level
-                        ? "border-red-400 bg-red-50"
-                        : "border-[#E2E8F0] hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="spLevel"
-                      value={level}
-                      checked={selectedSpLevel === level}
-                      onChange={() => setSelectedSpLevel(level)}
-                      className="accent-red-600"
-                    />
-                    <span className="text-sm font-medium text-gray-800">{level}</span>
-                  </label>
-                ))}
+                {(["SP1", "SP2", "SP3"] as const).map((level) => {
+                  const used = spData ? spData.some((sp: any) => sp.level === level) : false;
+                  return (
+                    <label
+                      key={level}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                        used ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200" :
+                        selectedSpLevel === level
+                          ? "border-red-400 bg-red-50 cursor-pointer"
+                          : "border-[#E2E8F0] hover:bg-gray-50 cursor-pointer"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="spLevel"
+                        value={level}
+                        checked={selectedSpLevel === level}
+                        onChange={() => !used && setSelectedSpLevel(level)}
+                        disabled={used}
+                        className="accent-red-600"
+                      />
+                      <span className="text-sm font-medium text-gray-800">
+                        {level} {used && <span className="ml-1 text-xs text-gray-500 font-normal">(Sudah diberikan)</span>}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 

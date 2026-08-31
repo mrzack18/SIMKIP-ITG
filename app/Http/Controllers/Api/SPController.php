@@ -30,8 +30,8 @@ class SPController extends Controller
     }
     public function history(Request $req, $id) {
         return match($req->user()->role) {
-            "admin" => app(AdminSP::class)->history($id),
-            "warek", "prodi" => app(AdminSP::class)->history($id),
+            "admin" => app(AdminSP::class)->history($req, $id),
+            "warek", "prodi" => app(AdminSP::class)->history($req, $id),
             default => abort(403),
         };
     }

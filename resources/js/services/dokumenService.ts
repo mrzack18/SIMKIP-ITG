@@ -18,6 +18,7 @@ export interface DokumenFilter {
   jenis?: string;
   page?: number;
   limit?: number;
+  tahun_ajaran?: string;
 }
 
 export async function getDokumenQueue(

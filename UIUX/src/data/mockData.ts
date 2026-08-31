@@ -54,3 +54,12 @@ export const angkatanStats = [
   { angkatan: "2025", reguler: 8, aspirasi: 5 },
   { angkatan: "2026", reguler: 3, aspirasi: 3 },
 ];
+
+export const spHistoryData = [
+  { level: "SP1", tahunAjaran: "2023/2024 Genap", alasan: "IPK turun menjadi 2.78", tanggal: "15 Maret 2024" },
+  { level: "SP2", tahunAjaran: "2024/2025 Ganjil", alasan: "Belum ada perbaikan IPK", tanggal: "15 September 2024" }
+];
+
+export const kendalaList = [
+  { id: 1, tahunAjaran: "2023/2024 Genap", kategori: "Akademik", deskripsi: "Kesulitan dalam mata kuliah pemrograman", tanggal: "10 April 2024" }
+];

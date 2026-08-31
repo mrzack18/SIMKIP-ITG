@@ -11,10 +11,13 @@ const docIcon = (status: string) => {
   return <FileText size={16} className="text-gray-300" />;
 };
 
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+
 export default function StudentDashboard() {
   const [data, setData] = useState<StudentDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,9 +60,14 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-5">
       {/* Greeting */}
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Halo, {firstName}!</h1>
-        <p className="text-gray-500 text-sm mt-0.5">{today} · NIM {mahasiswa.nim}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-display font-700 text-2xl text-gray-900">Halo, {firstName}!</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{today} · NIM {mahasiswa.nim}</p>
+        </div>
+        <div>
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        </div>
       </div>
 
       {/* Alert banners */}

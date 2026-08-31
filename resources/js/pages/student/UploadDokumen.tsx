@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, CheckCircle, Clock, AlertTriangle, FileText, Eye, Download, X } from "lucide-react";
+import { Upload, CheckCircle, Clock, AlertTriangle, FileText, ChevronRight, X, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 type DocStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak" | "Belum Diunggah";
 
@@ -72,10 +73,13 @@ function StatusIcon({ status }: { status: DocStatus }) {
   return <FileText size={20} className="text-gray-300" />;
 }
 
+const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
+
 export default function UploadDokumen() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
 
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const [viewTarget, setViewTarget] = useState<Doc | null>(null);
@@ -118,13 +122,13 @@ export default function UploadDokumen() {
     if (file) setSelectedFile(file);
   };
 
-  const handleUploadSubmit = async () => {
+  const handleUpload = async () => {
     if (!selectedFile || !uploadTarget) return;
     const uploadDoc = docs.find((d) => d.id === uploadTarget);
     if (!uploadDoc) return;
 
+    setUploading(true);
     try {
-      setUploading(true);
       const payload = new FormData();
       payload.append("dokumen_jenis_id", uploadDoc.dokumenJenisId.toString());
       payload.append("file", selectedFile);
@@ -132,10 +136,12 @@ export default function UploadDokumen() {
         payload.append("metadata", JSON.stringify(extraFields));
       }
 
-      await api.post("/dokumen", payload);
+      await api.post("/dokumen", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("Dokumen berhasil diunggah.");
       setUploadTarget(null);
       setSelectedFile(null);
-      setExtraFields({});
       fetchDokumen();
     } catch (err: any) {
       if (err.status === 413) {
@@ -149,7 +155,7 @@ export default function UploadDokumen() {
   };
 
   const uploadDoc = docs.find((d) => d.id === uploadTarget);
-  const currentExtraFields = uploadDoc?.kode ? (EXTRA_FIELDS[uploadDoc.kode] ?? []) : [];
+  const currentExtraFields = uploadDoc?.fields || [];
 
   if (error && docs.length === 0) {
     return <div className="p-8 text-center text-red-500">{error}</div>;
@@ -157,11 +163,16 @@ export default function UploadDokumen() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-bold text-2xl text-gray-900">Upload Dokumen Kewajiban</h1>
-        <p className="text-gray-500 text-sm mt-0.5">
-          Seluruh dokumen berikut wajib diunggah dan divalidasi sebagai syarat KIP-K dan kelulusan.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-bold text-2xl text-gray-900">Upload Dokumen Kewajiban</h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Seluruh dokumen berikut wajib diunggah dan divalidasi sebagai syarat KIP-K dan kelulusan.
+          </p>
+        </div>
+        <div>
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        </div>
       </div>
 
       {/* Student info */}
@@ -326,6 +337,14 @@ export default function UploadDokumen() {
                 }}
               />
 
+              {/* Tahun Ajaran */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tahun Ajaran</label>
+                <div className="inline-block px-3 py-1.5 bg-[#263F93]/10 text-[#263F93] rounded-lg text-sm font-semibold">
+                  {formatTA(extraFields.tahunAjaran || getCurrentTahunAjaran())}
+                </div>
+              </div>
+
               {/* Extra info fields */}
               {currentExtraFields.length > 0 && (
                 <div className="space-y-3">
@@ -333,18 +352,33 @@ export default function UploadDokumen() {
                     Informasi Tambahan
                   </p>
                   <div className={`grid gap-3 ${currentExtraFields.length > 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-                    {currentExtraFields.map((field) => (
-                      <div key={field.key}>
-                        <label className="block text-xs text-gray-400 mb-1">{field.label}</label>
-                        <input
-                          type={field.type}
-                          value={extraFields[field.key] ?? ""}
-                          onChange={(e) =>
-                            setExtraFields((prev) => ({ ...prev, [field.key]: e.target.value }))
-                          }
-                          placeholder={field.type === "text" ? field.label : undefined}
-                          className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]"
-                        />
+                    {currentExtraFields.map((field: any) => (
+                      <div key={field.id}>
+                        <label className="block text-xs text-gray-400 mb-1">{field.label} {field.is_required && <span className="text-red-500">*</span>}</label>
+                        {field.tipe === "dropdown" && field.opsi ? (
+                          <select
+                            value={extraFields[field.id] ?? ""}
+                            onChange={(e) =>
+                              setExtraFields((prev) => ({ ...prev, [field.id]: e.target.value }))
+                            }
+                            required={field.is_required}
+                            className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]"
+                          >
+                            <option value="">Pilih...</option>
+                            {field.opsi.map((op: string) => <option key={op} value={op}>{op}</option>)}
+                          </select>
+                        ) : (
+                          <input
+                            type={field.tipe === "date" ? "date" : field.tipe === "number" ? "number" : "text"}
+                            value={extraFields[field.id] ?? ""}
+                            onChange={(e) =>
+                              setExtraFields((prev) => ({ ...prev, [field.id]: e.target.value }))
+                            }
+                            required={field.is_required}
+                            placeholder={field.label}
+                            className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -359,7 +393,7 @@ export default function UploadDokumen() {
                   Batal
                 </button>
                 <button
-                  onClick={handleUploadSubmit}
+                  onClick={handleUpload}
                   disabled={!selectedFile || uploading}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2 transition-opacity"
                   style={{ background: "#263F93" }}

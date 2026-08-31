@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             ProdiSeeder::class,
             KonfigurasiSeeder::class,
             DokumenJenisSeeder::class,
+            JenisPelanggaranSeeder::class,
             SuperAdminSeeder::class, // UserSeeder
             MockDataSeeder::class, // Testing UI Data
         ]);

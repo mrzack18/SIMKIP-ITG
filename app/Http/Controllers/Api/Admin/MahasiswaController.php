@@ -17,7 +17,11 @@ class MahasiswaController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Mahasiswa::withDetails();
+        $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
+        if ($tahunAjaran) {
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+        }
+        $query = Mahasiswa::withDetails($tahunAjaran)->with(['suratPeringatans']);
 
         if ($request->search) {
             $q = $request->search;
@@ -34,7 +38,24 @@ class MahasiswaController extends Controller
             $query->where('kategori', $request->kategori);
         }
         if ($request->status && $request->status !== 'Semua Status') {
-            $query->where('status', $request->status);
+            if ($tahunAjaran) {
+                // If historical, we must check if they were active AT THAT TIME.
+                // The scopeWithDetails already filters out students who left BEFORE the year.
+                // But if they left DURING or AFTER, they were active then.
+                if ($request->status === 'Aktif') {
+                    // They are historically active if they haven't left before the end of that semester
+                    // Actually, scopeWithDetails already guarantees they didn't leave BEFORE the semester.
+                    // To be purely historically accurate, if they were active in that semester, we show them.
+                    // The simplest is to just not apply the strict CURRENT status filter, because they were active then!
+                    // We'll leave this empty to allow scopeWithDetails to handle it!
+                } else {
+                    // For finding "Dicabut" historically, it means they were revoked IN THAT semester.
+                    // (Implementation omitted for simplicity; usually people search 'Aktif' historically)
+                    $query->where('status', $request->status);
+                }
+            } else {
+                $query->where('status', $request->status);
+            }
         }
         if ($request->kipFilter && $request->kipFilter !== 'Semua') {
             $kategori = $request->kipFilter === 'KIP-K Reguler' ? 'Reguler' : 'Aspirasi';
@@ -266,9 +287,61 @@ class MahasiswaController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Status KIP-K mahasiswa berhasil dicabut.', 'data' => new \App\Http\Resources\MahasiswaResource($m)]);
-    }    public function rekapAkademik(Request $request): JsonResponse
+    }    public function getCatatanInternal(Request $request, int $id): JsonResponse
     {
-        $mahasiswas = Mahasiswa::withDetails()->get()->map(function($m) {
+        $tahunAjaran = $request->query('tahun_ajaran');
+        $query = \App\Models\CatatanInternal::where('mahasiswa_id', $id);
+        
+        if ($tahunAjaran) {
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+            $query->where('tahun_ajaran', $tahunAjaran);
+        }
+        
+        $catatan = $query->orderBy('created_at', 'desc')->get();
+        return response()->json(['success' => true, 'data' => $catatan]);
+    }
+
+    public function storeCatatanInternal(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'tahun_ajaran' => 'required|string',
+            'kategori' => 'required|string',
+            'deskripsi' => 'required|string',
+        ]);
+
+        $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $request->tahun_ajaran);
+
+        $catatan = \App\Models\CatatanInternal::create([
+            'mahasiswa_id' => $id,
+            'tahun_ajaran' => $tahunAjaran,
+            'kategori' => $request->kategori,
+            'deskripsi' => $request->deskripsi,
+        ]);
+
+        return response()->json(['success' => true, 'data' => $catatan]);
+    }
+
+    public function rekapAkademik(Request $request): JsonResponse
+    {
+        $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
+        if ($tahunAjaran) {
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+        }
+        $mahasiswas = Mahasiswa::withDetails($tahunAjaran)->with('suratPeringatans')->get()->map(function($m) use ($tahunAjaran) {
+            $spList = [];
+            $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+            foreach ($m->suratPeringatans as $surat) {
+                if ($range && $surat->tanggal_terbit <= $range[1]) {
+                    $active = in_array($surat->status, ['Aktif', 'Masa Tenggang']);
+                    if (!$active && $surat->status === 'Selesai' && $surat->updated_at >= $range[0]) {
+                        $active = true;
+                    }
+                    $spList[] = ['level' => $surat->level, 'status' => $active ? 'Aktif' : 'Selesai'];
+                } elseif (!$range) {
+                    $spList[] = ['level' => $surat->level, 'status' => $surat->status];
+                }
+            }
+
             return [
                 'id' => $m->id,
                 'nim' => $m->nim,
@@ -279,7 +352,8 @@ class MahasiswaController extends Controller
                 'kipkLabel' => $m->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
                 'ipk' => $m->ipk_terakhir,
                 'delta' => $m->trend_delta_calc,
-                'semester' => 'Semester ' . $m->semester_aktif,
+                'semester' => 'Sem ' . \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $tahunAjaran),
+                'spList' => count($spList) > 0 ? $spList : null,
                 'sp' => $m->sp_aktif,
                 'mkBelumLulus' => $m->mk_belum_lulus,
             ];
@@ -290,6 +364,11 @@ class MahasiswaController extends Controller
     public function rekapPrestasi(Request $request): JsonResponse
     {
         $query = \App\Models\Prestasi::with(['mahasiswa.prodi']);
+        $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
+        if ($tahunAjaran) {
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+            $query = \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $tahunAjaran);
+        }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);
         }
@@ -302,11 +381,12 @@ class MahasiswaController extends Controller
                 'prodi' => $p->mahasiswa->prodi->nama,
                 'angkatan' => $p->mahasiswa->angkatan,
                 'kipk' => $p->mahasiswa->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
-                'namaPrestasi' => $p->nama,
+                'namaPrestasi' => $p->nama_prestasi,
                 'tingkat' => $p->tingkat,
                 'pencapaian' => $p->pencapaian,
                 'penyelenggara' => $p->penyelenggara,
-                'tanggal' => $p->tanggal ? $p->tanggal->format('d M Y') : null,
+                'tanggalMulai' => $p->tanggal_mulai ? $p->tanggal_mulai->format('d M Y') : null,
+                'tanggalSelesai' => $p->tanggal_selesai ? $p->tanggal_selesai->format('d M Y') : null,
                 'tempat' => $p->tempat,
                 'deskripsi' => $p->deskripsi,
                 'link' => $p->link,
@@ -320,9 +400,10 @@ class MahasiswaController extends Controller
     public function dokumen(Request $request, int $id): JsonResponse
     {
         $mahasiswa = Mahasiswa::findOrFail($id);
-        $dokumens = \App\Models\Dokumen::with('jenis')
-            ->where('mahasiswa_id', $id)
-            ->get()
+        $q = \App\Models\Dokumen::with(['jenis', 'fieldValues.field'])
+            ->where('mahasiswa_id', $id);
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $request->tahun_ajaran);
+        $dokumens = $q->get()
             ->map(function ($d) {
                 return [
                     'id' => $d->id,
@@ -333,6 +414,13 @@ class MahasiswaController extends Controller
                     'catatan' => $d->catatan_admin,
                     'tanggal_upload' => $d->created_at->format('d M Y'),
                     'is_wajib' => $d->jenis->is_wajib ?? false,
+                    'fields' => $d->fieldValues->map(function ($fv) {
+                        return [
+                            'label' => $fv->field->label,
+                            'value' => $fv->value,
+                            'tipe' => $fv->field->tipe,
+                        ];
+                    })
                 ];
             });
 
@@ -345,6 +433,11 @@ class MahasiswaController extends Controller
     public function rekapOrganisasi(Request $request): JsonResponse
     {
         $query = \App\Models\Organisasi::with(['mahasiswa.prodi']);
+        $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
+        if ($tahunAjaran) {
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+            $query = \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'periode_mulai', $tahunAjaran);
+        }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);
         }
@@ -359,8 +452,8 @@ class MahasiswaController extends Controller
                 'kipk' => $o->mahasiswa->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
                 'organisasi' => $o->nama,
                 'jabatan' => $o->jabatan,
-                'periodeMulai' => $o->periode_mulai,
-                'periodeSelesai' => $o->periode_selesai,
+                'periodeMulai' => $o->periode_mulai ? $o->periode_mulai->format('d M Y') : null,
+                'periodeSelesai' => $o->periode_selesai ? $o->periode_selesai->format('d M Y') : null,
                 'deskripsi' => $o->deskripsi,
                 'status' => $o->status,
                 'catatan' => $o->catatan_admin,
@@ -372,6 +465,11 @@ class MahasiswaController extends Controller
     public function rekapPelatihan(Request $request): JsonResponse
     {
         $query = \App\Models\Pelatihan::with(['mahasiswa.prodi']);
+        $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
+        if ($tahunAjaran) {
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+            $query = \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $tahunAjaran);
+        }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);
         }

@@ -17,4 +17,9 @@ class DokumenJenis extends Model
     {
         return $this->hasMany(Dokumen::class);
     }
+
+    public function fields()
+    {
+        return $this->hasMany(DokumenJenisField::class)->orderBy('urutan');
+    }
 }

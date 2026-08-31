@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Plus, Search, Clock, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getSPList } from "@/services/spService";
+import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import type { SuratPeringatan } from "@/types";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 const levelColor: Record<string, { bg: string; text: string }> = {
   SP1: { bg: "#FEF3C7", text: "#92400E" },
@@ -23,6 +25,7 @@ type Tab = typeof TABS[number];
 export default function SPList() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("Semua");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [list, setList] = useState<SuratPeringatan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,14 +34,26 @@ export default function SPList() {
   const [totalItems, setTotalItems] = useState(0);
   // Full list for summary card counts (no tab/search filter, high limit)
   const [fullList, setFullList] = useState<SuratPeringatan[]>([]);
+  const [selectedProdi, setSelectedProdi] = useState('Semua');
+  const [selectedAngkatan, setSelectedAngkatan] = useState('Semua');
+  const [prodiOptions, setProdiOptions] = useState<string[]>(['Semua']);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(['Semua']);
+
+  // Load prodi and angkatan filter options
+  useEffect(() => {
+    getMahasiswaFilterOptions().then(res => {
+      setProdiOptions(['Semua', ...(res.prodis || []).map((p) => p.nama)]);
+      setAngkatanOptions(['Semua', ...(res.angkatans || [])]);
+    }).catch(() => {});
+  }, []);
 
   // Full list for counts — refetches when search changes (not tab)
   useEffect(() => {
     let active = true;
-    getSPList({ search: search || undefined, limit: 9999 })
+    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined, prodi: selectedProdi !== 'Semua' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua' ? selectedAngkatan : undefined })
       .then(res => { if (active) setFullList(res.data); });
     return () => { active = false; };
-  }, [search]);
+  }, [search, tahunAjaran, selectedProdi, selectedAngkatan]);
 
   // Paginated display data — refetches on tab/page/search change
   useEffect(() => {
@@ -55,6 +70,9 @@ export default function SPList() {
       status: statusFilter,
       page: currentPage,
       limit: 10,
+      tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined,
+      prodi: selectedProdi !== 'Semua' ? selectedProdi : undefined,
+      angkatan: selectedAngkatan !== 'Semua' ? selectedAngkatan : undefined,
     })
       .then(res => {
         if (!active) return;
@@ -71,7 +89,7 @@ export default function SPList() {
       });
 
     return () => { active = false; };
-  }, [search, tab, currentPage]);
+  }, [search, tab, currentPage, tahunAjaran, selectedProdi, selectedAngkatan]);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
@@ -102,16 +120,19 @@ export default function SPList() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">Surat Peringatan</h1>
           <p className="text-gray-500 text-sm mt-0.5">Daftar dan riwayat penerbitan SP mahasiswa KIP-K</p>
         </div>
-        <Link to="/admin/sp/terbitkan"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white"
-          style={{ background: "#DC2626" }}>
-          <Plus size={15} /> Terbitkan SP Baru
-        </Link>
+        <div className="flex items-center gap-3">
+          <TahunAjaranFilter value={tahunAjaran} onChange={v => { setTahunAjaran(v); setCurrentPage(1); }} />
+          <Link to="/admin/sp/terbitkan"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white shadow-sm hover:shadow-md transition-shadow"
+            style={{ background: "#DC2626" }}>
+            <Plus size={15} /> Terbitkan SP Baru
+          </Link>
+        </div>
       </div>
 
       {/* Error */}
@@ -164,6 +185,15 @@ export default function SPList() {
             </button>
           ))}
         </div>
+
+        <select value={selectedProdi} onChange={e => { setSelectedProdi(e.target.value); setCurrentPage(1); }} 
+          className='px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20'>
+          {prodiOptions.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <select value={selectedAngkatan} onChange={e => { setSelectedAngkatan(e.target.value); setCurrentPage(1); }} 
+          className='px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20'>
+          {angkatanOptions.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
       </div>
 
       {/* Table */}

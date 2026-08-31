@@ -9,6 +9,7 @@ export interface MahasiswaFilter {
   search?: string;
   prodi?: string;
   angkatan?: string;
+  tahun_ajaran?: string;
   kategori?: string;
   status?: string;
   page?: number;
@@ -63,8 +64,9 @@ export async function getMahasiswaFilterOptions(): Promise<MahasiswaFilterOption
 }
 
 
-export async function getMahasiswaById(id: number): Promise<Mahasiswa | null> {
-  const res = await api.get<ApiResponse<Mahasiswa>>(`/mahasiswa/${id}`);
+export async function getMahasiswaById(id: number, tahunAjaran?: string): Promise<Mahasiswa | null> {
+  const url = tahunAjaran ? `/mahasiswa/${id}?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : `/mahasiswa/${id}`;
+  const res = await api.get<ApiResponse<Mahasiswa>>(url);
   return res.data;
 }
 
@@ -105,20 +107,24 @@ export async function cabutKipkMahasiswa(id: number, payload: { alasan_cabut: st
   await api.patch(`/mahasiswa/${id}/cabut-kipk`, payload);
 }
 
-export async function getRekapAkademik(): Promise<{ data: any[] }> {
-  return await api.get("/akademik/rekap-mahasiswa");
+export async function getRekapAkademik(tahunAjaran?: string): Promise<{ data: any[] }> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  return await api.get(`/akademik/rekap-mahasiswa${qs}`);
 }
 
-export async function getRekapPrestasi(): Promise<{ data: any[] }> {
-  return await api.get("/akademik/prestasi");
+export async function getRekapPrestasi(tahunAjaran?: string): Promise<{ data: any[] }> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  return await api.get(`/akademik/prestasi${qs}`);
 }
 
-export async function getRekapOrganisasi(): Promise<{ data: any[] }> {
-  return await api.get("/akademik/organisasi");
+export async function getRekapOrganisasi(tahunAjaran?: string): Promise<{ data: any[] }> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  return await api.get(`/akademik/organisasi${qs}`);
 }
 
-export async function getRekapPelatihan(): Promise<{ data: any[] }> {
-  return await api.get("/akademik/pelatihan");
+export async function getRekapPelatihan(tahunAjaran?: string): Promise<{ data: any[] }> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  return await api.get(`/akademik/pelatihan${qs}`);
 }
 
 export interface MataKuliahItem {
@@ -131,44 +137,55 @@ export interface MataKuliahItem {
 }
 
 export interface SemesterDetailBE {
+  id: number;
   semester: number;
   tahun: string;
   ipk: number;
+  ips: number;
+  status: 'Menunggu' | 'Disetujui' | 'Ditolak';
+  catatan_admin?: string | null;
   mataKuliah: MataKuliahItem[];
 }
 
-export async function getMahasiswaIpk(id: number): Promise<SemesterDetailBE[]> {
-  const res = await api.get<{ data: SemesterDetailBE[] }>(`/mahasiswa/${id}/ipk`);
+export async function getMahasiswaIpk(id: number, tahunAjaran?: string): Promise<SemesterDetailBE[]> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}&_t=${Date.now()}` : `?_t=${Date.now()}`;
+  const res = await api.get<{ data: SemesterDetailBE[] }>(`/mahasiswa/${id}/ipk${qs}`);
   return res.data || [];
 }
 
-export async function getMahasiswaPrestasi(id: number): Promise<any[]> {
-  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/prestasi`);
+export async function getMahasiswaPrestasi(id: number, tahunAjaran?: string): Promise<any[]> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/prestasi${qs}`);
   return res.data || [];
 }
 
-export async function getMahasiswaOrganisasi(id: number): Promise<any[]> {
-  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/organisasi`);
+export async function getMahasiswaOrganisasi(id: number, tahunAjaran?: string): Promise<any[]> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/organisasi${qs}`);
   return res.data || [];
 }
 
-export async function getMahasiswaPelatihan(id: number): Promise<any[]> {
-  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/pelatihan`);
+export async function getMahasiswaPelatihan(id: number, tahunAjaran?: string): Promise<any[]> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/pelatihan${qs}`);
   return res.data || [];
 }
 
-export async function getMahasiswaSpHistory(id: number): Promise<any[]> {
-  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/sp`);
+export async function getMahasiswaSpHistory(id: number, tahunAjaran?: string): Promise<any[]> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/sp${qs}`);
   return res.data || [];
 }
 
-export async function getMahasiswaDokumen(id: number): Promise<any[]> {
-  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/dokumen`);
+export async function getMahasiswaDokumen(id: number, tahunAjaran?: string): Promise<any[]> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const res = await api.get<{ data: any[] }>(`/mahasiswa/${id}/dokumen${qs}`);
   return res.data || [];
 }
 
-export async function getMahasiswaBebasTanggungan(id: number): Promise<any> {
-  const res = await api.get(`/mahasiswa/${id}/bebas-tanggungan`);
+export async function getMahasiswaBebasTanggungan(id: number, tahunAjaran?: string): Promise<any> {
+  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const res = await api.get(`/mahasiswa/${id}/bebas-tanggungan${qs}`);
   return res;
 }
 
@@ -182,4 +199,15 @@ export async function validateOrganisasi(mahasiswaId: number, itemId: number, pa
 
 export async function validatePelatihan(mahasiswaId: number, itemId: number, payload: { status: string; catatan_admin?: string }): Promise<void> {
   await api.put(`/mahasiswa/${mahasiswaId}/pelatihan/${itemId}/validate`, payload);
+}
+
+export async function getCatatanInternal(id: number, tahunAjaran?: string) {
+  const url = tahunAjaran ? `/mahasiswa/${id}/catatan?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : `/mahasiswa/${id}/catatan`;
+  const res = await api.get(url);
+  return res.data;
+}
+
+export async function storeCatatanInternal(id: number, payload: { tahun_ajaran: string; kategori: string; deskripsi: string }) {
+  const res = await api.post(`/mahasiswa/${id}/catatan`, payload);
+  return res.data;
 }

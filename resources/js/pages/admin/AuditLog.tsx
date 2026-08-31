@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, Download, X, CircleDot, Loader2, AlertCircle } from "lucide-react";
 import { getAuditLogs, type AuditLogEntry, type AuditLogFilter } from "@/services/auditService";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 const jenisStyle: Record<string, { border: string; badge: string; label: string; icon: React.ReactNode }> = {
   SP: { border: "border-l-red-500", badge: "bg-red-100 text-red-700", label: "SP", icon: <CircleDot size={12} className="text-red-500" /> },
@@ -43,6 +44,7 @@ export default function AuditLog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [detail, setDetail] = useState<AuditLogEntry | null>(null);
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
 
   const fetchLogs = useCallback(async (filter: AuditLogFilter) => {
     setLoading(true);
@@ -84,14 +86,17 @@ export default function AuditLog() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">Riwayat Aktivitas Sistem</h1>
           <p className="text-gray-500 text-sm mt-0.5">Audit log lengkap untuk keperluan BPK/Inspektorat</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-          <Download size={15} /> Export Log
-        </button>
+        <div className="flex items-center gap-2">
+          <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <Download size={15} /> Export Log
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -136,6 +141,7 @@ export default function AuditLog() {
           className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-500"
           placeholder="Sampai"
         />
+
       </div>
 
       {/* Log table */}

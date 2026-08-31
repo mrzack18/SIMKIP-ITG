@@ -163,7 +163,11 @@ export default function ProdiDashboard() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600 font-500">{m.sem}</td>
                     <td className="px-4 py-3">
-                      <span className={`font-700 font-display text-sm ${m.ipk >= 3.0 ? "text-green-600" : "text-red-500"}`}>{m.ipk.toFixed(2)}</span>
+                      {m.ipk !== null ? (
+                        <span className={`font-700 font-display text-sm ${m.ipk >= 3.0 ? "text-green-600" : "text-red-500"}`}>{m.ipk.toFixed(2)}</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

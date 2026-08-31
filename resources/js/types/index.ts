@@ -25,6 +25,7 @@ export interface Mahasiswa {
   ipk: number;
   semester: number;
   sp: string | null;
+  spList?: { level: string; status: string }[] | null;
   // Optional BE-rich fields (MahasiswaResource)
   trendDelta?: number;
   semesterDicabut?: string | null;
@@ -64,6 +65,7 @@ export interface DokumenQueue {
   nim: string;
   nama: string;
   prodi: string;
+  angkatan: number | null;
   jenis: string;
   tanggalUpload: string;
   status: DokumenStatus;
@@ -107,7 +109,10 @@ export interface MataKuliah {
 export interface SemesterDetail {
   semester: number;
   tahun: string;
+  ips?: number;
   ipk: number;
+  status?: string;
+  catatan_admin?: string | null;
   mataKuliah: MataKuliah[];
 }
 

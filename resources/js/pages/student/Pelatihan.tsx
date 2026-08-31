@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BookOpen, Plus, X, FileText, Calendar, MapPin, Building2, Tag, AlignLeft, Upload, CheckCircle, Clock } from "lucide-react";
 import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 interface PelatihanItem {
   id: number;
@@ -14,6 +15,7 @@ interface PelatihanItem {
   status: "Disetujui" | "Menunggu" | "Ditolak";
   sertifikat?: string;
   fotoKegiatan?: string;
+  tahunAjaran?: string;
 }
 
 
@@ -27,6 +29,7 @@ const emptyForm = {
   deskripsi: "",
   sertifikat: null as File | null,
   fotoKegiatan: null as File | null,
+  tahunAjaran: "2025/2026 Ganjil",
 };
 
 function formatDate(d: string) {
@@ -35,8 +38,11 @@ function formatDate(d: string) {
   return dt.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
+const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
+
 export default function Pelatihan() {
   const [items, setItems] = useState<PelatihanItem[]>([]);
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [detail, setDetail] = useState<PelatihanItem | null>(null);
@@ -97,6 +103,7 @@ export default function Pelatihan() {
       if (form.deskripsi) formData.append("deskripsi", form.deskripsi);
       if (form.sertifikat) formData.append("file_sertifikat", form.sertifikat);
       if (form.fotoKegiatan) formData.append("foto_kegiatan", form.fotoKegiatan);
+      formData.append("tahun_ajaran", form.tahunAjaran);
 
       await api.post("/pelatihan", formData);
 
@@ -129,13 +136,16 @@ export default function Pelatihan() {
             Catat dan ajukan pelatihan akademik maupun non-akademik yang telah Anda ikuti.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
-          style={{ background: "#263F93" }}
-        >
-          <Plus size={15} /> Tambah Pelatihan
-        </button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
+            style={{ background: "#263F93" }}
+          >
+            <Plus size={15} /> Tambah Pelatihan
+          </button>
+        </div>
       </div>
 
       {/* Cards */}
@@ -146,63 +156,72 @@ export default function Pelatihan() {
         </div>
       )}
 
-      <div className="space-y-3">
-        {items.map(item => (
-          <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col sm:flex-row sm:items-start gap-4">
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
-              <BookOpen size={20} style={{ color: "#263F93" }} />
-              {item.fotoKegiatan && (
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <span className="text-[8px] text-white font-bold">✓</span>
+      <div className="space-y-6">
+        {[formatTA(taFilter)].map((ta) => (
+          <div key={ta} className="space-y-3">
+            <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
+              Tahun Ajaran {ta}
+            </h2>
+            <div className="space-y-3">
+              {items.filter(item => (item.tahunAjaran || "2025/2026 Ganjil") === ta).map(item => (
+                <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
+                    <BookOpen size={20} style={{ color: "#263F93" }} />
+                    {item.fotoKegiatan && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <span className="text-[8px] text-white font-bold">✓</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="font-600 text-gray-800 text-sm">{item.nama}</h3>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-500 ${
+                          item.jenis === "Akademik"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-purple-100 text-purple-700"
+                        }`}
+                      >
+                        {item.jenis}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
+                      <span className="flex items-center gap-1">
+                        <Building2 size={12} /> {item.penyelenggara}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar size={12} /> {formatDate(item.tanggalMulai)} — {formatDate(item.tanggalSelesai)}
+                      </span>
+                      {item.tempat && (
+                        <span className="flex items-center gap-1">
+                          <MapPin size={12} /> {item.tempat}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-shrink-0 items-center gap-3">
+                    <span
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 ${
+                        item.status === "Disetujui"
+                          ? "bg-green-100 text-green-700"
+                          : item.status === "Ditolak"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {item.status === "Disetujui" ? <CheckCircle size={11} /> : <Clock size={11} />}
+                      {item.status}
+                    </span>
+                    <button
+                      onClick={() => setDetail(item)}
+                      className="px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Lihat Detail
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h3 className="font-600 text-gray-800 text-sm">{item.nama}</h3>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-500 ${
-                    item.jenis === "Akademik"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-purple-100 text-purple-700"
-                  }`}
-                >
-                  {item.jenis}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
-                <span className="flex items-center gap-1">
-                  <Building2 size={12} /> {item.penyelenggara}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar size={12} /> {formatDate(item.tanggalMulai)} — {formatDate(item.tanggalSelesai)}
-                </span>
-                {item.tempat && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={12} /> {item.tempat}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-shrink-0 items-center gap-3">
-              <span
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 ${
-                  item.status === "Disetujui"
-                    ? "bg-green-100 text-green-700"
-                    : item.status === "Ditolak"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-amber-100 text-amber-700"
-                }`}
-              >
-                {item.status === "Disetujui" ? <CheckCircle size={11} /> : <Clock size={11} />}
-                {item.status}
-              </span>
-              <button
-                onClick={() => setDetail(item)}
-                className="px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Lihat Detail
-              </button>
+              ))}
             </div>
           </div>
         ))}
@@ -240,6 +259,22 @@ export default function Pelatihan() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                  <BookOpen size={14} className="inline mr-1.5" />Tahun Ajaran <span className="text-red-400">*</span>
+                </label>
+                <select
+                  required
+                  value={form.tahunAjaran}
+                  onChange={e => handleFormChange("tahunAjaran", e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                >
+                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
+                  <option value="2024/2025 Genap">2024/2025 Genap</option>
+                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
+                </select>
               </div>
 
               {/* Nama */}

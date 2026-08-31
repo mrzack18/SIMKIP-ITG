@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle, Download, QrCode, X, RotateCcw } from "lucide-r
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import logoItg from "@/imports/logo_itg.jpg";
 import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 interface LaporanDetail {
   id: number;
@@ -27,6 +28,7 @@ interface Statistik {
 
 export default function WarekLaporanDetail() {
   const { id } = useParams<{ id: string }>();
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [approved, setApproved] = useState(false);
@@ -125,10 +127,11 @@ export default function WarekLaporanDetail() {
 
   return (
     <div className="space-y-5 pb-24">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <Link to="/warek/laporan" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Link>
+        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
       </div>
 
       {actionError && (
@@ -176,6 +179,7 @@ export default function WarekLaporanDetail() {
           <div className="text-center mb-6">
             <p className="font-bold text-base text-gray-800 uppercase underline">LAPORAN EVALUASI KIP-K</p>
             <p className="text-xs text-gray-500 mt-1">Nomor: {report.nomor}</p>
+            <p className="text-xs font-semibold text-[#263F93] mt-1">Tahun Ajaran: {report.periode}</p>
           </div>
 
           {/* Summary stats */}

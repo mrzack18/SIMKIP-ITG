@@ -65,32 +65,42 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
 
   return (
     <div className="space-y-4">
-      <div className="flex border-b border-[#E2E8F0]">
-        {tiers.map((t) => (
-          <button
-            key={t}
-            onClick={() => setSubTab(t)}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-              subTab === t
-                ? "bg-[#263F93] text-white"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {t}
-            <span
-              className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
-                subTab === t
-                  ? "bg-[#D4A72C] text-[#263F93]"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              {counts[t]}
-            </span>
-          </button>
-        ))}
+      <div className="bg-white p-4 rounded-xl border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs text-gray-500 font-medium block mb-0.5">Filter Tahun Akademik</span>
+          <span className="text-sm font-bold text-gray-800">Data Prestasi</span>
+        </div>
+        <span className="text-sm font-bold text-gray-800">Data Prestasi</span>
       </div>
 
-      <div className="pt-1">
+      <div className="flex items-center justify-between border-b border-[#E2E8F0]">
+        <div className="flex flex-1">
+          {tiers.map((t) => (
+            <button
+              key={t}
+              onClick={() => setSubTab(t)}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                subTab === t
+                  ? "bg-[#263F93] text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {t}
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                  subTab === t
+                    ? "bg-[#D4A72C] text-[#263F93]"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {counts[t]}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="pt-2">
         <p className="text-sm text-gray-500 mb-4">
           {filtered.length} prestasi tingkat {subTab.toLowerCase()}
         </p>

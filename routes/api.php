@@ -57,6 +57,8 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::delete("/mahasiswa/{id}",          [MahasiswaController::class, "destroy"]);
     Route::patch("/mahasiswa/{id}/status",    [MahasiswaController::class, "updateStatus"]);
     Route::patch("/mahasiswa/{id}/cabut-kipk",[MahasiswaController::class, "cabutKipk"]);
+    Route::get("/mahasiswa/{id}/catatan",     [MahasiswaController::class, "getCatatanInternal"]);
+    Route::post("/mahasiswa/{id}/catatan",    [MahasiswaController::class, "storeCatatanInternal"]);
 
     Route::get("/akademik/rekap-mahasiswa",   [MahasiswaController::class, "rekapAkademik"]);
     Route::get("/akademik/prestasi",          [MahasiswaController::class, "rekapPrestasi"]);
@@ -103,6 +105,9 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::put("/{id}/validate",           [DokumenController::class, "validateDokumen"]);
     });
 
+    // Admin Badge Counts (sidebar notification badges)
+    Route::middleware("role:admin")->get("/admin/badge-counts", [\App\Http\Controllers\Api\Admin\DashboardController::class, "badgeCounts"]);
+
     Route::get("/sp",                      [SPController::class, "index"]);
     Route::post("/sp",                     [SPController::class, "store"]);
     Route::get("/sp/{id}",                 [SPController::class, "show"]);
@@ -142,6 +147,8 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::post("/dokumen-jenis",            [AdminConfig::class, "storeDokumenJenis"]);
         Route::delete("/dokumen-jenis/{id}",     [AdminConfig::class, "destroyDokumenJenis"]);
         Route::patch("/dokumen-jenis/{id}/toggle",[AdminConfig::class, "toggleDokumenJenis"]);
+        Route::post("/dokumen-jenis/{id}/fields", [AdminConfig::class, "storeDokumenJenisField"]);
+        Route::delete("/dokumen-jenis-fields/{id}", [AdminConfig::class, "destroyDokumenJenisField"]);
 
         Route::get("/all",                       [AdminConfig::class, "indexAll"]);
         
@@ -152,6 +159,8 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::post("/pelanggaran",              [AdminConfig::class, "storePelanggaran"]);
         Route::put("/pelanggaran/{id}",          [AdminConfig::class, "updatePelanggaran"]);
         Route::delete("/pelanggaran/{id}",       [AdminConfig::class, "destroyPelanggaran"]);
+        Route::patch("/pelanggaran/{id}/toggle", [AdminConfig::class, "togglePelanggaran"]);
+        Route::get("/pelanggaran",               [AdminConfig::class, "indexPelanggaran"]);
         
         Route::post("/periode",                  [AdminConfig::class, "storePeriode"]);
         Route::put("/periode/{id}",              [AdminConfig::class, "updatePeriode"]);

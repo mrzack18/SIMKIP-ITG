@@ -5,12 +5,13 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { getMahasiswaFilterOptions, getProdiMahasiswaList } from "@/services/mahasiswaService";
 import type { Mahasiswa } from "@/types";
-
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 const PAGE_SIZE = 10;
 
 export default function ProdiMahasiswaList() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");
   const [filterStatus, setFilterStatus] = useState("Semua Status");
@@ -37,6 +38,7 @@ export default function ProdiMahasiswaList() {
     const timer = setTimeout(() => {
       getProdiMahasiswaList({
         search,
+        tahun_ajaran: filterTahunAjaran === "Semua" ? undefined : filterTahunAjaran,
         angkatan: filterAngkatan,
         kategori: filterKategori,
         status: filterStatus,
@@ -54,7 +56,7 @@ export default function ProdiMahasiswaList() {
         .finally(() => { if (active) setLoading(false); });
     }, 250);
     return () => { active = false; clearTimeout(timer); };
-  }, [search, filterAngkatan, filterKategori, filterStatus, sortBy, page]);
+  }, [search, filterTahunAjaran, filterAngkatan, filterKategori, filterStatus, sortBy, page]);
 
   const prodiNama = user?.prodi ?? "Program Studi";
 
@@ -63,6 +65,7 @@ export default function ProdiMahasiswaList() {
       setExporting(true);
       const params = new URLSearchParams({
         angkatan: filterAngkatan,
+        tahun_ajaran: filterTahunAjaran === "Semua" ? undefined : filterTahunAjaran,
         kategori: filterKategori,
         status: filterStatus === "Semua Status" ? "Semua" : filterStatus,
         tahun_akademik: "2025/2026",
@@ -103,15 +106,18 @@ export default function ProdiMahasiswaList() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">Mahasiswa KIP-K — {prodiNama}</h1>
           <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
         </div>
-        <button onClick={handleExport} disabled={exporting}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-          <Download size={15} /> {exporting ? "Mengekspor..." : "Export Excel"}
-        </button>
+        <div className="flex items-center gap-3">
+          <TahunAjaranFilter value={filterTahunAjaran} onChange={v => { setFilterTahunAjaran(v); setPage(1); }} />
+          <button onClick={handleExport} disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+            <Download size={15} /> {exporting ? "Mengekspor..." : "Export Excel"}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -162,7 +168,11 @@ export default function ProdiMahasiswaList() {
                     <span className={`px-2 py-0.5 rounded text-xs font-500 ${m.kategori === "Reguler" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>{m.kategori}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`font-700 font-display ${m.ipk >= 3.0 ? "text-green-600" : "text-red-500"}`}>{m.ipk.toFixed(2)}</span>
+                    {m.ipk !== null ? (
+                      <span className={`font-700 font-display ${m.ipk >= 3.0 ? "text-green-600" : "text-red-500"}`}>{m.ipk.toFixed(2)}</span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{m.semester}</td>
                   <td className="px-4 py-3">

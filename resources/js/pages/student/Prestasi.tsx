@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 type PTab = "Internasional" | "Nasional" | "Wilayah";
 type PStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak";
@@ -20,6 +21,7 @@ interface Prestasi {
   fileFoto: string;
   status: PStatus;
   catatanAdmin?: string;
+  tahunAjaran?: string;
 }
 
 
@@ -57,6 +59,7 @@ interface FormState {
   tempat: string;
   deskripsi: string;
   linkPenyelenggara: string;
+  tahunAjaran: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -69,7 +72,10 @@ const EMPTY_FORM: FormState = {
   tempat: "",
   deskripsi: "",
   linkPenyelenggara: "",
+  tahunAjaran: "2025/2026 Ganjil",
 };
+
+const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
 
 export default function Prestasi() {
   const [list, setList] = useState<Prestasi[]>([]);
@@ -78,6 +84,7 @@ export default function Prestasi() {
   const [activeTab, setActiveTab] = useState<PTab>("Internasional");
   const [openForm, setOpenForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [detail, setDetail] = useState<Prestasi | null>(null);
   const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
   const [fileSertifikat, setFileSertifikat] = useState<File | null>(null);
@@ -135,6 +142,7 @@ export default function Prestasi() {
       if (form.linkPenyelenggara) payload.append("link_penyelenggara", form.linkPenyelenggara);
       if (fileSertifikat) payload.append("file_sertifikat", fileSertifikat);
       if (fileFoto) payload.append("file_foto", fileFoto);
+      payload.append("tahun_ajaran", form.tahunAjaran);
 
       await api.post("/prestasi", payload);
       setOpenForm(false);
@@ -158,11 +166,14 @@ export default function Prestasi() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-10">
       {/* Header */}
-      <div>
-        <h1 className="font-bold text-2xl text-gray-900">Prestasi Saya</h1>
-        <p className="text-gray-500 text-sm mt-0.5">{list.length} prestasi tercatat</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-bold text-2xl text-gray-900">Prestasi Saya</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{list.length} prestasi tercatat</p>
+        </div>
+        <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
       </div>
 
       {/* Tabs */}
@@ -170,7 +181,7 @@ export default function Prestasi() {
         {/* Tab bar */}
         <div className="flex border-b border-gray-100">
           {TABS.map((tab) => {
-            const count = list.filter((p) => p.tab === tab).length;
+            const count = list.filter((p) => p.tab === tab && (p.tahunAjaran || "2025/2026 Ganjil") === formatTA(taFilter)).length;
             const active = activeTab === tab;
             return (
               <button
@@ -226,76 +237,85 @@ export default function Prestasi() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {tabItems.map((p) => {
-                const ss = statusStyle[p.status];
-                return (
-                  <div
-                    key={p.id}
-                    className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: "#263F93" + "1a" }}
-                      >
-                        <Trophy size={18} style={{ color: "#D4A72C", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-800 text-sm leading-snug">{p.nama}</h3>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                          {p.pencapaian && (
-                            <span
-                              className="px-2 py-0.5 rounded text-xs font-medium text-white"
-                              style={{ background: "#263F93" }}
+            <div className="space-y-6">
+                {[formatTA(taFilter)].map((ta) => (
+                <div key={ta} className="space-y-3">
+                  <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
+                    Tahun Ajaran {ta}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {tabItems.filter(p => (p.tahunAjaran || "2025/2026 Ganjil") === ta).map((p) => {
+                      const ss = statusStyle[p.status];
+                      return (
+                        <div
+                          key={p.id}
+                          className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start gap-3 mb-3">
+                            <div
+                              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ background: "#263F93" + "1a" }}
                             >
-                              {p.pencapaian}
-                            </span>
+                              <Trophy size={18} style={{ color: "#D4A72C", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-800 text-sm leading-snug">{p.nama}</h3>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {p.pencapaian && (
+                                  <span
+                                    className="px-2 py-0.5 rounded text-xs font-medium text-white"
+                                    style={{ background: "#263F93" }}
+                                  >
+                                    {p.pencapaian}
+                                  </span>
+                                )}
+                                <span
+                                  className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${ss.badge}`}
+                                >
+                                  {ss.icon} {p.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-xs text-gray-500 space-y-1.5 mb-3">
+                            <div className="flex items-center gap-1.5">
+                              <Trophy size={11} className="text-gray-400 flex-shrink-0" />
+                              <span>{p.penyelenggara}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar size={11} className="text-gray-400 flex-shrink-0" />
+                              <span>
+                                {formatDate(p.tanggalMulai)} – {formatDate(p.tanggalSelesai)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin size={11} className="text-gray-400 flex-shrink-0" />
+                              <span>{p.tempat}</span>
+                            </div>
+                          </div>
+
+                          {p.catatanAdmin && (
+                            <div className="mb-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                              <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-red-700">
+                                <span className="font-medium">Catatan Admin:</span> {p.catatanAdmin}
+                              </p>
+                            </div>
                           )}
-                          <span
-                            className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${ss.badge}`}
+
+                          <button
+                            onClick={() => setDetail(p)}
+                            className="w-full py-1.5 rounded-lg border border-[#263F93] text-xs text-[#263F93] hover:bg-[#EDF0F8] transition-colors flex items-center justify-center gap-1.5"
                           >
-                            {ss.icon} {p.status}
-                          </span>
+                            <Eye size={12} /> Lihat Detail
+                          </button>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-gray-500 space-y-1.5 mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <Trophy size={11} className="text-gray-400 flex-shrink-0" />
-                        <span>{p.penyelenggara}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar size={11} className="text-gray-400 flex-shrink-0" />
-                        <span>
-                          {formatDate(p.tanggalMulai)} – {formatDate(p.tanggalSelesai)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <MapPin size={11} className="text-gray-400 flex-shrink-0" />
-                        <span>{p.tempat}</span>
-                      </div>
-                    </div>
-
-                    {p.catatanAdmin && (
-                      <div className="mb-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
-                        <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-xs text-red-700">
-                          <span className="font-medium">Catatan Admin:</span> {p.catatanAdmin}
-                        </p>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => setDetail(p)}
-                      className="w-full py-1.5 rounded-lg border border-[#263F93] text-xs text-[#263F93] hover:bg-[#EDF0F8] transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <Eye size={12} /> Lihat Detail
-                    </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -468,6 +488,16 @@ export default function Prestasi() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Ajaran <span className="text-red-500">*</span></label>
+                <select value={form.tahunAjaran} onChange={e => setForm(f => ({ ...f, tahunAjaran: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20">
+                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
+                  <option value="2024/2025 Genap">2024/2025 Genap</option>
+                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
+                </select>
               </div>
 
               {/* Nama prestasi */}

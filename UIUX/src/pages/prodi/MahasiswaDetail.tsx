@@ -39,7 +39,7 @@ import {
   Download,
   Info,
 } from "lucide-react"
-import { mahasiswaList, ipkHistory } from "@/data/mockData"
+import { mahasiswaList, ipkHistory, spHistoryData } from "@/data/mockData"
 import logoItg from "@/imports/logo_itg.jpg"
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -863,21 +863,24 @@ function TabRiwayatAkademik() {
 
       {/* IPK History Table */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">
-          Riwayat IPK per Semester
-        </h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold text-gray-700">
+            Riwayat IPK per Semester
+          </h4>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
+            <Download size={14} />
+            Tarik Data Mata Kuliah dari Sistem Akademik
+          </button>
+        </div>
         <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
                 {[
                   "Semester",
-                  "TA",
+                  "Tahun Ajaran",
                   "IPK",
-                  "Perubahan",
-                  "MK Belum Lulus",
-                  "Status Verifikasi",
-                  "Aksi",
+                  "Status",
                 ].map((h) => (
                   <th
                     key={h}
@@ -889,13 +892,49 @@ function TabRiwayatAkademik() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {semesterDetails.map((detail, idx) => (
-                <SemesterRow
-                  key={detail.semester}
-                  detail={detail}
-                  prev={idx > 0 ? semesterDetails[idx - 1] : null}
-                />
-              ))}
+              {ipkHistory.map((detail, idx) => {
+                const prev = idx > 0 ? ipkHistory[idx - 1] : null
+                const delta = prev ? detail.ipk - prev.ipk : null
+                return (
+                <tr key={detail.semester} className="hover:bg-gray-50/60 transition-colors border-b border-gray-100">
+                  <td className="py-3 px-3 text-sm text-gray-700">
+                    Semester {detail.semester}
+                  </td>
+                  <td className="py-3 px-3 text-sm text-gray-500">{detail.tahun}</td>
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="font-semibold text-sm"
+                        style={{ color: detail.ipk >= 3.0 ? "#059669" : "#DC2626" }}
+                      >
+                        {detail.ipk.toFixed(2)}
+                      </span>
+                      {delta !== null ? (
+                        <span
+                          className={`text-xs font-medium ${
+                            delta >= 0 ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {delta >= 0 ? "↑" : "↓"} {Math.abs(delta).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        detail.ipk >= 3.0
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {detail.status}
+                    </span>
+                  </td>
+                </tr>
+              )})}
             </tbody>
           </table>
         </div>
@@ -1769,37 +1808,21 @@ function TabSP() {
           Riwayat Surat Peringatan
         </h4>
         <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-4">
-          <div className="relative">
-            <div className="absolute -left-[29px] top-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-white shadow" />
-            <button
-              onClick={() => setExpanded((v) => !v)}
-              className="w-full text-left flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-xl"
-            >
-              <div>
-                <span className="text-xs font-semibold text-amber-700">
-                  SP1 — Aktif
-                </span>
-                <div className="text-xs text-amber-600 mt-0.5">
-                  {mockSP.tanggal} · {mockSP.alasan}
+          {spHistoryData.map((sp, idx) => (
+            <div key={idx} className="relative">
+              <div className="absolute -left-[29px] top-1 w-4 h-4 rounded-full bg-amber-400 border-2 border-white shadow" />
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <div>
+                  <span className="text-xs font-semibold text-amber-700">
+                    {sp.level} — {sp.tahunAjaran}
+                  </span>
+                  <div className="text-xs text-amber-600 mt-0.5">
+                    {sp.tanggal} · {sp.alasan}
+                  </div>
                 </div>
               </div>
-              {expanded ? (
-                <ChevronUp size={14} className="text-amber-500" />
-              ) : (
-                <ChevronDown size={14} className="text-amber-500" />
-              )}
-            </button>
-            {expanded && (
-              <div className="mt-2 p-3 bg-white border border-[#E2E8F0] rounded-xl text-xs text-gray-600 space-y-1">
-                <div>
-                  <span className="font-medium">Nomor:</span> {mockSP.nomor}
-                </div>
-                <div>
-                  <span className="font-medium">Alasan:</span> {mockSP.alasan}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

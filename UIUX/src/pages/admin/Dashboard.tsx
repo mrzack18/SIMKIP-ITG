@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import {
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -17,8 +20,25 @@ import {
   Clock,
   ArrowRight,
   TrendingUp,
+  Calendar,
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
+
+// ── Mock data for Rekapitulasi Kendala Mahasiswa ─────────────────────────────
+const kendalaMahasiswaData = [
+  { name: "Finansial", value: 45, color: "#263F93" },
+  { name: "Akademik", value: 30, color: "#D4A72C" },
+  { name: "Fasilitas", value: 15, color: "#4F46E5" },
+  { name: "Lainnya", value: 10, color: "#94A3B8" },
+];
+
+const tahunAjaranList = [
+  "2024/2025 Ganjil",
+  "2024/2025 Genap",
+  "2025/2026 Ganjil",
+  "2025/2026 Genap",
+  "2026/2027 Ganjil",
+];
 
 // ── Summary chart data (Reguler vs Aspirasi) ─────────────────────────────────
 const prodiSebaranData = [
@@ -165,13 +185,14 @@ function ProdiChartTooltip({
 // ── Main component ─────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [selectedAngkatan, setSelectedAngkatan] = useState<string>("Semua");
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>("2024/2025 Ganjil");
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <img src={logoItg} alt="ITG Logo" className="h-12 w-12 object-contain rounded-lg" />
+          <img src={logoItg} alt="ITG Logo" className="h-12 w-12 object-contain rounded-lg shadow-sm border border-gray-100" />
           <div>
             <h1 className="font-bold text-2xl text-[#263F93]">
               Selamat datang, Pak Encep Jianul
@@ -179,9 +200,25 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500 mt-0.5">19 Agustus 2026</p>
           </div>
         </div>
-        <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-[#D4A72C] text-[#263F93]">
-          Pengelola KIP-K
-        </span>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-xl shadow-sm">
+            <Calendar size={15} className="text-[#263F93]" />
+            <label className="text-xs font-semibold text-gray-600">Tahun Ajaran:</label>
+            <select
+              value={selectedTahunAjaran}
+              onChange={(e) => setSelectedTahunAjaran(e.target.value)}
+              className="text-xs font-medium text-gray-800 bg-transparent focus:outline-none cursor-pointer pr-1"
+            >
+              {tahunAjaranList.map((ta) => (
+                <option key={ta} value={ta}>{ta}</option>
+              ))}
+            </select>
+          </div>
+          <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-[#D4A72C] text-[#263F93]">
+            Pengelola KIP-K
+          </span>
+        </div>
       </div>
 
       {/* Stat cards */}
@@ -285,40 +322,104 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Per-prodi chart with angkatan filter */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h2 className="font-bold text-gray-800">Sebaran Mahasiswa KIP-K per Prodi</h2>
-          <select
-            value={selectedAngkatan}
-            onChange={(e) => setSelectedAngkatan(e.target.value)}
-            className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
-          >
-            {["Semua", "2022", "2023", "2024", "2025", "2026"].map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
+      {/* Middle charts: Per-prodi with Angkatan filter + Rekapitulasi Kendala Mahasiswa */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Per-prodi chart with angkatan filter */}
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+              <h2 className="font-bold text-gray-800">Sebaran Mahasiswa KIP-K per Prodi</h2>
+              <select
+                value={selectedAngkatan}
+                onChange={(e) => setSelectedAngkatan(e.target.value)}
+                className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+              >
+                {["Semua", "2022", "2023", "2024", "2025", "2026"].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-gray-400 mb-3">Distribusi program studi berdasarkan angkatan yang dipilih</p>
+          </div>
+
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart
+              data={sebaranPerProdiAngkatan[selectedAngkatan]}
+              layout="vertical"
+              barCategoryGap="25%"
+              barGap={3}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
+              <Tooltip content={<ProdiChartTooltip />} cursor={{ fill: "#F8FAFC" }} />
+              <Bar dataKey="Reguler" fill="#263F93" stackId="c" radius={[0, 0, 0, 0]} maxBarSize={14} />
+              <Bar dataKey="Aspirasi" fill="#D4A72C" stackId="c" radius={[0, 3, 3, 0]} maxBarSize={14} />
+            </BarChart>
+          </ResponsiveContainer>
+
+          <div className="flex items-center justify-center gap-6 mt-3 pt-2 border-t border-[#F1F5F9]">
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#263F93]" /><span className="text-xs text-[#64748B]">Reguler</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#D4A72C]" /><span className="text-xs text-[#64748B]">Aspirasi</span></div>
+          </div>
         </div>
 
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart
-            data={sebaranPerProdiAngkatan[selectedAngkatan]}
-            layout="vertical"
-            barCategoryGap="25%"
-            barGap={3}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-            <Tooltip content={<ProdiChartTooltip />} cursor={{ fill: "#F8FAFC" }} />
-            <Bar dataKey="Reguler" fill="#263F93" stackId="c" radius={[0, 0, 0, 0]} maxBarSize={14} />
-            <Bar dataKey="Aspirasi" fill="#D4A72C" stackId="c" radius={[0, 3, 3, 0]} maxBarSize={14} />
-          </BarChart>
-        </ResponsiveContainer>
+        {/* Rekapitulasi Kendala Mahasiswa Chart Widget */}
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-bold text-gray-800">Rekapitulasi Kendala Mahasiswa</h2>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#263F93]">
+                Total: 100 Kasus
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 mb-2">Distribusi kategori kendala yang dilaporkan mahasiswa KIP-K</p>
+          </div>
 
-        <div className="flex items-center justify-center gap-6 mt-3">
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#263F93]" /><span className="text-xs text-[#64748B]">Reguler</span></div>
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#D4A72C]" /><span className="text-xs text-[#64748B]">Aspirasi</span></div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 my-auto">
+            <div className="w-full sm:w-1/2 h-[190px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={kendalaMahasiswaData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={48}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {kendalaMahasiswaData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => [`${value} Kasus (${value}%)`, "Jumlah"]}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#E2E8F0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="w-full sm:w-1/2 grid grid-cols-2 gap-2.5">
+              {kendalaMahasiswaData.map((item) => (
+                <div key={item.name} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-2.5 flex flex-col justify-center">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <span className="text-xs text-gray-600 font-medium truncate">{item.name}</span>
+                  </div>
+                  <p className="text-base font-bold text-gray-800">
+                    {item.value} <span className="text-xs font-normal text-gray-500">({item.value}%)</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-[#F1F5F9] mt-3">
+            <span>Tahun Ajaran: <strong className="text-gray-700">{selectedTahunAjaran}</strong></span>
+            <span className="text-[#263F93] font-medium">Finansial dominan (45%)</span>
+          </div>
         </div>
       </div>
 

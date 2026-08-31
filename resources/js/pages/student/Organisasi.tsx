@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download, Image } from "lucide-react";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 type OStatus = "Disetujui" | "Menunggu" | "Ditolak";
 
@@ -17,6 +18,7 @@ interface Org {
   catatanAdmin?: string;
   fotoKegiatan?: string;
   fileSk?: string;
+  tahunAjaran?: string;
 }
 
 const statusStyle: Record<OStatus, { badge: string; icon: React.ReactNode; dot: string }> = {
@@ -45,6 +47,8 @@ function fmtMonth(ym: string) {
 
 
 
+const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
+
 export default function Organisasi() {
   const { user } = useAuth();
   const STUDENT_NAME = user?.nama || "Mahasiswa";
@@ -57,7 +61,8 @@ export default function Organisasi() {
   const [skOrg, setSkOrg] = useState<Org | null>(null);
   const [fileName, setFileName] = useState("");
   const [fotoName, setFotoName] = useState("");
-  const [form, setForm] = useState({ jenis: "Organisasi" as "Organisasi" | "Kepanitiaan" | "Kegiatan", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+  const [form, setForm] = useState({ jenis: "Organisasi" as "Organisasi" | "Kepanitiaan" | "Kegiatan", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "", tahunAjaran: "2025/2026 Ganjil" });
   const fileRef = useRef<HTMLInputElement>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
 
@@ -97,6 +102,7 @@ export default function Organisasi() {
       if (form.mulai) formData.append("periode_mulai", `${form.mulai}-01`);
       if (form.selesai) formData.append("periode_selesai", `${form.selesai}-01`);
       if (form.deskripsi) formData.append("deskripsi", form.deskripsi);
+      formData.append("tahun_ajaran", form.tahunAjaran);
       
       const fileEl = fileRef.current?.files?.[0];
       if (fileEl) formData.append("file_sk", fileEl);
@@ -106,7 +112,7 @@ export default function Organisasi() {
 
       await api.post("/organisasi", formData);
 
-      setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+      setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "", tahunAjaran: "2025/2026 Ganjil" });
       setFileName("");
       setFotoName("");
       setOpen(false);
@@ -131,88 +137,103 @@ export default function Organisasi() {
           <h1 className="font-display font-700 text-2xl text-gray-900">Keaktifan Organisasi & Kepanitiaan</h1>
           <p className="text-gray-500 text-sm mt-0.5">{list.length} organisasi tercatat</p>
         </div>
-        <button onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
-          style={{ background: "#263F93" }}>
-          <Plus size={15} /> Tambah Data
-        </button>
+        <div className="flex items-center gap-3">
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+          <button onClick={() => setOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
+            style={{ background: "#263F93" }}>
+            <Plus size={15} /> Tambah Data
+          </button>
+        </div>
       </div>
 
       {/* Timeline */}
       <div className="relative">
         <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
-        <div className="space-y-4">
-          {list.map((org) => {
-            const ss = statusStyle[org.status];
-            const duration = calcDuration(org.mulai, org.selesai);
-            return (
-              <div key={org.id} className="relative pl-14">
-                <div className={`absolute left-3.5 top-5 w-3 h-3 rounded-full border-2 border-white shadow-sm ${ss.dot}`} />
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E2E8F0]">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
-                      <Building2 size={18} className="text-[#263F93]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                        <h3 className="font-600 text-gray-800 text-sm">{org.nama}</h3>
-                        <span className={`px-2 py-0.5 rounded text-xs font-500 ${
-                          org.jenis === "Organisasi" ? "bg-blue-100 text-blue-700" :
-                          org.jenis === "Kepanitiaan" ? "bg-purple-100 text-purple-700" :
-                          "bg-teal-100 text-teal-700"
-                        }`}>{org.jenis}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 ${ss.badge}`}>
-                          {ss.icon} {org.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 font-500">{org.jabatan}</p>
-                      <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400">
-                        <Calendar size={11} />
-                        <span>{fmtMonth(org.mulai)} – {fmtMonth(org.selesai)}</span>
-                        {duration && <span className="text-gray-300">·</span>}
-                        {duration && <span className="text-gray-400 font-500">{duration}</span>}
-                      </div>
-                      {org.deskripsi && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{org.deskripsi}</p>}
-                    </div>
-                  </div>
-
-                  {/* Proof thumbnail */}
-                  <div className="mt-3 h-16 bg-[#F8FAFC] rounded-lg flex items-center justify-center border border-dashed border-[#E2E8F0] gap-2 overflow-hidden">
-                    {org.fileSk ? (
-                      <span className="text-xs text-gray-400 font-500">Dokumen SK Tersedia</span>
-                    ) : (
-                      <>
-                        <FileText size={14} className="text-gray-300" />
-                        <span className="text-xs text-gray-300">Belum ada dokumen</span>
-                      </>
-                    )}
-                  </div>
-
-                  {org.catatanAdmin && (
-                    <div className="mt-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
-                      <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-red-700"><span className="font-500">Catatan Admin:</span> {org.catatanAdmin}</p>
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => setDetail(org)}
-                      className="flex-1 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-[#F8FAFC] flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      <Eye size={12} /> Lihat Detail
-                    </button>
-                    <button
-                      onClick={() => setSkOrg(org)}
-                      className="flex-1 py-1.5 rounded-lg border border-[#263F93] text-xs text-[#263F93] hover:bg-[#EDF0F8] flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      <FileText size={12} /> Pratinjau SK
-                    </button>
-                  </div>
+        <div className="space-y-6">
+          {[formatTA(taFilter)].map((ta) => (
+            <div key={ta} className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 shadow-sm flex items-center justify-center flex-shrink-0 z-10 text-gray-500 font-bold text-xs">
+                  {ta.split(" ")[0]}
                 </div>
+                <h2 className="font-600 text-gray-700 text-sm bg-gray-100 px-3 py-1 rounded-lg">Tahun Ajaran {ta}</h2>
               </div>
-            );
-          })}
+              <div className="space-y-4">
+                {list.filter(org => (org.tahunAjaran || "2025/2026 Ganjil") === ta).map((org) => {
+                  const ss = statusStyle[org.status];
+                  const duration = calcDuration(org.mulai, org.selesai);
+                  return (
+                    <div key={org.id} className="relative pl-14">
+                      <div className={`absolute left-3.5 top-5 w-3 h-3 rounded-full border-2 border-white shadow-sm ${ss.dot}`} />
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E2E8F0]">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
+                            <Building2 size={18} className="text-[#263F93]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                              <h3 className="font-600 text-gray-800 text-sm">{org.nama}</h3>
+                              <span className={`px-2 py-0.5 rounded text-xs font-500 ${
+                                org.jenis === "Organisasi" ? "bg-blue-100 text-blue-700" :
+                                org.jenis === "Kepanitiaan" ? "bg-purple-100 text-purple-700" :
+                                "bg-teal-100 text-teal-700"
+                              }`}>{org.jenis}</span>
+                              <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 ${ss.badge}`}>
+                                {ss.icon} {org.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 font-500">{org.jabatan}</p>
+                            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400">
+                              <Calendar size={11} />
+                              <span>{fmtMonth(org.mulai)} – {fmtMonth(org.selesai)}</span>
+                              {duration && <span className="text-gray-300">·</span>}
+                              {duration && <span className="text-gray-400 font-500">{duration}</span>}
+                            </div>
+                            {org.deskripsi && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{org.deskripsi}</p>}
+                          </div>
+                        </div>
+
+                        {/* Proof thumbnail */}
+                        <div className="mt-3 h-16 bg-[#F8FAFC] rounded-lg flex items-center justify-center border border-dashed border-[#E2E8F0] gap-2 overflow-hidden">
+                          {org.fileSk ? (
+                            <span className="text-xs text-gray-400 font-500">Dokumen SK Tersedia</span>
+                          ) : (
+                            <>
+                              <FileText size={14} className="text-gray-300" />
+                              <span className="text-xs text-gray-300">Belum ada dokumen</span>
+                            </>
+                          )}
+                        </div>
+
+                        {org.catatanAdmin && (
+                          <div className="mt-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                            <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-red-700"><span className="font-500">Catatan Admin:</span> {org.catatanAdmin}</p>
+                          </div>
+                        )}
+
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() => setDetail(org)}
+                            className="flex-1 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-[#F8FAFC] flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            <Eye size={12} /> Lihat Detail
+                          </button>
+                          <button
+                            onClick={() => setSkOrg(org)}
+                            className="flex-1 py-1.5 rounded-lg border border-[#263F93] text-xs text-[#263F93] hover:bg-[#EDF0F8] flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            <FileText size={12} /> Pratinjau SK
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -400,6 +421,15 @@ export default function Organisasi() {
                     </label>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Ajaran <span className="text-red-500">*</span></label>
+                <select value={form.tahunAjaran} onChange={e => setForm(f => ({ ...f, tahunAjaran: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20">
+                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
+                  <option value="2024/2025 Genap">2024/2025 Genap</option>
+                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">Nama Organisasi / Kegiatan <span className="text-red-500">*</span></label>

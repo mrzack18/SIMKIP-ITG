@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/services/api";
-
+import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 interface Mhs {
   id: number;
   nim: string;
@@ -28,6 +28,7 @@ const PAGE_SIZE = 8;
 
 export default function WarekMahasiswaList() {
   const [search, setSearch] = useState("");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [filterProdi, setFilterProdi] = useState("Semua");
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");
@@ -71,6 +72,7 @@ export default function WarekMahasiswaList() {
       try {
         const params = new URLSearchParams();
         if (search) params.set("search", search);
+        if (filterTahunAjaran !== "Semua") params.set("tahun_ajaran", filterTahunAjaran);
         if (filterProdi !== "Semua") params.set("prodi", filterProdi);
         if (filterAngkatan !== "Semua") params.set("angkatan", filterAngkatan);
         if (filterKategori !== "Semua") params.set("kategori", filterKategori);
@@ -93,13 +95,14 @@ export default function WarekMahasiswaList() {
     return () => {
       cancelled = true;
     };
-  }, [search, filterProdi, filterAngkatan, filterKategori, filterStatus, page]);
+  }, [search, filterTahunAjaran, filterProdi, filterAngkatan, filterKategori, filterStatus, page]);
 
   const paginated = useMemo(() => data, [data]);
 
   const handleExport = async () => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (filterTahunAjaran !== "Semua") params.set("tahun_ajaran", filterTahunAjaran);
     if (filterProdi !== "Semua") params.set("prodi", filterProdi);
     if (filterAngkatan !== "Semua") params.set("angkatan", filterAngkatan);
     if (filterKategori !== "Semua") params.set("kategori", filterKategori);
@@ -146,14 +149,17 @@ export default function WarekMahasiswaList() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">Data Mahasiswa KIP-K — Semua Prodi</h1>
           <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
         </div>
-        <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50">
-          <Download size={15} /> Export Excel
-        </button>
+        <div className="flex items-center gap-3">
+          <TahunAjaranFilter value={filterTahunAjaran} onChange={v => { setFilterTahunAjaran(v); setPage(1); }} />
+          <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-700 hover:bg-gray-50">
+            <Download size={15} /> Export Excel
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
