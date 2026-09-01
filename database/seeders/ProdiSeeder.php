@@ -10,11 +10,11 @@ class ProdiSeeder extends Seeder
     public function run(): void
     {
         $prodis = [
-            ['kode' => 'TI',  'nama' => 'Teknik Informatika',   'urutan' => 1],
-            ['kode' => 'SI',  'nama' => 'Sistem Informasi',      'urutan' => 2],
-            ['kode' => 'TIN', 'nama' => 'Teknik Industri',       'urutan' => 3],
-            ['kode' => 'TS',  'nama' => 'Teknik Sipil',          'urutan' => 4],
-            ['kode' => 'AR',  'nama' => 'Arsitektur',            'urutan' => 5],
+            ['kode' => '06', 'nama' => 'Teknik Informatika',  'urutan' => 1],
+            ['kode' => '07', 'nama' => 'Sistem Informasi',     'urutan' => 2],
+            ['kode' => '03', 'nama' => 'Teknik Industri',      'urutan' => 3],
+            ['kode' => '11', 'nama' => 'Teknik Sipil',        'urutan' => 4],
+            ['kode' => '24', 'nama' => 'Arsitektur',         'urutan' => 5],
         ];
 
         foreach ($prodis as $data) {

@@ -74,6 +74,6 @@ export interface PelanggaranItem {
 }
 
 export async function getPelanggaranList(): Promise<PelanggaranItem[]> {
-  const res = await api.get<{ success: boolean; data: PelanggaranItem[] }>("/admin/konfigurasi/pelanggaran");
+  const res = await api.get<{ success: boolean; data: PelanggaranItem[] }>("/konfigurasi/pelanggaran");
   return res.data ?? [];
 }

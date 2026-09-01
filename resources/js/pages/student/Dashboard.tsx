@@ -21,8 +21,10 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const res = await getStudentDashboardData();
+        const ta = taFilter === "Semua" ? undefined : taFilter;
+        const res = await getStudentDashboardData(ta);
         setData(res);
       } catch (err: any) {
         setError(err.response?.data?.message || "Gagal memuat data dashboard.");
@@ -31,7 +33,7 @@ export default function StudentDashboard() {
       }
     };
     fetchData();
-  }, []);
+  }, [taFilter]);
 
   if (loading) {
     return (

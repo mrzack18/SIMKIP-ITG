@@ -36,6 +36,19 @@ export interface DokumenQueueItem {
   status: string;
 }
 
+export interface KendalaCategoryItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface KendalaData {
+  total: number;
+  categories: KendalaCategoryItem[];
+  dominant: string | null;
+  dominant_pct: number;
+}
+
 export interface DashboardResponse {
   success: boolean;
   stats: DashboardStats;
@@ -44,10 +57,13 @@ export interface DashboardResponse {
   sebaran_per_prodi_angkatan: Record<string, ChartData[]>;
   sp_aktif: SpAktifItem[];
   dokumen_queue: DokumenQueueItem[];
+  kendala: KendalaData;
 }
 
 export const getAdminDashboardData = async (tahunAjaran?: string): Promise<DashboardResponse> => {
-  const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
+  const qs = (tahunAjaran && tahunAjaran !== "Semua")
+    ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}`
+    : '';
   return api.get<DashboardResponse>(`/dashboard${qs}`);
 };
 
@@ -151,6 +167,9 @@ export interface StudentDashboardResponse {
   ipk_chart: { semester: number; ipk: number }[];
 }
 
-export const getStudentDashboardData = async (): Promise<StudentDashboardResponse> => {
-  return api.get<StudentDashboardResponse>("/dashboard");
+export const getStudentDashboardData = async (tahunAjaran?: string): Promise<StudentDashboardResponse> => {
+  const qs = (tahunAjaran && tahunAjaran !== "Semua")
+    ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}`
+    : "";
+  return api.get<StudentDashboardResponse>(`/mahasiswa/dashboard${qs}`);
 };

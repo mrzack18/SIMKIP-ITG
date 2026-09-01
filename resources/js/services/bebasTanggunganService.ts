@@ -13,6 +13,9 @@ export interface BebasTanggunganFilter {
   search?: string;
   page?: number;
   limit?: number;
+  tahun_ajaran?: string;
+  prodi?: string;
+  angkatan?: string;
 }
 
 export async function getBebasTanggunganList(
@@ -23,6 +26,9 @@ export async function getBebasTanggunganList(
   if (filter.search) params.append("search", filter.search);
   if (filter.page)   params.append("page", String(filter.page));
   if (filter.limit)  params.append("limit", String(filter.limit));
+  if (filter.tahun_ajaran) params.append("tahun_ajaran", filter.tahun_ajaran);
+  if (filter.prodi && filter.prodi !== "Semua Prodi") params.append("prodi", filter.prodi);
+  if (filter.angkatan && filter.angkatan !== "Semua Angkatan") params.append("angkatan", filter.angkatan);
 
   return api.get<BebasTanggunganListResponse>(`/bebas-tanggungan?${params.toString()}`);
 }

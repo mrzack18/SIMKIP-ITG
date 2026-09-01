@@ -60,6 +60,12 @@ const formatTgl = (iso: string) => {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 };
 
+// Extract YYYY-MM-DD from ISO datetime for HTML <input type="date">
+const toDateInputValue = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  return iso.substring(0, 10);
+};
+
 function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: () => void }) {
   const [label, setLabel] = useState("");
   const [tipe, setTipe] = useState("text");
@@ -195,8 +201,8 @@ export default function Konfigurasi() {
         
         const pAktif = pHistory.find((p:any) => p.is_aktif)
         if (pAktif) {
-           setTglBuka(pAktif.tanggal_buka)
-           setTglTutup(pAktif.tanggal_tutup)
+           setTglBuka(toDateInputValue(pAktif.tanggal_buka))
+           setTglTutup(toDateInputValue(pAktif.tanggal_tutup))
            setPeriodeAktif(true)
         } else {
            setPeriodeAktif(false)
@@ -446,10 +452,10 @@ export default function Konfigurasi() {
                 </thead>
                 <tbody>
                   {periodeHistory.map((p) => (
-                    <tr key={p.sem} className="border-b border-gray-50">
-                      <td className="py-2 px-3 text-gray-600">{p.sem}</td>
-                      <td className="py-2 px-3 text-gray-500">{p.buka}</td>
-                      <td className="py-2 px-3 text-gray-500">{p.tutup}</td>
+                    <tr key={p.id} className="border-b border-gray-50">
+                      <td className="py-2 px-3 text-gray-600">{p.semester}</td>
+                      <td className="py-2 px-3 text-gray-500">{formatTgl(p.tanggal_buka)}</td>
+                      <td className="py-2 px-3 text-gray-500">{formatTgl(p.tanggal_tutup)}</td>
                     </tr>
                   ))}
                 </tbody>

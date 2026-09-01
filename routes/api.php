@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\NotificationController;
 
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\MahasiswaController;
+use App\Http\Controllers\Api\Mahasiswa\DashboardController as MahasiswaDashboard;
 use App\Http\Controllers\Api\IPKController;
 use App\Http\Controllers\Api\PrestasiController;
 use App\Http\Controllers\Api\OrganisasiController;
@@ -45,6 +46,9 @@ Route::middleware("auth:sanctum")->group(function () {
 
     // Unified Resources
     Route::get("/dashboard", [DashboardController::class, "index"]);
+
+    // Mahasiswa self-dashboard (authenticated student)
+    Route::get("/mahasiswa/dashboard", [MahasiswaDashboard::class, "index"]);
 
     Route::get("/mahasiswa",                  [MahasiswaController::class, "index"]);
     Route::post("/mahasiswa",                 [MahasiswaController::class, "store"]);

@@ -28,16 +28,6 @@ import {
 import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import logoItg from "@/imports/logo_itg.jpg";
 
-// ── Mock data for Rekapitulasi Kendala Mahasiswa ─────────────────────────────
-const kendalaMahasiswaData = [
-  { name: "Finansial", value: 45, color: "#263F93" },
-  { name: "Akademik", value: 30, color: "#D4A72C" },
-  { name: "Fasilitas", value: 15, color: "#4F46E5" },
-  { name: "Lainnya", value: 10, color: "#94A3B8" },
-];
-
-
-
 // ── SP badge helper ────────────────────────────────────────────────────────
 function SpBadges({ level }: { level: "SP1" | "SP2" | "SP3" }) {
   return (
@@ -98,6 +88,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [selectedAngkatan, setSelectedAngkatan] = useState<string>("Semua");
   const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>(getCurrentTahunAjaran());
+  const [selectedKendalaTahunAjaran, setSelectedKendalaTahunAjaran] = useState<string>("Semua");
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -116,6 +107,24 @@ export default function Dashboard() {
     fetchData();
   }, [selectedTahunAjaran]);
 
+  // Re-fetch whole dashboard when kendala tahun ajaran filter changes
+  useEffect(() => {
+    const fetchKendala = async () => {
+      setLoading(true);
+      try {
+        // "Semua" = no tahun_ajaran param → aggregates all-time data
+        const ta = selectedKendalaTahunAjaran === "Semua" ? undefined : selectedKendalaTahunAjaran;
+        const res = await getAdminDashboardData(ta);
+        setData(res);
+      } catch (error) {
+        console.error("Error fetching kendala data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchKendala();
+  }, [selectedKendalaTahunAjaran]);
+
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -124,13 +133,14 @@ export default function Dashboard() {
     );
   }
 
-  const { 
-    stats, 
-    prodi_sebaran: prodiSebaranData, 
-    angkatan_sebaran: angkatanSebaranData, 
-    sebaran_per_prodi_angkatan: sebaranPerProdiAngkatan, 
-    sp_aktif: spAktif, 
-    dokumen_queue: dokumenQueue 
+  const {
+    stats,
+    prodi_sebaran: prodiSebaranData,
+    angkatan_sebaran: angkatanSebaranData,
+    sebaran_per_prodi_angkatan: sebaranPerProdiAngkatan,
+    sp_aktif: spAktif,
+    dokumen_queue: dokumenQueue,
+    kendala,
   } = data;
 
   return (
@@ -335,11 +345,24 @@ export default function Dashboard() {
         {/* Rekapitulasi Kendala Mahasiswa Chart Widget */}
         <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
               <h2 className="font-bold text-gray-800">Rekapitulasi Kendala Mahasiswa</h2>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#263F93]">
-                Total: 100 Kasus
-              </span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedKendalaTahunAjaran}
+                  onChange={(e) => setSelectedKendalaTahunAjaran(e.target.value)}
+                  className="border border-[#E2E8F0] rounded-lg px-2.5 py-1 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                >
+                  <option value="Semua">Semua TA</option>
+                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
+                  <option value="2025/2026 Genap">2025/2026 Genap</option>
+                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
+                  <option value="2024/2025 Genap">2024/2025 Genap</option>
+                </select>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#263F93]">
+                  Total: {kendala.total} Kasus
+                </span>
+              </div>
             </div>
             <p className="text-xs text-gray-400 mb-2">Distribusi kategori kendala yang dilaporkan mahasiswa KIP-K</p>
           </div>
@@ -349,7 +372,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={kendalaMahasiswaData}
+                    data={kendala.categories}
                     cx="50%"
                     cy="50%"
                     innerRadius={48}
@@ -357,12 +380,16 @@ export default function Dashboard() {
                     paddingAngle={4}
                     dataKey="value"
                   >
-                    {kendalaMahasiswaData.map((entry, index) => (
+                    {kendala.categories.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [`${value} Kasus (${value}%)`, "Jumlah"]}
+                    formatter={(value: number, name: string) => {
+                      const total = kendala.total || 1;
+                      const pct = Math.round((value / total) * 100);
+                      return [`${value} Kasus (${pct}%)`, name];
+                    }}
                     contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: "#E2E8F0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
                   />
                 </PieChart>
@@ -370,23 +397,32 @@ export default function Dashboard() {
             </div>
 
             <div className="w-full sm:w-1/2 grid grid-cols-2 gap-2.5">
-              {kendalaMahasiswaData.map((item) => (
-                <div key={item.name} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-2.5 flex flex-col justify-center">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-gray-600 font-medium truncate">{item.name}</span>
+              {kendala.categories.map((item) => {
+                const pct = kendala.total > 0 ? Math.round((item.value / kendala.total) * 100) : 0;
+                return (
+                  <div key={item.name} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-2.5 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs text-gray-600 font-medium truncate">{item.name}</span>
+                    </div>
+                    <p className="text-base font-bold text-gray-800">
+                      {item.value} <span className="text-xs font-normal text-gray-500">({pct}%)</span>
+                    </p>
                   </div>
-                  <p className="text-base font-bold text-gray-800">
-                    {item.value} <span className="text-xs font-normal text-gray-500">({item.value}%)</span>
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-[#F1F5F9] mt-3">
-            <span>Tahun Ajaran: <strong className="text-gray-700">{selectedTahunAjaran}</strong></span>
-            <span className="text-[#263F93] font-medium">Finansial dominan (45%)</span>
+            <span>Tahun Ajaran: <strong className="text-gray-700">{selectedKendalaTahunAjaran}</strong></span>
+            {kendala.dominant && kendala.total > 0 ? (
+              <span className="text-[#263F93] font-medium">
+                {kendala.dominant} dominan ({kendala.dominant_pct}%)
+              </span>
+            ) : (
+              <span className="text-gray-400 italic">Belum ada data</span>
+            )}
           </div>
         </div>
       </div>

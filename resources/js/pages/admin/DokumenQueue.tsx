@@ -399,12 +399,12 @@ const isPelatihan = (jenis: string) =>
 export default function DokumenQueue() {
   const [tab, setTab] = useState<Tab>("Menunggu");
   const [search, setSearch] = useState("");
-  const [jenis, setJenis] = useState("Semua");
-  const [prodi, setProdi] = useState("Semua");
-  const [angkatan, setAngkatan] = useState("Semua");
-  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua"]);
-  const [jenisDokumenOptions, setJenisDokumenOptions] = useState<string[]>(["Semua"]);
-  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua"]);
+  const [jenis, setJenis] = useState("Semua Dokumen");
+  const [prodi, setProdi] = useState("Semua Prodi");
+  const [angkatan, setAngkatan] = useState("Semua Angkatan");
+  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua Prodi"]);
+  const [jenisDokumenOptions, setJenisDokumenOptions] = useState<string[]>(["Semua Dokumen"]);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua Angkatan"]);
   const [reviewing, setReviewing] = useState<DokumenQueueType | null>(null);
   const [showReject, setShowReject] = useState(false);
   const [rejectNote, setRejectNote] = useState("");
@@ -434,9 +434,9 @@ export default function DokumenQueue() {
     getMahasiswaFilterOptions()
       .then((opts) => {
         if (!active) return;
-        setProdiOptions(["Semua", ...opts.prodis.map((p) => p.nama)]);
+        setProdiOptions(["Semua Prodi", ...opts.prodis.map((p) => p.nama)]);
         if (opts.angkatans && opts.angkatans.length > 0) {
-          setAngkatanOptions(["Semua", ...opts.angkatans.map(String)]);
+          setAngkatanOptions(["Semua Angkatan", ...opts.angkatans.map(String)]);
         }
       })
       .catch(() => {});
@@ -447,7 +447,7 @@ export default function DokumenQueue() {
   useEffect(() => {
     if (fullQueue.length === 0) return;
     const unique = Array.from(new Set(fullQueue.map(d => d.jenis))).sort();
-    setJenisDokumenOptions(["Semua", ...unique]);
+    setJenisDokumenOptions(["Semua Dokumen", ...unique]);
   }, [fullQueue]);
 
   // Load all items (no status/jenis filter) for accurate tab counts + jenis options
@@ -475,7 +475,7 @@ export default function DokumenQueue() {
       limit: 10,
       search: search || undefined,
       status: statusParam as any,
-      jenis: jenis !== "Semua" ? jenis : undefined,
+      jenis: jenis !== "Semua Dokumen" ? jenis : undefined,
       tahun_ajaran: tahunAjaran !== "Semua" ? tahunAjaran : undefined,
     })
       .then((res) => {
@@ -511,9 +511,9 @@ export default function DokumenQueue() {
 
   const resetFilters = () => {
     setSearch("");
-    setProdi("Semua");
-    setAngkatan("Semua");
-    setJenis("Semua");
+    setProdi("Semua Prodi");
+    setAngkatan("Semua Angkatan");
+    setJenis("Semua Dokumen");
     setCurrentPage(1);
   };
 
@@ -574,9 +574,9 @@ export default function DokumenQueue() {
     const status = getStatus(d);
     return (
       (tab === "Semua" || (tab === "Menunggu" ? status === "Menunggu" : tab === "Disetujui" ? status === "Disetujui" : status === "Ditolak")) &&
-      (jenis === "Semua" || d.jenis.toLowerCase().includes(jenis.toLowerCase())) &&
-      (prodi === "Semua" || d.prodi === prodi) &&
-      (angkatan === "Semua" || String(d.angkatan) === angkatan) &&
+      (jenis === "Semua Dokumen" || d.jenis.toLowerCase().includes(jenis.toLowerCase())) &&
+      (prodi === "Semua Prodi" || d.prodi === prodi) &&
+      (angkatan === "Semua Angkatan" || String(d.angkatan) === angkatan) &&
       (d.nama.toLowerCase().includes(q) || d.nim.toLowerCase().includes(q))
     );
   });
@@ -634,11 +634,12 @@ export default function DokumenQueue() {
     setActionBusy(true);
     setActionError("");
     try {
-      await rejectDokumen(String(reviewing.id), rejectNote.trim() || "Dokumen tidak terbaca dengan jelas");
+      // Catatan benar-benar opsional — kirim string kosong jika tidak diisi
+      await rejectDokumen(String(reviewing.id), rejectNote.trim());
       const now = new Date().toISOString();
       const entry: RejectionEntry = {
         date: now,
-        catatan: rejectNote.trim() || "Dokumen tidak terbaca dengan jelas",
+        catatan: rejectNote.trim(),
         reviewer: REVIEWER_NAME,
       };
       setRejectionHistory(h => ({
@@ -718,10 +719,10 @@ export default function DokumenQueue() {
       {/* Filter bar */}
       <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
         <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative flex-1 min-w-48">
+          <div className="relative min-w-48 sm:min-w-56 md:flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => handleSearchChange(e.target.value)} placeholder="Cari NIM atau Nama..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700" />
           </div>
           <FilterSelect value={prodi} onChange={(v) => { setProdi(v); setCurrentPage(1); }} options={prodiOptions} />
           <FilterSelect value={angkatan} onChange={handleAngkatanChange} options={angkatanOptions} />
@@ -964,24 +965,26 @@ export default function DokumenQueue() {
               )}
               {!showReject ? (
                 <>
-                  <button onClick={handleApprove} disabled={actionBusy}
+                  <button onClick={handleApprove} disabled={actionBusy || currentStatus === "Disetujui"}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-500 text-white text-sm transition-colors disabled:opacity-60"
-                    style={{ background: "#059669" }}>
+                    style={{ background: currentStatus === "Disetujui" ? "#9CA3AF" : "#059669" }}>
                     {actionBusy ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                    {currentStatus === "Disetujui" ? "Sudah Disetujui (Ubah ke Tolak)" : "Setujui Dokumen"}
+                    {currentStatus === "Menunggu" && "Setujui Dokumen"}
+                    {currentStatus === "Disetujui" && "Sudah Disetujui"}
+                    {currentStatus === "Ditolak" && "Setujui Ulang"}
                   </button>
                   <button onClick={openRejectPanel} disabled={actionBusy}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-500 text-sm border transition-colors hover:bg-red-50 disabled:opacity-60"
-                    style={{ borderColor: "#FECACA", color: "#DC2626" }}>
-                    {actionBusy ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
-                    {currentStatus === "Ditolak" ? "Tambah Catatan Penolakan" : "Tolak / Revisi"}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 text-sm hover:underline transition-colors disabled:opacity-60"
+                    style={{ color: "#DC2626" }}>
+                    <XCircle size={13} />
+                    {currentStatus === "Ditolak" ? "Ubah Catatan Penolakan" : "Tolak dengan Catatan"}
                   </button>
                 </>
               ) : (
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                      {currentStatus === "Ditolak" ? "Tambah Catatan" : "Catatan Penolakan"}{" "}
+                      {currentStatus === "Ditolak" ? "Catatan Penolakan" : "Catatan Penolakan"}{" "}
                       <span className="text-gray-400 font-400">(opsional)</span>
                     </label>
                     <textarea value={rejectNote} onChange={e => setRejectNote(e.target.value)} rows={3}
@@ -991,9 +994,9 @@ export default function DokumenQueue() {
                       onFocus={e => { e.target.style.boxShadow = "0 0 0 3px rgba(220,38,38,0.15)"; e.target.style.borderColor = "#FCA5A5"; }}
                       onBlur={e => { e.target.style.boxShadow = "none"; e.target.style.borderColor = "#E2E8F0"; }} />
                   </div>
-                  <button onClick={handleReject} disabled={!rejectNote.trim() || actionBusy} className="w-full py-3 rounded-xl font-500 text-white text-sm transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2" style={{ background: "#DC2626" }}>
+                  <button onClick={handleReject} disabled={actionBusy} className="w-full py-3 rounded-xl font-500 text-white text-sm transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2" style={{ background: "#DC2626" }}>
                     {actionBusy ? <Loader2 size={16} className="animate-spin" /> : null}
-                    {currentStatus === "Ditolak" ? "Simpan Catatan Penolakan" : "Kirim Penolakan"}
+                    {currentStatus === "Ditolak" ? "Simpan Catatan" : "Kirim Penolakan"}
                   </button>
                   <button onClick={() => setShowReject(false)} className="w-full py-2 text-sm text-gray-500 hover:text-gray-700">Batal</button>
                 </div>

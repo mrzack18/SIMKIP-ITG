@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, AlertTriangle, Award, XCircle, Search, Loader2 } from "lucide-react";
+import { CheckCircle, AlertTriangle, Award, Search, Loader2 } from "lucide-react";
 import { getBebasTanggunganList } from "@/services/bebasTanggunganService";
-import type { BebasTanggunganListItem, BebasTanggunganStatus } from "@/types";
+import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
+import type { BebasTanggunganListItem } from "@/types";
 import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { Link } from "react-router-dom";
 
 type Tab = "menunggu" | "diterbitkan" | "ditolak";
 
@@ -19,7 +20,13 @@ export default function BebasTanggunganList() {
   const [tab, setTab] = useState<Tab>("menunggu");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [page, setPage] = useState(1);
+
+  const [selectedProdi, setSelectedProdi] = useState("Semua Prodi");
+  const [selectedAngkatan, setSelectedAngkatan] = useState("Semua Angkatan");
+  const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua Prodi"]);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua Angkatan"]);
 
   const [data, setData] = useState<BebasTanggunganListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -29,11 +36,29 @@ export default function BebasTanggunganList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load prodi and angkatan filter options
+  useEffect(() => {
+    getMahasiswaFilterOptions()
+      .then((res) => {
+        setProdiOptions(["Semua Prodi", ...(res.prodis || []).map((p: any) => p.nama)]);
+        setAngkatanOptions(["Semua Angkatan", ...(res.angkatans || [])]);
+      })
+      .catch(() => {});
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getBebasTanggunganList({ status: tab, search, page, limit: LIMIT });
+      const res = await getBebasTanggunganList({
+        status: tab,
+        search,
+        page,
+        limit: LIMIT,
+        tahun_ajaran: tahunAjaran !== "Semua" ? tahunAjaran : undefined,
+        prodi: selectedProdi,
+        angkatan: selectedAngkatan,
+      });
       setData(res.data);
       setTotal(res.total);
       setTotalPages(Math.max(1, res.total_pages));
@@ -43,7 +68,7 @@ export default function BebasTanggunganList() {
     } finally {
       setLoading(false);
     }
-  }, [tab, search, page]);
+  }, [tab, search, page, tahunAjaran, selectedProdi, selectedAngkatan]);
 
   useEffect(() => {
     fetchData();
@@ -68,6 +93,7 @@ export default function BebasTanggunganList() {
 
   return (
     <div className="space-y-5">
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display font-700 text-2xl text-gray-900">
@@ -77,18 +103,18 @@ export default function BebasTanggunganList() {
             Review permohonan penerbitan Surat Keterangan Penyelesaian Studi KIP-K
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5">
-            <Award size={16} className="text-purple-600" />
-            <span className="text-sm font-600 text-purple-700">
-              {counts.menunggu} menunggu review
-            </span>
-          </div>
-        </div>
+        <TahunAjaranFilter
+          value={tahunAjaran}
+          onChange={(v) => {
+            setTahunAjaran(v);
+            setPage(1);
+          }}
+        />
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      {/* Tabs + Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Tabs */}
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
           {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
             <button
@@ -114,8 +140,8 @@ export default function BebasTanggunganList() {
           ))}
         </div>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex items-center gap-2">
+        {/* Search + Prodi + Angkatan */}
+        <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -123,9 +149,40 @@ export default function BebasTanggunganList() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Cari NIM atau nama..."
-              className="pl-8 pr-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 w-56"
+              className="pl-9 pr-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 w-52"
             />
           </div>
+
+          <select
+            value={selectedProdi}
+            onChange={(e) => {
+              setSelectedProdi(e.target.value);
+              setPage(1);
+            }}
+            className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+          >
+            {prodiOptions.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedAngkatan}
+            onChange={(e) => {
+              setSelectedAngkatan(e.target.value);
+              setPage(1);
+            }}
+            className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+          >
+            {angkatanOptions.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+
           <button
             type="submit"
             className="px-3 py-2 text-xs font-500 bg-[#263F93] text-white rounded-lg hover:bg-[#1E3275] transition-colors"
@@ -141,7 +198,6 @@ export default function BebasTanggunganList() {
               Reset
             </button>
           )}
-
         </form>
       </div>
 
@@ -351,9 +407,7 @@ export default function BebasTanggunganList() {
         {/* Total count when single page */}
         {!loading && !error && totalPages <= 1 && data.length > 0 && (
           <div className="px-4 py-3 border-t border-[#E2E8F0]">
-            <p className="text-xs text-gray-500">
-              Total {total} permohonan
-            </p>
+            <p className="text-xs text-gray-500">Total {total} permohonan</p>
           </div>
         )}
       </div>

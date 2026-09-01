@@ -22,7 +22,9 @@ export async function apiCall<T>(
   // Inertia middleware detects non-Inertia GETs via X-Requested-With absence
   // and renders the SPA shell instead of returning JSON. Mark every request
   // as XHR so api endpoints always respond with their declared JSON body.
+  // Accept: application/json ensures Laravel returns JSON 401 on unauth, not a redirect.
   headers.set("X-Requested-With", "XMLHttpRequest");
+  headers.set("Accept", "application/json");
 
   // Set Content-Type only if it's not FormData
   if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {

@@ -59,7 +59,9 @@ export async function updateSPStatus(
 
 export async function terbitkanSP(
   payload: Omit<SuratPeringatan, "id" | "status" | "sisa" | "tanggalTerbit" | "batasEvaluasi">
-): Promise<SuratPeringatan> {
-  const res = await api.post<ApiResponse<SuratPeringatan>>("/sp", payload);
-  return res.data;
+): Promise<{ id: number; level: string }> {
+  // Backend returns { success: true, sp: { id, level } } — no "data" wrapper
+  const res = await api.post<{ success: boolean; sp: { id: number; level: string } }>("/sp", payload);
+  if (!res.success) throw new Error("Gagal menerbitkan SP.");
+  return res.sp;
 }

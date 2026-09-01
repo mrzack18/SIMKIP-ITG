@@ -21,16 +21,17 @@ class BebasTanggunganResource extends JsonResource
         $semester   = $m ? $m->ipkSemestrs->count() : 0;
         $spBersih   = $m ? $m->suratPeringatans->isEmpty() : true;
 
-        // Dokumen progress: compare uploaded & approved docs against wajib jenis
+        // Dokumen progress: approved mandatory docs out of total mandatory document types configured
+        $docsTotal = \App\Models\DokumenJenis::where('is_wajib', true)->count();
         $docsOk    = 0;
-        $docsTotal = 0;
         if ($m && $m->relationLoaded('dokumens')) {
-            // Group docs by jenis, pick latest per jenis
-            $byJenis = $m->dokumens->groupBy('dokumen_jenis_id');
-            $docsTotal = $byJenis->count();
-            $docsOk   = $byJenis->filter(fn($group) =>
-                $group->sortByDesc('created_at')->first()?->status === 'Disetujui'
-            )->count();
+            // Of the mandatory jenis, which ones have an approved document?
+            $wajibIds = \App\Models\DokumenJenis::where('is_wajib', true)->pluck('id')->toArray();
+            $byJenis  = $m->dokumens->groupBy('dokumen_jenis_id');
+            $docsOk = $byJenis->filter(function ($group) use ($wajibIds) {
+                $latest = $group->sortByDesc('created_at')->first();
+                return $latest && $latest->status === 'Disetujui' && in_array($latest->dokumen_jenis_id, $wajibIds);
+            })->count();
         }
 
         return [

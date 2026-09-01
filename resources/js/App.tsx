@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { getCurrentUser } from "@/services/authService";
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -41,12 +42,28 @@ import WarekMahasiswaList from "./pages/warek/MahasiswaList";
 import WarekMahasiswaDetail from "./pages/warek/MahasiswaDetail";
 import Placeholder from "./pages/Placeholder";
 
-// Placeholder user props — these will be replaced by AuthContext values
-// once the backend is connected. Layout reads user from AuthContext.
-const adminUser = { nama: "Encep Jianul Hayat, S.T., M.T.", nim: undefined };
-const studentUser = { nama: "Ahmad Rifaldi", nim: "2206001" };
-const prodiUser = { nama: "Teknik Informatika", nim: undefined };
-const warekUser = { nama: "Dr. Rina Kurniawati, S.E., M.Si.", nim: undefined };
+/** Resolve user object from auth session for the layout profile dropdown. */
+function resolveLayoutUser(role: string) {
+  const u = getCurrentUser();
+  return {
+    nama: u?.nama ?? u?.name ?? "User",
+    nim: u?.nim ?? undefined,
+  };
+}
+
+/** Wrapper that reads auth from context and passes resolved user to Layout. */
+function LayoutWrapper({ role }: { role: "admin" | "mahasiswa" | "prodi" | "warek" }) {
+  const { isLoading } = useAuth();
+  const user = resolveLayoutUser(role);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#263F93]" />
+      </div>
+    );
+  }
+  return <Layout role={role} user={user} />;
+}
 
 export default function App() {
   return (
@@ -58,7 +75,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
 
           {/* Admin routes */}
-          <Route path="/admin" element={<Layout role="admin" user={adminUser} />}>
+          <Route path="/admin" element={<LayoutWrapper role="admin" />}>
             <Route index element={<AdminDashboard />} />
             <Route path="mahasiswa" element={<MahasiswaList />} />
             <Route path="mahasiswa/tambah" element={<TambahMahasiswa />} />
@@ -66,7 +83,7 @@ export default function App() {
             <Route path="akademik" element={<DataAkademik />} />
             <Route path="dokumen" element={<DokumenQueue />} />
             <Route path="sp" element={<SPList />} />
-            <Route path="sp/terbitkan" element={<TerbitkanSP />} />
+            <Route path="sp/terbit kan" element={<TerbitkanSP />} />
             <Route path="sp/:id" element={<SPDetail />} />
             <Route path="bebas-tanggungan" element={<BebasTanggunganList />} />
             <Route path="bebas-tanggungan/:id" element={<BebasTanggunganDetail />} />
@@ -75,11 +92,11 @@ export default function App() {
             <Route path="laporan/:id" element={<LaporanDetail />} />
             <Route path="konfigurasi" element={<Konfigurasi />} />
             <Route path="audit" element={<AuditLog />} />
-            <Route path="profil" element={<Profil role="admin" user={adminUser} />} />
+            <Route path="profil" element={<Profil role="admin" />} />
           </Route>
 
           {/* Student routes */}
-          <Route path="/mahasiswa" element={<Layout role="mahasiswa" user={studentUser} />}>
+          <Route path="/mahasiswa" element={<LayoutWrapper role="mahasiswa" />}>
             <Route index element={<StudentDashboard />} />
             <Route path="ipk" element={<InputIPK />} />
             <Route path="prestasi" element={<Prestasi />} />
@@ -89,28 +106,28 @@ export default function App() {
             <Route path="arsip" element={<ArsipDigital />} />
             <Route path="sp" element={<SPMahasiswa />} />
             <Route path="bebas-tanggungan" element={<BebasTanggungan />} />
-            <Route path="profil" element={<Profil role="mahasiswa" user={studentUser} />} />
+            <Route path="profil" element={<Profil role="mahasiswa" />} />
           </Route>
 
           {/* Prodi routes */}
-          <Route path="/prodi" element={<Layout role="prodi" user={prodiUser} />}>
+          <Route path="/prodi" element={<LayoutWrapper role="prodi" />}>
             <Route index element={<ProdiDashboard />} />
             <Route path="mahasiswa" element={<ProdiMahasiswaList />} />
             <Route path="mahasiswa/:id" element={<ProdiMahasiswaDetail />} />
             <Route path="laporan" element={<ProdiLaporanList />} />
             <Route path="laporan/:id" element={<ProdiLaporanDetail />} />
             <Route path="ekspor" element={<EksporLaporan />} />
-            <Route path="profil" element={<Profil role="prodi" user={prodiUser} />} />
+            <Route path="profil" element={<Profil role="prodi" />} />
           </Route>
 
           {/* Warek routes */}
-          <Route path="/warek" element={<Layout role="warek" user={warekUser} />}>
+          <Route path="/warek" element={<LayoutWrapper role="warek" />}>
             <Route index element={<WarekDashboard />} />
             <Route path="laporan" element={<WarekLaporanList />} />
             <Route path="laporan/:id" element={<WarekLaporanDetail />} />
             <Route path="mahasiswa" element={<WarekMahasiswaList />} />
             <Route path="mahasiswa/:id" element={<WarekMahasiswaDetail />} />
-            <Route path="profil" element={<Profil role="warek" user={warekUser} />} />
+            <Route path="profil" element={<Profil role="warek" />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

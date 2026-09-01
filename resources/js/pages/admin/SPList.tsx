@@ -19,12 +19,12 @@ const statusStyle: Record<string, string> = {
   "Selesai": "bg-green-100 text-green-700",
 };
 
-const TABS = ["Semua", "SP1", "SP2", "SP3", "Selesai"] as const;
-type Tab = typeof TABS[number];
+const SP_FILTER_OPTIONS = ["Semua SP", "SP1", "SP2", "SP3", "Selesai"] as const;
+type SpFilterValue = typeof SP_FILTER_OPTIONS[number];
 
 export default function SPList() {
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<Tab>("Semua");
+  const [spFilter, setSpFilter] = useState<SpFilterValue>("Semua SP");
   const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [list, setList] = useState<SuratPeringatan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,37 +32,37 @@ export default function SPList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  // Full list for summary card counts (no tab/search filter, high limit)
+  // Full list for summary card counts (no spFilter/search filter, high limit)
   const [fullList, setFullList] = useState<SuratPeringatan[]>([]);
-  const [selectedProdi, setSelectedProdi] = useState('Semua');
-  const [selectedAngkatan, setSelectedAngkatan] = useState('Semua');
-  const [prodiOptions, setProdiOptions] = useState<string[]>(['Semua']);
-  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(['Semua']);
+  const [selectedProdi, setSelectedProdi] = useState('Semua Prodi');
+  const [selectedAngkatan, setSelectedAngkatan] = useState('Semua Angkatan');
+  const [prodiOptions, setProdiOptions] = useState<string[]>(['Semua Prodi']);
+  const [angkatanOptions, setAngkatanOptions] = useState<string[]>(['Semua Angkatan']);
 
   // Load prodi and angkatan filter options
   useEffect(() => {
     getMahasiswaFilterOptions().then(res => {
-      setProdiOptions(['Semua', ...(res.prodis || []).map((p) => p.nama)]);
-      setAngkatanOptions(['Semua', ...(res.angkatans || [])]);
+      setProdiOptions(['Semua Prodi', ...(res.prodis || []).map((p) => p.nama)]);
+      setAngkatanOptions(['Semua Angkatan', ...(res.angkatans || [])]);
     }).catch(() => {});
   }, []);
 
-  // Full list for counts — refetches when search changes (not tab)
+  // Full list for counts — refetches when search changes (not spFilter)
   useEffect(() => {
     let active = true;
-    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined, prodi: selectedProdi !== 'Semua' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua' ? selectedAngkatan : undefined })
+    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined, prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined })
       .then(res => { if (active) setFullList(res.data); });
     return () => { active = false; };
   }, [search, tahunAjaran, selectedProdi, selectedAngkatan]);
 
-  // Paginated display data — refetches on tab/page/search change
+  // Paginated display data — refetches on spFilter/page/search change
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError("");
 
-    const levelFilter = tab === "Semua" || tab === "Selesai" ? undefined : tab;
-    const statusFilter = tab === "Selesai" ? "Selesai" : undefined;
+    const levelFilter = spFilter === "Semua SP" || spFilter === "Selesai" ? undefined : spFilter;
+    const statusFilter = spFilter === "Selesai" ? "Selesai" : undefined;
 
     getSPList({
       search: search || undefined,
@@ -71,8 +71,8 @@ export default function SPList() {
       page: currentPage,
       limit: 10,
       tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined,
-      prodi: selectedProdi !== 'Semua' ? selectedProdi : undefined,
-      angkatan: selectedAngkatan !== 'Semua' ? selectedAngkatan : undefined,
+      prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined,
+      angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined,
     })
       .then(res => {
         if (!active) return;
@@ -89,15 +89,23 @@ export default function SPList() {
       });
 
     return () => { active = false; };
-  }, [search, tab, currentPage, tahunAjaran, selectedProdi, selectedAngkatan]);
+  }, [search, spFilter, currentPage, tahunAjaran, selectedProdi, selectedAngkatan]);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
     setCurrentPage(1);
   };
 
-  const handleTabChange = (t: Tab) => {
-    setTab(t);
+  const handleSpFilterChange = (v: SpFilterValue) => {
+    setSpFilter(v);
+    setCurrentPage(1);
+  };
+
+  const resetFilters = () => {
+    setSearch("");
+    setSpFilter("Semua SP");
+    setSelectedProdi("Semua Prodi");
+    setSelectedAngkatan("Semua Angkatan");
     setCurrentPage(1);
   };
 
@@ -161,39 +169,33 @@ export default function SPList() {
         ))}
       </div>
 
-      {/* Search + Tab filter row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-full max-w-xs">
+      {/* Search + Filter row */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative min-w-48 sm:min-w-56 md:flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => handleSearchChange(e.target.value)} placeholder="Cari NIM atau Nama..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700" />
         </div>
 
-        {/* Tab filter */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-          {TABS.map(t => (
-            <button
-              key={t}
-              onClick={() => handleTabChange(t)}
-              className={`px-3 py-1.5 rounded-md text-xs font-500 transition-colors ${
-                tab === t
-                  ? "bg-white text-[#263F93] shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <select value={spFilter} onChange={e => handleSpFilterChange(e.target.value as SpFilterValue)}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700">
+          {SP_FILTER_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
 
-        <select value={selectedProdi} onChange={e => { setSelectedProdi(e.target.value); setCurrentPage(1); }} 
-          className='px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20'>
+        <select value={selectedProdi} onChange={e => { setSelectedProdi(e.target.value); setCurrentPage(1); }}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700">
           {prodiOptions.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
-        <select value={selectedAngkatan} onChange={e => { setSelectedAngkatan(e.target.value); setCurrentPage(1); }} 
-          className='px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20'>
+
+        <select value={selectedAngkatan} onChange={e => { setSelectedAngkatan(e.target.value); setCurrentPage(1); }}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700">
           {angkatanOptions.map(a => <option key={a} value={a}>{a}</option>)}
         </select>
+
+        <button onClick={resetFilters}
+          className="px-3 py-2 text-sm text-[#263F93] hover:bg-[#263F93]/5 rounded-lg transition-colors font-500 border border-[#263F93]/20">
+          Reset
+        </button>
       </div>
 
       {/* Table */}

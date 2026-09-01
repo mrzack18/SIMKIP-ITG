@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+﻿import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, AlertTriangle, Search, CheckCircle, X, Info, Loader2, XCircle } from "lucide-react";
 import { getMahasiswaList, getMahasiswaSpHistory } from "@/services/mahasiswaService";
 import { terbitkanSP } from "@/services/spService";
 import { getPelanggaranList } from "@/services/konfigurasiService";
 import type { Mahasiswa } from "@/types";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 type SPLevel = "SP1" | "SP2" | "SP3";
 
@@ -19,6 +19,42 @@ const getNextSP = (current: string | null): SPLevel => {
 
 export default function TerbitkanSP() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Prefill mahasiswa from URL params (when navigated from detail page)
+  useEffect(() => {
+    const mhsId = searchParams.get("mahasiswa_id");
+    const mhsNim = searchParams.get("nim");
+    const mhsNama = searchParams.get("nama");
+    const mhsProdi = searchParams.get("prodi");
+    const mhsIpk = searchParams.get("ipk");
+
+    if (mhsId && mhsNim && mhsNama) {
+      const prefilled: Mahasiswa = {
+        id: Number(mhsId),
+        nim: mhsNim,
+        nama: decodeURIComponent(mhsNama),
+        prodi: decodeURIComponent(mhsProdi ?? ""),
+        angkatan: 0,
+        kategori: "Reguler",
+        status: "Aktif",
+        ipk: mhsIpk ? Number(mhsIpk) : 0,
+        semester: 0,
+        sp: null,
+      };
+      setSelected(prefilled);
+      setQuery(prefilled.nama);
+      // Also fetch SP history for this student
+      getMahasiswaSpHistory(Number(mhsId)).then(history => {
+        setStudentSpData(history);
+        const used = history.map((sp: any) => sp.level);
+        let defaultLevel = "SP1";
+        if (used.includes("SP1") && used.includes("SP2")) defaultLevel = "SP3";
+        else if (used.includes("SP1")) defaultLevel = "SP2";
+        setSpLevel(defaultLevel as SPLevel);
+      }).catch(() => {});
+    }
+  }, []);
 
   // Search state
   const [query, setQuery]               = useState("");
@@ -53,9 +89,11 @@ export default function TerbitkanSP() {
       .then((list) => {
         if (!active) return;
         console.log("[TerbitkanSP] pelanggaran list:", list);
-        setJenisPelanggaranOptions(list.filter((jp) => jp.aktif));
+        setJenisPelanggaranOptions(list.filter((jp) => jp.aktif !== false));
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[TerbitkanSP] gagal ambil daftar pelanggaran:", err);
+      });
     return () => { active = false };
   }, []);
 
@@ -118,7 +156,7 @@ export default function TerbitkanSP() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const res = await terbitkanSP({
+      const spData = await terbitkanSP({
         mahasiswa_id:      selected.id,
         level:             jenisP === "Cuti Tanpa Izin" ? "SP3" : spLevel,
         jenis_pelanggaran: jenisP,
@@ -128,9 +166,11 @@ export default function TerbitkanSP() {
         catatan:           catatan || null,
         tahun_ajaran:      tahunAjaran,
       } as any);
-      setCreatedId((res as any)?.id ?? null);
+      console.log("[TerbitkanSP] SP berhasil dibuat:", spData);
+      setCreatedId(spData?.id ?? null);
       setShowConfirm(false);
     } catch (err: any) {
+      console.error("[TerbitkanSP] API error:", err);
       setSubmitError(err?.message ?? "Gagal menerbitkan SP. Coba lagi.");
       setShowConfirm(false);
     } finally {
@@ -295,26 +335,18 @@ export default function TerbitkanSP() {
           )}
 
           {/* Jenis Pelanggaran */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">Jenis Pelanggaran <span className="text-red-500">*</span></label>
-              <select value={jenisP} onChange={(e) => setJenisP(e.target.value)}
-                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-colors ${
-                  errors.jenis ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#263F93]/20"
-                }`}>
-                <option value="">Pilih Jenis Pelanggaran</option>
-                {jenisPelanggaranOptions.map((jp) => (
-                  <option key={jp.id} value={jp.nama}>{jp.nama}{jp.deskripsi ? ` (${jp.deskripsi})` : ""}</option>
-                ))}
-              </select>
-              {errors.jenis && <p className="mt-1.5 text-xs text-red-600">{errors.jenis}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Ajaran <span className="text-red-500">*</span></label>
-              <div className="w-full flex items-center justify-start border border-gray-200 rounded-lg h-[42px] px-1">
-                <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} className="w-full bg-white hover:bg-white" />
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-500 text-gray-700 mb-1.5">Jenis Pelanggaran <span className="text-red-500">*</span></label>
+            <select value={jenisP} onChange={(e) => setJenisP(e.target.value)}
+              className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-colors ${
+                errors.jenis ? "border-red-300 focus:ring-red-200" : "border-gray-200 focus:ring-[#263F93]/20"
+              }`}>
+              <option value="">Pilih Jenis Pelanggaran</option>
+              {jenisPelanggaranOptions.map((jp) => (
+                <option key={jp.id} value={jp.nama}>{jp.nama}{jp.deskripsi ? ` (${jp.deskripsi})` : ""}</option>
+              ))}
+            </select>
+            {errors.jenis && <p className="mt-1.5 text-xs text-red-600">{errors.jenis}</p>}
           </div>
 
           {jenisP === "Cuti Tanpa Izin" && (
@@ -445,3 +477,4 @@ export default function TerbitkanSP() {
     </div>
   );
 }
+

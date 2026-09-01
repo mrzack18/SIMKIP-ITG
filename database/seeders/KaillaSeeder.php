@@ -143,8 +143,9 @@ class KaillaSeeder extends Seeder
                 'semester' => $sem,
                 'tahun_ajaran' => $data['ta'],
                 'ipk' => $data['ipk'],
+                'ips' => $data['ipk'], // seeded without per-MK breakdown, use same value
                 'file_khs' => "khs_sem_{$sem}_2306064.pdf",
-                'is_verified' => true,
+                'status' => 'Disetujui',
                 'created_at' => $data['date'],
                 'updated_at' => $data['date'],
             ]);

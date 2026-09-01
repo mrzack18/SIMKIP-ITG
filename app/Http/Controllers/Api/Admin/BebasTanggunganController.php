@@ -38,15 +38,25 @@ class BebasTanggunganController extends Controller
             $baseQuery->whereHas('mahasiswa', fn($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
         }
 
+        if ($request->prodi && $request->prodi !== 'Semua Prodi') {
+            $baseQuery->whereHas('mahasiswa.prodi', fn($q) => $q->where('nama', $request->prodi));
+        }
+
+        if ($request->angkatan && $request->angkatan !== 'Semua Angkatan') {
+            $baseQuery->whereHas('mahasiswa', fn($q) => $q->where('angkatan', $request->angkatan));
+        }
+
         $limit = (int) ($request->limit ?? 10);
         $page  = (int) ($request->page ?? 1);
         $total = $baseQuery->count();
         $data  = $baseQuery->latest()->skip(($page - 1) * $limit)->take($limit)->get();
 
-        // Per-status counts (always unfiltered by search/status to power the summary badge)
-        $countMenunggu   = BebasTanggungan::whereIn('status', ['Menunggu', 'Diproses'])->count();
-        $countDiterbitkan = BebasTanggungan::where('status', 'Disetujui')->count();
-        $countDitolak    = BebasTanggungan::where('status', 'Ditolak')->count();
+        // Per-status counts (filtered by tahun_ajaran to match displayed data)
+        $tahunAjaranQuery = BebasTanggungan::query();
+        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($tahunAjaranQuery, 'bebas_tanggungans.created_at', $request->tahun_ajaran);
+        $countMenunggu    = (clone $tahunAjaranQuery)->whereIn('status', ['Menunggu', 'Diproses'])->count();
+        $countDiterbitkan = (clone $tahunAjaranQuery)->where('status', 'Disetujui')->count();
+        $countDitolak     = (clone $tahunAjaranQuery)->where('status', 'Ditolak')->count();
 
         return response()->json([
             'success'      => true,
