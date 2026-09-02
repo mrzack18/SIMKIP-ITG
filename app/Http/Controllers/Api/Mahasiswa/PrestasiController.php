@@ -14,7 +14,10 @@ class PrestasiController extends Controller
         $m = $request->user()->mahasiswa;
         if (!$m) return response()->json(['data' => []]);
 
-        $data = $m->prestasis()->latest()->get();
+        $query = $m->prestasis();
+        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $request->tahun_ajaran);
+
+        $data = $query->latest()->get();
         return response()->json([
             'data' => \App\Http\Resources\PrestasiResource::collection($data)
         ]);

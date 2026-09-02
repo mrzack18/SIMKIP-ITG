@@ -95,7 +95,10 @@ export default function Prestasi() {
   const fetchPrestasi = async () => {
     try {
       setLoading(true);
-      const res = await api.get<{ data: any[] }>("/prestasi");
+      const res = await api.get<{ data: any[] }>(
+        "/prestasi",
+        taFilter !== "Semua" ? { tahun_ajaran: taFilter } : undefined
+      );
       const mappedData = res.data.map((item: any) => ({
         ...item,
         tab: item.tingkat,
@@ -111,7 +114,7 @@ export default function Prestasi() {
 
   useEffect(() => {
     fetchPrestasi();
-  }, []);
+  }, [taFilter]);
 
   const set = (k: keyof FormState) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -181,7 +184,7 @@ export default function Prestasi() {
         {/* Tab bar */}
         <div className="flex border-b border-gray-100">
           {TABS.map((tab) => {
-            const count = list.filter((p) => p.tab === tab && (p.tahunAjaran || "2025/2026 Ganjil") === formatTA(taFilter)).length;
+            const count = list.filter((p) => p.tab === tab).length;
             const active = activeTab === tab;
             return (
               <button
@@ -238,13 +241,12 @@ export default function Prestasi() {
             </div>
           ) : (
             <div className="space-y-6">
-                {[formatTA(taFilter)].map((ta) => (
-                <div key={ta} className="space-y-3">
+                <div className="space-y-3">
                   <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
-                    Tahun Ajaran {ta}
+                    {taFilter === "Semua" ? "Semua Tahun Ajaran" : `Tahun Ajaran ${formatTA(taFilter)}`}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {tabItems.filter(p => (p.tahunAjaran || "2025/2026 Ganjil") === ta).map((p) => {
+                    {tabItems.map((p) => {
                       const ss = statusStyle[p.status];
                       return (
                         <div
@@ -315,7 +317,6 @@ export default function Prestasi() {
                     })}
                   </div>
                 </div>
-              ))}
             </div>
           )}
         </div>

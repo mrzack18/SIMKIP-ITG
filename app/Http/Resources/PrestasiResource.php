@@ -30,6 +30,22 @@ class PrestasiResource extends JsonResource
             'fileFoto' => $this->file_foto ? url(Storage::url($this->file_foto)) : null,
             'status' => $this->status,
             'catatanAdmin' => $this->catatan_admin,
+            'tahunAjaran' => $this->getTahunAjaranFromTanggalMulai($this->tanggal_mulai),
         ];
+    }
+
+    private function getTahunAjaranFromTanggalMulai($date): ?string
+    {
+        if (!$date) return null;
+        $month = (int) $date->format('m');
+        $year = (int) $date->format('Y');
+
+        if ($month >= 2 && $month <= 8) {
+            return ($year - 1) . '/' . $year . ' Genap';
+        } elseif ($month == 1) {
+            return ($year - 1) . '/' . $year . ' Ganjil';
+        } else {
+            return $year . '/' . ($year + 1) . ' Ganjil';
+        }
     }
 }
