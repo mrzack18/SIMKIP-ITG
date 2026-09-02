@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle, Download, QrCode, X, RotateCcw } from "lucide-r
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import logoItg from "@/imports/logo_itg.jpg";
 import { api } from "@/services/api";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 interface LaporanDetail {
   id: number;
@@ -28,7 +28,7 @@ interface Statistik {
 
 export default function WarekLaporanDetail() {
   const { id } = useParams<{ id: string }>();
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [approved, setApproved] = useState(false);

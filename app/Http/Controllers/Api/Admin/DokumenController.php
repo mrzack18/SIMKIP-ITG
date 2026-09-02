@@ -19,8 +19,9 @@ class DokumenController extends Controller
 
         $items = collect();
 
-        // 1. Dokumens
-        $dokQuery = Dokumen::with(['mahasiswa.prodi', 'jenis.fields', 'fieldValues.field']);
+        // 1. Dokumens (exclude KHS — KHS dilacak via IpkSemestr agar tidak duplikat di queue)
+        $dokQuery = Dokumen::with(['mahasiswa.prodi', 'jenis.fields', 'fieldValues.field'])
+            ->whereHas('jenis', fn($q) => $q->where('nama', '!=', 'KHS'));
         \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($dokQuery, 'dokumens.created_at', $request->tahun_ajaran);
         if ($status && $status !== 'Semua') $dokQuery->where('status', $status);
         $doks = $dokQuery->get()->map(function($d) {
@@ -106,8 +107,9 @@ class DokumenController extends Controller
         $items = $items->concat($pels);
 
         // 5. IpkSemestr (Evaluasi Akademik / KHS)
+        // Filter langsung pada kolom tahun_ajaran (bukan created_at) agar sync dengan TA semesternya.
         $ipkQuery = \App\Models\IpkSemestr::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($ipkQuery, 'ipk_semestrs.created_at', $request->tahun_ajaran);
+        \App\Helpers\TahunAjaranHelper::applyTahunAjaranFilter($ipkQuery, 'ipk_semestrs.tahun_ajaran', $request->tahun_ajaran);
         if ($status && $status !== 'Semua') $ipkQuery->where('status', $status);
         $ipks = $ipkQuery->get()->map(function($i) {
             return [
@@ -174,6 +176,25 @@ class DokumenController extends Controller
         if ($type === 'doc') {
             $dok = Dokumen::with('mahasiswa')->findOrFail($realId);
             $dok->update(['status' => $status, 'catatan_admin' => $catatan, 'approved_by' => $adminId, 'approved_at' => now()]);
+
+            // Jika dokumen KHS, sinkronkan status ke IpkSemestr yang sesuai agar konsisten.
+            if ($dok->jenis?->nama === 'KHS') {
+                $meta = $dok->metadata ?? [];
+                $semester = $meta['semester'] ?? null;
+                $ta = $meta['tahun_ajaran'] ?? null;
+                if ($semester !== null && $ta !== null) {
+                    \App\Models\IpkSemestr::where('mahasiswa_id', $dok->mahasiswa_id)
+                        ->where('semester', $semester)
+                        ->where('tahun_ajaran', $ta)
+                        ->update([
+                            'status' => $status,
+                            'catatan_admin' => $catatan,
+                            'validated_by' => $adminId,
+                            'validated_at' => now(),
+                        ]);
+                }
+            }
+
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'prestasi') {
             $pres = \App\Models\Prestasi::findOrFail($realId);
@@ -188,8 +209,27 @@ class DokumenController extends Controller
             $pel->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'ipk') {
-            $ipk = \App\Models\IpkSemestr::findOrFail($realId);
+            $ipk = \App\Models\IpkSemestr::with('mahasiswa')->findOrFail($realId);
             $ipk->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+
+            // Sinkronkan ke Dokumen KHS (jenis='KHS') yang matching (mahasiswa, semester, tahun_ajaran)
+            // agar konsisten bila dokumen KHS pernah diupload terpisah.
+            $jenisKHS = \App\Models\DokumenJenis::where('nama', 'KHS')->first();
+            if ($jenisKHS) {
+                \App\Models\Dokumen::where('mahasiswa_id', $ipk->mahasiswa_id)
+                    ->where('dokumen_jenis_id', $jenisKHS->id)
+                    ->where(function ($q) use ($ipk) {
+                        $q->whereNull('metadata')
+                          ->orWhereRaw("JSON_EXTRACT(metadata, '$.semester') = ?", [$ipk->semester]);
+                    })
+                    ->update([
+                        'status' => $status,
+                        'catatan_admin' => $catatan,
+                        'approved_by' => $adminId,
+                        'approved_at' => now(),
+                    ]);
+            }
+
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         }
 

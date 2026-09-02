@@ -127,7 +127,7 @@ class IPKController extends Controller
 
         $m = $request->user()->mahasiswa;
 
-        // 2. Block if already Disetujui or Diajukan
+        // 2. Block if already Disetujui (final) atau Menunggu (sedang divalidasi admin)
         $existing = IpkSemestr::where('mahasiswa_id', $m->id)
             ->where('semester', $request->semester)
             ->first();
@@ -139,10 +139,10 @@ class IPKController extends Controller
             ], 422);
         }
 
-        if ($existing && $existing->status === 'Diajukan') {
+        if ($existing && $existing->status === 'Menunggu') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai sedang menunggu validasi. Tidak dapat mengubah.'
+                'message' => 'Nilai sedang menunggu validasi admin. Tidak dapat mengubah sampai ditolak.'
             ], 422);
         }
 
@@ -152,7 +152,9 @@ class IPKController extends Controller
         try {
             \Illuminate\Support\Facades\DB::beginTransaction();
 
-            // Upsert IpkSemestr — save as Draft
+            // Upsert IpkSemestr — simpan sebagai Draft agar admin tidak melihat
+            // sampai mahasiswa klik "Ajukan" (submit).
+            // Status 'Ditolak' di-reset ke 'Draft' supaya bisa diedit ulang.
             $ipkSem = IpkSemestr::updateOrCreate(
                 ['mahasiswa_id' => $m->id, 'semester' => $request->semester],
                 [
@@ -192,7 +194,8 @@ class IPKController extends Controller
     /**
      * Submit a draft IPK record for admin validation.
      *
-     * Transitions: Draft -> Diajukan | Ditolak -> Diajukan
+     * Transitions: Draft -> Menunggu | Ditolak -> Menunggu (re-submit)
+     * Status 'Menunggu' dipakai di queue admin (bukan 'Diajukan') agar sync dengan filter.
      */
     public function submit(Request $request): JsonResponse
     {
@@ -226,16 +229,19 @@ class IPKController extends Controller
             ], 422);
         }
 
-        if ($existing->status === 'Diajukan') {
+        if ($existing->status === 'Menunggu') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai sudah diajukan dan sedang menunggu validasi.'
+                'message' => 'Nilai sudah diajukan dan sedang menunggu validasi admin.'
             ], 422);
         }
 
+        // Izinkan submit dari 'Draft' atau 'Ditolak' (re-submit setelah penolakan)
         $existing->update([
-            'status' => 'Diajukan',
+            'status' => 'Menunggu',
             'catatan_admin' => null,
+            'validated_by' => null,
+            'validated_at' => null,
         ]);
 
         return response()->json([

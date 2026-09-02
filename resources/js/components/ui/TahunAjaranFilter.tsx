@@ -55,12 +55,12 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1; // 1-12
     const currentYear = currentDate.getFullYear();
-    
+
     // Determine the max academic year strictly based on the current real-world date.
     // If we are in Jan 2026, the academic year is 2025/2026 Ganjil.
     // If we are in Feb-Aug 2026, the academic year is 2025/2026 Genap.
     // If we are in Sep-Dec 2026, the academic year is 2026/2027 Ganjil.
-    
+
     let maxStartYear = currentYear;
     let maxSemester = 1; // 1 = Ganjil, 2 = Genap
 
@@ -76,7 +76,7 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
     }
 
     const startYear = 2022;
-    const opts: string[] = [];
+    const opts: string[] = ["Semua"]; // opsi untuk lihat semua TA
 
     for (let y = maxStartYear; y >= startYear; y--) {
       // If we are on the max year, only push up to the max semester
@@ -91,11 +91,11 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
       }
     }
 
-    // Deduplicate and sort descending
-    return Array.from(new Set(opts)).sort().reverse();
+    // Deduplicate and sort descending, keep "Semua" at top
+    return ["Semua", ...Array.from(new Set(opts.filter(o => o !== "Semua"))).sort().reverse()];
   }, []);
 
-  const displayLabel = formatTahunAjaran(value);
+  const displayLabel = value === "Semua" ? "Semua Tahun Ajaran" : formatTahunAjaran(value);
 
   return (
     <>

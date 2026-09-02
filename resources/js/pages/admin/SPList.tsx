@@ -4,7 +4,7 @@ import { AlertTriangle, Plus, Search, Clock, Loader2, ChevronLeft, ChevronRight 
 import { getSPList } from "@/services/spService";
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import type { SuratPeringatan } from "@/types";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 const levelColor: Record<string, { bg: string; text: string }> = {
   SP1: { bg: "#FEF3C7", text: "#92400E" },
@@ -25,7 +25,7 @@ type SpFilterValue = typeof SP_FILTER_OPTIONS[number];
 export default function SPList() {
   const [search, setSearch] = useState("");
   const [spFilter, setSpFilter] = useState<SpFilterValue>("Semua SP");
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
   const [list, setList] = useState<SuratPeringatan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

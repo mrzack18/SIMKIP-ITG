@@ -38,7 +38,7 @@ const DEFAULT_FORM = {
 export default function EksporLaporan() {
   const { user } = useAuth();
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
   const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);

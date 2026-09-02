@@ -1,6 +1,19 @@
 import { useState, useEffect } from "react"
 import { api } from "@/services/api"
 import {
+  getPeriodeList,
+  createPeriode,
+  updatePeriode,
+  deletePeriode,
+  activatePeriode,
+  type PeriodeItem,
+} from "@/services/konfigurasiService"
+import {
+  PeriodeAktifCard,
+  PeriodeFormModal,
+  TimelinePeriode,
+} from "@/components/admin/periode"
+import {
   Save,
   Plus,
   Trash2,
@@ -53,18 +66,6 @@ const SectionHeader = ({
     )}
   </div>
 )
-
-const formatTgl = (iso: string) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-};
-
-// Extract YYYY-MM-DD from ISO datetime for HTML <input type="date">
-const toDateInputValue = (iso: string | null | undefined): string => {
-  if (!iso) return "";
-  return iso.substring(0, 10);
-};
 
 function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: () => void }) {
   const [label, setLabel] = useState("");
@@ -122,13 +123,6 @@ function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: ()
 export default function Konfigurasi() {
   const [ipkMin, setIpkMin] = useState(3.0)
   const [showIpkWarning, setShowIpkWarning] = useState(false)
-  const [periodeAktif, setPeriodeAktif] = useState(true)
-  const [tglBuka, setTglBuka] = useState("2026-09-01")
-  const [tglTutup, setTglTutup] = useState("2026-09-15")
-  const [selectedTA, setSelectedTA] = useState("") // TA yang dibuka untuk periode input
-  const [prodis, setProdis] = useState<any[]>([])
-  const [dokumens, setDokumens] = useState<any[]>([])
-  const [toast, setToast] = useState("")
   const [institusi, setInstitusi] = useState({
     nama: "Institut Teknologi Garut",
     alamat: "Jl. Mayor Syamsu No. 1, Garut, Jawa Barat",
@@ -136,6 +130,19 @@ export default function Konfigurasi() {
   const [newProdi, setNewProdi] = useState({ nama: "", kode: "" })
   const [showAddProdi, setShowAddProdi] = useState(false)
   const [expandedDokumen, setExpandedDokumen] = useState<number | null>(null)
+
+  // Section 2 state (Periode)
+  const [periodeList, setPeriodeList] = useState<PeriodeItem[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingPeriode, setEditingPeriode] = useState<PeriodeItem | null>(null)
+  const [totalMahasiswaAktif, setTotalMahasiswaAktif] = useState(0)
+
+  // Section 3: Prodi state
+  const [prodis, setProdis] = useState<any[]>([])
+
+  // Section 4: Dokumen state
+  const [dokumens, setDokumens] = useState<any[]>([])
+  const [toast, setToast] = useState("")
 
   // Nilai Mutu state
   const [nilaiMutu, setNilaiMutu] = useState<any[]>([])
@@ -171,16 +178,26 @@ export default function Konfigurasi() {
 
   // Section 8 State: Jenis Pelanggaran
 
-  const [periodeHistory, setPeriodeHistory] = useState<any[]>([])
   const [tahunAjaranOptions, setTahunAjaranOptions] = useState<string[]>([])
-  
+
+  const fetchPeriodeData = async () => {
+    try {
+      const list = await getPeriodeList();
+      setPeriodeList(list);
+      // Hitung mahasiswa KIP-K aktif sebagai preview dampak
+      const mhsRes: any = await api.get("/konfigurasi/all");
+      const stats = mhsRes?.data?.mahasiswa_count_aktif ?? null;
+      if (typeof stats === "number") setTotalMahasiswaAktif(stats);
+    } catch {}
+  }
+
   const fetchData = async () => {
     try {
       const res: any = await api.get("/konfigurasi/all")
       if (res.success) {
         const d = res.data
         setInstitusi(d.institusi)
-        
+
         // Map aturan_akademik to regulasi array for the UI
         const regArr = d.regulasi || [
           { id: 1, nama: "IPK Minimum", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester", nilai: d.aturan_akademik?.ipk_minimum || "3.00", tipe: "number", aktif: true },
@@ -190,36 +207,22 @@ export default function Konfigurasi() {
           { id: 5, nama: "Total SKS Kelulusan", deskripsi: "Total minimum SKS untuk kelulusan mahasiswa KIP-K", nilai: d.aturan_akademik?.sks_minimum_lulus || "144", tipe: "number", aktif: true }
         ];
         setRegulasi(regArr)
-        
+
         setNilaiMutu(d.nilai_mutu || [])
         setJenisPelanggaran(d.jenis_pelanggaran || [])
         setProdis(d.prodis || [])
         setDokumens(d.dokumens || [])
-        const pHistory = d.periode_history || [];
-        setPeriodeHistory(pHistory)
         setTahunAjaranOptions(d.tahun_ajaran_options || [])
-        
+
         const ipkMinObj = regArr.find((r:any) => r.nama === "IPK Minimum")
         if (ipkMinObj) setIpkMin(parseFloat(ipkMinObj.nilai))
-        
-        const pAktif = pHistory.find((p:any) => p.is_aktif)
-        if (pAktif) {
-           setTglBuka(toDateInputValue(pAktif.tanggal_buka))
-           setTglTutup(toDateInputValue(pAktif.tanggal_tutup))
-           setPeriodeAktif(true)
-           setSelectedTA(`${pAktif.tahun_akademik} ${pAktif.semester}`)
-        } else {
-           setPeriodeAktif(false)
-           // Load dari konfigurasi fallback
-           const taKonfig = d.periode_aktif?.tahun_ajaran || ""
-           setSelectedTA(taKonfig)
-        }
       }
     } catch(e) {}
   }
-  
+
   useEffect(() => {
     fetchData()
+    fetchPeriodeData()
   }, [])
 
   const [jenisPelanggaran, setJenisPelanggaran] = useState<any[]>([])
@@ -288,17 +291,72 @@ export default function Konfigurasi() {
           fetchData();
       }
   }
-  const handleSavePeriode = async () => {
-    // Simpan konfigurasi satu per satu
-    await api.put('/konfigurasi', { periode_input_aktif: periodeAktif ? '1' : '0' });
-    await api.put('/konfigurasi', { periode_input_buka: tglBuka });
-    await api.put('/konfigurasi', { periode_input_tutup: tglTutup });
-    if (selectedTA) {
-      await api.put('/konfigurasi', { periode_input_tahun_ajaran: selectedTA });
+  // Section 2 handlers (Periode)
+  const handleCreateOrUpdatePeriode = async (data: {
+    tahun_akademik: string;
+    semester: "Ganjil" | "Genap";
+    tanggal_buka: string;
+    tanggal_tutup: string;
+    is_aktif: boolean;
+  }) => {
+    if (editingPeriode) {
+      await updatePeriode(editingPeriode.id, data);
+      showToast("Periode berhasil diperbarui");
+    } else {
+      await createPeriode(data);
+      showToast("Periode berhasil ditambahkan");
     }
-    fetchData();
-    showToast("Pengaturan periode berhasil disimpan");
-  }
+    await fetchPeriodeData();
+    await fetchData();
+  };
+
+  const handleActivatePeriode = async (item: PeriodeItem) => {
+    if (!window.confirm(`Aktifkan periode ${item.tahun_akademik} ${item.semester}?\n\nMahasiswa akan langsung bisa input nilai KHS untuk periode ini. Periode lain akan otomatis dinonaktifkan.`)) return;
+    await activatePeriode(item.id);
+    showToast(`Periode ${item.tahun_akademik} ${item.semester} diaktifkan`);
+    await fetchPeriodeData();
+    await fetchData();
+  };
+
+  const handleDeactivatePeriode = async () => {
+    const active = periodeList.find(p => p.is_aktif);
+    if (!active) return;
+    if (!window.confirm(`Nonaktifkan periode ${active.tahun_akademik} ${active.semester}?\n\nMahasiswa tidak akan bisa input nilai KHS sampai periode baru diaktifkan.`)) return;
+    // Update dengan is_aktif=false
+    await updatePeriode(active.id, {
+      tahun_akademik: active.tahun_akademik,
+      semester: active.semester as "Ganjil" | "Genap",
+      tanggal_buka: active.tanggal_buka?.substring(0, 10) ?? "",
+      tanggal_tutup: active.tanggal_tutup?.substring(0, 10) ?? "",
+      is_aktif: false,
+    });
+    showToast("Periode dinonaktifkan");
+    await fetchPeriodeData();
+    await fetchData();
+  };
+
+  const handleDeletePeriode = async (item: PeriodeItem) => {
+    if (item.is_aktif) {
+      showToast("Tidak dapat menghapus periode aktif. Nonaktifkan dulu.");
+      return;
+    }
+    if (!window.confirm(`Hapus periode ${item.tahun_akademik} ${item.semester}?\n\nTindakan ini tidak dapat dibatalkan.`)) return;
+    await deletePeriode(item.id);
+    showToast("Periode dihapus");
+    await fetchPeriodeData();
+    await fetchData();
+  };
+
+  const handleEditPeriode = (item: PeriodeItem) => {
+    setEditingPeriode(item);
+    setModalOpen(true);
+  };
+
+  const handleAddPeriode = () => {
+    setEditingPeriode(null);
+    setModalOpen(true);
+  };
+
   const handleSavePelanggaran = async (data: any, id: number|null = null) => {
       if(id) {
           await api.put('/konfigurasi/pelanggaran/'+id, data);
@@ -386,123 +444,59 @@ export default function Konfigurasi() {
         </div>
       </div>
 
-      {/* Section 2: Periode Input */}
+      {/* Section 2: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <SectionHeader
-          num={2}
-          title="Periode Input Nilai (Kalender Akademik)"
-          onSave={handleSavePeriode}
-        />
-        <div className="p-5 space-y-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            {periodeAktif ? (
-              <span className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-600">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Aktif{selectedTA ? `: ${selectedTA}` : ''} ({tglBuka && tglTutup ? `${formatTgl(tglBuka)} – ${formatTgl(tglTutup)}` : '—'})
-              </span>
-            ) : (
-              <span className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-full text-xs font-500">
-                Tidak ada periode aktif
-              </span>
-            )}
-          </div>
-
-          {/* TA Dropdown */}
-          <div className="flex items-end gap-4 flex-wrap">
-            <div className="flex-1 min-w-[220px]">
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                Tahun Ajaran
-              </label>
-              <select
-                value={selectedTA}
-                onChange={(e) => setSelectedTA(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
-              >
-                <option value="">— Pilih Tahun Ajaran —</option>
-                {tahunAjaranOptions.map((ta: string) => (
-                  <option key={ta} value={ta}>
-                    {ta}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Status:</span>
-              <button
-                onClick={() => setPeriodeAktif(!periodeAktif)}
-                className="flex items-center gap-1.5 text-sm font-500"
-              >
-                {periodeAktif ? (
-                  <>
-                    <ToggleRight size={24} className="text-green-500" /> Aktif
-                  </>
-                ) : (
-                  <>
-                    <ToggleLeft size={24} className="text-gray-400" /> Nonaktif
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                Tanggal Buka
-              </label>
-              <input
-                type="date"
-                value={tglBuka}
-                onChange={(e) => setTglBuka(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
-              />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700">
+              2
             </div>
             <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                Tanggal Tutup
-              </label>
-              <input
-                type="date"
-                value={tglTutup}
-                onChange={(e) => setTglTutup(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
-              />
+              <h2 className="font-600 text-gray-800 text-sm">Periode Input Nilai KHS</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Atur kapan mahasiswa KIP-K dapat mengajukan nilai KHS untuk divalidasi admin
+              </p>
             </div>
           </div>
+          <button
+            onClick={handleAddPeriode}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors"
+            style={{ background: "#263F93" }}
+          >
+            <Plus size={12} /> Tambah Periode
+          </button>
+        </div>
+        <div className="p-5 space-y-5">
+          <PeriodeAktifCard
+            active={periodeList.find(p => p.is_aktif) || null}
+            totalMahasiswaAktif={totalMahasiswaAktif}
+            onEdit={() => {
+              const active = periodeList.find(p => p.is_aktif);
+              if (active) handleEditPeriode(active);
+            }}
+            onDeactivate={handleDeactivatePeriode}
+            onActivateAnother={handleAddPeriode}
+          />
 
-          {/* History */}
-          <div>
-            <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">
-              Riwayat Periode
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    {["Semester", "Tanggal Buka", "Tanggal Tutup"].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left py-2 px-3 text-gray-400 font-600"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {periodeHistory.map((p) => (
-                    <tr key={p.id} className="border-b border-gray-50">
-                      <td className="py-2 px-3 text-gray-600">{p.semester}</td>
-                      <td className="py-2 px-3 text-gray-500">{formatTgl(p.tanggal_buka)}</td>
-                      <td className="py-2 px-3 text-gray-500">{formatTgl(p.tanggal_tutup)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <TimelinePeriode
+            items={periodeList}
+            onActivate={handleActivatePeriode}
+            onEdit={handleEditPeriode}
+            onDelete={handleDeletePeriode}
+          />
         </div>
       </div>
+
+      <PeriodeFormModal
+        open={modalOpen}
+        initial={editingPeriode}
+        tahunAjaranOptions={tahunAjaranOptions}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingPeriode(null);
+        }}
+        onSubmit={handleCreateOrUpdatePeriode}
+      />
 
       {/* Section 3: Master Prodi */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

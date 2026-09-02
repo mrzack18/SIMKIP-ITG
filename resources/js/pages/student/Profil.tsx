@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import {
   Eye, EyeOff, CheckCircle, X, Pencil, Camera, Phone, AlertCircle, Clock,
 } from "lucide-react";
@@ -69,7 +69,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 /* ── Mahasiswa full layout ─────────────────────────────────────────────── */
 function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
-  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+  const [taFilter, setTaFilter] = useState("Semua");
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

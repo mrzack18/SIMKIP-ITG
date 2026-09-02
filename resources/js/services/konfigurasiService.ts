@@ -77,3 +77,37 @@ export async function getPelanggaranList(): Promise<PelanggaranItem[]> {
   const res = await api.get<{ success: boolean; data: PelanggaranItem[] }>("/konfigurasi/pelanggaran");
   return res.data ?? [];
 }
+
+// ─── Periode Akademik CRUD ────────────────────────────────────────────
+
+export interface PeriodeCreateInput {
+  tahun_akademik: string;
+  semester: "Ganjil" | "Genap";
+  tanggal_buka: string;
+  tanggal_tutup: string;
+  is_aktif?: boolean;
+}
+
+export async function getPeriodeList(): Promise<PeriodeItem[]> {
+  const res = await api.get<{ success: boolean; data: PeriodeItem[] }>("/konfigurasi/periode-akademik");
+  return res.data ?? [];
+}
+
+export async function createPeriode(input: PeriodeCreateInput): Promise<PeriodeItem> {
+  const res = await api.post<{ success: boolean; data: PeriodeItem }>("/konfigurasi/periode-akademik", input);
+  return res.data;
+}
+
+export async function updatePeriode(id: number, input: Partial<PeriodeCreateInput>): Promise<PeriodeItem> {
+  const res = await api.put<{ success: boolean; data: PeriodeItem }>(`/konfigurasi/periode-akademik/${id}`, input);
+  return res.data;
+}
+
+export async function deletePeriode(id: number): Promise<void> {
+  await api.delete(`/konfigurasi/periode-akademik/${id}`);
+}
+
+export async function activatePeriode(id: number): Promise<PeriodeItem> {
+  const res = await api.patch<{ success: boolean; data: PeriodeItem }>(`/konfigurasi/periode-akademik/${id}/activate`);
+  return res.data;
+}

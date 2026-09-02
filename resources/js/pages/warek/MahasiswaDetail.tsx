@@ -43,7 +43,7 @@ import logoItg from "@/imports/logo_itg.jpg"
 import { api } from "@/services/api"
 import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
 import { spHistoryData } from "@/data/mockData"
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1710,7 +1710,7 @@ const TAB_LABELS = [
 
 export default function WarekMahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
+  const [tahunAjaran, setTahunAjaran] = useState("Semua")
   const [activeTab, setActiveTab] = useState(0)
 
   const [mhs, setMhs] = useState<MahasiswaDetail | null>(null)

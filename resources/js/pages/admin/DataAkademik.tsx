@@ -28,7 +28,7 @@ import {
   getMahasiswaFilterOptions,
 } from "@/services/mahasiswaService"
 import { getKonfigurasiAll } from "@/services/konfigurasiService"
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter"
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter"
 
 const kipkOptions = ["Semua Kategori", "KIP-K Reguler", "KIP-K Aspirasi"]
 
@@ -579,7 +579,7 @@ export default function DataAkademik() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [akademikRows, setAkademikRows] = useState<any[]>([])
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
+  const [tahunAjaran, setTahunAjaran] = useState("Semua")
   const [prestasiData, setPrestasiData] = useState<any[]>([])
   const [organisasiData, setOrganisasiData] = useState<any[]>([])
   const [pelatihanData, setPelatihanData] = useState<any[]>([])

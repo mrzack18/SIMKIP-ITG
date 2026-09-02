@@ -223,6 +223,14 @@ class KonfigurasiController extends Controller
     }
 
     // --- Master Periode Akademik ---
+    public function indexPeriode(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
+        ]);
+    }
+
     private function buildTahunAjaranOptions(): array
     {
         // Generate 5 tahun ajaran: 3 sebelum, current, 1 setelah
@@ -262,18 +270,9 @@ class KonfigurasiController extends Controller
     public function activatePeriode(int $id): JsonResponse
     {
         $p = PeriodeAkademik::findOrFail($id);
-        PeriodeAkademik::query()->update(['is_aktif' => false]);
         $p->update(['is_aktif' => true]);
-
-        // Sync compatibility for old konfigurasis keys used by other modules
-        Konfigurasi::where('key', 'periode_input_aktif')->update(['value' => '1']);
-        Konfigurasi::where('key', 'periode_input_buka')->update(['value' => $p->tanggal_buka->format('Y-m-d')]);
-        Konfigurasi::where('key', 'periode_input_tutup')->update(['value' => $p->tanggal_tutup->format('Y-m-d')]);
-        Konfigurasi::where('key', 'periode_input_tahun_ajaran')->update(['value' => $p->tahun_akademik . ' ' . $p->semester]);
-        Konfigurasi::where('key', 'tahun_akademik_aktif')->update(['value' => $p->tahun_akademik]);
-        Konfigurasi::where('key', 'semester_aktif')->update(['value' => $p->semester]);
-
-        return response()->json(['success' => true, 'data' => $p]);
+        // Sync ke konfigurasi keys dilakukan otomatis oleh PeriodeAkademikObserver::saved
+        return response()->json(['success' => true, 'data' => $p->fresh()]);
     }
 
     // --- Upload Logo Institusi ---

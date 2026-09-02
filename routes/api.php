@@ -167,10 +167,11 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::patch("/pelanggaran/{id}/toggle", [AdminConfig::class, "togglePelanggaran"]);
         Route::get("/pelanggaran",               [AdminConfig::class, "indexPelanggaran"]);
         
-        Route::post("/periode",                  [AdminConfig::class, "storePeriode"]);
-        Route::put("/periode/{id}",              [AdminConfig::class, "updatePeriode"]);
-        Route::delete("/periode/{id}",           [AdminConfig::class, "destroyPeriode"]);
-        Route::patch("/periode/{id}/activate",   [AdminConfig::class, "activatePeriode"]);
+        Route::get("/periode-akademik",          [AdminConfig::class, "indexPeriode"]);
+        Route::post("/periode-akademik",         [AdminConfig::class, "storePeriode"]);
+        Route::put("/periode-akademik/{id}",     [AdminConfig::class, "updatePeriode"]);
+        Route::delete("/periode-akademik/{id}",  [AdminConfig::class, "destroyPeriode"]);
+        Route::patch("/periode-akademik/{id}/activate", [AdminConfig::class, "activatePeriode"]);
     });
 
     // WAREK-specific endpoints (read-only dashboard & export)

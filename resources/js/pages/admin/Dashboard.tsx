@@ -25,7 +25,7 @@ import {
   UserX,
   Calendar,
 } from "lucide-react";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import logoItg from "@/imports/logo_itg.jpg";
 
 // ── SP badge helper ────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ function ProdiChartTooltip({
 export default function Dashboard() {
   const { user } = useAuth();
   const [selectedAngkatan, setSelectedAngkatan] = useState<string>("Semua");
-  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>(getCurrentTahunAjaran());
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>("Semua");
   const [selectedKendalaTahunAjaran, setSelectedKendalaTahunAjaran] = useState<string>("Semua");
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);

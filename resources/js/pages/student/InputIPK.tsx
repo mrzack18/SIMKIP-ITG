@@ -10,7 +10,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts"
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import {
   TrendingUp,
   TrendingDown,
@@ -87,7 +87,7 @@ function getLulus(nilai: NilaiHuruf): boolean | null {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function InputIPK() {
-  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+  const [taFilter, setTaFilter] = useState("Semua");
 
   const [mkList, setMkList] = useState<MataKuliah[]>([])
   const [nextId, setNextId] = useState(1)

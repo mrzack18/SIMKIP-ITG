@@ -5,7 +5,7 @@ import { getMahasiswaList, getMahasiswaSpHistory } from "@/services/mahasiswaSer
 import { terbitkanSP } from "@/services/spService";
 import { getPelanggaranList } from "@/services/konfigurasiService";
 import type { Mahasiswa } from "@/types";
-import { getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import {} from "@/components/ui/TahunAjaranFilter";
 
 type SPLevel = "SP1" | "SP2" | "SP3";
 
@@ -71,7 +71,7 @@ export default function TerbitkanSP() {
   const [tanggalTerbit, setTanggalTerbit] = useState(() => new Date().toISOString().slice(0, 10));
   const [batasEvaluasi, setBatasEvaluasi] = useState("");
   const [catatan, setCatatan]     = useState("");
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
 
   // UI state
   const [showConfirm, setShowConfirm]   = useState(false);

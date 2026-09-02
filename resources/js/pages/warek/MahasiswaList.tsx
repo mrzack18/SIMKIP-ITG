@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 interface Mhs {
   id: number;
   nim: string;
@@ -28,7 +28,7 @@ const PAGE_SIZE = 8;
 
 export default function WarekMahasiswaList() {
   const [search, setSearch] = useState("");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
   const [filterProdi, setFilterProdi] = useState("Semua");
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");

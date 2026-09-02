@@ -5,13 +5,13 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { getMahasiswaFilterOptions, getProdiMahasiswaList } from "@/services/mahasiswaService";
 import type { Mahasiswa } from "@/types";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 const PAGE_SIZE = 10;
 
 export default function ProdiMahasiswaList() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");
   const [filterStatus, setFilterStatus] = useState("Semua Status");

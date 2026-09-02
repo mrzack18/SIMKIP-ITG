@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FileText, CheckCircle, Clock, RotateCcw, Download } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 type LStatus = "Menunggu" | "Disetujui" | "Dikembalikan";
 
 interface Laporan {
@@ -30,7 +30,7 @@ const statusStyle: Record<LStatus, { badge: string; icon: React.ReactNode }> = {
 
 export default function WarekLaporanList() {
   const [activeTab, setActiveTab] = useState<LStatus>("Menunggu");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
   const [data, setData] = useState<Laporan[]>([]);
   const [counts, setCounts] = useState<Record<LStatus, number>>({ Menunggu: 0, Disetujui: 0, Dikembalikan: 0 });
   const [loading, setLoading] = useState(true);

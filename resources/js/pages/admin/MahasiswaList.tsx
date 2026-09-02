@@ -27,7 +27,7 @@ import {
   type MahasiswaFilter,
 } from "@/services/mahasiswaService";
 import type { Mahasiswa, PaginatedResponse } from "@/types";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ─── SP badges (historical list with status) ─────────────────────────────────────────────────────────────────────────
 function SpBadges({ spList }: { spList?: { level: string; status: string }[] | null }) {
@@ -100,7 +100,7 @@ export default function MahasiswaList() {
   // Filters
   const [searchInput,         setSearchInput]         = useState("");
   const [search,              setSearch]              = useState("");
-  const [tahunAjaranFilter,   setTahunAjaranFilter]   = useState(getCurrentTahunAjaran());
+  const [tahunAjaranFilter,   setTahunAjaranFilter]   = useState("Semua");
   const [prodiFilter,         setProdiFilter]         = useState("Semua Prodi");
   const [angkatanFilter,      setAngkatanFilter]      = useState("Semua Angkatan");
   const [spFilter,            setSpFilter]            = useState("Semua SP");
@@ -206,7 +206,7 @@ export default function MahasiswaList() {
 
   function resetFilters() {
     setSearchInput(""); setSearch("");
-    setTahunAjaranFilter(getCurrentTahunAjaran());
+    setTahunAjaranFilter("Semua");
     setProdiFilter("Semua Prodi"); setAngkatanFilter("Semua Angkatan");
     setSpFilter("Semua SP"); setStatusFilter("Semua Status");
     setKipFilter("Semua Kategori"); setIpkFilter("Semua IPK");

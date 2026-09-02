@@ -5,7 +5,7 @@ import { getLaporanList, type LaporanFilter } from "@/services/laporanService"
 import { getKonfigurasiAll } from "@/services/konfigurasiService"
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService"
 import type { Laporan } from "@/types"
-import { TahunAjaranFilter, getCurrentTahunAjaran, parseTahunAjaran } from "@/components/ui/TahunAjaranFilter"
+import { TahunAjaranFilter, parseTahunAjaran } from "@/components/ui/TahunAjaranFilter"
 
 const statusStyle: Record<string, { badge: string; icon: React.ReactNode; label: string }> = {
   Disetujui: {
@@ -68,7 +68,7 @@ function formatDate(iso: string | undefined): string {
 
 export default function LaporanList() {
   const [search, setSearch] = useState("")
-  const [tahunFilter, setTahunFilter] = useState(getCurrentTahunAjaran())
+  const [tahunFilter, setTahunFilter] = useState("Semua")
   const [semesterFilter, setSemesterFilter] = useState("")
   const [selectedProdi, setSelectedProdi] = useState('Semua');
   const [selectedAngkatan, setSelectedAngkatan] = useState('Semua');

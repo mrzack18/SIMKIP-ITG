@@ -3,7 +3,7 @@ import { CheckCircle, AlertTriangle, Award, Search, Loader2 } from "lucide-react
 import { getBebasTanggunganList } from "@/services/bebasTanggunganService";
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import type { BebasTanggunganListItem } from "@/types";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import { Link } from "react-router-dom";
 
 type Tab = "menunggu" | "diterbitkan" | "ditolak";
@@ -20,7 +20,7 @@ export default function BebasTanggunganList() {
   const [tab, setTab] = useState<Tab>("menunggu");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
   const [page, setPage] = useState(1);
 
   const [selectedProdi, setSelectedProdi] = useState("Semua Prodi");

@@ -8,7 +8,7 @@ import { createLaporan, submitLaporan, getPreviewStatistics, type LaporanPreview
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import logoItg from "@/imports/logo_itg.jpg";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 const STEPS = [
   { label: "Informasi Laporan", num: 1 },
@@ -24,7 +24,7 @@ export default function SusunLaporan() {
   const [form, setForm] = useState({
     judul: "Laporan Evaluasi Semester Genap Tahun Akademik 2025/2026",
     nomorSK: "",
-    tahunAkademik: getCurrentTahunAjaran(),
+    tahunAkademik: "Semua",
     semester: "Genap",
     tanggalLaporan: "2026-08-19",
     catatan: "",

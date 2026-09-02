@@ -79,7 +79,7 @@ export default function UploadDokumen() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+  const [taFilter, setTaFilter] = useState("Semua");
 
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const [viewTarget, setViewTarget] = useState<Doc | null>(null);

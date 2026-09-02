@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 type PTab = "Internasional" | "Nasional" | "Wilayah";
 type PStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak";
@@ -84,7 +84,7 @@ export default function Prestasi() {
   const [activeTab, setActiveTab] = useState<PTab>("Internasional");
   const [openForm, setOpenForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+  const [taFilter, setTaFilter] = useState("Semua");
   const [detail, setDetail] = useState<Prestasi | null>(null);
   const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
   const [fileSertifikat, setFileSertifikat] = useState<File | null>(null);

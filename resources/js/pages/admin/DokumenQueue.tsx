@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { getDokumenQueue, approveDokumen, rejectDokumen } from "@/services/dokumenService";
 import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan, getMahasiswaFilterOptions, getMahasiswaIpk, getMahasiswaDokumen } from "@/services/mahasiswaService";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import type { DokumenQueue as DokumenQueueType } from "@/types";
 
 type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
@@ -416,7 +416,7 @@ export default function DokumenQueue() {
   const [error, setError] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
   const [queue, setQueue] = useState<DokumenQueueType[]>([]);
   const [fullQueue, setFullQueue] = useState<DokumenQueueType[]>([]); // all items for accurate tab counts
   const [currentPage, setCurrentPage] = useState(1);

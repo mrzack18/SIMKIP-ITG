@@ -57,6 +57,42 @@ class TahunAjaranHelper
     }
 
     /**
+     * Filter tabel yang MEMILIKI kolom `tahun_ajaran` (mis. ipk_semestrs)
+     * dengan membandingkan langsung ke nilai kolom tersebut, bukan ke created_at.
+     *
+     * Menangani semua varian format yang ada di DB:
+     *   - "Tahun 2025/2026-1"   (legacy format dari frontend)
+     *   - "2025/2026-1"         (tanpa prefix "Tahun ")
+     *   - "2025/2026 Ganjil"    (normalized format)
+     *
+     * @param  \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder  $query
+     */
+    public static function applyTahunAjaranFilter($query, string $columnName, ?string $tahunAjaran)
+    {
+        if (!$tahunAjaran || $tahunAjaran === 'Semua') return $query;
+
+        // Normalisasi ke format readable "2025/2026 Ganjil"
+        $normalized = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+
+        // Bangun varian legacy "Tahun 2025/2026-1" dari format normalized
+        $legacyFormat = null;
+        if (preg_match('/^(\d{4}\/\d{4})\s+(Ganjil|Genap)$/', $normalized, $m)) {
+            $num = $m[2] === 'Ganjil' ? '1' : '2';
+            $legacyFormat = "Tahun {$m[1]}-{$num}";
+        }
+
+        // Kumpulkan semua varian yang mungkin cocok
+        $variants = array_values(array_unique(array_filter([
+            $tahunAjaran,                           // input asli
+            $normalized,                            // "2025/2026 Ganjil"
+            $legacyFormat,                          // "Tahun 2025/2026-1" (built jika applicable)
+            str_replace('Tahun ', '', $tahunAjaran), // "2025/2026-1"
+        ])));
+
+        return $query->whereIn($columnName, $variants);
+    }
+
+    /**
      * Menghitung semester secara matematis berdasarkan tahun masuk dan tahun ajaran
      */
     public static function calculateSemester(int $angkatan, ?string $tahunAjaran = null): int

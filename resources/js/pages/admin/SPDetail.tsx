@@ -8,7 +8,7 @@ import logoItg from "@/imports/logo_itg.jpg";
 import { getSPDetail, updateSPStatus, type SPDetailResponse } from "@/services/spService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { SuratPeringatan } from "@/types";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ── Static UI mappings ───────────────────────────────────────────────────────
 const levelColor: Record<string, { bg: string; text: string; border: string }> = {

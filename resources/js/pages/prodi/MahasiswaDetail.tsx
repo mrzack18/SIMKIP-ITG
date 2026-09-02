@@ -42,7 +42,7 @@ import {
 import logoItg from "@/imports/logo_itg.jpg"
 import { api, API_BASE_URL } from "@/services/api"
 import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1374,7 +1374,7 @@ const TAB_LABELS = [
 
 export default function MahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
+  const [tahunAjaran, setTahunAjaran] = useState("Semua")
   const [activeTab, setActiveTab] = useState(0)
   const [data, setData] = useState<DetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
