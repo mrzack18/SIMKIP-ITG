@@ -16,8 +16,12 @@ class DokumenController extends Controller
     {
         $m = $request->user()->mahasiswa;
         
-        $jenis = DokumenJenis::with(['fields', 'dokumens' => function ($q) use ($m) {
-            $q->where('mahasiswa_id', $m->id)->latest();
+        $jenis = DokumenJenis::with(['fields', 'dokumens' => function ($q) use ($m, $request) {
+            $q->where('mahasiswa_id', $m->id);
+            if ($request->tahun_ajaran) {
+                \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'created_at', $request->tahun_ajaran);
+            }
+            $q->latest();
         }])->orderBy('urutan')->get();
 
         return response()->json([

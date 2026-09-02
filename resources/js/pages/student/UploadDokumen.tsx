@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, CheckCircle, Clock, AlertTriangle, FileText, ChevronRight, X, Loader2 } from "lucide-react";
+import { Upload, CheckCircle, Clock, AlertTriangle, FileText, ChevronRight, X, Loader2, Eye, Download } from "lucide-react";
 import { api } from "@/services/api";
+import { useAuth } from "@/context/AuthContext";
 import { getCurrentTahunAjaran, TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 type DocStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak" | "Belum Diunggah";
@@ -16,41 +17,9 @@ interface Doc {
   fileName?: string;
   fileUrl?: string;
   metadata?: any;
+  isWajib?: boolean;
+  fields?: any[];
 }
-
-interface ExtraFieldDef {
-  key: string;
-  label: string;
-  type: "text" | "date";
-}
-
-const EXTRA_FIELDS: Record<string, ExtraFieldDef[]> = {
-  pkkmb: [
-    { key: "tanggal", label: "Tanggal Pelaksanaan", type: "date" },
-    { key: "tempat", label: "Tempat / Lokasi", type: "text" },
-  ],
-  mabim: [
-    { key: "tanggal", label: "Tanggal Pelaksanaan", type: "date" },
-    { key: "tempat", label: "Tempat / Lokasi", type: "text" },
-  ],
-  belanegara: [
-    { key: "tanggal", label: "Tanggal Pelaksanaan", type: "date" },
-    { key: "tempat", label: "Tempat", type: "text" },
-    { key: "penyelenggara", label: "Penyelenggara", type: "text" },
-  ],
-  sertifikasi: [
-    { key: "namaSertifikasi", label: "Nama Sertifikasi", type: "text" },
-    { key: "penyelenggara", label: "Penyelenggara", type: "text" },
-    { key: "tanggalLulus", label: "Tanggal Lulus", type: "date" },
-    { key: "noSertifikat", label: "No. Sertifikat", type: "text" },
-  ],
-  ba_kp: [
-    { key: "judulKP", label: "Judul KP", type: "text" },
-    { key: "perusahaan", label: "Perusahaan / Instansi", type: "text" },
-    { key: "tanggalMulai", label: "Tanggal Mulai", type: "date" },
-    { key: "tanggalSelesai", label: "Tanggal Selesai", type: "date" },
-  ],
-};
 
 const borderColor: Record<DocStatus, string> = {
   Disetujui: "border-l-green-500",
@@ -76,10 +45,12 @@ function StatusIcon({ status }: { status: DocStatus }) {
 const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
 
 export default function UploadDokumen() {
+  const { user } = useAuth();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
+  const isReadOnly = taFilter !== getCurrentTahunAjaran();
 
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const [viewTarget, setViewTarget] = useState<Doc | null>(null);
@@ -92,7 +63,10 @@ export default function UploadDokumen() {
   const fetchDokumen = async () => {
     try {
       setLoading(true);
-      const res = await api.get<{ data: Doc[] }>("/dokumen");
+      const res = await api.get<{ data: Doc[] }>(
+        "/dokumen", 
+        taFilter ? { tahun_ajaran: taFilter } : undefined
+      );
       setDocs(res.data);
     } catch (err: any) {
       setError(err.message || "Gagal memuat dokumen");
@@ -103,7 +77,7 @@ export default function UploadDokumen() {
 
   useEffect(() => {
     fetchDokumen();
-  }, []);
+  }, [taFilter]);
 
   const approved = docs.filter((d) => d.status === "Disetujui").length;
   const total = docs.length;
@@ -181,11 +155,11 @@ export default function UploadDokumen() {
           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
           style={{ background: "#263F93" }}
         >
-          AR
+          {user?.nama?.substring(0, 2).toUpperCase() || "MH"}
         </div>
         <div>
-          <p className="font-semibold text-gray-800 text-sm">Ahmad Rifaldi</p>
-          <p className="text-xs text-gray-400">NIM 2206001</p>
+          <p className="font-semibold text-gray-800 text-sm">{user?.nama || "Mahasiswa"}</p>
+          <p className="text-xs text-gray-400">NIM {user?.nim || "-"}</p>
         </div>
       </div>
 
@@ -227,6 +201,11 @@ export default function UploadDokumen() {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <h3 className="font-semibold text-gray-800 text-sm">{doc.nama}</h3>
+                  {doc.isWajib ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-50 text-[#263F93] border border-blue-100">Wajib</span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-gray-50 text-gray-400 border border-gray-200">Opsional</span>
+                  )}
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${badgeStyle[doc.status]}`}>
                     {doc.status}
                   </span>
@@ -264,10 +243,10 @@ export default function UploadDokumen() {
                     <Download size={13} /> Unduh
                   </a>
                 )}
-                {(doc.status === "Belum Diunggah" || doc.status === "Ditolak") && (
+                {(doc.status === "Belum Diunggah" || doc.status === "Ditolak") && !isReadOnly && (
                   <button
                     onClick={() => openUpload(doc.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white font-medium transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white font-medium transition-colors hover:opacity-90"
                     style={{ background: doc.status === "Ditolak" ? "#DC2626" : "#263F93" }}
                   >
                     <Upload size={13} /> {doc.status === "Ditolak" ? "Upload Ulang" : "Upload"}

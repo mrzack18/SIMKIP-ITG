@@ -27,7 +27,9 @@ class ArsipController extends Controller
         $arsip = collect();
 
         // 1. Prestasi
-        $prestasis = $m->prestasis()->where('status', 'Disetujui')->get();
+        $prestasis = $m->prestasis()->where('status', 'Disetujui');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($prestasis, 'created_at', $request->tahun_ajaran);
+        $prestasis = $prestasis->get();
         foreach ($prestasis as $p) {
             if ($p->file_sertifikat) {
                 $arsip->push([
@@ -52,7 +54,9 @@ class ArsipController extends Controller
         }
 
         // 2. Organisasi
-        $organisasis = $m->organisasis()->where('status', 'Disetujui')->get();
+        $organisasis = $m->organisasis()->where('status', 'Disetujui');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($organisasis, 'created_at', $request->tahun_ajaran);
+        $organisasis = $organisasis->get();
         foreach ($organisasis as $o) {
             if ($o->file_sk) {
                 $arsip->push([
@@ -74,7 +78,9 @@ class ArsipController extends Controller
         }
 
         // 3. Pelatihan
-        $pelatihans = $m->pelatihans()->where('status', 'Disetujui')->get();
+        $pelatihans = $m->pelatihans()->where('status', 'Disetujui');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($pelatihans, 'created_at', $request->tahun_ajaran);
+        $pelatihans = $pelatihans->get();
         foreach ($pelatihans as $pel) {
             if ($pel->file_sertifikat) {
                 $arsip->push([
@@ -98,7 +104,9 @@ class ArsipController extends Controller
         }
 
         // 4. Dokumen
-        $dokumens = $m->dokumens()->where('status', 'Disetujui')->with('jenis')->get();
+        $dokumens = $m->dokumens()->where('status', 'Disetujui')->with('jenis');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($dokumens, 'created_at', $request->tahun_ajaran);
+        $dokumens = $dokumens->get();
         foreach ($dokumens as $d) {
             if ($d->path_file) {
                 // If the name from jenis is SK Penetapan KIP-K it will match CATEGORIES in frontend.
@@ -120,7 +128,9 @@ class ArsipController extends Controller
         }
 
         // 5. IPK Semesters (Treated as Approved)
-        $ipkSemesters = $m->ipkSemestrs()->get();
+        $ipkSemesters = $m->ipkSemestrs();
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($ipkSemesters, 'created_at', $request->tahun_ajaran);
+        $ipkSemesters = $ipkSemesters->get();
         foreach ($ipkSemesters as $ipk) {
             if ($ipk->file_khs) {
                 $arsip->push([
@@ -137,7 +147,9 @@ class ArsipController extends Controller
         }
 
         // 6. Bebas Tanggungan
-        $bt = $m->bebasTanggungan()->where('status', 'Disetujui')->first();
+        $btQuery = $m->bebasTanggungan()->where('status', 'Disetujui');
+        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($btQuery, 'created_at', $request->tahun_ajaran);
+        $bt = $btQuery->first();
         if ($bt) {
             $arsip->push([
                 'id' => 'bt_' . $bt->id,

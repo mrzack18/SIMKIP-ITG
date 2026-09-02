@@ -508,8 +508,10 @@ function GenericPreview({ doc, data }: { doc: DokumenQueueType; data: any | null
           <DocPlaceholderCard
             icon={typeIcon(doc.jenis, "text-gray-400")}
             label={doc.jenis}
-            fileUrl={data?.fileUrl}
-            downloadUrl={data?.id != null ? fileDownloadUrl("dokumen", data.id, "path_file") : undefined}
+            fileUrl={data?.file_url}
+            downloadType="dokumen"
+            downloadId={data?.id}
+            downloadField="path_file"
           />
         </div>
       </div>
@@ -1041,24 +1043,7 @@ export default function DokumenQueue() {
               ) : reviewing.id.toString().startsWith("ipk_") || reviewing.jenis === "KHS" ? (
                 <EvaluasiPreview doc={reviewing} data={previewIpk} />
               ) : (
-                <>
-                  <GenericPreview doc={reviewing} data={previewGeneric} />
-                  {/* Zoom controls for generic only */}
-                  <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
-                      className="p-1.5 rounded-lg border hover:bg-gray-50" style={{ borderColor: "#E2E8F0" }}>
-                      <ZoomOut size={14} />
-                    </button>
-                    <span className="text-xs text-gray-500">{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(z => Math.min(2, z + 0.25))}
-                      className="p-1.5 rounded-lg border hover:bg-gray-50" style={{ borderColor: "#E2E8F0" }}>
-                      <ZoomIn size={14} />
-                    </button>
-                    <button className="ml-2 flex items-center gap-1 text-xs hover:underline" style={{ color: "#263F93" }}>
-                      <Download size={12} /> Download Asli
-                    </button>
-                  </div>
-                </>
+                <GenericPreview doc={reviewing} data={previewGeneric} />
               )}
 
               {/* Rejection history */}
