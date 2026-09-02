@@ -99,6 +99,26 @@ class PrestasiController extends Controller
         if ($p->file_foto) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_foto);
         
         $p->delete();
+
         return response()->json(['message' => 'Prestasi dihapus.']);
+    }
+
+    public function resubmit(Request $request, int $id): JsonResponse
+    {
+        $m = $request->user()->mahasiswa;
+        $p = Prestasi::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
+
+        if ($p->status !== 'Ditolak') {
+            return response()->json(['message' => 'Hanya prestasi berstatus Ditolak yang dapat diajukan ulang.'], 422);
+        }
+
+        $p->update([
+            'status'         => 'Menunggu Validasi',
+            'catatan_admin'  => null,
+            'validated_by'   => null,
+            'validated_at'   => null,
+        ]);
+
+        return response()->json(['message' => 'Prestasi berhasil diajukan ulang.', 'data' => new \App\Http\Resources\PrestasiResource($p)]);
     }
 }

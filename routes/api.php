@@ -83,6 +83,7 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::post("/prestasi",               [PrestasiController::class, "store"]);
     Route::put("/prestasi/{id}",           [PrestasiController::class, "update"]);
     Route::delete("/prestasi/{id}",        [PrestasiController::class, "destroy"]);
+    Route::patch("/prestasi/{id}/resubmit",[PrestasiController::class, "resubmit"]);
     Route::patch("/prestasi/{id}/validate",[PrestasiController::class, "validatePrestasi"]);
 
     Route::get("/organisasi",                [OrganisasiController::class, "index"]);

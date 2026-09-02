@@ -389,7 +389,7 @@ class MahasiswaController extends Controller
                 'tanggalSelesai' => $p->tanggal_selesai ? $p->tanggal_selesai->format('d M Y') : null,
                 'tempat' => $p->tempat,
                 'deskripsi' => $p->deskripsi,
-                'link' => $p->link,
+                'link' => $p->link_penyelenggara,
                 'status' => $p->status,
                 'catatan' => $p->catatan_admin,
             ];

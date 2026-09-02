@@ -30,6 +30,11 @@ class PrestasiController extends Controller
         abort(403);
     }
 
+    public function resubmit(Request $req, $id) {
+        if ($req->user()->role === "mahasiswa") return app(MhsPrestasi::class)->resubmit($req, $id);
+        abort(403);
+    }
+
     public function validatePrestasi(Request $req, $id) {
         if ($req->user()->role === "admin") return app(AdminAkademik::class)->validatePrestasi($req, $id);
         abort(403);

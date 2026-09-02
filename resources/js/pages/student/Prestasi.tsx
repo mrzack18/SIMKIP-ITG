@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2 } from "lucide-react";
+import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2, Pencil, Send } from "lucide-react";
 import { api } from "@/services/api";
 import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
@@ -59,7 +59,6 @@ interface FormState {
   tempat: string;
   deskripsi: string;
   linkPenyelenggara: string;
-  tahunAjaran: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -72,7 +71,6 @@ const EMPTY_FORM: FormState = {
   tempat: "",
   deskripsi: "",
   linkPenyelenggara: "",
-  tahunAjaran: "2025/2026 Ganjil",
 };
 
 const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " Ganjil").replace("-2", " Genap") : "2025/2026 Ganjil";
@@ -89,6 +87,7 @@ export default function Prestasi() {
   const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
   const [fileSertifikat, setFileSertifikat] = useState<File | null>(null);
   const [fileFoto, setFileFoto] = useState<File | null>(null);
+  const [editingItem, setEditingItem] = useState<Prestasi | null>(null);
   const sertifikatRef = useRef<HTMLInputElement>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
 
@@ -123,7 +122,26 @@ export default function Prestasi() {
   const tabItems = list.filter((p) => p.tab === activeTab);
 
   const openAddForm = () => {
+    setEditingItem(null);
     setForm({ ...EMPTY_FORM, tab: activeTab });
+    setFileSertifikat(null);
+    setFileFoto(null);
+    setOpenForm(true);
+  };
+
+  const openEditForm = (item: Prestasi) => {
+    setEditingItem(item);
+    setForm({
+      tab: item.tab,
+      nama: item.nama,
+      penyelenggara: item.penyelenggara,
+      pencapaian: item.pencapaian,
+      tanggalMulai: item.tanggalMulai,
+      tanggalSelesai: item.tanggalSelesai,
+      tempat: item.tempat,
+      deskripsi: item.deskripsi,
+      linkPenyelenggara: item.linkPenyelenggara || "",
+    });
     setFileSertifikat(null);
     setFileFoto(null);
     setOpenForm(true);
@@ -145,9 +163,13 @@ export default function Prestasi() {
       if (form.linkPenyelenggara) payload.append("link_penyelenggara", form.linkPenyelenggara);
       if (fileSertifikat) payload.append("file_sertifikat", fileSertifikat);
       if (fileFoto) payload.append("file_foto", fileFoto);
-      payload.append("tahun_ajaran", form.tahunAjaran);
 
-      await api.post("/prestasi", payload);
+      if (editingItem) {
+        await api.put(`/prestasi/${editingItem.id}`, payload);
+      } else {
+        await api.post("/prestasi", payload);
+      }
+      setEditingItem(null);
       setOpenForm(false);
       fetchPrestasi();
     } catch (err: any) {
@@ -158,6 +180,15 @@ export default function Prestasi() {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResubmit = async (id: number) => {
+    try {
+      await api.patch(`/prestasi/${id}/resubmit`);
+      fetchPrestasi();
+    } catch (err: any) {
+      alert(err.error?.message || err.message || "Gagal mengajukan ulang");
     }
   };
 
@@ -312,6 +343,23 @@ export default function Prestasi() {
                           >
                             <Eye size={12} /> Lihat Detail
                           </button>
+
+                          {p.status === "Ditolak" && (
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={() => openEditForm(p)}
+                                className="flex-1 py-1.5 rounded-lg border border-amber-300 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <Pencil size={12} /> Edit
+                              </button>
+                              <button
+                                onClick={() => handleResubmit(p.id)}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-white bg-[#263F93] hover:bg-[#1a2e6e] transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <Send size={12} /> Ajukan Ulang
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -457,12 +505,12 @@ export default function Prestasi() {
       {/* Add form slide-over */}
       {openForm && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="flex-1 bg-black/40" onClick={() => setOpenForm(false)} />
+          <div className="flex-1 bg-black/40" onClick={() => { setEditingItem(null); setOpenForm(false); }} />
           <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-              <h2 className="font-bold text-gray-800">Tambah Prestasi</h2>
+              <h2 className="font-bold text-gray-800">{editingItem ? "Perbaiki Prestasi" : "Tambah Prestasi"}</h2>
               <button
-                onClick={() => setOpenForm(false)}
+                onClick={() => { setEditingItem(null); setOpenForm(false); }}
                 className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
               >
                 <X size={18} />
@@ -470,6 +518,14 @@ export default function Prestasi() {
             </div>
 
             <div className="flex-1 px-5 py-4 space-y-4">
+              {editingItem && editingItem.status === "Ditolak" && editingItem.catatanAdmin && (
+                <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl">
+                  <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">
+                    <span className="font-medium">Catatan Admin:</span> {editingItem.catatanAdmin}
+                  </p>
+                </div>
+              )}
               {/* Kategori */}
               <div>
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">Kategori Tingkat</label>
@@ -491,17 +547,6 @@ export default function Prestasi() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Ajaran <span className="text-red-500">*</span></label>
-                <select value={form.tahunAjaran} onChange={e => setForm(f => ({ ...f, tahunAjaran: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20">
-                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
-                  <option value="2024/2025 Genap">2024/2025 Genap</option>
-                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
-                </select>
-              </div>
-
-              {/* Nama prestasi */}
               <div>
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   Nama Prestasi / Penghargaan <span className="text-red-500">*</span>
@@ -661,7 +706,7 @@ export default function Prestasi() {
 
             <div className="px-5 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
               <button
-                onClick={() => setOpenForm(false)}
+                onClick={() => { setEditingItem(null); setOpenForm(false); }}
                 className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
               >
                 Batal
@@ -672,7 +717,7 @@ export default function Prestasi() {
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 transition-opacity flex items-center justify-center"
                 style={{ background: "#263F93" }}
               >
-                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : "Simpan Prestasi"}
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : editingItem ? "Simpan Perubahan" : "Simpan Prestasi"}
               </button>
             </div>
           </div>
