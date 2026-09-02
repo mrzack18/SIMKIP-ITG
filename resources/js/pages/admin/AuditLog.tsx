@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, Download, X, CircleDot, Loader2, AlertCircle } from "lucide-react";
 import { getAuditLogs, type AuditLogEntry, type AuditLogFilter } from "@/services/auditService";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 const jenisStyle: Record<string, { border: string; badge: string; label: string; icon: React.ReactNode }> = {
   SP: { border: "border-l-red-500", badge: "bg-red-100 text-red-700", label: "SP", icon: <CircleDot size={12} className="text-red-500" /> },
@@ -44,7 +44,7 @@ export default function AuditLog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [detail, setDetail] = useState<AuditLogEntry | null>(null);
-  const [tahunAjaran, setTahunAjaran] = useState("Semua");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
 
   const fetchLogs = useCallback(async (filter: AuditLogFilter) => {
     setLoading(true);

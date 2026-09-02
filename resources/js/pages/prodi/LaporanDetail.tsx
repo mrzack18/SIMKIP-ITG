@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import logoItg from "@/imports/logo_itg.jpg";
 import { api, API_BASE_URL } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 interface LaporanDetailData {
   id: number;
@@ -47,7 +47,7 @@ interface DetailResponse {
 
 export default function ProdiLaporanDetail() {
   const { id } = useParams<{ id: string }>();
-  const [tahunAjaran, setTahunAjaran] = useState("Semua");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<DetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

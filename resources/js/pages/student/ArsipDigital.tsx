@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Download, Search, Filter, Folder, FileText, ChevronDown, ChevronRight, X, ExternalLink, Calendar, CheckCircle, Upload, Eye, Building2, MapPin, Tag, User, AlignLeft, ClipboardList, BarChart, Trophy, Landmark, GraduationCap, Image as ImageIcon, Award, Loader, ChevronUp } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 export interface FileItem {
   id: string;
@@ -321,7 +321,7 @@ export default function ArsipDigital() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("Semua");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [preview, setPreview] = useState<FileItem | null>(null);
 
   const [data, setData] = useState<FileItem[]>([]);

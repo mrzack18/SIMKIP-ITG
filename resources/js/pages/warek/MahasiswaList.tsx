@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 interface Mhs {
   id: number;
   nim: string;
@@ -28,7 +28,7 @@ const PAGE_SIZE = 8;
 
 export default function WarekMahasiswaList() {
   const [search, setSearch] = useState("");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [filterProdi, setFilterProdi] = useState("Semua");
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");
@@ -72,7 +72,7 @@ export default function WarekMahasiswaList() {
       try {
         const params = new URLSearchParams();
         if (search) params.set("search", search);
-        if (filterTahunAjaran !== "Semua") params.set("tahun_ajaran", filterTahunAjaran);
+        if (filterTahunAjaran) params.set("tahun_ajaran", filterTahunAjaran);
         if (filterProdi !== "Semua") params.set("prodi", filterProdi);
         if (filterAngkatan !== "Semua") params.set("angkatan", filterAngkatan);
         if (filterKategori !== "Semua") params.set("kategori", filterKategori);
@@ -102,7 +102,7 @@ export default function WarekMahasiswaList() {
   const handleExport = async () => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
-    if (filterTahunAjaran !== "Semua") params.set("tahun_ajaran", filterTahunAjaran);
+    if (filterTahunAjaran) params.set("tahun_ajaran", filterTahunAjaran);
     if (filterProdi !== "Semua") params.set("prodi", filterProdi);
     if (filterAngkatan !== "Semua") params.set("angkatan", filterAngkatan);
     if (filterKategori !== "Semua") params.set("kategori", filterKategori);

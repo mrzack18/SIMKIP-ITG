@@ -27,7 +27,7 @@ import {
   type MahasiswaFilter,
 } from "@/services/mahasiswaService";
 import type { Mahasiswa, PaginatedResponse } from "@/types";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ─── SP badges (historical list with status) ─────────────────────────────────────────────────────────────────────────
 function SpBadges({ spList }: { spList?: { level: string; status: string }[] | null }) {
@@ -100,7 +100,7 @@ export default function MahasiswaList() {
   // Filters
   const [searchInput,         setSearchInput]         = useState("");
   const [search,              setSearch]              = useState("");
-  const [tahunAjaranFilter,   setTahunAjaranFilter]   = useState("Semua");
+  const [tahunAjaranFilter,   setTahunAjaranFilter]   = useState(getCurrentTahunAjaran());
   const [prodiFilter,         setProdiFilter]         = useState("Semua Prodi");
   const [angkatanFilter,      setAngkatanFilter]      = useState("Semua Angkatan");
   const [spFilter,            setSpFilter]            = useState("Semua SP");
@@ -138,7 +138,7 @@ export default function MahasiswaList() {
   const [cabutError,      setCabutError]      = useState("");
 
   const isFiltered =
-    search || tahunAjaranFilter !== "Semua" || prodiFilter !== "Semua Prodi" ||
+    search || tahunAjaranFilter || prodiFilter !== "Semua Prodi" ||
     angkatanFilter !== "Semua Angkatan" || spFilter !== "Semua SP" ||
     statusFilter !== "Semua Status" || kipFilter !== "Semua Kategori" ||
     ipkFilter !== "Semua IPK" || sortBy !== "IPK Tertinggi → Terendah";
@@ -160,7 +160,7 @@ export default function MahasiswaList() {
   const buildFilter = useCallback((): MahasiswaFilter => {
     const f: MahasiswaFilter = { page, limit: LIMIT };
     if (search)                                        f.search        = search;
-    if (tahunAjaranFilter !== "Semua")                 f.tahun_ajaran  = tahunAjaranFilter;
+    if (tahunAjaranFilter)                 f.tahun_ajaran  = tahunAjaranFilter;
     if (prodiFilter !== "Semua Prodi")                 f.prodi         = prodiFilter;
     if (angkatanFilter !== "Semua Angkatan")           f.angkatan      = angkatanFilter;
     if (spFilter !== "Semua SP")                       f.spFilter      = spFilter;
@@ -206,7 +206,7 @@ export default function MahasiswaList() {
 
   function resetFilters() {
     setSearchInput(""); setSearch("");
-    setTahunAjaranFilter("Semua");
+    setTahunAjaranFilter(getCurrentTahunAjaran());
     setProdiFilter("Semua Prodi"); setAngkatanFilter("Semua Angkatan");
     setSpFilter("Semua SP"); setStatusFilter("Semua Status");
     setKipFilter("Semua Kategori"); setIpkFilter("Semua IPK");

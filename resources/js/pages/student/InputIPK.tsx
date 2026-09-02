@@ -10,7 +10,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts"
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import {
   TrendingUp,
   TrendingDown,
@@ -87,7 +87,7 @@ function getLulus(nilai: NilaiHuruf): boolean | null {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function InputIPK() {
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
 
   const [mkList, setMkList] = useState<MataKuliah[]>([])
   const [nextId, setNextId] = useState(1)
@@ -126,7 +126,7 @@ export default function InputIPK() {
     : 0
 
   // Computed displayed semester based on angkatan + TA filter
-  const displayedSemester = mahasiswaProfile && taFilter !== "Semua"
+  const displayedSemester = mahasiswaProfile && taFilter
     ? calculateSemester(mahasiswaProfile.angkatan, taFilter)
     : (maxSemesterFromHistory || targetSemester)
 
@@ -137,7 +137,7 @@ export default function InputIPK() {
     if (now < new Date(periode.buka)) return false
     if (now > new Date(periode.tutup)) return false
     // TA filter must match configured TA
-    if (taFilter !== "Semua" && periode.tahun_ajaran) {
+    if (taFilter && periode.tahun_ajaran) {
       const normalize = (ta: string) => ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
       if (normalize(taFilter) !== normalize(periode.tahun_ajaran)) return false
     }
@@ -163,14 +163,14 @@ export default function InputIPK() {
     return new Date() < new Date(periode.buka)
   }
   const isTANotMatched = () => {
-    if (taFilter === "Semua" || !periode?.tahun_ajaran) return false
+    if (taFilter === getCurrentTahunAjaran() || !periode?.tahun_ajaran) return false
     const normalize = (ta: string) => ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
     return normalize(taFilter) !== normalize(periode.tahun_ajaran)
   }
 
   const fetchData = async () => {
     try {
-      const ta = taFilter === "Semua" ? undefined : taFilter
+      const ta = taFilter
       const [resIpk, resPeriode, resProfile]: any = await Promise.all([
         api.get('/ipk', ta ? { tahun_ajaran: ta } : undefined),
         api.get('/konfigurasi/periode'),
@@ -191,7 +191,7 @@ export default function InputIPK() {
 
       // Compute displayedSemester from fetched profile + taFilter
       // Saat filter "Semua", gunakan semester tertinggi dari riwayat (bukan 0)
-      const computedDisplayedSem = taFilter === "Semua"
+      const computedDisplayedSem = taFilter === getCurrentTahunAjaran()
         ? (history.length > 0 ? Math.max(...history.map((r) => r.semester)) : 0)
         : calculateSemester(angkatan, taFilter)
 
@@ -294,7 +294,7 @@ export default function InputIPK() {
     const fd = new FormData()
     fd.append('semester', String(displayedSemester))
     // Send tahun_ajaran: use taFilter if not "Semua", otherwise derive from periode
-    if (taFilter !== "Semua") {
+    if (taFilter) {
       fd.append('tahun_ajaran', taFilter)
     } else if (periode?.tahun_ajaran) {
       fd.append('tahun_ajaran', periode.tahun_ajaran)
@@ -336,7 +336,7 @@ export default function InputIPK() {
       await api.post('/ipk', buildFormData())
       await api.post('/ipk/submit', {
         semester: displayedSemester,
-        tahun_ajaran: taFilter !== "Semua" ? taFilter : undefined,
+        tahun_ajaran: taFilter ? taFilter : undefined,
       })
       setFormStatus("diajukan")
       setToast("Nilai berhasil diajukan untuk divalidasi.")

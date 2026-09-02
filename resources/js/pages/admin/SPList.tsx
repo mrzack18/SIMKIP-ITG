@@ -4,7 +4,7 @@ import { AlertTriangle, Plus, Search, Clock, Loader2, ChevronLeft, ChevronRight 
 import { getSPList } from "@/services/spService";
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import type { SuratPeringatan } from "@/types";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 const levelColor: Record<string, { bg: string; text: string }> = {
   SP1: { bg: "#FEF3C7", text: "#92400E" },
@@ -25,7 +25,7 @@ type SpFilterValue = typeof SP_FILTER_OPTIONS[number];
 export default function SPList() {
   const [search, setSearch] = useState("");
   const [spFilter, setSpFilter] = useState<SpFilterValue>("Semua SP");
-  const [tahunAjaran, setTahunAjaran] = useState("Semua");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [list, setList] = useState<SuratPeringatan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,7 +50,7 @@ export default function SPList() {
   // Full list for counts — refetches when search changes (not spFilter)
   useEffect(() => {
     let active = true;
-    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined, prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined })
+    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran ? tahunAjaran : undefined, prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined })
       .then(res => { if (active) setFullList(res.data); });
     return () => { active = false; };
   }, [search, tahunAjaran, selectedProdi, selectedAngkatan]);
@@ -70,7 +70,7 @@ export default function SPList() {
       status: statusFilter,
       page: currentPage,
       limit: 10,
-      tahun_ajaran: tahunAjaran !== 'Semua' ? tahunAjaran : undefined,
+      tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
       prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined,
       angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined,
     })

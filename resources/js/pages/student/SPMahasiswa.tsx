@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import { FileText, Download, CheckCircle, AlertTriangle, X } from "lucide-react";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import logoItg from "@/imports/logo_itg.jpg";
 
 type SPLevel = "SP1" | "SP2" | "SP3";
@@ -176,7 +176,7 @@ const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " G
 export default function SPMahasiswa() {
   const [showModal, setShowModal] = useState(false);
   const [selectedSP, setSelectedSP] = useState<SP | null>(null);
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [list, setList] = useState<SP[]>([]);
   const [loading, setLoading] = useState(true);
 

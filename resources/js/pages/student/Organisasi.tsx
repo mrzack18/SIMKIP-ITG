@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download, Image } from "lucide-react";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 type OStatus = "Disetujui" | "Menunggu" | "Ditolak";
 
@@ -61,7 +61,7 @@ export default function Organisasi() {
   const [skOrg, setSkOrg] = useState<Org | null>(null);
   const [fileName, setFileName] = useState("");
   const [fotoName, setFotoName] = useState("");
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [form, setForm] = useState({ jenis: "Organisasi" as "Organisasi" | "Kepanitiaan" | "Kegiatan", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "", tahunAjaran: "2025/2026 Ganjil" });
   const fileRef = useRef<HTMLInputElement>(null);
   const fotoRef = useRef<HTMLInputElement>(null);

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2, Pencil, Send } from "lucide-react";
+import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2, Pencil, Send, Download } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 type PTab = "Internasional" | "Nasional" | "Wilayah";
 type PStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak";
@@ -82,7 +82,7 @@ export default function Prestasi() {
   const [activeTab, setActiveTab] = useState<PTab>("Internasional");
   const [openForm, setOpenForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [detail, setDetail] = useState<Prestasi | null>(null);
   const [form, setForm] = useState<FormState>({ ...EMPTY_FORM });
   const [fileSertifikat, setFileSertifikat] = useState<File | null>(null);
@@ -96,7 +96,7 @@ export default function Prestasi() {
       setLoading(true);
       const res = await api.get<{ data: any[] }>(
         "/prestasi",
-        taFilter !== "Semua" ? { tahun_ajaran: taFilter } : undefined
+        taFilter ? { tahun_ajaran: taFilter } : undefined
       );
       const mappedData = res.data.map((item: any) => ({
         ...item,
@@ -274,7 +274,7 @@ export default function Prestasi() {
             <div className="space-y-6">
                 <div className="space-y-3">
                   <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
-                    {taFilter === "Semua" ? "Semua Tahun Ajaran" : `Tahun Ajaran ${formatTA(taFilter)}`}
+                    Tahun Ajaran {formatTA(taFilter)}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {tabItems.map((p) => {
@@ -475,17 +475,65 @@ export default function Prestasi() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-gray-400 mb-1.5">Sertifikat / Piagam</p>
-                  <div className="h-28 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
-                    <FileText size={22} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">{detail.fileSertifikat || "—"}</p>
-                  </div>
+                  {detail.fileSertifikat ? (
+                    <div className="rounded-xl border border-gray-200 overflow-hidden">
+                      {detail.fileSertifikat.toLowerCase().endsWith(".pdf") ? (
+                        <iframe
+                          src={detail.fileSertifikat}
+                          className="w-full h-40 border-0"
+                          title="Sertifikat"
+                        />
+                      ) : (
+                        <a href={detail.fileSertifikat} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={detail.fileSertifikat}
+                            alt="Sertifikat"
+                            className="w-full h-40 object-cover"
+                          />
+                        </a>
+                      )}
+                      <a
+                        href={detail.fileSertifikat}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <Download size={12} /> Unduh Sertifikat
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
+                      <FileText size={22} className="text-gray-300" />
+                      <p className="text-xs text-gray-400">Belum diunggah</p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
-                  <div className="h-28 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
-                    <Image size={22} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">{detail.fileFoto || "—"}</p>
-                  </div>
+                  {detail.fileFoto ? (
+                    <div className="rounded-xl border border-gray-200 overflow-hidden">
+                      <a href={detail.fileFoto} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={detail.fileFoto}
+                          alt="Foto Kegiatan"
+                          className="w-full h-40 object-cover"
+                        />
+                      </a>
+                      <a
+                        href={detail.fileFoto}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <Download size={12} /> Unduh Foto
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
+                      <Image size={22} className="text-gray-300" />
+                      <p className="text-xs text-gray-400">Belum diunggah</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

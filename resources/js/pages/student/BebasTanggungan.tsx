@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, Clock, AlertTriangle, FileText, Download, User, CheckCircle2, ChevronRight, Loader2, Send, XCircle } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import { useAuth } from "@/context/AuthContext";
 
 type AppState = "belum" | "menunggu" | "diterbitkan" | "ditolak";
@@ -42,7 +42,7 @@ export default function BebasTanggungan() {
   };
   
   const [state, setState] = useState<AppState>("belum");
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [showConfirm, setShowConfirm] = useState(false);
   
   const [dokumenList, setDokumenList] = useState<Dokumen[]>([]);

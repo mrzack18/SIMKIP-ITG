@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { BookOpen, Plus, X, FileText, Calendar, MapPin, Building2, Tag, AlignLeft, Upload, CheckCircle, Clock } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 interface PelatihanItem {
   id: number;
@@ -42,7 +42,7 @@ const formatTA = (ta: string) => ta ? ta.replace("Tahun ", "").replace("-1", " G
 
 export default function Pelatihan() {
   const [items, setItems] = useState<PelatihanItem[]>([]);
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [detail, setDetail] = useState<PelatihanItem | null>(null);

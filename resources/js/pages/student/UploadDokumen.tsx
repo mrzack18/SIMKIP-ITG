@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload, CheckCircle, Clock, AlertTriangle, FileText, ChevronRight, X, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter, getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran, TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 type DocStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak" | "Belum Diunggah";
 
@@ -79,7 +79,7 @@ export default function UploadDokumen() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
 
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const [viewTarget, setViewTarget] = useState<Doc | null>(null);

@@ -1,3 +1,4 @@
+import { getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import { api } from "./api";
 
 export interface DashboardStats {
@@ -61,7 +62,7 @@ export interface DashboardResponse {
 }
 
 export const getAdminDashboardData = async (tahunAjaran?: string): Promise<DashboardResponse> => {
-  const qs = (tahunAjaran && tahunAjaran !== "Semua")
+  const qs = (tahunAjaran && tahunAjaran)
     ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}`
     : '';
   return api.get<DashboardResponse>(`/dashboard${qs}`);
@@ -168,7 +169,7 @@ export interface StudentDashboardResponse {
 }
 
 export const getStudentDashboardData = async (tahunAjaran?: string): Promise<StudentDashboardResponse> => {
-  const qs = (tahunAjaran && tahunAjaran !== "Semua")
+  const qs = (tahunAjaran && tahunAjaran)
     ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}`
     : "";
   return api.get<StudentDashboardResponse>(`/mahasiswa/dashboard${qs}`);

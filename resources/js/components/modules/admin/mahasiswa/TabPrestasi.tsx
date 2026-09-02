@@ -306,42 +306,66 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Foto Sertifikat</p>
-                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
-                    <FileText size={22} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">
-                      {modalItem.fileSertifikat ? "Tersedia" : "Belum diunggah"}
-                    </p>
-                    {modalItem.fileSertifikat && (
+                  <p className="text-xs text-gray-400 mb-1.5">Sertifikat / Piagam</p>
+                  {modalItem.fileSertifikat ? (
+                    <div className="rounded-xl border border-[#E2E8F0] overflow-hidden">
+                      {modalItem.fileSertifikat.toLowerCase().endsWith(".pdf") ? (
+                        <iframe
+                          src={modalItem.fileSertifikat}
+                          className="w-full h-40 border-0"
+                          title="Sertifikat"
+                        />
+                      ) : (
+                        <a href={modalItem.fileSertifikat} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={modalItem.fileSertifikat}
+                            alt="Sertifikat"
+                            className="w-full h-40 object-cover"
+                          />
+                        </a>
+                      )}
                       <a
                         href={modalItem.fileSertifikat}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline"
+                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-[#F8FAFC] hover:bg-gray-100 transition-colors"
                       >
-                        <Download size={11} /> Unduh
+                        <Download size={11} /> Unduh Sertifikat
                       </a>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
+                      <FileText size={22} className="text-gray-300" />
+                      <p className="text-xs text-gray-400">Belum diunggah</p>
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Foto Podium</p>
-                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
-                    <Image size={22} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">
-                      {modalItem.fileFoto ? "Tersedia" : "Belum diunggah"}
-                    </p>
-                    {modalItem.fileFoto && (
+                  <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
+                  {modalItem.fileFoto ? (
+                    <div className="rounded-xl border border-[#E2E8F0] overflow-hidden">
+                      <a href={modalItem.fileFoto} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={modalItem.fileFoto}
+                          alt="Foto Kegiatan"
+                          className="w-full h-40 object-cover"
+                        />
+                      </a>
                       <a
                         href={modalItem.fileFoto}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline"
+                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-[#F8FAFC] hover:bg-gray-100 transition-colors"
                       >
-                        <Download size={11} /> Unduh
+                        <Download size={11} /> Unduh Foto
                       </a>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
+                      <Image size={22} className="text-gray-300" />
+                      <p className="text-xs text-gray-400">Belum diunggah</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

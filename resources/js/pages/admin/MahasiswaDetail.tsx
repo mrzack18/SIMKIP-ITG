@@ -34,7 +34,7 @@ import { TabPelatihan } from "@/components/modules/admin/mahasiswa/TabPelatihan"
 import { TabDokumen } from "@/components/modules/admin/mahasiswa/TabDokumen"
 import { TabSP } from "@/components/modules/admin/mahasiswa/TabSP"
 import { TabSuratPenyelesaian } from "@/components/modules/admin/mahasiswa/TabSuratPenyelesaian"
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter"
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter"
 
 
 
@@ -58,7 +58,7 @@ export default function MahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
-  const [tahunAjaran, setTahunAjaran] = useState("Semua")
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [showSpModal, setShowSpModal] = useState(false)
   const [selectedSpLevel, setSelectedSpLevel] = useState<"SP1" | "SP2" | "SP3">("SP1")
   const [nonaktifModal, setNonaktifModal] = useState(false)

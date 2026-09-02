@@ -76,7 +76,7 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
     }
 
     const startYear = 2022;
-    const opts: string[] = ["Semua"]; // opsi untuk lihat semua TA
+    const opts: string[] = [];
 
     for (let y = maxStartYear; y >= startYear; y--) {
       // If we are on the max year, only push up to the max semester
@@ -91,11 +91,11 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
       }
     }
 
-    // Deduplicate and sort descending, keep "Semua" at top
-    return ["Semua", ...Array.from(new Set(opts.filter(o => o !== "Semua"))).sort().reverse()];
+    // Deduplicate and sort descending
+    return Array.from(new Set(opts)).sort().reverse();
   }, []);
 
-  const displayLabel = value === "Semua" ? "Semua Tahun Ajaran" : formatTahunAjaran(value);
+  const displayLabel = formatTahunAjaran(value);
 
   return (
     <>

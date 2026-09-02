@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Users, FileCheck, ArrowRight, Download, CheckCircle, ClipboardList } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 interface PendingReport {
   id: number;
   judul: string;
@@ -33,7 +33,7 @@ interface DashboardData {
 }
 
 export default function WarekDashboard() {
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export default function WarekDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get<DashboardData>(`/warek/dashboard?tahun_ajaran=${filterTahunAjaran === "Semua" ? "" : filterTahunAjaran}`);
+        const res = await api.get<DashboardData>(`/warek/dashboard?tahun_ajaran=${filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran}`);
         if (!cancelled) {
           setData(res);
           setLoading(false);

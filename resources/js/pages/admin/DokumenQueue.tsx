@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
 import { getDokumenQueue, approveDokumen, rejectDokumen } from "@/services/dokumenService";
 import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan, getMahasiswaFilterOptions, getMahasiswaIpk, getMahasiswaDokumen } from "@/services/mahasiswaService";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import type { DokumenQueue as DokumenQueueType } from "@/types";
 
 type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
@@ -416,7 +416,7 @@ export default function DokumenQueue() {
   const [error, setError] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [tahunAjaran, setTahunAjaran] = useState("Semua");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [queue, setQueue] = useState<DokumenQueueType[]>([]);
   const [fullQueue, setFullQueue] = useState<DokumenQueueType[]>([]); // all items for accurate tab counts
   const [currentPage, setCurrentPage] = useState(1);
@@ -457,7 +457,7 @@ export default function DokumenQueue() {
       page: 1,
       limit: 9999,
       search: search || undefined,
-      tahun_ajaran: tahunAjaran !== "Semua" ? tahunAjaran : undefined,
+      tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
     })
       .then((res) => { if (active) setFullQueue(res.data); })
       .catch(() => {});
@@ -476,7 +476,7 @@ export default function DokumenQueue() {
       search: search || undefined,
       status: statusParam as any,
       jenis: jenis !== "Semua Dokumen" ? jenis : undefined,
-      tahun_ajaran: tahunAjaran !== "Semua" ? tahunAjaran : undefined,
+      tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
     })
       .then((res) => {
         if (!active) return;
@@ -532,29 +532,29 @@ export default function DokumenQueue() {
     const idPrefix = String(reviewing.id);
     if (idPrefix.startsWith("prestasi_")) {
       const itemId = Number(idPrefix.replace("prestasi_", ""));
-      getMahasiswaPrestasi(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined)
+      getMahasiswaPrestasi(mhsId, tahunAjaran ? tahunAjaran : undefined)
         .then((list) => setPreviewPrestasi(list.find((p: any) => p.id === itemId) || null));
     } else if (idPrefix.startsWith("organisasi_")) {
       const itemId = Number(idPrefix.replace("organisasi_", ""));
-      getMahasiswaOrganisasi(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined)
+      getMahasiswaOrganisasi(mhsId, tahunAjaran ? tahunAjaran : undefined)
         .then((list) => setPreviewOrganisasi(list.find((o: any) => o.id === itemId) || null));
     } else if (idPrefix.startsWith("pelatihan_")) {
       const itemId = Number(idPrefix.replace("pelatihan_", ""));
-      getMahasiswaPelatihan(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined)
+      getMahasiswaPelatihan(mhsId, tahunAjaran ? tahunAjaran : undefined)
         .then((list) => setPreviewPelatihan(list.find((p: any) => p.id === itemId) || null));
         } else if (idPrefix.startsWith("ipk_")) {
       const itemId = Number(idPrefix.replace("ipk_", ""));
-      getMahasiswaIpk(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined).then(list => {
+      getMahasiswaIpk(mhsId, tahunAjaran ? tahunAjaran : undefined).then(list => {
         setPreviewIpk(list.find((ipk: any) => ipk.id === itemId) || null);
       });
     } else if (idPrefix.startsWith("doc_")) {
       const itemId = Number(idPrefix.replace("doc_", ""));
-      getMahasiswaDokumen(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined).then(list => {
+      getMahasiswaDokumen(mhsId, tahunAjaran ? tahunAjaran : undefined).then(list => {
         setPreviewGeneric(list.find((d: any) => d.id === itemId) || null);
       });
 
       if (reviewing.jenis === "KHS") {
-        getMahasiswaIpk(mhsId, tahunAjaran !== "Semua" ? tahunAjaran : undefined).then(list => {
+        getMahasiswaIpk(mhsId, tahunAjaran ? tahunAjaran : undefined).then(list => {
           const semMatch = reviewing.catatan?.match(/Semester\s+(\d+)/i);
           if (semMatch) {
             const sem = Number(semMatch[1]);

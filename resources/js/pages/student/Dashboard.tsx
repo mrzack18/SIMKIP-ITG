@@ -11,19 +11,19 @@ const docIcon = (status: string) => {
   return <FileText size={16} className="text-gray-300" />;
 };
 
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 export default function StudentDashboard() {
   const [data, setData] = useState<StudentDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [taFilter, setTaFilter] = useState("Semua");
+  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const ta = taFilter === "Semua" ? undefined : taFilter;
+        const ta = taFilter;
         const res = await getStudentDashboardData(ta);
         setData(res);
       } catch (err: any) {

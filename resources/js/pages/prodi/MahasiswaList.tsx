@@ -5,13 +5,13 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { getMahasiswaFilterOptions, getProdiMahasiswaList } from "@/services/mahasiswaService";
 import type { Mahasiswa } from "@/types";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 const PAGE_SIZE = 10;
 
 export default function ProdiMahasiswaList() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [filterAngkatan, setFilterAngkatan] = useState("Semua");
   const [filterKategori, setFilterKategori] = useState("Semua");
   const [filterStatus, setFilterStatus] = useState("Semua Status");
@@ -38,7 +38,7 @@ export default function ProdiMahasiswaList() {
     const timer = setTimeout(() => {
       getProdiMahasiswaList({
         search,
-        tahun_ajaran: filterTahunAjaran === "Semua" ? undefined : filterTahunAjaran,
+        tahun_ajaran: filterTahunAjaran,
         angkatan: filterAngkatan,
         kategori: filterKategori,
         status: filterStatus,
@@ -65,7 +65,7 @@ export default function ProdiMahasiswaList() {
       setExporting(true);
       const params = new URLSearchParams({
         angkatan: filterAngkatan,
-        tahun_ajaran: filterTahunAjaran === "Semua" ? undefined : filterTahunAjaran,
+        tahun_ajaran: filterTahunAjaran,
         kategori: filterKategori,
         status: filterStatus === "Semua Status" ? "Semua" : filterStatus,
         tahun_akademik: "2025/2026",

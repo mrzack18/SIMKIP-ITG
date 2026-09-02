@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, CheckCircle, Search } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 function formatTanggal(tanggal?: string | null) {
   if (!tanggal) return "-";
   try {
@@ -38,7 +38,7 @@ interface LaporanListResponse {
 export default function ProdiLaporanList() {
   const [items, setItems] = useState<LaporanItem[]>([]);
   const [search, setSearch] = useState("");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ export default function ProdiLaporanList() {
     const timer = setTimeout(() => {
       const params = new URLSearchParams({
         search,
-        tahun_ajaran: filterTahunAjaran === "Semua" ? "" : filterTahunAjaran,
+        tahun_ajaran: filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran,
         page: String(page),
         limit: "10",
       });

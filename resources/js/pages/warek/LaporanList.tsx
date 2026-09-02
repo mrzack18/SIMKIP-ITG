@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FileText, CheckCircle, Clock, RotateCcw, Download } from "lucide-react";
 import { api } from "@/services/api";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 type LStatus = "Menunggu" | "Disetujui" | "Dikembalikan";
 
 interface Laporan {
@@ -30,7 +30,7 @@ const statusStyle: Record<LStatus, { badge: string; icon: React.ReactNode }> = {
 
 export default function WarekLaporanList() {
   const [activeTab, setActiveTab] = useState<LStatus>("Menunggu");
-  const [filterTahunAjaran, setFilterTahunAjaran] = useState("Semua");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<Laporan[]>([]);
   const [counts, setCounts] = useState<Record<LStatus, number>>({ Menunggu: 0, Disetujui: 0, Dikembalikan: 0 });
   const [loading, setLoading] = useState(true);
@@ -45,7 +45,7 @@ export default function WarekLaporanList() {
         const results = await Promise.all(
           tabsToFetch.map((s) =>
             api
-              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100&tahun_ajaran=${filterTahunAjaran === "Semua" ? "" : filterTahunAjaran}`)
+              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100&tahun_ajaran=${filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran}`)
               .then((r) => [s, r.total] as [LStatus, number])
               .catch(() => [s, 0] as [LStatus, number])
           )
@@ -70,7 +70,7 @@ export default function WarekLaporanList() {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100&tahun_ajaran=${filterTahunAjaran === "Semua" ? "" : filterTahunAjaran}`);
+        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100&tahun_ajaran=${filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran}`);
         if (cancelled) return;
         setData(res.data ?? []);
         setLoading(false);

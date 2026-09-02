@@ -42,7 +42,7 @@ import {
 import logoItg from "@/imports/logo_itg.jpg"
 import { api, API_BASE_URL } from "@/services/api"
 import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -231,26 +231,55 @@ function PlaceholderThumb({ label }: { label: string }) {
 }
 
 function FilePlaceholderCard({ label, fileUrl }: { label: string; fileUrl?: string | null }) {
-  return (
-    <div className="flex items-center justify-between p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-          <FileText size={14} className="text-gray-500" />
+  if (!fileUrl) {
+    return (
+      <div className="flex items-center justify-between p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+            <FileText size={14} className="text-gray-500" />
+          </div>
+          <span className="text-sm text-gray-700 font-medium">{label}</span>
         </div>
-        <span className="text-sm text-gray-700 font-medium">{label}</span>
-      </div>
-      {fileUrl ? (
-        <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
-          <Download size={12} />
-          Unduh
-        </a>
-      ) : (
         <button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
           <Download size={12} />
           Unduh
         </button>
+      </div>
+    )
+  }
+
+  const isPdf = fileUrl.toLowerCase().endsWith(".pdf")
+
+  return (
+    <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+      <div className="p-3 bg-gray-50 border-b border-[#E2E8F0]">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+      </div>
+      {isPdf ? (
+        <iframe
+          src={fileUrl}
+          className="w-full h-48 border-0"
+          title={label}
+        />
+      ) : (
+        <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+          <img
+            src={fileUrl}
+            alt={label}
+            className="w-full h-48 object-cover"
+          />
+        </a>
       )}
+      <div className="p-2 bg-gray-50 border-t border-[#E2E8F0]">
+        <a
+          href={fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[#263F93] hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Download size={11} /> Unduh
+        </a>
+      </div>
     </div>
   )
 }
@@ -1374,7 +1403,7 @@ const TAB_LABELS = [
 
 export default function MahasiswaDetail() {
   const { id } = useParams<{ id: string }>()
-  const [tahunAjaran, setTahunAjaran] = useState("Semua")
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [activeTab, setActiveTab] = useState(0)
   const [data, setData] = useState<DetailResponse | null>(null)
   const [loading, setLoading] = useState(true)

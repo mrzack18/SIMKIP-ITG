@@ -1,3 +1,4 @@
+import { getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 import { useEffect, useState } from "react";
 import { Download, FileText, Table } from "lucide-react";
 import { api, API_BASE_URL } from "@/services/api";
@@ -38,7 +39,7 @@ const DEFAULT_FORM = {
 export default function EksporLaporan() {
   const { user } = useAuth();
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [tahunAjaran, setTahunAjaran] = useState("Semua");
+  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
   const [generated, setGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
