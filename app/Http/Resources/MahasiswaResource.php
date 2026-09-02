@@ -14,13 +14,9 @@ class MahasiswaResource extends JsonResource
             $range = \App\Helpers\TahunAjaranHelper::getDateRange($request->tahun_ajaran);
             foreach ($this->suratPeringatans as $surat) {
                 if ($range && $surat->tanggal_terbit <= $range[1]) {
-                    $active = in_array($surat->status, ['Aktif', 'Masa Tenggang']);
-                    if (!$active && $surat->status === 'Selesai' && $surat->updated_at >= $range[0]) {
-                        $active = true;
-                    }
                     $spList[] = [
                         'level' => $surat->level,
-                        'status' => $active ? 'Aktif' : 'Selesai'
+                        'status' => $surat->status
                     ];
                 } elseif (!$range) {
                     $spList[] = [

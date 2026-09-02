@@ -38,6 +38,7 @@ export default function SPList() {
   const [selectedAngkatan, setSelectedAngkatan] = useState('Semua Angkatan');
   const [prodiOptions, setProdiOptions] = useState<string[]>(['Semua Prodi']);
   const [angkatanOptions, setAngkatanOptions] = useState<string[]>(['Semua Angkatan']);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Load prodi and angkatan filter options
   useEffect(() => {
@@ -89,7 +90,19 @@ export default function SPList() {
       });
 
     return () => { active = false; };
-  }, [search, spFilter, currentPage, tahunAjaran, selectedProdi, selectedAngkatan]);
+  }, [search, spFilter, currentPage, tahunAjaran, selectedProdi, selectedAngkatan, refreshKey]);
+
+  // Listen for SP status changes from detail page
+  useEffect(() => {
+    const handler = () => {
+      setRefreshKey(k => k + 1);
+      getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran, prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined })
+        .then(res => setFullList(res.data))
+        .catch(() => {});
+    };
+    window.addEventListener('sp:updated', handler);
+    return () => window.removeEventListener('sp:updated', handler);
+  }, [search, tahunAjaran, selectedProdi, selectedAngkatan]);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);

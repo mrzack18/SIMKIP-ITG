@@ -51,17 +51,6 @@ class SuratPeringatanResource extends JsonResource
         $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaranFilter);
         if (!$range) return $this->status;
 
-        $startOfAcademicYear = $range[0];
-
-        if (in_array($this->status, ['Aktif', 'Masa Tenggang'])) {
-            return $this->status;
-        }
-
-        // If it's Selesai, check if it was still active during this historical semester
-        if ($this->status === 'Selesai' && $this->updated_at && $startOfAcademicYear <= $this->updated_at) {
-            return 'Aktif';
-        }
-
         return $this->status;
     }
 

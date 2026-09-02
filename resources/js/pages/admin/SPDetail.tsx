@@ -96,6 +96,17 @@ export default function SPDetail() {
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
+  // Load signature + masa tenggang from BE
+  useEffect(() => {
+    getKonfigurasiAll()
+      .then((res) => {
+        if (res?.data?.signature) setSignature(res.data.signature);
+        const reg = res?.data?.regulasi?.find((r: any) => r.nama === "Masa Tenggang SP");
+        if (reg) setMasaTenggang(Number(reg.nilai));
+      })
+      .catch(() => { /* fallback */ });
+  }, []);
+
   const handleMarkDone = async () => {
     if (!detail || markDoneLoading) return;
     setMarkDoneLoading(true);
@@ -106,6 +117,7 @@ export default function SPDetail() {
         catatan: markDoneCatatan.trim() || undefined,
       });
       await fetchDetail();
+      window.dispatchEvent(new CustomEvent('sp:updated'));
       setShowMarkDone(false);
       setMarkDoneCatatan("");
     } catch (err: any) {
@@ -152,17 +164,6 @@ export default function SPDetail() {
       </div>
     </div>
   );
-
-  // Load signature + masa tenggang from BE
-  useEffect(() => {
-    getKonfigurasiAll()
-      .then((res) => {
-        if (res?.data?.signature) setSignature(res.data.signature);
-        const reg = res?.data?.regulasi?.find((r: any) => r.nama === "Masa Tenggang SP");
-        if (reg) setMasaTenggang(Number(reg.nilai));
-      })
-      .catch(() => { /* fallback */ });
-  }, []);
 
   const sp     = detail.data;
   const extra  = detail.extra;

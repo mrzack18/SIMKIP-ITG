@@ -101,20 +101,12 @@ class Mahasiswa extends Model
 
             'sp_calc' => \App\Models\SuratPeringatan::select('level')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
+                ->whereIn('status', ['Aktif', 'Masa Tenggang'])
                 ->when($tahunAjaran, function($q) use ($tahunAjaran) {
                      $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
                      if ($range) {
-                         $q->where('tanggal_terbit', '<=', $range[1])
-                           ->where(function($sub) use ($range) {
-                               $sub->whereIn('status', ['Aktif', 'Masa Tenggang'])
-                                   ->orWhere(function($sub2) use ($range) {
-                                       $sub2->where('status', 'Selesai')
-                                            ->where('updated_at', '>=', $range[0]);
-                                   });
-                           });
+                         $q->where('tanggal_terbit', '<=', $range[1]);
                      }
-                }, function($q) {
-                     $q->whereIn('status', ['Aktif', 'Masa Tenggang']);
                 })
                 ->orderByDesc('level')
                 ->limit(1),

@@ -197,7 +197,7 @@ class LaporanController extends Controller
                 'prodi'    => $m->prodi?->nama ?? '',
                 'angkatan' => $m->angkatan,
                 'ipk'      => $m->ipkTerakhir,
-                'sp'       => $m->sp,
+                'sp'       => $m->sp_aktif,
                 'status'   => $m->status,
                 'kategori' => $m->kategori,
             ]);
@@ -205,7 +205,7 @@ class LaporanController extends Controller
         // Get SP count and names
         $spList = SuratPeringatan::with('mahasiswa')
             ->whereIn('mahasiswa_id', $mIds)
-            ->where('status', 'Aktif')
+            ->whereIn('status', ['Aktif', 'Masa Tenggang'])
             ->get();
         $totalSp = $spList->count();
         $namaSp = $spList->map(fn($sp) => $sp->mahasiswa->nama . ' (' . $sp->level . ')')->unique()->values();

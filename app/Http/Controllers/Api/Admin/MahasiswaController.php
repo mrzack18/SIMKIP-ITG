@@ -332,11 +332,7 @@ class MahasiswaController extends Controller
             $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
             foreach ($m->suratPeringatans as $surat) {
                 if ($range && $surat->tanggal_terbit <= $range[1]) {
-                    $active = in_array($surat->status, ['Aktif', 'Masa Tenggang']);
-                    if (!$active && $surat->status === 'Selesai' && $surat->updated_at >= $range[0]) {
-                        $active = true;
-                    }
-                    $spList[] = ['level' => $surat->level, 'status' => $active ? 'Aktif' : 'Selesai'];
+                    $spList[] = ['level' => $surat->level, 'status' => $surat->status];
                 } elseif (!$range) {
                     $spList[] = ['level' => $surat->level, 'status' => $surat->status];
                 }

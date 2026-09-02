@@ -85,7 +85,7 @@ export default function App() {
             <Route path="akademik" element={<DataAkademik />} />
             <Route path="dokumen" element={<DokumenQueue />} />
             <Route path="sp" element={<SPList />} />
-            <Route path="sp/terbit kan" element={<TerbitkanSP />} />
+            <Route path="sp/terbitkan" element={<TerbitkanSP />} />
             <Route path="sp/:id" element={<SPDetail />} />
             <Route path="bebas-tanggungan" element={<BebasTanggunganList />} />
             <Route path="bebas-tanggungan/:id" element={<BebasTanggunganDetail />} />

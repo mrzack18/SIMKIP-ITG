@@ -206,6 +206,13 @@ export default function SPMahasiswa() {
     fetchSP();
   }, [taFilter]);
 
+  // Listen for SP status changes (e.g. admin marks as done)
+  useEffect(() => {
+    const handler = () => fetchSP();
+    window.addEventListener('sp:updated', handler);
+    return () => window.removeEventListener('sp:updated', handler);
+  }, [taFilter]);
+
   const openDetail = (sp: SP) => {
     setSelectedSP(sp);
     setShowModal(true);
