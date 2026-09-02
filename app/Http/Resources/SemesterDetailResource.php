@@ -25,9 +25,10 @@ class SemesterDetailResource extends JsonResource
             'tahun'         => $this->tahun_ajaran,
             'ips'           => (float) $this->ips,
             'ipk'           => (float) $this->ipk,
-            'status'        => $this->status,          // Draft | Diajukan | Disetujui | Ditolak
+            'status'        => $this->status,
             'catatan_admin' => $this->catatan_admin,
             'mkBelumLulus'  => $mkBelumLulus,
+            'file_khs'      => $this->file_khs ? asset('storage/' . $this->file_khs) : null,
             'mataKuliah'    => MataKuliahResource::collection($this->whenLoaded('mataKuliahs')),
         ];
     }

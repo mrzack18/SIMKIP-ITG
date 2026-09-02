@@ -27,7 +27,9 @@ import {
   Send,
   RotateCcw,
   Loader,
+  FileText,
 } from "lucide-react"
+import React from "react"
 import { calculateSemester, normalizeTA } from "@/utils/tahunAjaranHelper";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ interface SemesterRecord {
   ipk: number
   status: "Draft" | "Diajukan" | "Disetujui" | "Ditolak" | string
   catatan_admin: string | null
+  file_khs: string | null
   mataKuliah?: any[]
   mkBelumLulus?: number
 }
@@ -135,7 +138,17 @@ export default function InputIPK() {
     }
     return true
   }
-  const isLocked = () => ["diajukan", "disetujui"].includes(formStatus) || isSubmitting
+  const isLocked = () => {
+    if (isSubmitting) return true
+    if (isTANotMatched()) return true
+    // Diajukan / Disetujui selalu locked
+    if (["diajukan", "disetujui"].includes(formStatus)) return true
+    // Ditolak — locked hanya jika periode TIDAK aktif
+    if (formStatus === "ditolak" && !isPeriodeAktif()) return true
+    // Idle (belum ada data) — locked jika periode tidak aktif
+    if (formStatus === "idle" && !isPeriodeAktif()) return true
+    return false
+  }
   const isPeriodeClosed = () => {
     if (!periode?.aktif) return true
     return new Date() > new Date(periode.tutup)
@@ -160,77 +173,77 @@ export default function InputIPK() {
       ])
 
       const history: SemesterRecord[] = resIpk.data || []
-      const semesterAktif: number = resIpk.semester_aktif ?? 0
       setHistoryData(history)
       setCarryOverData(resIpk.carry_over || [])
       if (resIpk.statistik) setStatistik(resIpk.statistik)
       if (resPeriode.nilai_mutu) setNilaiMutuMap(resPeriode.nilai_mutu)
       setPeriode(resPeriode)
-      if (resProfile?.mahasiswa) {
-        setMahasiswaProfile({ angkatan: resProfile.mahasiswa.angkatan ?? 2022 })
+      // Profile: angkatan ada di resProfile.data.angkatan (bukan resProfile.mahasiswa.angkatan)
+      const angkatan = resProfile?.data?.angkatan ?? resProfile?.mahasiswa?.angkatan ?? 2022
+      if (resProfile?.data) {
+        setMahasiswaProfile({ angkatan })
       }
 
-      // Derive "next semester" from filtered data or angkatan+TA
-      const angkatanFetched = resProfile?.mahasiswa?.angkatan ?? 2022
-      const nextSemester = () => {
-        if (history.length > 0) {
-          return history[0].semester + 1
-        }
-        // No records — compute from angkatan + TA filter
-        return calculateSemester(angkatanFetched, taFilter || "Semua") + 1
-      }
+      // Compute displayedSemester from fetched profile + taFilter
+      const computedDisplayedSem = calculateSemester(angkatan, taFilter || "Semua")
 
-      if (history.length > 0) {
-        const latest = history[0]
-        switch (latest.status) {
+      // Find record matching the displayed semester (key data for this TA filter)
+      const recordForSemester = history.find((r: SemesterRecord) => r.semester === computedDisplayedSem)
+
+      if (recordForSemester) {
+        // Data exists for this semester
+        switch (recordForSemester.status) {
           case "Draft":
             setFormStatus("draft")
-            setTargetSemester(latest.semester)
             setCatatanRevisi(null)
-            if (latest.mataKuliah?.length > 0) {
-              setMkList(latest.mataKuliah.map((mk: any) => ({
+            if (recordForSemester.mataKuliah?.length > 0) {
+              setMkList(recordForSemester.mataKuliah.map((mk: any) => ({
                 id: mk.id || Math.random(),
                 kode: mk.kode,
                 nama: mk.nama,
                 sks: mk.sks,
                 nilai: (mk.nilaiHuruf || mk.nilai_huruf || "") as NilaiHuruf,
               })))
+            } else {
+              setMkList([])
             }
             break
           case "Diajukan":
           case "Menunggu":
             setFormStatus("diajukan")
-            setTargetSemester(latest.semester)
-            setCatatanRevisi(latest.catatan_admin)
+            setCatatanRevisi(recordForSemester.catatan_admin)
             setMkList([])
             break
           case "Ditolak":
             setFormStatus("ditolak")
-            setTargetSemester(latest.semester)
-            setCatatanRevisi(latest.catatan_admin)
-            if (latest.mataKuliah?.length > 0) {
-              setMkList(latest.mataKuliah.map((mk: any) => ({
+            setCatatanRevisi(recordForSemester.catatan_admin)
+            if (recordForSemester.mataKuliah?.length > 0) {
+              setMkList(recordForSemester.mataKuliah.map((mk: any) => ({
                 id: mk.id || Math.random(),
                 kode: mk.kode,
                 nama: mk.nama,
                 sks: mk.sks,
                 nilai: (mk.nilaiHuruf || mk.nilai_huruf || "") as NilaiHuruf,
               })))
+            } else {
+              setMkList([])
             }
             break
           case "Disetujui":
             setFormStatus("disetujui")
-            setTargetSemester(nextSemester())
             setCatatanRevisi(null)
             setMkList([])
             break
           default:
             setFormStatus("idle")
-            setTargetSemester(1)
+            setCatatanRevisi(null)
+            setMkList([])
         }
       } else {
+        // No data for this semester yet — idle, empty form
         setFormStatus("idle")
-        setTargetSemester(nextSemester())
+        setCatatanRevisi(null)
+        setMkList([])
       }
     } catch {
       setPeriodeError(true)
@@ -268,12 +281,16 @@ export default function InputIPK() {
     if (!isLocked()) setMkList((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
   }
 
-  // Build FormData
+  // Build FormData — uses displayedSemester (computed) NOT targetSemester (state)
   const buildFormData = (): FormData => {
     const fd = new FormData()
-    fd.append('semester', String(targetSemester))
-    // Use taFilter as tahun_ajaran — backend checkPeriode will validate TA match
-    if (taFilter !== "Semua") fd.append('tahun_ajaran', taFilter)
+    fd.append('semester', String(displayedSemester))
+    // Send tahun_ajaran: use taFilter if not "Semua", otherwise derive from periode
+    if (taFilter !== "Semua") {
+      fd.append('tahun_ajaran', taFilter)
+    } else if (periode?.tahun_ajaran) {
+      fd.append('tahun_ajaran', periode.tahun_ajaran)
+    }
     if (uploadedFile) fd.append('file_khs', uploadedFile)
     mkList.forEach((mk, idx) => {
       fd.append(`mata_kuliah[${idx}][kode]`, mk.kode)
@@ -310,7 +327,7 @@ export default function InputIPK() {
     try {
       await api.post('/ipk', buildFormData())
       await api.post('/ipk/submit', {
-        semester: targetSemester,
+        semester: displayedSemester,
         tahun_ajaran: taFilter !== "Semua" ? taFilter : undefined,
       })
       setFormStatus("diajukan")
@@ -390,7 +407,7 @@ export default function InputIPK() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
           <span className="text-sm text-amber-700 font-medium">
-            Periode input untuk <strong>{normalizeTA(taFilter)}</strong> belum dibuka. Admin membuka periode untuk <strong>{normalizeTA(periode?.tahun_ajaran || '')}</strong>. Silakan pilih TA yang sesuai.
+            Periode input untuk <strong>{normalizeTA(taFilter)}</strong> belum dibuka. Pengelola KIP-K membuka periode untuk <strong>{normalizeTA(periode?.tahun_ajaran || '')}</strong>. Silakan pilih TA yang sesuai.
           </span>
         </div>
       ) : isPeriodeClosed() ? (
@@ -465,18 +482,35 @@ export default function InputIPK() {
           <h2 className="font-bold text-gray-900 text-base">Input Nilai Mata Kuliah — Semester {displayedSemester}</h2>
         </div>
 
-        {/* ── Full lock: periode closed or not started ── */}
-        {(isPeriodeClosed() || isPeriodeNotStarted()) && (
+        {/* ── Locked: TA tidak cocok ── */}
+        {isTANotMatched() && (
           <div className="p-8 text-center">
             <Lock size={32} className="mx-auto text-gray-300 mb-3" />
             <p className="text-gray-500 text-sm font-medium">
-              {isPeriodeClosed() ? "Periode input nilai telah ditutup. Seluruh input terkunci." : "Periode input nilai belum dibuka."}
+              Periode input untuk {normalizeTA(taFilter)} belum dibuka.
+            </p>
+            <p className="text-gray-400 text-xs mt-1">
+              Pengelola KIP-K membuka periode untuk {normalizeTA(periode?.tahun_ajaran || '')}. Silakan ubah filter tahun ajaran.
             </p>
           </div>
         )}
 
-        {/* ── Diajukan / Menunggu ── */}
-        {!isPeriodeClosed() && !isPeriodeNotStarted() && formStatus === "diajukan" && (
+        {/* ── Locked: periode belum buka / sudah tutup (TA cocok tapi periode tidak aktif) ── */}
+        {!isTANotMatched() && !isPeriodeAktif() && (
+          <div className="p-8 text-center">
+            <Lock size={32} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-500 text-sm font-medium">
+              {isPeriodeClosed()
+                ? "Periode input nilai telah ditutup."
+                : isPeriodeNotStarted()
+                ? "Periode input belum dibuka."
+                : "Periode input tidak aktif."}
+            </p>
+          </div>
+        )}
+
+        {/* ── Menunggu Validasi (locked, apapun kondisi periode) ── */}
+        {!isTANotMatched() && formStatus === "diajukan" && (
           <div className="p-8 text-center">
             <div className="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 rounded-xl inline-block max-w-lg mx-auto">
               <h3 className="font-bold mb-1 flex items-center justify-center gap-2">
@@ -490,8 +524,8 @@ export default function InputIPK() {
           </div>
         )}
 
-        {/* ── Disetujui ── */}
-        {!isPeriodeClosed() && !isPeriodeNotStarted() && formStatus === "disetujui" && (
+        {/* ── Telah Disetujui (locked, apapun kondisi periode) ── */}
+        {!isTANotMatched() && formStatus === "disetujui" && (
           <div className="p-8 text-center">
             <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-xl inline-block max-w-lg mx-auto">
               <h3 className="font-bold mb-1 flex items-center justify-center gap-2">
@@ -502,22 +536,189 @@ export default function InputIPK() {
           </div>
         )}
 
-        {/* ── Form aktif: idle / draft / ditolak ── */}
-        {!isPeriodeClosed() && !isPeriodeNotStarted() && !["diajukan", "disetujui"].includes(formStatus) && (
+        {/* ── Ditolak + periode TIDAK aktif (locked — tidak bisa apa-apa) ── */}
+        {!isTANotMatched() && formStatus === "ditolak" && !isPeriodeAktif() && (
+          <div className="p-8 text-center">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl inline-block max-w-lg mx-auto">
+              <h3 className="font-bold mb-1 flex items-center justify-center gap-2">
+                <AlertTriangle size={16} /> Evaluasi Semester {displayedSemester} Ditolak
+              </h3>
+              <p className="text-sm mt-1">Silakan perbaiki isian nilai dan ajukan kembali saat periode dibuka.</p>
+              {catatanRevisi && (
+                <p className="text-xs mt-3 bg-white/60 p-2 rounded text-red-800 italic">"{catatanRevisi}"</p>
+              )}
+            </div>
+            <p className="text-gray-400 text-xs mt-4">
+              Periode input telah ditutup. Hubungi Pengelola KIP-K untuk membuka periode perbaikan.
+            </p>
+          </div>
+        )}
+
+        {/* ── Ditolak + periode AKTIF (bisa Ajukan Ulang) ── */}
+        {!isTANotMatched() && formStatus === "ditolak" && isPeriodeAktif() && (
           <>
-            {/* Banner ditolak */}
-            {formStatus === "ditolak" && (
-              <div className="mx-5 mt-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-                <h3 className="font-bold text-sm flex items-center gap-2">
-                  <AlertTriangle size={16} /> Evaluasi Semester {displayedSemester} Ditolak
-                </h3>
-                <p className="text-sm mt-1">Silakan perbaiki isian nilai dan ajukan kembali.</p>
-                {catatanRevisi && (
-                  <p className="text-xs mt-2 bg-white/50 p-2 rounded text-red-800 italic">"{catatanRevisi}"</p>
+            <div className="mx-5 mt-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <AlertTriangle size={16} /> Evaluasi Semester {displayedSemester} Ditolak
+              </h3>
+              <p className="text-sm mt-1">Silakan perbaiki isian nilai di bawah dan ajukan kembali.</p>
+              {catatanRevisi && (
+                <p className="text-xs mt-2 bg-white/60 p-2 rounded text-red-800 italic">"{catatanRevisi}"</p>
+              )}
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    <th className="text-left px-4 py-3 text-xs text-gray-500 font-semibold w-8">No</th>
+                    <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold w-28">Kode MK</th>
+                    <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold">Nama Mata Kuliah</th>
+                    <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold w-20">SKS</th>
+                    <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold w-28">Nilai Huruf</th>
+                    <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold w-24">Nilai Mutu</th>
+                    <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold w-28">Status</th>
+                    <th className="px-3 py-3 w-10" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {mkList.map((mk, idx) => {
+                    const mutu = getNilaiMutu(mk.nilai)
+                    const lulus = getLulus(mk.nilai)
+                    return (
+                      <tr key={mk.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-2.5 text-gray-400 text-xs">{idx + 1}</td>
+                        <td className="px-3 py-2">
+                          <input type="text" value={mk.kode} onChange={(e) => updateRow(mk.id, "kode", e.target.value)}
+                            disabled={isLocked()} placeholder="IF401" className={inputClass} />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input type="text" value={mk.nama} onChange={(e) => updateRow(mk.id, "nama", e.target.value)}
+                            disabled={isLocked()} placeholder="Nama mata kuliah" className={inputClass} />
+                        </td>
+                        <td className="px-3 py-2">
+                          <input type="number" min={1} max={6} value={mk.sks}
+                            onChange={(e) => updateRow(mk.id, "sks", parseInt(e.target.value) || 1)}
+                            disabled={isLocked()} className={inputClass} />
+                        </td>
+                        <td className="px-3 py-2">
+                          <select value={mk.nilai} onChange={(e) => updateRow(mk.id, "nilai", e.target.value as NilaiHuruf)}
+                            disabled={isLocked()} className={selectClass}>
+                            <option value="">-- Pilih --</option>
+                            {["A", "AB", "B", "BC", "C", "D", "E"].map((n) => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="border border-gray-100 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 text-gray-600 text-center">
+                            {mutu !== null ? mutu.toFixed(1) : "—"}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          {lulus === null ? <span className="text-gray-300 text-xs">—</span>
+                           : lulus
+                             ? <span className="inline-flex items-center text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-2.5 py-0.5">Lulus</span>
+                             : <span className="inline-flex items-center text-xs font-semibold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5">Belum Lulus</span>}
+                        </td>
+                        <td className="px-3 py-2">
+                          <button onClick={() => deleteRow(mk.id)} disabled={isLocked()}
+                            className="text-gray-300 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed">
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer + upload KHS */}
+            <div className="px-5 pt-3 pb-4 border-t border-gray-100 flex items-center justify-between">
+              <button onClick={addRow} disabled={isLocked()}
+                className="flex items-center gap-2 text-sm text-[#263F93] font-semibold hover:text-[#1a2d6d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                <Plus size={15} />Tambah Mata Kuliah
+              </button>
+              <div className="text-sm text-gray-600 font-medium flex items-center gap-4">
+                <span>Total SKS: <span className="font-bold text-gray-900">{totalSKS}</span></span>
+                <span className="text-gray-300">|</span>
+                <span>IPS: <span className="font-bold text-[#263F93]">{ipsSemester}</span></span>
+              </div>
+            </div>
+
+            {/* Upload KHS */}
+            <div className="px-5 pb-5">
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center bg-gray-50/40 hover:border-gray-300 transition-colors cursor-pointer relative">
+                {uploadedFile ? (
+                  <div className="flex items-center justify-center gap-2 text-sm text-green-700 font-medium">
+                    <FileText size={17} />
+                    <span>{uploadedFile.name}</span>
+                    {!isLocked() && (
+                      <button onClick={() => setUploadedFile(null)} className="text-gray-400 hover:text-gray-600 ml-2 text-xs underline">Ganti</button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={22} className="text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Seret dan lepas file KHS di sini, atau <label className="text-[#263F93] font-semibold cursor-pointer hover:underline">
+                      pilih file<input type="file" accept=".pdf,image/*" className="hidden" onChange={handleFileInput} /></label></p>
+                    <p className="text-xs text-gray-400 mt-1">PDF atau gambar (maks. 5 MB)</p>
+                  </>
                 )}
               </div>
-            )}
+              <p className="text-xs text-gray-400">KHS digunakan sebagai bukti verifikasi oleh Pengelola KIP-K</p>
 
+              {/* Action buttons */}
+              <div className="space-y-2">
+                {/* Save Draft */}
+                {formStatus !== "draft" && (
+                  <button onClick={handleSaveDraft} disabled={isSubmitting || isLocked()}
+                    className="w-full border border-[#263F93] text-[#263F93] font-semibold py-3 rounded-xl text-sm hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    {isSubmitting ? <Loader size={15} className="animate-spin" /> : <CheckCircle size={16} />}
+                    Simpan Draft
+                  </button>
+                )}
+
+                {/* Ajukan / Ajukan Ulang */}
+                <button onClick={handleAjukan} disabled={isSubmitting || isLocked()}
+                  className="w-full bg-[#263F93] hover:bg-[#1a2d6d] text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  {isSubmitting
+                    ? <><Loader size={15} className="animate-spin" />Menyimpan...</>
+                    : formStatus === "ditolak"
+                      ? <><RotateCcw size={16} />Ajukan Ulang untuk Divalidasi</>
+                      : <><Send size={16} />Ajukan Nilai untuk Divalidasi</>}
+                </button>
+              </div>
+
+              {/* Draft notice */}
+              {formStatus === "draft" && (
+                <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+                  <CheckCircle size={13} className="text-gray-400" />
+                  Draft tersimpan. Klik "Ajukan Nilai" bila sudah yakin.
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── Belum ada data + periode tidak aktif (locked) ── */}
+        {!isTANotMatched() && formStatus === "idle" && !isPeriodeAktif() && (
+          <div className="p-8 text-center">
+            <Lock size={32} className="mx-auto text-gray-300 mb-3" />
+            <p className="text-gray-500 text-sm font-medium">
+              {isPeriodeClosed()
+                ? "Periode input nilai telah ditutup."
+                : isPeriodeNotStarted()
+                ? "Periode input belum dibuka."
+                : "Periode input tidak aktif."}
+            </p>
+          </div>
+        )}
+
+        {/* ── Form aktif: idle (kosong) / draft + periode terbuka ── */}
+        {!isTANotMatched() && !["diajukan", "disetujui", "ditolak"].includes(formStatus) && isPeriodeAktif() && (
+
+          <>
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -625,16 +826,16 @@ export default function InputIPK() {
               <div className="space-y-2">
                 {/* Save Draft */}
                 {formStatus !== "draft" && (
-                  <button onClick={handleSaveDraft} disabled={isSubmitting}
-                    className="w-full border border-[#263F93] text-[#263F93] font-semibold py-3 rounded-xl text-sm hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  <button onClick={handleSaveDraft} disabled={isSubmitting || isLocked()}
+                    className="w-full border border-[#263F93] text-[#263F93] font-semibold py-3 rounded-xl text-sm hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     {isSubmitting ? <Loader size={15} className="animate-spin" /> : <CheckCircle size={16} />}
                     Simpan Draft
                   </button>
                 )}
 
                 {/* Ajukan / Ajukan Ulang */}
-                <button onClick={handleAjukan} disabled={isSubmitting}
-                  className="w-full bg-[#263F93] hover:bg-[#1a2d6d] text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                <button onClick={handleAjukan} disabled={isSubmitting || isLocked()}
+                  className="w-full bg-[#263F93] hover:bg-[#1a2d6d] text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                   {isSubmitting
                     ? <><Loader size={15} className="animate-spin" />Menyimpan...</>
                     : formStatus === "ditolak"
@@ -752,21 +953,20 @@ export default function InputIPK() {
                 <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold">Perubahan</th>
                 <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold">MK Belum Lulus</th>
                 <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold">Status</th>
+                <th className="text-left px-3 py-3 text-xs text-gray-500 font-semibold">KHS</th>
               </tr>
             </thead>
             <tbody>
               {historyData.map((h, idx) => {
                 const change = ipkChange(idx)
                 const isExpanded = expandedSem === h.semester
-                const isLockedRow = h.status === "Disetujui"
                 return (
-                  <>
-                    <tr key={h.semester}
-                      className={`${isLockedRow ? "cursor-default" : "hover:bg-blue-50/40 cursor-pointer"} border-b border-gray-50 transition-colors`}
-                      onClick={() => !isLockedRow && setExpandedSem(isExpanded ? null : h.semester)}>
+                  <React.Fragment key={h.semester}>
+                    <tr
+                      className="hover:bg-blue-50/40 cursor-pointer border-b border-gray-50 transition-colors"
+                      onClick={() => setExpandedSem(isExpanded ? null : h.semester)}>
                       <td className="px-4 py-3 text-gray-400">
-                        {isLockedRow ? <Lock size={13} className="text-gray-300" />
-                          : isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </td>
                       <td className="px-3 py-3 font-medium text-gray-800">Semester {h.semester}</td>
                       <td className="px-3 py-3 text-gray-500 text-xs">{h.tahun}</td>
@@ -790,10 +990,21 @@ export default function InputIPK() {
                               ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5"><AlertTriangle size={11} />Ditolak</span>
                               : <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-0.5"><Lock size={10} />Draft</span>}
                       </td>
+                      <td className="px-3 py-3">
+                        {h.file_khs ? (
+                          <a href={h.file_khs} target="_blank" rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-xs text-[#263F93] hover:underline font-medium">
+                            <FileText size={12} />Lihat
+                          </a>
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
+                        )}
+                      </td>
                     </tr>
-                    {isExpanded && !isLockedRow && (
-                      <tr key={`${h.semester}-detail`}>
-                        <td colSpan={7} className="px-10 py-4 bg-blue-50/30 border-b border-gray-100">
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={8} className="px-10 py-4 bg-blue-50/30 border-b border-gray-100">
                           <div className="text-xs font-semibold text-gray-500 mb-2">Mata Kuliah — Semester {h.semester}</div>
                           <table className="w-full text-xs">
                             <thead>
@@ -815,10 +1026,18 @@ export default function InputIPK() {
                               ))}
                             </tbody>
                           </table>
+                          {h.file_khs && (
+                            <div className="mt-3">
+                              <a href={h.file_khs} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs text-[#263F93] hover:underline font-medium">
+                                <FileText size={13} />Lihat file KHS yang diupload
+                              </a>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 )
               })}
             </tbody>
