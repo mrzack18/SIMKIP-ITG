@@ -14,7 +14,7 @@ class DashboardController extends Controller
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa()->with([
-            'prodi', 'ipkSemestrs', 'suratPeringatans', 'dokumens', 'bebasTanggungan',
+            'prodi', 'ipkSemestrs'
         ])->first();
 
         if (! $m) {
@@ -23,6 +23,9 @@ class DashboardController extends Controller
 
         $tahunAjaran = $request->tahun_ajaran;
         $tahunAjaranLabel = $tahunAjaran && $tahunAjaran !== 'Semua' ? $tahunAjaran : null;
+        
+        $range = TahunAjaranHelper::getDateRange($tahunAjaranLabel);
+        $endDate = $range ? $range[1] : null;
 
         // Filter IPK records up to the selected TA semester
         $ipkBase = $m->ipkSemestrs();
@@ -34,27 +37,52 @@ class DashboardController extends Controller
         $ipkList     = $ipkBase->get()->sortBy('semester')->values();
         $ipkTerakhir = (float) ($ipkList->last()?->ipk ?? 0);
         $ipkPrev     = $ipkList->count() > 1 ? (float) $ipkList->slice(-2, 1)->first()?->ipk : null;
-        $spAktif     = $m->suratPeringatans->whereIn('status', ['Aktif', 'Masa Tenggang'])->sortByDesc('level')->first();
+        
+        // 1. Surat Peringatan Time Travel
+        $spQuery = $m->suratPeringatans()->whereIn('status', ['Aktif', 'Masa Tenggang']);
+        if ($endDate) {
+            $spQuery->where('tanggal_terbit', '<=', $endDate);
+        }
+        $spAktif = $spQuery->orderByDesc('level')->first();
+        
         $ipkMin      = (float) Konfigurasi::get('ipk_minimum', 3.0);
 
-        // Dokumen status (always show all mandatory docs, but the status reflects latest upload)
+        // 2. Dokumen status Time Travel
         $dokumenJenis = DokumenJenis::where('is_wajib', true)->get();
         $dokWajib     = $dokumenJenis->count();
-        $dokDisetujui = $m->dokumens->where('status', 'Disetujui')->unique('dokumen_jenis_id')->count();
+        
+        $dokumenQuery = $m->dokumens();
+        if ($endDate) {
+            $dokumenQuery->where('created_at', '<=', $endDate);
+        }
+        $dokumensFiltered = $dokumenQuery->get();
+        
+        $dokDisetujui = $dokumensFiltered->where('status', 'Disetujui')->unique('dokumen_jenis_id')->count();
 
-        $dokumenStatusList = $dokumenJenis->map(function ($jenis) use ($m) {
-            $uploaded = $m->dokumens->where('dokumen_jenis_id', $jenis->id)->sortByDesc('created_at')->first();
+        $dokumenStatusList = $dokumenJenis->map(function ($jenis) use ($dokumensFiltered) {
+            $uploaded = $dokumensFiltered->where('dokumen_jenis_id', $jenis->id)->sortByDesc('created_at')->first();
             return [
                 'id_jenis' => $jenis->id,
                 'nama'     => $jenis->nama,
                 'status'   => $uploaded ? $uploaded->status : 'Belum Diunggah',
-                'pesan'    => $uploaded ? $uploaded->keterangan : null,
+                'pesan'    => $uploaded ? ($uploaded->catatan_admin ?? $uploaded->keterangan) : null,
             ];
         })->values();
 
-        $totalPrestasi   = $m->prestasis()->count();
-        $totalOrganisasi = $m->organisasis()->count();
-        $totalPelatihan  = $m->pelatihans()->count();
+        // 3. Kegiatan Time Travel
+        $prestasiQuery = $m->prestasis();
+        $organisasiQuery = $m->organisasis();
+        $pelatihanQuery = $m->pelatihans();
+        
+        if ($endDate) {
+            $prestasiQuery->where('tanggal_mulai', '<=', $endDate);
+            $organisasiQuery->where('periode_mulai', '<=', $endDate);
+            $pelatihanQuery->where('tanggal_mulai', '<=', $endDate);
+        }
+        
+        $totalPrestasi   = $prestasiQuery->count();
+        $totalOrganisasi = $organisasiQuery->count();
+        $totalPelatihan  = $pelatihanQuery->count();
 
         $periodeAktif = Konfigurasi::get('periode_input_aktif', '0') === '1';
         $periodeTutup = Konfigurasi::get('periode_input_tutup');
@@ -69,6 +97,13 @@ class DashboardController extends Controller
         $displayedSemester = $tahunAjaranLabel
             ? TahunAjaranHelper::calculateSemester((int) $m->angkatan, $tahunAjaranLabel)
             : $semesterAktif;
+
+        // 4. Bebas Tanggungan Time Travel
+        $bebasTanggunganQuery = $m->bebasTanggungan();
+        if ($endDate) {
+            $bebasTanggunganQuery->where('tanggal_ajukan', '<=', $endDate);
+        }
+        $bebasTanggungan = $bebasTanggunganQuery->first();
 
         return response()->json([
             'success'   => true,
@@ -109,7 +144,7 @@ class DashboardController extends Controller
                 'aktif'       => $periodeAktif,
                 'batas_waktu' => $periodeTutup,
             ],
-            'bebas_tanggungan' => $m->bebasTanggungan ? ['status' => $m->bebasTanggungan->status] : null,
+            'bebas_tanggungan' => $bebasTanggungan ? ['status' => $bebasTanggungan->status] : null,
             'ipk_chart' => $ipkList->map(fn($s) => ['semester' => $s->semester, 'ipk' => (float) $s->ipk]),
         ]);
     }

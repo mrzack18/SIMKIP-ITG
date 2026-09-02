@@ -144,6 +144,7 @@ export interface SemesterDetailBE {
   ips: number;
   status: 'Menunggu' | 'Disetujui' | 'Ditolak';
   catatan_admin?: string | null;
+  file_khs?: string | null;
   mataKuliah: MataKuliahItem[];
 }
 

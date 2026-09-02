@@ -10,7 +10,7 @@ import {
   ReferenceLine,
   Legend,
 } from "recharts"
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loader2, Download } from "lucide-react"
+import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loader2, Download, FileText } from "lucide-react"
 import type { SemesterDetailBE, SemesterDetail, MataKuliah } from "@/types"
 import { BackendNotReady } from "./Shared"
 
@@ -98,79 +98,99 @@ function SemesterRow({
       </tr>
       {open && (
         <tr>
-          <td colSpan={7} className="p-0">
-            <div className="bg-gray-50 border-t border-b border-gray-100 px-4 py-3">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase w-8">
-                      No
-                    </th>
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">
-                      Kode MK
-                    </th>
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">
-                      Nama MK
-                    </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
-                      SKS
-                    </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
-                      Nilai Huruf
-                    </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
-                      Nilai Mutu
-                    </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {detail.mataKuliah.map((mk, idx) => (
-                    <tr key={mk.kode} className={mk.lulus ? "" : "bg-red-50"}>
-                      <td className="py-2 text-gray-400 text-xs">{idx + 1}</td>
-                      <td className="py-2 text-gray-600 text-xs font-mono">
-                        {mk.kode}
-                      </td>
-                      <td className="py-2 text-gray-800 text-sm">{mk.nama}</td>
-                      <td className="py-2 text-center text-gray-600 text-sm">
-                        {mk.sks}
-                      </td>
+          <td colSpan={8} className="p-0 border-r border-gray-100">
+            <div className="flex">
+              <div className="bg-gray-50 border-t border-b border-gray-100 px-4 py-3 flex-1">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase w-8">
+                        No
+                      </th>
+                      <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">
+                        Kode MK
+                      </th>
+                      <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">
+                        Nama MK
+                      </th>
+                      <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                        SKS
+                      </th>
+                      <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                        Nilai Huruf
+                      </th>
+                      <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                        Nilai Mutu
+                      </th>
+                      <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {detail.mataKuliah.map((mk, idx) => (
+                      <tr key={mk.kode} className={mk.lulus ? "" : "bg-red-50"}>
+                        <td className="py-2 text-gray-400 text-xs">{idx + 1}</td>
+                        <td className="py-2 text-gray-600 text-xs font-mono">
+                          {mk.kode}
+                        </td>
+                        <td className="py-2 text-gray-800 text-sm">{mk.nama}</td>
+                        <td className="py-2 text-center text-gray-600 text-sm">
+                          {mk.sks}
+                        </td>
+                        <td
+                          className="py-2 text-center font-semibold text-sm"
+                          style={{ color: mk.lulus ? "#059669" : "#DC2626" }}
+                        >
+                          {mk.nilaiHuruf}
+                        </td>
+                        <td className="py-2 text-center text-gray-600 text-sm">
+                          {mk.nilaiMutu.toFixed(1)}
+                        </td>
+                        <td className="py-2 text-center">
+                          {mk.lulus ? (
+                            <span className="text-xs text-green-700 flex items-center justify-center gap-1">
+                              <CheckCircle size={12} /> Lulus
+                            </span>
+                          ) : (
+                            <span className="text-xs text-red-700 flex items-center justify-center gap-1">
+                              <XCircle size={12} /> Belum Lulus
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-gray-200">
                       <td
-                        className="py-2 text-center font-semibold text-sm"
-                        style={{ color: mk.lulus ? "#059669" : "#DC2626" }}
+                        colSpan={7}
+                        className="pt-2 text-xs text-gray-500 font-medium"
                       >
-                        {mk.nilaiHuruf}
-                      </td>
-                      <td className="py-2 text-center text-gray-600 text-sm">
-                        {mk.nilaiMutu.toFixed(1)}
-                      </td>
-                      <td className="py-2 text-center">
-                        {mk.lulus ? (
-                          <span className="text-xs text-green-700 flex items-center justify-center gap-1">
-                            <CheckCircle size={12} /> Lulus
-                          </span>
-                        ) : (
-                          <span className="text-xs text-red-700 flex items-center justify-center gap-1">
-                            <XCircle size={12} /> Belum Lulus
-                          </span>
-                        )}
+                        Total SKS: {totalSks} | IPK: {detail.ipk.toFixed(2)}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-gray-200">
-                    <td
-                      colSpan={7}
-                      className="pt-2 text-xs text-gray-500 font-medium"
-                    >
-                      Total SKS: {totalSks} | IPK: {detail.ipk.toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+                  </tfoot>
+                </table>
+              </div>
+              <div className="p-4 align-top bg-gray-50 border-t border-b border-gray-100 w-48 border-l border-gray-200">
+                {detail.file_khs ? (
+                  <a
+                    href={detail.file_khs}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#263F93] rounded-lg hover:bg-[#1E337A] transition-colors"
+                  >
+                    <FileText size={16} />
+                    Lihat KHS
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+                    <FileText size={20} className="opacity-50" />
+                    <span className="text-xs text-center">KHS Belum Diunggah</span>
+                  </div>
+                )}
+              </div>
             </div>
           </td>
         </tr>
@@ -237,6 +257,7 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
     ipk: s.ipk,
     status: s.status,
     catatan_admin: s.catatan_admin,
+    file_khs: s.file_khs,
     mataKuliah: s.mataKuliah.map((mk) => ({
       kode: mk.kode,
       nama: mk.nama,

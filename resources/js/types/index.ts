@@ -114,6 +114,7 @@ export interface SemesterDetail {
   ipk: number;
   status?: string;
   catatan_admin?: string | null;
+  file_khs?: string | null;
   mataKuliah: MataKuliah[];
 }
 
