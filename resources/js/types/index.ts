@@ -191,10 +191,13 @@ export interface BebasTanggungan {
   nama?: string;
   prodi?: string;
   angkatan?: number;
-  tanggalPermohonan: string;
+  tanggalAjukan: string;
+  tanggalTerbit?: string;
+  nomorSurat?: string;
   status: BebasTanggunganStatus;
   keterangan?: string;
   catatanAdmin?: string;
+  rejectionHistory?: RejectionHistoryEntry[];
 }
 
 export interface RejectionHistoryEntry {
@@ -279,6 +282,7 @@ export interface BebasTanggunganDetailResponse {
     tanggalTerbit: string | null;
     nomorSurat: string | null;
     catatanAdmin: string | null;
+    tahunAjaran: string | null;
   };
   mahasiswa: {
     id: number;

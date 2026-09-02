@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ZakiSeeder::class, // Dummy student: Zaki Muhamad (2307094)
             MahasiswaBatchSeeder::class, // 125 batch students: 5 prodi × 5 angkatan × 3 mahasiswa
             BebasTanggunganSeeder::class, // Permohonan bebas tanggungan TA 2022 & 2023 (menunggu/diterima/ditolak)
+            BebasTanggunganTestSeeder::class, // 7 akun test BT: masing-masing kekurangan 1 syarat
         ]);
     }
 }

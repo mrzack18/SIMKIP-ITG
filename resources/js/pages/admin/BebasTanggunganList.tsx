@@ -329,7 +329,7 @@ export default function BebasTanggunganList() {
 
                       {/* Aksi */}
                       <td className="px-4 py-3.5">
-                        {tab === "menunggu" ? (
+                        {r.status === "menunggu" ? (
                           <Link
                             to={`/admin/bebas-tanggungan/${r.id}`}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 border border-green-500 text-green-600 hover:bg-green-50 transition-colors whitespace-nowrap"

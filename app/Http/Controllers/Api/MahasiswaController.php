@@ -214,7 +214,7 @@ class MahasiswaController extends Controller
         
         $history = [];
         if ($permohonan) {
-            $history = $permohonan->histories()->with('reviewedBy')->get()->map(function($h) {
+            $history = $permohonan->histories()->where('status', 'Ditolak')->oldest()->with('reviewedBy')->get()->map(function($h) {
                 return [
                     'tgl' => $h->created_at->format('d M Y'),
                     'catatan' => $h->catatan,

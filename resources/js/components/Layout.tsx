@@ -37,17 +37,27 @@ export default function Layout({ role, user }: LayoutProps) {
   useEffect(() => {
     if (role !== "admin") return;
     let active = true;
-    getBadgeCounts()
-      .then((res) => {
-        if (active) {
-          setBadgeCounts({
-            dokumen_queue_menunggu: res.dokumen_queue_menunggu,
-            bebas_tanggungan_menunggu: res.bebas_tanggungan_menunggu,
-          });
-        }
-      })
-      .catch(() => {});
-    return () => { active = false; };
+    const fetchCounts = () => {
+      getBadgeCounts()
+        .then((res) => {
+          if (active) {
+            setBadgeCounts({
+              dokumen_queue_menunggu: res.dokumen_queue_menunggu,
+              bebas_tanggungan_menunggu: res.bebas_tanggungan_menunggu,
+            });
+          }
+        })
+        .catch(() => {});
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000);
+    const handleVisibility = () => { if (document.visibilityState === 'visible') fetchCounts(); };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [role]);
 
   useEffect(() => {

@@ -84,11 +84,15 @@ class BebasTanggunganController extends Controller
         $m        = $b->mahasiswa;
         $checklist = BebasTanggunganService::getChecklist($m);
 
-        $rejectionHistory = $b->histories->map(fn($h) => [
-            'tgl'    => $h->created_at->format('d M Y'),
-            'catatan'=> $h->catatan,
-            'oleh'   => $h->reviewedBy?->name ?? 'Sistem',
-        ]);
+        $rejectionHistory = $b->histories
+            ->where('status', 'Ditolak')
+            ->sortBy('created_at')
+            ->values()
+            ->map(fn($h) => [
+                'tgl'    => $h->created_at->format('d M Y'),
+                'catatan'=> $h->catatan,
+                'oleh'   => $h->reviewedBy?->name ?? 'Sistem',
+            ]);
 
         $statusMap = [
             'Menunggu'  => 'menunggu',
@@ -106,6 +110,7 @@ class BebasTanggunganController extends Controller
                 'tanggalTerbit' => $b->tanggal_terbit?->format('d M Y'),
                 'nomorSurat'    => $b->nomor_surat,
                 'catatanAdmin'  => $b->catatan_admin,
+                'tahunAjaran'   => $b->created_at ? self::getTahunAjaranFromDate($b->created_at) : null,
             ],
             'mahasiswa'  => [
                 'id'       => $m->id,
@@ -138,15 +143,23 @@ class BebasTanggunganController extends Controller
 
         $nomor = 'SKPS/KIP-K/ITG/' . strtoupper(now()->format('m')) . '/' . now()->year . '/' . str_pad($id, 3, '0', STR_PAD_LEFT);
 
-        $b->update([
-            'status'        => 'Disetujui',
-            'reviewed_by'   => auth()->id(),
-            'reviewed_at'   => now(),
-            'nomor_surat'   => $nomor,
-            'tanggal_terbit'=> now()->toDateString(),
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($b, $nomor) {
+            $b->update([
+                'status'        => 'Disetujui',
+                'reviewed_by'   => auth()->id(),
+                'reviewed_at'   => now(),
+                'nomor_surat'   => $nomor,
+                'tanggal_terbit'=> now()->toDateString(),
+            ]);
 
-        $b->mahasiswa->update(['status' => 'Lulus']);
+            $b->histories()->create([
+                'status'      => 'Disetujui',
+                'catatan'     => "Surat diterbitkan dengan nomor {$nomor}",
+                'reviewed_by' => auth()->id(),
+            ]);
+
+            $b->mahasiswa->update(['status' => 'Lulus']);
+        });
 
         Notification::kirim(
             $b->mahasiswa->user_id,
@@ -206,5 +219,19 @@ class BebasTanggunganController extends Controller
             return response()->json(['success' => false, 'message' => 'Surat belum diterbitkan.'], 403);
         }
         return \App\Services\PdfGeneratorService::suratBebasTanggungan($id);
+    }
+
+    private static function getTahunAjaranFromDate($date): ?string
+    {
+        if (!$date) return null;
+        $month = (int) $date->format('m');
+        $year = (int) $date->format('Y');
+        if ($month >= 2 && $month <= 8) {
+            return ($year - 1) . '/' . $year . ' Genap';
+        } elseif ($month == 1) {
+            return ($year - 1) . '/' . $year . ' Ganjil';
+        } else {
+            return $year . '/' . ($year + 1) . ' Ganjil';
+        }
     }
 }

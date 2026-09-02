@@ -19,7 +19,7 @@ class BebasTanggunganResource extends JsonResource
         // Summary fields for the list view — computed from eager-loaded relations
         $m          = $this->mahasiswa;
         $semester   = $m ? $m->ipkSemestrs->count() : 0;
-        $spBersih   = $m ? $m->suratPeringatans->isEmpty() : true;
+        $spBersih   = $m ? !$m->suratPeringatans->contains(fn($sp) => in_array($sp->status, ['Aktif', 'Masa Tenggang'])) : true;
 
         // Dokumen progress: approved mandatory docs out of total mandatory document types configured
         $docsTotal = \App\Models\DokumenJenis::where('is_wajib', true)->count();
@@ -46,11 +46,15 @@ class BebasTanggunganResource extends JsonResource
             'spBersih'     => $spBersih,
             'docsOk'       => $docsOk,
             'docsTotal'    => $docsTotal,
-            'rejectionHistory' => $this->whenLoaded('histories', fn() => $this->histories->map(fn($h) => [
-                'tgl'    => $h->created_at->format('d M Y'),
-                'catatan'=> $h->catatan,
-                'oleh'   => $h->reviewedBy?->name ?? 'Sistem',
-            ])),
+            'rejectionHistory' => $this->whenLoaded('histories', fn() => $this->histories
+                ->where('status', 'Ditolak')
+                ->sortBy('created_at')
+                ->values()
+                ->map(fn($h) => [
+                    'tgl'    => $h->created_at->format('d M Y'),
+                    'catatan'=> $h->catatan,
+                    'oleh'   => $h->reviewedBy?->name ?? 'Sistem',
+                ])),
             // Nested mahasiswa
             'mahasiswa'    => $this->whenLoaded('mahasiswa', fn() => new MahasiswaResource($this->mahasiswa)),
         ];

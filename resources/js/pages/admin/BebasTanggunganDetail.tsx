@@ -268,6 +268,34 @@ export default function BebasTanggunganDetail() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    try {
+      const token = localStorage.getItem("simkip_token");
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'}/bebas-tanggungan/${data?.permohonan.id}/pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/pdf",
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SKPS_KIP-K_${data?.mahasiswa.nim}_${data?.mahasiswa.nama}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || "Gagal mengunduh PDF.");
+    }
+  };
+
   // ── Loading ──
   if (loading) {
     return (
@@ -490,7 +518,7 @@ export default function BebasTanggunganDetail() {
       </div>
 
       {/* Rejection history */}
-      {currentStatus === "ditolak" && (
+      {rejectionHistory.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-5">
           <h3 className="font-600 text-gray-800 text-sm mb-3 flex items-center gap-2">
             <XCircle size={15} className="text-[#DC2626]" /> Riwayat Penolakan
@@ -545,22 +573,19 @@ export default function BebasTanggunganDetail() {
             </h3>
             <div className="flex items-center gap-2">
               <a
-                href={`/api/bebas-tanggungan/${permohonan.id}/pdf`}
+                href={`/api/bebas-tanggungan/${permohonan.id}/pdf?token=${localStorage.getItem("simkip_token") || ""}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"
               >
                 <Download size={12} /> Unduh PDF
               </a>
-              <a
-                href={`/api/bebas-tanggungan/${permohonan.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleDownloadPdf}
                 className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"
-                onClick={(e) => { e.preventDefault(); window.print(); }}
               >
                 <Printer size={12} /> Cetak
-              </a>
+              </button>
             </div>
           </div>
           <div className="p-5">

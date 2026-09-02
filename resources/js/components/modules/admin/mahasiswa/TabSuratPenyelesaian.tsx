@@ -86,7 +86,7 @@ function FormalSurat({
         {/* Nomor surat */}
         <div className="mb-4 space-y-1">
           {[
-            ["Nomor", "—"],
+            ["Nomor", student.permohonan.nomorSurat ?? "—"],
             ["Lampiran", "—"],
             ["Perihal", "Surat Keterangan Penyelesaian Studi Mahasiswa KIP-K"],
           ].map(([k, v]) => (
@@ -140,7 +140,7 @@ function FormalSurat({
         {/* TTD */}
         <div className="mt-5 grid grid-cols-2 gap-6 text-xs text-center">
           <div>
-            <p>Garut, {student.permohonan.tanggalPermohonan}</p>
+            <p>Garut, {student.permohonan.tanggalAjukan}</p>
             <p className="mt-0.5">Pengelola KIP-K,</p>
             <div className="h-14 my-1" />
             <p className="font-bold underline">{sig.pengelola_nama}</p>
@@ -204,7 +204,7 @@ export function TabSuratPenyelesaian({
         <div>
           <h3 className="font-600 text-gray-800">Status Surat Penyelesaian</h3>
           {permohonan ? (
-            <p className="text-xs text-gray-500 mt-0.5">Diajukan pada: {permohonan.tanggalPermohonan}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Diajukan pada: {permohonan.tanggalAjukan}</p>
           ) : (
             <p className="text-xs text-gray-500 mt-0.5">Mahasiswa belum melakukan pengajuan.</p>
           )}
@@ -378,7 +378,7 @@ export function TabSuratPenyelesaian({
               Preview Surat Formal
             </h3>
             <a
-              href={`/api/bebas-tanggungan/${permohonan?.id}/pdf`}
+              href={`/api/bebas-tanggungan/${permohonan?.id}/pdf?token=${typeof localStorage !== 'undefined' ? localStorage.getItem("simkip_token") || "" : ""}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#263F93] text-white rounded-xl text-sm font-500 hover:bg-[#1E3275] transition-colors shadow-sm"

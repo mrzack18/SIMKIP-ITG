@@ -60,12 +60,25 @@ class BebasTanggunganController extends Controller
             $bt->update([
                 'tanggal_ajukan' => now()->toDateString(),
                 'status'         => 'Menunggu',
+                'catatan_admin'  => null,
+                'reviewed_by'    => null,
+                'reviewed_at'    => null,
+            ]);
+            $bt->histories()->create([
+                'status'      => 'Menunggu',
+                'catatan'     => 'Pengajuan ulang',
+                'reviewed_by' => $m->user_id,
             ]);
         } else {
             $bt = BebasTanggungan::create([
                 'mahasiswa_id'   => $m->id,
                 'tanggal_ajukan' => now()->toDateString(),
                 'status'         => 'Menunggu',
+            ]);
+            $bt->histories()->create([
+                'status'      => 'Menunggu',
+                'catatan'     => 'Pengajuan awal',
+                'reviewed_by' => $m->user_id,
             ]);
         }
 

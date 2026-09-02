@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, Clock, AlertTriangle, FileText, Download, User, CheckCircle2, ChevronRight, Loader2, Send, XCircle } from "lucide-react";
 import { api } from "@/services/api";
-import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import { useAuth } from "@/context/AuthContext";
 
 type AppState = "belum" | "menunggu" | "diterbitkan" | "ditolak";
@@ -42,7 +41,6 @@ export default function BebasTanggungan() {
   };
   
   const [state, setState] = useState<AppState>("belum");
-  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [showConfirm, setShowConfirm] = useState(false);
   
   const [dokumenList, setDokumenList] = useState<Dokumen[]>([]);
@@ -95,7 +93,13 @@ export default function BebasTanggungan() {
       const token = localStorage.getItem("simkip_token");
       const res = await fetch(
         `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'}/bebas-tanggungan/pdf`,
-        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/pdf",
+          },
+        }
       );
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
@@ -114,7 +118,6 @@ export default function BebasTanggungan() {
           <h1 className="font-display font-700 text-2xl text-gray-900">Surat Keterangan Penyelesaian Studi</h1>
           <p className="text-gray-500 text-sm mt-0.5">Mahasiswa KIP-K — {mahasiswa.prodi} · {mahasiswa.nim}</p>
         </div>
-        <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
       </div>
 
       {state === "belum" && (
