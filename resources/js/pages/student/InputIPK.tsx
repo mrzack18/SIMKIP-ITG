@@ -120,10 +120,15 @@ export default function InputIPK() {
   // ── Profile ─────────────────────────────────────────────────────────────────
   const [mahasiswaProfile, setMahasiswaProfile] = useState<{ angkatan: number } | null>(null)
 
+  // Semester tertinggi dari riwayat (untuk mode "Semua")
+  const maxSemesterFromHistory = historyData.length > 0
+    ? Math.max(...historyData.map((h) => h.semester))
+    : 0
+
   // Computed displayed semester based on angkatan + TA filter
   const displayedSemester = mahasiswaProfile && taFilter !== "Semua"
     ? calculateSemester(mahasiswaProfile.angkatan, taFilter)
-    : targetSemester
+    : (maxSemesterFromHistory || targetSemester)
 
   // Periode helpers
   const isPeriodeAktif = () => {
@@ -185,7 +190,10 @@ export default function InputIPK() {
       }
 
       // Compute displayedSemester from fetched profile + taFilter
-      const computedDisplayedSem = calculateSemester(angkatan, taFilter || "Semua")
+      // Saat filter "Semua", gunakan semester tertinggi dari riwayat (bukan 0)
+      const computedDisplayedSem = taFilter === "Semua"
+        ? (history.length > 0 ? Math.max(...history.map((r) => r.semester)) : 0)
+        : calculateSemester(angkatan, taFilter)
 
       // Find record matching the displayed semester (key data for this TA filter)
       const recordForSemester = history.find((r: SemesterRecord) => r.semester === computedDisplayedSem)
