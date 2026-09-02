@@ -76,7 +76,7 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
     }
 
     const startYear = 2022;
-    const opts: string[] = [];
+    const opts: string[] = []; 
 
     for (let y = maxStartYear; y >= startYear; y--) {
       // If we are on the max year, only push up to the max semester

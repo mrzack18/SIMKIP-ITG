@@ -55,7 +55,7 @@ export default function BebasTanggunganList() {
         search,
         page,
         limit: LIMIT,
-        tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
+        tahun_ajaran: tahunAjaran,
         prodi: selectedProdi,
         angkatan: selectedAngkatan,
       });

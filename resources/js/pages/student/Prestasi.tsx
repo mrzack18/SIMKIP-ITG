@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Trophy, FileText, Eye, MapPin, Calendar, Link, Image, Loader2, Pencil, Send, Download } from "lucide-react";
 import { api } from "@/services/api";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { downloadFile } from "@/utils/fileUrl";
 
 type PTab = "Internasional" | "Nasional" | "Wilayah";
 type PStatus = "Disetujui" | "Menunggu Validasi" | "Ditolak";
@@ -484,22 +485,34 @@ export default function Prestasi() {
                           title="Sertifikat"
                         />
                       ) : (
-                        <a href={detail.fileSertifikat} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={detail.fileSertifikat}
-                            alt="Sertifikat"
-                            className="w-full h-40 object-cover"
-                          />
-                        </a>
+                        <img
+                          src={detail.fileSertifikat}
+                          alt="Sertifikat"
+                          className="w-full h-40 object-cover"
+                        />
                       )}
-                      <a
-                        href={detail.fileSertifikat}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-gray-50 hover:bg-gray-100 transition-colors"
-                      >
-                        <Download size={12} /> Unduh Sertifikat
-                      </a>
+                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
+                        <a
+                          href={detail.fileSertifikat}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Eye size={12} /> Pratinjau
+                        </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            downloadFile("prestasi", detail.id, "file_sertifikat").catch((err) =>
+                              alert(err?.message || "Gagal mengunduh file")
+                            );
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Download size={12} /> Download
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
@@ -512,21 +525,33 @@ export default function Prestasi() {
                   <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
                   {detail.fileFoto ? (
                     <div className="rounded-xl border border-gray-200 overflow-hidden">
-                      <a href={detail.fileFoto} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={detail.fileFoto}
-                          alt="Foto Kegiatan"
-                          className="w-full h-40 object-cover"
-                        />
-                      </a>
-                      <a
-                        href={detail.fileFoto}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-gray-50 hover:bg-gray-100 transition-colors"
-                      >
-                        <Download size={12} /> Unduh Foto
-                      </a>
+                      <img
+                        src={detail.fileFoto}
+                        alt="Foto Kegiatan"
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
+                        <a
+                          href={detail.fileFoto}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Eye size={12} /> Pratinjau
+                        </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            downloadFile("prestasi", detail.id, "file_foto").catch((err) =>
+                              alert(err?.message || "Gagal mengunduh file")
+                            );
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Download size={12} /> Download
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">

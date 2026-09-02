@@ -42,7 +42,7 @@ export default function WarekDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await api.get<DashboardData>(`/warek/dashboard?tahun_ajaran=${filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran}`);
+        const res = await api.get<DashboardData>(`/warek/dashboard?tahun_ajaran=${filterTahunAjaran}`);
         if (!cancelled) {
           setData(res);
           setLoading(false);

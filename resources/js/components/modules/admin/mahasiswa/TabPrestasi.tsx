@@ -10,6 +10,7 @@ import {
   Building2,
   FileText,
   Download,
+  Eye,
   Image,
 } from "lucide-react"
 import {
@@ -17,6 +18,7 @@ import {
   ApprovalStatusIcon as StatusIcon,
 } from "@/constants/status"
 import { BackendNotReady } from "./Shared"
+import { downloadFile } from "@/utils/fileUrl"
 
 export function TabPrestasi({ data, loading, error }: { data: any[]; loading: boolean; error?: any }) {
   const [subTab, setSubTab] =
@@ -316,22 +318,34 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                           title="Sertifikat"
                         />
                       ) : (
-                        <a href={modalItem.fileSertifikat} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={modalItem.fileSertifikat}
-                            alt="Sertifikat"
-                            className="w-full h-40 object-cover"
-                          />
-                        </a>
+                        <img
+                          src={modalItem.fileSertifikat}
+                          alt="Sertifikat"
+                          className="w-full h-40 object-cover"
+                        />
                       )}
-                      <a
-                        href={modalItem.fileSertifikat}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-[#F8FAFC] hover:bg-gray-100 transition-colors"
-                      >
-                        <Download size={11} /> Unduh Sertifikat
-                      </a>
+                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-[#F8FAFC]">
+                        <a
+                          href={modalItem.fileSertifikat}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Eye size={11} /> Pratinjau
+                        </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            downloadFile("prestasi", modalItem.id, "file_sertifikat").catch((err) =>
+                              alert(err?.message || "Gagal mengunduh file")
+                            );
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Download size={11} /> Download
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
@@ -344,21 +358,33 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                   <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
                   {modalItem.fileFoto ? (
                     <div className="rounded-xl border border-[#E2E8F0] overflow-hidden">
-                      <a href={modalItem.fileFoto} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={modalItem.fileFoto}
-                          alt="Foto Kegiatan"
-                          className="w-full h-40 object-cover"
-                        />
-                      </a>
-                      <a
-                        href={modalItem.fileFoto}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] bg-[#F8FAFC] hover:bg-gray-100 transition-colors"
-                      >
-                        <Download size={11} /> Unduh Foto
-                      </a>
+                      <img
+                        src={modalItem.fileFoto}
+                        alt="Foto Kegiatan"
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-[#F8FAFC]">
+                        <a
+                          href={modalItem.fileFoto}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Eye size={11} /> Pratinjau
+                        </a>
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            downloadFile("prestasi", modalItem.id, "file_foto").catch((err) =>
+                              alert(err?.message || "Gagal mengunduh file")
+                            );
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                        >
+                          <Download size={11} /> Download
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">

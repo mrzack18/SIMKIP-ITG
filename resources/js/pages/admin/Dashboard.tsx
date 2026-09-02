@@ -88,7 +88,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [selectedAngkatan, setSelectedAngkatan] = useState<string>("Semua");
   const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>(getCurrentTahunAjaran());
-  const [selectedKendalaTahunAjaran, setSelectedKendalaTahunAjaran] = useState<string>(getCurrentTahunAjaran());
+  const [selectedKendalaTahunAjaran, setSelectedKendalaTahunAjaran] = useState<string>("Semua");
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -113,7 +113,7 @@ export default function Dashboard() {
       setLoading(true);
       try {
         // "Semua" = no tahun_ajaran param → aggregates all-time data
-        const ta = selectedKendalaTahunAjaran;
+        const ta = selectedKendalaTahunAjaran === "Semua" ? undefined : selectedKendalaTahunAjaran;
         const res = await getAdminDashboardData(ta);
         setData(res);
       } catch (error) {
@@ -353,6 +353,7 @@ export default function Dashboard() {
                   onChange={(e) => setSelectedKendalaTahunAjaran(e.target.value)}
                   className="border border-[#E2E8F0] rounded-lg px-2.5 py-1 text-xs text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
                 >
+                  
                   <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
                   <option value="2025/2026 Genap">2025/2026 Genap</option>
                   <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>

@@ -10,12 +10,14 @@ import {
   FileText,
   Download,
   Image,
+  Eye,
 } from "lucide-react"
 import {
   getApprovalStatusBadge as statusBadge,
   ApprovalStatusIcon as StatusIcon,
 } from "@/constants/status"
 import { BackendNotReady } from "./Shared"
+import { downloadFile } from "@/utils/fileUrl";
 
 function PlaceholderThumb({ label }: { label: string }) {
   return (
@@ -232,31 +234,49 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-gray-400 mb-1.5">Sertifikat</p>
-                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
-                    <FileText size={22} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">
-                      {selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat ? "Tersedia" : "Belum diunggah"}
-                    </p>
-                    {(selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat) && (
-                      <a href={selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
-                        <Download size={11} /> Unduh
-                      </a>
-                    )}
-                  </div>
+                  {(selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat) ? (
+                    <div className="rounded-xl border border-gray-200 overflow-hidden">
+                      {(selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat).toLowerCase().endsWith(".pdf") ? (
+                        <iframe src={selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat} className="w-full h-40 border-0" title="Sertifikat" />
+                      ) : (
+                        <img src={selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat} alt="Sertifikat" className="w-full h-40 object-cover" />
+                      )}
+                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
+                        <a href={selectedPelatihan.sertifikat || selectedPelatihan.fileSertifikat} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                          <Eye size={12} /> Pratinjau
+                        </a>
+                        <a href="#" onClick={(e) => { e.preventDefault(); downloadFile("pelatihan", selectedPelatihan.id, "file_sertifikat").catch(err => alert(err?.message || "Gagal mengunduh file")); }} className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                          <Download size={12} /> Download
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
+                      <FileText size={22} className="text-gray-300" />
+                      <p className="text-xs text-gray-400">Belum diunggah</p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
-                  <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
-                    <Image size={22} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 text-center px-2">
-                      {selectedPelatihan.fotoKegiatan ? "Tersedia" : "Belum diunggah"}
-                    </p>
-                    {selectedPelatihan.fotoKegiatan && (
-                      <a href={selectedPelatihan.fotoKegiatan} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-xs text-[#263F93] font-medium hover:underline">
-                        <Download size={11} /> Unduh
-                      </a>
-                    )}
-                  </div>
+                  {selectedPelatihan.fotoKegiatan ? (
+                    <div className="rounded-xl border border-gray-200 overflow-hidden">
+                      <img src={selectedPelatihan.fotoKegiatan} alt="Foto Kegiatan" className="w-full h-40 object-cover" />
+                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
+                        <a href={selectedPelatihan.fotoKegiatan} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                          <Eye size={12} /> Pratinjau
+                        </a>
+                        <a href="#" onClick={(e) => { e.preventDefault(); downloadFile("pelatihan", selectedPelatihan.id, "foto_kegiatan").catch(err => alert(err?.message || "Gagal mengunduh file")); }} className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                          <Download size={12} /> Download
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
+                      <Image size={22} className="text-gray-300" />
+                      <p className="text-xs text-gray-400">Belum diunggah</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

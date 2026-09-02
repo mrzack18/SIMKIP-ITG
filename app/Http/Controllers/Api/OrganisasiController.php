@@ -34,4 +34,9 @@ class OrganisasiController extends Controller
         if ($req->user()->role === "admin") return app(AdminAkademik::class)->validateOrganisasi($req, $id);
         abort(403);
     }
+
+    public function resubmit(Request $req, $id) {
+        if ($req->user()->role === "mahasiswa") return app(MhsOrganisasi::class)->resubmit($req, $id);
+        abort(403);
+    }
 }

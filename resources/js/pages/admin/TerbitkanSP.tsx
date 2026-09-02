@@ -1,4 +1,3 @@
-import { getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 ﻿import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, AlertTriangle, Search, CheckCircle, X, Info, Loader2, XCircle } from "lucide-react";
@@ -72,7 +71,7 @@ export default function TerbitkanSP() {
   const [tanggalTerbit, setTanggalTerbit] = useState(() => new Date().toISOString().slice(0, 10));
   const [batasEvaluasi, setBatasEvaluasi] = useState("");
   const [catatan, setCatatan]     = useState("");
-  const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran());
+  const [tahunAjaran, setTahunAjaran] = useState("Semua");
 
   // UI state
   const [showConfirm, setShowConfirm]   = useState(false);

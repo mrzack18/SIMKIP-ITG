@@ -57,6 +57,20 @@ class TahunAjaranHelper
     }
 
     /**
+     * Filter data that has a duration (start & end dates) to see if it overlaps with the academic year.
+     * Overlap condition: start <= semester_end AND end >= semester_start
+     */
+    public static function applyOverlapFilter($query, string $startCol, string $endCol, ?string $tahunAjaran)
+    {
+        $range = self::getDateRange($tahunAjaran);
+        if ($range) {
+            $query->where($startCol, '<=', $range[1])
+                  ->where($endCol, '>=', $range[0]);
+        }
+        return $query;
+    }
+
+    /**
      * Filter tabel yang MEMILIKI kolom `tahun_ajaran` (mis. ipk_semestrs)
      * dengan membandingkan langsung ke nilai kolom tersebut, bukan ke created_at.
      *

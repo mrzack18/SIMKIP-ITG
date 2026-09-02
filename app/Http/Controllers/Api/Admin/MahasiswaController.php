@@ -436,7 +436,7 @@ class MahasiswaController extends Controller
         $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
-            $query = \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'periode_mulai', $tahunAjaran);
+            $query = \App\Helpers\TahunAjaranHelper::applyOverlapFilter($query, 'periode_mulai', 'periode_selesai', $tahunAjaran);
         }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);

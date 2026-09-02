@@ -126,9 +126,9 @@ export default function InputIPK() {
     : 0
 
   // Computed displayed semester based on angkatan + TA filter
-  const displayedSemester = mahasiswaProfile && taFilter
+  const displayedSemester = mahasiswaProfile
     ? calculateSemester(mahasiswaProfile.angkatan, taFilter)
-    : (maxSemesterFromHistory || targetSemester)
+    : targetSemester
 
   // Periode helpers
   const isPeriodeAktif = () => {
@@ -137,7 +137,7 @@ export default function InputIPK() {
     if (now < new Date(periode.buka)) return false
     if (now > new Date(periode.tutup)) return false
     // TA filter must match configured TA
-    if (taFilter && periode.tahun_ajaran) {
+    if (periode.tahun_ajaran) {
       const normalize = (ta: string) => ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
       if (normalize(taFilter) !== normalize(periode.tahun_ajaran)) return false
     }
@@ -163,7 +163,7 @@ export default function InputIPK() {
     return new Date() < new Date(periode.buka)
   }
   const isTANotMatched = () => {
-    if (taFilter === getCurrentTahunAjaran() || !periode?.tahun_ajaran) return false
+    if (!periode?.tahun_ajaran) return false
     const normalize = (ta: string) => ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
     return normalize(taFilter) !== normalize(periode.tahun_ajaran)
   }
@@ -191,9 +191,7 @@ export default function InputIPK() {
 
       // Compute displayedSemester from fetched profile + taFilter
       // Saat filter "Semua", gunakan semester tertinggi dari riwayat (bukan 0)
-      const computedDisplayedSem = taFilter === getCurrentTahunAjaran()
-        ? (history.length > 0 ? Math.max(...history.map((r) => r.semester)) : 0)
-        : calculateSemester(angkatan, taFilter)
+      const computedDisplayedSem = calculateSemester(angkatan, taFilter)
 
       // Find record matching the displayed semester (key data for this TA filter)
       const recordForSemester = history.find((r: SemesterRecord) => r.semester === computedDisplayedSem)
@@ -294,11 +292,7 @@ export default function InputIPK() {
     const fd = new FormData()
     fd.append('semester', String(displayedSemester))
     // Send tahun_ajaran: use taFilter if not "Semua", otherwise derive from periode
-    if (taFilter) {
-      fd.append('tahun_ajaran', taFilter)
-    } else if (periode?.tahun_ajaran) {
-      fd.append('tahun_ajaran', periode.tahun_ajaran)
-    }
+    fd.append('tahun_ajaran', taFilter)
     if (uploadedFile) fd.append('file_khs', uploadedFile)
     mkList.forEach((mk, idx) => {
       fd.append(`mata_kuliah[${idx}][kode]`, mk.kode)
@@ -336,7 +330,7 @@ export default function InputIPK() {
       await api.post('/ipk', buildFormData())
       await api.post('/ipk/submit', {
         semester: displayedSemester,
-        tahun_ajaran: taFilter ? taFilter : undefined,
+        tahun_ajaran: taFilter,
       })
       setFormStatus("diajukan")
       setToast("Nilai berhasil diajukan untuk divalidasi.")

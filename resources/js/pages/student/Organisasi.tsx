@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, X, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download, Image } from "lucide-react";
+import { Plus, X, Pencil, Send, Upload, CheckCircle, Clock, AlertTriangle, Building2, Calendar, FileText, Eye, Download, Image } from "lucide-react";
 import { api } from "@/services/api";
+import { downloadFile } from "@/utils/fileUrl";
 import { useAuth } from "@/context/AuthContext";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
@@ -62,7 +63,32 @@ export default function Organisasi() {
   const [fileName, setFileName] = useState("");
   const [fotoName, setFotoName] = useState("");
   const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
-  const [form, setForm] = useState({ jenis: "Organisasi" as "Organisasi" | "Kepanitiaan" | "Kegiatan", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "", tahunAjaran: "2025/2026 Ganjil" });
+    const [form, setForm] = useState({ jenis: "Organisasi" as "Organisasi" | "Kepanitiaan" | "Kegiatan", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const openEditForm = (org: Org) => {
+    setEditingId(org.id);
+    setForm({
+      jenis: org.jenis,
+      nama: org.nama,
+      jabatan: org.jabatan,
+      mulai: org.mulai,
+      selesai: org.selesai,
+      deskripsi: org.deskripsi || ""
+    });
+    setFileName(org.fileSk ? "File SK sudah diunggah" : "");
+    setFotoName(org.fotoKegiatan ? "Foto sudah diunggah" : "");
+    setOpen(true);
+  };
+
+  const handleResubmit = async (id: number) => {
+    try {
+      await api.put(`/organisasi/${id}/resubmit`);
+      fetchOrganisasi();
+    } catch (err: any) {
+      alert(err.error?.message || err.message || "Gagal mengajukan ulang");
+    }
+  };
   const fileRef = useRef<HTMLInputElement>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
 
@@ -72,7 +98,10 @@ export default function Organisasi() {
   const fetchOrganisasi = async () => {
     setIsLoading(true);
     try {
-      const res = await api.get<{ data: Org[] }>("/organisasi");
+      const res = await api.get<{ data: Org[] }>(
+        "/organisasi",
+        taFilter ? { tahun_ajaran: taFilter } : undefined
+      );
       if (res && res.data && Array.isArray(res.data)) {
         setList(res.data);
       } else if (res && Array.isArray(res.data)) { // in case of { data: [...] } structure
@@ -89,7 +118,7 @@ export default function Organisasi() {
 
   useEffect(() => {
     fetchOrganisasi();
-  }, []);
+  }, [taFilter]);
 
   const handleSubmit = async () => {
     if (!form.nama.trim() || !form.jabatan.trim()) return;
@@ -102,7 +131,6 @@ export default function Organisasi() {
       if (form.mulai) formData.append("periode_mulai", `${form.mulai}-01`);
       if (form.selesai) formData.append("periode_selesai", `${form.selesai}-01`);
       if (form.deskripsi) formData.append("deskripsi", form.deskripsi);
-      formData.append("tahun_ajaran", form.tahunAjaran);
       
       const fileEl = fileRef.current?.files?.[0];
       if (fileEl) formData.append("file_sk", fileEl);
@@ -110,9 +138,15 @@ export default function Organisasi() {
       const fotoEl = fotoRef.current?.files?.[0];
       if (fotoEl) formData.append("foto_kegiatan", fotoEl);
 
-      await api.post("/organisasi", formData);
+            if (editingId) {
+        formData.append("_method", "PUT");
+        await api.post(`/organisasi/${editingId}`, formData);
+      } else {
+        await api.post("/organisasi", formData);
+      }
 
-      setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "", tahunAjaran: "2025/2026 Ganjil" });
+      setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" });
+      setEditingId(null);
       setFileName("");
       setFotoName("");
       setOpen(false);
@@ -147,93 +181,96 @@ export default function Organisasi() {
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="relative">
-        <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
-        <div className="space-y-6">
-          {[formatTA(taFilter)].map((ta) => (
-            <div key={ta} className="relative">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 shadow-sm flex items-center justify-center flex-shrink-0 z-10 text-gray-500 font-bold text-xs">
-                  {ta.split(" ")[0]}
-                </div>
-                <h2 className="font-600 text-gray-700 text-sm bg-gray-100 px-3 py-1 rounded-lg">Tahun Ajaran {ta}</h2>
-              </div>
-              <div className="space-y-4">
-                {list.filter(org => (org.tahunAjaran || "2025/2026 Ganjil") === ta).map((org) => {
-                  const ss = statusStyle[org.status];
-                  const duration = calcDuration(org.mulai, org.selesai);
-                  return (
-                    <div key={org.id} className="relative pl-14">
-                      <div className={`absolute left-3.5 top-5 w-3 h-3 rounded-full border-2 border-white shadow-sm ${ss.dot}`} />
-                      <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E2E8F0]">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
-                            <Building2 size={18} className="text-[#263F93]" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                              <h3 className="font-600 text-gray-800 text-sm">{org.nama}</h3>
-                              <span className={`px-2 py-0.5 rounded text-xs font-500 ${
-                                org.jenis === "Organisasi" ? "bg-blue-100 text-blue-700" :
-                                org.jenis === "Kepanitiaan" ? "bg-purple-100 text-purple-700" :
-                                "bg-teal-100 text-teal-700"
-                              }`}>{org.jenis}</span>
-                              <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 ${ss.badge}`}>
-                                {ss.icon} {org.status}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-500 font-500">{org.jabatan}</p>
-                            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400">
-                              <Calendar size={11} />
-                              <span>{fmtMonth(org.mulai)} – {fmtMonth(org.selesai)}</span>
-                              {duration && <span className="text-gray-300">·</span>}
-                              {duration && <span className="text-gray-400 font-500">{duration}</span>}
-                            </div>
-                            {org.deskripsi && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{org.deskripsi}</p>}
-                          </div>
-                        </div>
+      {/* List */}
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
+            Tahun Ajaran {formatTA(taFilter)}
+          </h2>
 
-                        {/* Proof thumbnail */}
-                        <div className="mt-3 h-16 bg-[#F8FAFC] rounded-lg flex items-center justify-center border border-dashed border-[#E2E8F0] gap-2 overflow-hidden">
-                          {org.fileSk ? (
-                            <span className="text-xs text-gray-400 font-500">Dokumen SK Tersedia</span>
-                          ) : (
+          {list.length === 0 && !isLoading ? (
+            <div className="bg-white rounded-xl border border-dashed border-[#E2E8F0] p-8 text-center">
+              <Building2 size={32} className="mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500 font-500 text-sm">Belum ada catatan keaktifan pada tahun ajaran ini.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {list.map((org) => {
+                const ss = statusStyle[org.status];
+                const duration = calcDuration(org.mulai, org.selesai);
+                return (
+                  <div key={org.id} className="bg-white rounded-xl p-5 shadow-sm border border-[#E2E8F0] hover:shadow-md transition-shadow flex flex-col">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
+                        <Building2 size={18} className="text-[#263F93]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                          <h3 className="font-600 text-gray-800 text-sm leading-snug">{org.nama}</h3>
+                          <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 ${ss.badge}`}>
+                            {ss.icon} {org.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-600 uppercase tracking-wider ${
+                            org.jenis === "Organisasi" ? "bg-blue-100 text-blue-700" :
+                            org.jenis === "Kepanitiaan" ? "bg-purple-100 text-purple-700" :
+                            "bg-teal-100 text-teal-700"
+                          }`}>{org.jenis}</span>
+                          <span className="text-xs font-500 text-gray-600">{org.jabatan}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Calendar size={11} />
+                            <span>{fmtMonth(org.mulai)} – {fmtMonth(org.selesai)}</span>
+                          </div>
+                          {duration && (
                             <>
-                              <FileText size={14} className="text-gray-300" />
-                              <span className="text-xs text-gray-300">Belum ada dokumen</span>
+                              <span className="text-gray-300 hidden sm:inline">·</span>
+                              <span className="text-gray-400 font-500 bg-gray-50 px-1.5 py-0.5 rounded">{duration}</span>
                             </>
                           )}
                         </div>
-
-                        {org.catatanAdmin && (
-                          <div className="mt-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
-                            <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-red-700"><span className="font-500">Catatan Admin:</span> {org.catatanAdmin}</p>
-                          </div>
-                        )}
-
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            onClick={() => setDetail(org)}
-                            className="flex-1 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-[#F8FAFC] flex items-center justify-center gap-1.5 transition-colors"
-                          >
-                            <Eye size={12} /> Lihat Detail
-                          </button>
-                          <button
-                            onClick={() => setSkOrg(org)}
-                            className="flex-1 py-1.5 rounded-lg border border-[#263F93] text-xs text-[#263F93] hover:bg-[#EDF0F8] flex items-center justify-center gap-1.5 transition-colors"
-                          >
-                            <FileText size={12} /> Pratinjau SK
-                          </button>
-                        </div>
+                        {org.deskripsi && <p className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">{org.deskripsi}</p>}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {org.catatanAdmin && (
+                      <div className="mt-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+                        <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-700 leading-relaxed"><span className="font-600">Catatan Admin:</span> {org.catatanAdmin}</p>
+                      </div>
+                    )}
+
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex gap-2">
+                      <button
+                        onClick={() => setDetail(org)}
+                        className="flex-1 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-[#F8FAFC] flex items-center justify-center gap-1.5 transition-colors font-500"
+                      >
+                        <Eye size={12} /> Detail
+                      </button>
+                    </div>
+                    {org.status === "Ditolak" && (
+                      <div className="mt-2 pt-2 border-t border-gray-100 flex gap-2">
+                        <button
+                          onClick={() => openEditForm(org)}
+                          className="flex-1 py-1.5 rounded-lg border border-amber-300 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleResubmit(org.id)}
+                          className="flex-1 py-1.5 rounded-lg text-xs font-medium text-white bg-[#263F93] hover:bg-[#1a2e6e] transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Send size={12} /> Ajukan Ulang
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -283,24 +320,50 @@ export default function Organisasi() {
               <div>
                 <p className="text-xs text-gray-400 mb-2">Bukti Dokumen</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2">
-                    <FileText size={28} className="text-gray-300" />
-                    <p className="text-xs text-gray-400 px-2 text-center">{detail.fileSk ? "SK Tersedia" : "Belum ada dokumen"}</p>
-                    <button 
-                      onClick={() => detail.fileSk && window.open(detail.fileSk, '_blank')}
-                      disabled={!detail.fileSk}
-                      className="mt-1 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-100 flex items-center gap-1.5 disabled:opacity-50">
-                      <Eye size={11} /> Lihat Dokumen
-                    </button>
-                  </div>
-                  <div className="h-36 bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-2 overflow-hidden">
-                    {detail.fotoKegiatan ? (
-                      <img src={detail.fotoKegiatan} alt="Foto Kegiatan" className="w-full h-full object-cover" />
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1.5">Sertifikat / SK Pengurus</p>
+                    {detail.fileSk ? (
+                      <div className="rounded-xl border border-gray-200 overflow-hidden">
+                        {detail.fileSk.toLowerCase().endsWith(".pdf") ? (
+                          <iframe src={detail.fileSk} className="w-full h-40 border-0" title="SK Pengurus" />
+                        ) : (
+                          <img src={detail.fileSk} alt="SK Pengurus" className="w-full h-40 object-cover" />
+                        )}
+                        <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
+                          <a href={detail.fileSk} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                            <Eye size={12} /> Pratinjau
+                          </a>
+                          <a href="#" onClick={(e) => { e.preventDefault(); downloadFile("organisasi", detail.id, "file_sk").catch(err => alert(err?.message || "Gagal mengunduh file")); }} className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                            <Download size={12} /> Download
+                          </a>
+                        </div>
+                      </div>
                     ) : (
-                      <>
-                        <Image size={28} className="text-gray-300" />
-                        <p className="text-xs text-gray-400 text-center px-2">Belum ada foto</p>
-                      </>
+                      <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
+                        <FileText size={22} className="text-gray-300" />
+                        <p className="text-xs text-gray-400">Belum diunggah</p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1.5">Foto Dokumentasi Kegiatan</p>
+                    {detail.fotoKegiatan ? (
+                      <div className="rounded-xl border border-gray-200 overflow-hidden">
+                        <img src={detail.fotoKegiatan} alt="Foto Kegiatan" className="w-full h-40 object-cover" />
+                        <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
+                          <a href={detail.fotoKegiatan} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                            <Eye size={12} /> Pratinjau
+                          </a>
+                          <a href="#" onClick={(e) => { e.preventDefault(); downloadFile("organisasi", detail.id, "foto_kegiatan").catch(err => alert(err?.message || "Gagal mengunduh file")); }} className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
+                            <Download size={12} /> Download
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
+                        <Image size={22} className="text-gray-300" />
+                        <p className="text-xs text-gray-400">Belum diunggah</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -396,11 +459,11 @@ export default function Organisasi() {
       {/* Slide-over */}
       {open && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="flex-1 bg-black/40" onClick={() => setOpen(false)} />
+          <div className="flex-1 bg-black/40" onClick={() => { setOpen(false); setEditingId(null); setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" }); }} />
           <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
             <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-              <h2 className="font-display font-700 text-gray-800">Tambah Data</h2>
-              <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"><X size={18} /></button>
+              <h2 className="font-display font-700 text-gray-800">{editingId ? "Edit Data" : "Tambah Data"}</h2>
+              <button onClick={() => { setOpen(false); setEditingId(null); setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" }); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"><X size={18} /></button>
             </div>
 
             <div className="flex-1 px-5 py-4 space-y-4">
@@ -421,15 +484,6 @@ export default function Organisasi() {
                     </label>
                   ))}
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Ajaran <span className="text-red-500">*</span></label>
-                <select value={form.tahunAjaran} onChange={e => setForm(f => ({ ...f, tahunAjaran: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20">
-                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
-                  <option value="2024/2025 Genap">2024/2025 Genap</option>
-                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
-                </select>
               </div>
               <div>
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">Nama Organisasi / Kegiatan <span className="text-red-500">*</span></label>
@@ -498,7 +552,7 @@ export default function Organisasi() {
             </div>
 
             <div className="px-5 py-4 border-t border-[#E2E8F0] flex gap-3">
-              <button onClick={() => setOpen(false)} className="flex-1 py-2.5 border border-[#E2E8F0] rounded-xl text-sm text-gray-600">Batal</button>
+              <button onClick={() => { setOpen(false); setEditingId(null); setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" }); }} className="flex-1 py-2.5 border border-[#E2E8F0] rounded-xl text-sm text-gray-600">Batal</button>
               <button onClick={handleSubmit} disabled={!form.nama.trim() || !form.jabatan.trim() || isSubmitting}
                 className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white disabled:opacity-40"
                 style={{ background: "#263F93" }}>

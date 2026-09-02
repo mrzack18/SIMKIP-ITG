@@ -43,6 +43,7 @@ import logoItg from "@/imports/logo_itg.jpg"
 import { api, API_BASE_URL } from "@/services/api"
 import { getApprovalStatusBadge as statusBadge, getApprovalStatusBorder as dokBorderColor, ApprovalStatusIcon as StatusIcon } from "@/constants/status"
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { downloadFile } from "@/utils/fileUrl";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -230,7 +231,28 @@ function PlaceholderThumb({ label }: { label: string }) {
   )
 }
 
-function FilePlaceholderCard({ label, fileUrl }: { label: string; fileUrl?: string | null }) {
+function FilePlaceholderCard({
+  label,
+  fileUrl,
+  downloadType,
+  downloadId,
+  downloadField,
+}: {
+  label: string
+  fileUrl?: string | null
+  downloadType?: string
+  downloadId?: number | string
+  downloadField?: string
+}) {
+  const handleDownload = downloadType && downloadId && downloadField
+    ? (e: React.MouseEvent) => {
+        e.preventDefault()
+        downloadFile(downloadType, downloadId, downloadField).catch((err) =>
+          alert(err?.message || "Gagal mengunduh file")
+        )
+      }
+    : undefined
+
   if (!fileUrl) {
     return (
       <div className="flex items-center justify-between p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl">
@@ -242,7 +264,7 @@ function FilePlaceholderCard({ label, fileUrl }: { label: string; fileUrl?: stri
         </div>
         <button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed">
           <Download size={12} />
-          Unduh
+          Download
         </button>
       </div>
     )
@@ -262,22 +284,28 @@ function FilePlaceholderCard({ label, fileUrl }: { label: string; fileUrl?: stri
           title={label}
         />
       ) : (
-        <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-          <img
-            src={fileUrl}
-            alt={label}
-            className="w-full h-48 object-cover"
-          />
-        </a>
+        <img
+          src={fileUrl}
+          alt={label}
+          className="w-full h-48 object-cover"
+        />
       )}
-      <div className="p-2 bg-gray-50 border-t border-[#E2E8F0]">
+      <div className="grid grid-cols-2 divide-x divide-[#E2E8F0] bg-gray-50 border-t border-[#E2E8F0]">
         <a
           href={fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[#263F93] hover:bg-gray-100 rounded-lg transition-colors"
+          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
         >
-          <Download size={11} /> Unduh
+          <ExternalLink size={11} /> Pratinjau
+        </a>
+        <a
+          href={handleDownload ? "#" : fileUrl}
+          onClick={handleDownload}
+          download={!handleDownload}
+          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+        >
+          <Download size={11} /> Download
         </a>
       </div>
     </div>
@@ -772,8 +800,8 @@ function TabPrestasi({ items }: { items: PrestasiItem[] }) {
             </div>
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Berkas</div>
-              <FilePlaceholderCard label="Foto Sertifikat" fileUrl={modalItem.fileSertifikat} />
-              <FilePlaceholderCard label="Foto Podium" fileUrl={modalItem.fileFoto} />
+              <FilePlaceholderCard label="Foto Sertifikat" fileUrl={modalItem.fileSertifikat} downloadType="prestasi" downloadId={modalItem.id} downloadField="file_sertifikat" />
+              <FilePlaceholderCard label="Foto Podium" fileUrl={modalItem.fileFoto} downloadType="prestasi" downloadId={modalItem.id} downloadField="file_foto" />
             </div>
             <div className="pt-2 flex justify-end">
               <button onClick={() => setModalItem(null)}
@@ -897,8 +925,8 @@ function TabOrganisasi({ items }: { items: OrganisasiItem[] }) {
             </div>
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Berkas</div>
-              <FilePlaceholderCard label="Surat Keputusan (SK)" fileUrl={modalItem.fileSk} />
-              <FilePlaceholderCard label="Foto Dokumentasi Kegiatan" fileUrl={modalItem.fotoKegiatan} />
+              <FilePlaceholderCard label="Surat Keputusan (SK)" fileUrl={modalItem.fileSk} downloadType="organisasi" downloadId={modalItem.id} downloadField="file_sk" />
+              <FilePlaceholderCard label="Foto Dokumentasi Kegiatan" fileUrl={modalItem.fotoKegiatan} downloadType="organisasi" downloadId={modalItem.id} downloadField="foto_kegiatan" />
             </div>
             <div className="pt-2 flex justify-end">
               <button onClick={() => setModalItem(null)}
@@ -1051,8 +1079,8 @@ function TabPelatihan({ items }: { items: PelatihanItem[] }) {
             </div>
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Berkas</div>
-              <FilePlaceholderCard label="Sertifikat" fileUrl={modalItem.sertifikat} />
-              <FilePlaceholderCard label="Foto Saat Kegiatan" fileUrl={modalItem.fotoKegiatan} />
+              <FilePlaceholderCard label="Sertifikat" fileUrl={modalItem.sertifikat} downloadType="pelatihan" downloadId={modalItem.id} downloadField="file_sertifikat" />
+              <FilePlaceholderCard label="Foto Saat Kegiatan" fileUrl={modalItem.fotoKegiatan} downloadType="pelatihan" downloadId={modalItem.id} downloadField="foto_kegiatan" />
             </div>
             <div className="pt-2 flex justify-end">
               <button onClick={() => setModalItem(null)}
@@ -1152,7 +1180,7 @@ function TabDokumen({ items, summary }: { items: DokumenWajib[]; summary: { tota
             {modalItem.status !== "Belum Diunggah" && (
               <div className="space-y-2">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Berkas</div>
-                <FilePlaceholderCard label={`Dokumen ${modalItem.nama}`} fileUrl={modalItem.fileUrl} />
+                <FilePlaceholderCard label={`Dokumen ${modalItem.nama}`} fileUrl={modalItem.fileUrl} downloadType="dokumen" downloadId={modalItem.id} downloadField="path_file" />
               </div>
             )}
             {modalItem.status === "Belum Diunggah" && (

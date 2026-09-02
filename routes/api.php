@@ -89,12 +89,14 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/organisasi",                [OrganisasiController::class, "index"]);
     Route::post("/organisasi",               [OrganisasiController::class, "store"]);
     Route::put("/organisasi/{id}",           [OrganisasiController::class, "update"]);
+    Route::put("/organisasi/{id}/resubmit",  [OrganisasiController::class, "resubmit"]);
     Route::delete("/organisasi/{id}",        [OrganisasiController::class, "destroy"]);
     Route::patch("/organisasi/{id}/validate",[OrganisasiController::class, "validateOrganisasi"]);
 
     Route::get("/pelatihan",                [PelatihanController::class, "index"]);
     Route::post("/pelatihan",               [PelatihanController::class, "store"]);
     Route::put("/pelatihan/{id}",           [PelatihanController::class, "update"]);
+    Route::put("/pelatihan/{id}/resubmit",  [PelatihanController::class, "resubmit"]);
     Route::get("/pelatihan/{id}",           [PelatihanController::class, "show"]);
     Route::delete("/pelatihan/{id}",        [PelatihanController::class, "destroy"]);
     Route::patch("/pelatihan/{id}/validate",[PelatihanController::class, "validatePelatihan"]);
@@ -113,6 +115,12 @@ Route::middleware("auth:sanctum")->group(function () {
 
     // Admin Badge Counts (sidebar notification badges)
     Route::middleware("role:admin")->get("/admin/badge-counts", [\App\Http\Controllers\Api\Admin\DashboardController::class, "badgeCounts"]);
+
+    // File preview & download (role-based access)
+    Route::get("/files/{type}/{id}/{field}/preview",  [\App\Http\Controllers\Api\FileController::class, "serve"])
+        ->defaults('action', 'inline');
+    Route::get("/files/{type}/{id}/{field}/download", [\App\Http\Controllers\Api\FileController::class, "serve"])
+        ->defaults('action', 'download');
 
     Route::get("/sp",                      [SPController::class, "index"]);
     Route::post("/sp",                     [SPController::class, "store"]);

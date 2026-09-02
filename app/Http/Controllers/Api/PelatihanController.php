@@ -39,4 +39,9 @@ class PelatihanController extends Controller
         if ($req->user()->role === "admin") return app(AdminAkademik::class)->validatePelatihan($req, $id);
         abort(403);
     }
+
+    public function resubmit(Request $req, $id) {
+        if ($req->user()->role === "mahasiswa") return app(MhsPelatihan::class)->resubmit($req, $id);
+        abort(403);
+    }
 }

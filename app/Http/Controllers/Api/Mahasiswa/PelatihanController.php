@@ -15,6 +15,7 @@ class PelatihanController extends Controller
         if (!$m) return response()->json(['data' => []]);
 
         $query = $m->pelatihans()->latest();
+        \App\Helpers\TahunAjaranHelper::applyOverlapFilter($query, 'pelatihans.tanggal_mulai', 'pelatihans.tanggal_selesai', $request->tahun_ajaran);
         if ($request->jenis && $request->jenis !== 'Semua') $query->where('jenis', $request->jenis);
         
         $data = $query->get();
@@ -91,5 +92,24 @@ class PelatihanController extends Controller
         
         $p->delete();
         return response()->json(['message' => 'Pelatihan dihapus.']);
+    }
+
+    public function resubmit(Request $request, int $id): JsonResponse
+    {
+        $m = $request->user()->mahasiswa;
+        $p = \App\Models\Pelatihan::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
+
+        if ($p->status !== 'Ditolak') {
+            return response()->json(['message' => 'Hanya pelatihan berstatus Ditolak yang dapat diajukan ulang.'], 422);
+        }
+
+        $p->update([
+            'status'         => 'Menunggu',
+            'catatan_admin'  => null,
+            'validated_by'   => null,
+            'validated_at'   => null,
+        ]);
+
+        return response()->json(['message' => 'Pelatihan berhasil diajukan ulang.', 'data' => new \App\Http\Resources\PelatihanResource($p)]);
     }
 }

@@ -49,7 +49,7 @@ export default function ProdiLaporanList() {
     const timer = setTimeout(() => {
       const params = new URLSearchParams({
         search,
-        tahun_ajaran: filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran,
+        tahun_ajaran: filterTahunAjaran,
         page: String(page),
         limit: "10",
       });

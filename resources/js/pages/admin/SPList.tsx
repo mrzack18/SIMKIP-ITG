@@ -50,7 +50,7 @@ export default function SPList() {
   // Full list for counts — refetches when search changes (not spFilter)
   useEffect(() => {
     let active = true;
-    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran ? tahunAjaran : undefined, prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined })
+    getSPList({ search: search || undefined, limit: 9999, tahun_ajaran: tahunAjaran, prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined, angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined })
       .then(res => { if (active) setFullList(res.data); });
     return () => { active = false; };
   }, [search, tahunAjaran, selectedProdi, selectedAngkatan]);
@@ -70,7 +70,7 @@ export default function SPList() {
       status: statusFilter,
       page: currentPage,
       limit: 10,
-      tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
+      tahun_ajaran: tahunAjaran,
       prodi: selectedProdi !== 'Semua Prodi' ? selectedProdi : undefined,
       angkatan: selectedAngkatan !== 'Semua Angkatan' ? selectedAngkatan : undefined,
     })

@@ -42,7 +42,7 @@ class DokumenController extends Controller
 
         // 2. Prestasis
         $presQuery = \App\Models\Prestasi::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($presQuery, 'prestasis.tanggal_mulai', $request->tahun_ajaran);
+        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($presQuery, 'prestasis.created_at', $request->tahun_ajaran);
         if ($status && $status !== 'Semua') {
             if ($status === 'Menunggu') {
                 $presQuery->whereIn('status', ['Menunggu Validasi', 'Menunggu']);
@@ -68,7 +68,7 @@ class DokumenController extends Controller
 
         // 3. Organisasis
         $orgQuery = \App\Models\Organisasi::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($orgQuery, 'organisasis.periode_mulai', $request->tahun_ajaran);
+        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($orgQuery, 'organisasis.created_at', $request->tahun_ajaran);
         if ($status && $status !== 'Semua') $orgQuery->where('status', $status);
         $orgs = $orgQuery->get()->map(function($o) {
             return [
@@ -88,7 +88,7 @@ class DokumenController extends Controller
 
         // 4. Pelatihans
         $pelQuery = \App\Models\Pelatihan::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($pelQuery, 'pelatihans.tanggal_mulai', $request->tahun_ajaran);
+        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($pelQuery, 'pelatihans.created_at', $request->tahun_ajaran);
         if ($status && $status !== 'Semua') $pelQuery->where('status', $status);
         $pels = $pelQuery->get()->map(function($p) {
             return [

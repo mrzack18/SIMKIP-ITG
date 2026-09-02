@@ -14,7 +14,10 @@ class OrganisasiController extends Controller
         $m = $request->user()->mahasiswa;
         if (!$m) return response()->json(['data' => []]);
 
-        $data = $m->organisasis()->latest()->get();
+        $query = $m->organisasis();
+        \App\Helpers\TahunAjaranHelper::applyOverlapFilter($query, 'organisasis.periode_mulai', 'organisasis.periode_selesai', $request->tahun_ajaran);
+
+        $data = $query->latest()->get();
         return response()->json([
             'data' => \App\Http\Resources\OrganisasiResource::collection($data)
         ]);
@@ -85,5 +88,24 @@ class OrganisasiController extends Controller
         
         $o->delete();
         return response()->json(['message' => 'Organisasi dihapus.']);
+    }
+
+    public function resubmit(Request $request, int $id): JsonResponse
+    {
+        $m = $request->user()->mahasiswa;
+        $o = \App\Models\Organisasi::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
+
+        if ($o->status !== 'Ditolak') {
+            return response()->json(['message' => 'Hanya organisasi berstatus Ditolak yang dapat diajukan ulang.'], 422);
+        }
+
+        $o->update([
+            'status'         => 'Menunggu',
+            'catatan_admin'  => null,
+            'validated_by'   => null,
+            'validated_at'   => null,
+        ]);
+
+        return response()->json(['message' => 'Organisasi berhasil diajukan ulang.', 'data' => new \App\Http\Resources\OrganisasiResource($o)]);
     }
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { FileCheck, Clock, CheckCircle, XCircle, Search, ChevronRight, X, Download, ZoomIn, ZoomOut, ChevronLeft, Trophy, Users, AlertCircle, BookOpen, ExternalLink, ClipboardList, BarChart, FileText, Image as ImageIcon, Loader2, Eye } from "lucide-react";
 import { getDokumenQueue, approveDokumen, rejectDokumen } from "@/services/dokumenService";
 import { getMahasiswaPrestasi, getMahasiswaOrganisasi, getMahasiswaPelatihan, getMahasiswaFilterOptions, getMahasiswaIpk, getMahasiswaDokumen } from "@/services/mahasiswaService";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { fileDownloadUrl, downloadFile } from "@/utils/fileUrl";
 import type { DokumenQueue as DokumenQueueType } from "@/types";
 
 type Tab = "Semua" | "Menunggu" | "Disetujui" | "Ditolak";
@@ -99,14 +100,71 @@ function InfoRow({ label, value, colSpan = 1 }: { label: string; value: React.Re
   );
 }
 
-function DocPlaceholderCard({ icon, label }: { icon: React.ReactNode; label: string }) {
+function DocPlaceholderCard({
+  icon,
+  label,
+  fileUrl,
+  downloadType,
+  downloadId,
+  downloadField,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  fileUrl?: string | null;
+  downloadType?: string;
+  downloadId?: number | string;
+  downloadField?: string;
+}) {
+  const handleDownload = downloadType && downloadId != null && downloadField
+    ? (e: React.MouseEvent) => {
+        e.preventDefault();
+        downloadFile(downloadType, downloadId, downloadField).catch((err) =>
+          alert(err?.message || "Gagal mengunduh file")
+        );
+      }
+    : undefined;
+
+  if (!fileUrl) {
+    return (
+      <div className="flex-1 rounded-xl border p-4 flex flex-col items-center gap-2 text-center" style={{ background: "#F8FAFC", borderColor: "#E2E8F0" }}>
+        <div className="text-gray-400 flex items-center justify-center">{icon}</div>
+        <p className="text-xs text-gray-600 font-medium">{label}</p>
+        <button className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg text-white mt-1 disabled:opacity-40" style={{ background: "#263F93" }} disabled>
+          <Download size={11} /> Download
+        </button>
+      </div>
+    );
+  }
+
+  const isPdf = fileUrl.toLowerCase().endsWith(".pdf");
+
   return (
-    <div className="flex-1 rounded-xl border p-4 flex flex-col items-center gap-2 text-center" style={{ background: "#F8FAFC", borderColor: "#E2E8F0" }}>
-      <div className="text-gray-400 flex items-center justify-center">{icon}</div>
-      <p className="text-xs text-gray-600 font-medium">{label}</p>
-      <button className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg text-white mt-1" style={{ background: "#263F93" }}>
-        <Download size={11} /> Unduh
-      </button>
+    <div className="flex-1 rounded-xl border overflow-hidden flex flex-col" style={{ background: "white", borderColor: "#E2E8F0" }}>
+      <div className="p-2 text-center border-b border-[#E2E8F0] bg-[#F8FAFC]">
+        <p className="text-xs text-gray-600 font-medium">{label}</p>
+      </div>
+      {isPdf ? (
+        <iframe src={fileUrl} className="w-full h-32 border-0" title={label} />
+      ) : (
+        <img src={fileUrl} alt={label} className="w-full h-32 object-cover" />
+      )}
+      <div className="grid grid-cols-2 divide-x divide-[#E2E8F0] border-t border-[#E2E8F0]">
+        <a
+          href={fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+        >
+          <Eye size={11} /> Pratinjau
+        </a>
+        <a
+          href={handleDownload ? "#" : fileUrl}
+          onClick={handleDownload}
+          className="flex items-center justify-center gap-1 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+        >
+          <Download size={11} /> Download
+        </a>
+      </div>
     </div>
   );
 }
@@ -196,8 +254,22 @@ function PrestasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
         <div className="p-4 flex gap-3 bg-white">
-          <DocPlaceholderCard icon={<Trophy size={32} className="text-gray-400" />} label="Foto Sertifikat" />
-          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Saat Podium" />
+          <DocPlaceholderCard
+            icon={<Trophy size={32} className="text-gray-400" />}
+            label="Foto Sertifikat"
+            fileUrl={data?.fileSertifikat}
+            downloadType="prestasi"
+            downloadId={data?.id}
+            downloadField="file_sertifikat"
+          />
+          <DocPlaceholderCard
+            icon={<ImageIcon size={32} className="text-gray-400" />}
+            label="Foto Saat Podium"
+            fileUrl={data?.fileFoto}
+            downloadType="prestasi"
+            downloadId={data?.id}
+            downloadField="file_foto"
+          />
         </div>
       </div>
     </div>
@@ -231,8 +303,22 @@ function OrganisasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | n
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
         <div className="p-4 flex gap-3 bg-white">
-          <DocPlaceholderCard icon={<FileText size={32} className="text-gray-400" />} label="Serti/SK Pengurus" />
-          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Dokumentasi Kegiatan" />
+          <DocPlaceholderCard
+            icon={<FileText size={32} className="text-gray-400" />}
+            label="Serti/SK Pengurus"
+            fileUrl={data?.fileSk}
+            downloadType="organisasi"
+            downloadId={data?.id}
+            downloadField="file_sk"
+          />
+          <DocPlaceholderCard
+            icon={<ImageIcon size={32} className="text-gray-400" />}
+            label="Foto Dokumentasi Kegiatan"
+            fileUrl={data?.fotoKegiatan}
+            downloadType="organisasi"
+            downloadId={data?.id}
+            downloadField="foto_kegiatan"
+          />
         </div>
       </div>
     </div>
@@ -276,8 +362,22 @@ function PelatihanPreview({ doc, data }: { doc: DokumenQueueType; data: any | nu
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
         <div className="p-4 flex gap-3 bg-white">
-          <DocPlaceholderCard icon={<FileText size={32} className="text-gray-400" />} label="Sertifikat" />
-          <DocPlaceholderCard icon={<ImageIcon size={32} className="text-gray-400" />} label="Foto Saat Kegiatan" />
+          <DocPlaceholderCard
+            icon={<FileText size={32} className="text-gray-400" />}
+            label="Sertifikat"
+            fileUrl={data?.sertifikat}
+            downloadType="pelatihan"
+            downloadId={data?.id}
+            downloadField="file_sertifikat"
+          />
+          <DocPlaceholderCard
+            icon={<ImageIcon size={32} className="text-gray-400" />}
+            label="Foto Saat Kegiatan"
+            fileUrl={data?.fotoKegiatan}
+            downloadType="pelatihan"
+            downloadId={data?.id}
+            downloadField="foto_kegiatan"
+          />
         </div>
       </div>
     </div>
@@ -335,13 +435,39 @@ function EvaluasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
         <GrayHeader title="File KHS Fisik" />
         <div className="p-4 bg-white">
           {data?.file_khs ? (
-             <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                <FileText size={48} className="text-[#263F93] mb-3" />
-                <p className="text-sm font-500 text-gray-700 mb-1">Dokumen KHS</p>
-                <a href={`/storage/${data.file_khs}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Unduh File</a>
-             </div>
+            <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+              {String(data.file_khs).toLowerCase().endsWith(".pdf") ? (
+                <iframe src={data.file_khs} className="w-full h-48 border-0" title="KHS" />
+              ) : (
+                <img src={data.file_khs} alt="KHS" className="w-full h-48 object-cover" />
+              )}
+              <div className="grid grid-cols-2 divide-x divide-[#E2E8F0] border-t border-[#E2E8F0] bg-[#F8FAFC]">
+                <a
+                  href={data.file_khs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                >
+                  <Eye size={11} /> Pratinjau
+                </a>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (data.id != null) {
+                      downloadFile("ipk", data.id, "file_khs").catch((err) =>
+                        alert(err?.message || "Gagal mengunduh file")
+                      );
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
+                >
+                  <Download size={11} /> Download
+                </a>
+              </div>
+            </div>
           ) : (
-             <DocPlaceholderCard icon={<FileCheck size={32} className="text-gray-400" />} label="Scan KHS" />
+            <DocPlaceholderCard icon={<FileCheck size={32} className="text-gray-400" />} label="Scan KHS" />
           )}
         </div>
       </div>
@@ -379,7 +505,12 @@ function GenericPreview({ doc, data }: { doc: DokumenQueueType; data: any | null
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
         <div className="p-4 bg-white">
-          <DocPlaceholderCard icon={typeIcon(doc.jenis, "text-gray-400")} label={doc.jenis} />
+          <DocPlaceholderCard
+            icon={typeIcon(doc.jenis, "text-gray-400")}
+            label={doc.jenis}
+            fileUrl={data?.fileUrl}
+            downloadUrl={data?.id != null ? fileDownloadUrl("dokumen", data.id, "path_file") : undefined}
+          />
         </div>
       </div>
     </div>
@@ -457,7 +588,7 @@ export default function DokumenQueue() {
       page: 1,
       limit: 9999,
       search: search || undefined,
-      tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
+      tahun_ajaran: tahunAjaran,
     })
       .then((res) => { if (active) setFullQueue(res.data); })
       .catch(() => {});
@@ -476,7 +607,7 @@ export default function DokumenQueue() {
       search: search || undefined,
       status: statusParam as any,
       jenis: jenis !== "Semua Dokumen" ? jenis : undefined,
-      tahun_ajaran: tahunAjaran ? tahunAjaran : undefined,
+      tahun_ajaran: tahunAjaran,
     })
       .then((res) => {
         if (!active) return;
@@ -532,29 +663,29 @@ export default function DokumenQueue() {
     const idPrefix = String(reviewing.id);
     if (idPrefix.startsWith("prestasi_")) {
       const itemId = Number(idPrefix.replace("prestasi_", ""));
-      getMahasiswaPrestasi(mhsId, tahunAjaran ? tahunAjaran : undefined)
+      getMahasiswaPrestasi(mhsId, tahunAjaran)
         .then((list) => setPreviewPrestasi(list.find((p: any) => p.id === itemId) || null));
     } else if (idPrefix.startsWith("organisasi_")) {
       const itemId = Number(idPrefix.replace("organisasi_", ""));
-      getMahasiswaOrganisasi(mhsId, tahunAjaran ? tahunAjaran : undefined)
+      getMahasiswaOrganisasi(mhsId, tahunAjaran)
         .then((list) => setPreviewOrganisasi(list.find((o: any) => o.id === itemId) || null));
     } else if (idPrefix.startsWith("pelatihan_")) {
       const itemId = Number(idPrefix.replace("pelatihan_", ""));
-      getMahasiswaPelatihan(mhsId, tahunAjaran ? tahunAjaran : undefined)
+      getMahasiswaPelatihan(mhsId, tahunAjaran)
         .then((list) => setPreviewPelatihan(list.find((p: any) => p.id === itemId) || null));
         } else if (idPrefix.startsWith("ipk_")) {
       const itemId = Number(idPrefix.replace("ipk_", ""));
-      getMahasiswaIpk(mhsId, tahunAjaran ? tahunAjaran : undefined).then(list => {
+      getMahasiswaIpk(mhsId, tahunAjaran).then(list => {
         setPreviewIpk(list.find((ipk: any) => ipk.id === itemId) || null);
       });
     } else if (idPrefix.startsWith("doc_")) {
       const itemId = Number(idPrefix.replace("doc_", ""));
-      getMahasiswaDokumen(mhsId, tahunAjaran ? tahunAjaran : undefined).then(list => {
+      getMahasiswaDokumen(mhsId, tahunAjaran).then(list => {
         setPreviewGeneric(list.find((d: any) => d.id === itemId) || null);
       });
 
       if (reviewing.jenis === "KHS") {
-        getMahasiswaIpk(mhsId, tahunAjaran ? tahunAjaran : undefined).then(list => {
+        getMahasiswaIpk(mhsId, tahunAjaran).then(list => {
           const semMatch = reviewing.catatan?.match(/Semester\s+(\d+)/i);
           if (semMatch) {
             const sem = Number(semMatch[1]);

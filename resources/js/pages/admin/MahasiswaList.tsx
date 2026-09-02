@@ -138,7 +138,7 @@ export default function MahasiswaList() {
   const [cabutError,      setCabutError]      = useState("");
 
   const isFiltered =
-    search || tahunAjaranFilter || prodiFilter !== "Semua Prodi" ||
+    search || tahunAjaranFilter !== getCurrentTahunAjaran() || prodiFilter !== "Semua Prodi" ||
     angkatanFilter !== "Semua Angkatan" || spFilter !== "Semua SP" ||
     statusFilter !== "Semua Status" || kipFilter !== "Semua Kategori" ||
     ipkFilter !== "Semua IPK" || sortBy !== "IPK Tertinggi → Terendah";
@@ -160,7 +160,7 @@ export default function MahasiswaList() {
   const buildFilter = useCallback((): MahasiswaFilter => {
     const f: MahasiswaFilter = { page, limit: LIMIT };
     if (search)                                        f.search        = search;
-    if (tahunAjaranFilter)                 f.tahun_ajaran  = tahunAjaranFilter;
+    if (tahunAjaranFilter) f.tahun_ajaran  = tahunAjaranFilter;
     if (prodiFilter !== "Semua Prodi")                 f.prodi         = prodiFilter;
     if (angkatanFilter !== "Semua Angkatan")           f.angkatan      = angkatanFilter;
     if (spFilter !== "Semua SP")                       f.spFilter      = spFilter;
@@ -206,7 +206,7 @@ export default function MahasiswaList() {
 
   function resetFilters() {
     setSearchInput(""); setSearch("");
-    setTahunAjaranFilter(getCurrentTahunAjaran());
+    setTahunAjaranFilter("Semua");
     setProdiFilter("Semua Prodi"); setAngkatanFilter("Semua Angkatan");
     setSpFilter("Semua SP"); setStatusFilter("Semua Status");
     setKipFilter("Semua Kategori"); setIpkFilter("Semua IPK");

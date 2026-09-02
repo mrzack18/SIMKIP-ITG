@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Plus, X, FileText, Calendar, MapPin, Building2, Tag, AlignLeft, Upload, CheckCircle, Clock } from "lucide-react";
+import { BookOpen, Plus, X, Pencil, Send, FileText, Calendar, MapPin, Building2, Tag, AlignLeft, Upload, CheckCircle, Clock, Eye, Download, Image, AlertTriangle } from "lucide-react";
 import { api } from "@/services/api";
+import { downloadFile } from "@/utils/fileUrl";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 interface PelatihanItem {
@@ -16,6 +17,7 @@ interface PelatihanItem {
   sertifikat?: string;
   fotoKegiatan?: string;
   tahunAjaran?: string;
+  catatanAdmin?: string;
 }
 
 
@@ -29,7 +31,6 @@ const emptyForm = {
   deskripsi: "",
   sertifikat: null as File | null,
   fotoKegiatan: null as File | null,
-  tahunAjaran: "2025/2026 Ganjil",
 };
 
 function formatDate(d: string) {
@@ -45,6 +46,34 @@ export default function Pelatihan() {
   const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const openEditForm = (item: PelatihanItem) => {
+    setEditingId(item.id);
+    setForm({
+      jenis: item.jenis,
+      nama: item.nama,
+      penyelenggara: item.penyelenggara,
+      tanggalMulai: item.tanggalMulai,
+      tanggalSelesai: item.tanggalSelesai,
+      tempat: item.tempat,
+      deskripsi: item.deskripsi || "",
+      sertifikat: null,
+      fotoKegiatan: null
+    });
+    setFileLabel(item.sertifikat ? "File sertifikat sudah diunggah" : "Pilih file PDF / gambar");
+    setFotoLabel(item.fotoKegiatan ? "Foto sudah diunggah" : "Pilih file gambar");
+    setShowForm(true);
+  };
+
+  const handleResubmit = async (id: number) => {
+    try {
+      await api.put(`/pelatihan/${id}/resubmit`);
+      fetchPelatihan();
+    } catch (err: any) {
+      alert(err.error?.message || err.message || "Gagal mengajukan ulang");
+    }
+  };
   const [detail, setDetail] = useState<PelatihanItem | null>(null);
   const [fileLabel, setFileLabel] = useState("Pilih file PDF / gambar");
   const [fotoLabel, setFotoLabel] = useState("Pilih file gambar");
@@ -54,7 +83,10 @@ export default function Pelatihan() {
   const fetchPelatihan = async () => {
     setIsLoading(true);
     try {
-      const res = await api.get<{ data: PelatihanItem[] }>("/pelatihan");
+      const res = await api.get<{ data: PelatihanItem[] }>(
+        "/pelatihan", 
+        taFilter ? { tahun_ajaran: taFilter } : undefined
+      );
       if (res && res.data && Array.isArray(res.data)) {
         setItems(res.data);
       } else if (res && Array.isArray(res.data)) {
@@ -71,7 +103,7 @@ export default function Pelatihan() {
 
   useEffect(() => {
     fetchPelatihan();
-  }, []);
+  }, [taFilter]);
 
   const handleFormChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -103,11 +135,16 @@ export default function Pelatihan() {
       if (form.deskripsi) formData.append("deskripsi", form.deskripsi);
       if (form.sertifikat) formData.append("file_sertifikat", form.sertifikat);
       if (form.fotoKegiatan) formData.append("foto_kegiatan", form.fotoKegiatan);
-      formData.append("tahun_ajaran", form.tahunAjaran);
 
-      await api.post("/pelatihan", formData);
+            if (editingId) {
+        formData.append("_method", "PUT");
+        await api.post(`/pelatihan/${editingId}`, formData);
+      } else {
+        await api.post("/pelatihan", formData);
+      }
 
       setForm({ ...emptyForm });
+      setEditingId(null);
       setFileLabel("Pilih file PDF / gambar");
       setFotoLabel("Pilih file gambar");
       setShowForm(false);
@@ -163,7 +200,7 @@ export default function Pelatihan() {
               Tahun Ajaran {ta}
             </h2>
             <div className="space-y-3">
-              {items.filter(item => (item.tahunAjaran || "2025/2026 Ganjil") === ta).map(item => (
+              {items.map(item => (
                 <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col sm:flex-row sm:items-start gap-4">
                   <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
                     <BookOpen size={20} style={{ color: "#263F93" }} />
@@ -213,12 +250,30 @@ export default function Pelatihan() {
                       {item.status === "Disetujui" ? <CheckCircle size={11} /> : <Clock size={11} />}
                       {item.status}
                     </span>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto flex-col sm:flex-row mt-3 sm:mt-0">
                     <button
                       onClick={() => setDetail(item)}
-                      className="px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                      className="px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
                     >
-                      Lihat Detail
+                      <Eye size={12} /> Detail
                     </button>
+                    {item.status === "Ditolak" && (
+                      <>
+                        <button
+                          onClick={() => openEditForm(item)}
+                          className="px-3 py-1.5 rounded-lg border border-amber-300 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleResubmit(item.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#263F93] hover:bg-[#1a2e6e] transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Send size={12} /> Ajukan Ulang
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -261,21 +316,7 @@ export default function Pelatihan() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-500 text-gray-700 mb-1.5">
-                  <BookOpen size={14} className="inline mr-1.5" />Tahun Ajaran <span className="text-red-400">*</span>
-                </label>
-                <select
-                  required
-                  value={form.tahunAjaran}
-                  onChange={e => handleFormChange("tahunAjaran", e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
-                >
-                  <option value="2025/2026 Ganjil">2025/2026 Ganjil</option>
-                  <option value="2024/2025 Genap">2024/2025 Genap</option>
-                  <option value="2024/2025 Ganjil">2024/2025 Ganjil</option>
-                </select>
-              </div>
+
 
               {/* Nama */}
               <div>

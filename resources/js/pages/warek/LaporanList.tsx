@@ -45,7 +45,7 @@ export default function WarekLaporanList() {
         const results = await Promise.all(
           tabsToFetch.map((s) =>
             api
-              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100&tahun_ajaran=${filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran}`)
+              .get<{ data: Laporan[]; total: number }>(`/laporan?status=${s}&limit=100&tahun_ajaran=${filterTahunAjaran}`)
               .then((r) => [s, r.total] as [LStatus, number])
               .catch(() => [s, 0] as [LStatus, number])
           )
@@ -70,7 +70,7 @@ export default function WarekLaporanList() {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100&tahun_ajaran=${filterTahunAjaran === getCurrentTahunAjaran() ? "" : filterTahunAjaran}`);
+        const res = await api.get<{ data: Laporan[] }>(`/laporan?status=${activeTab}&limit=100&tahun_ajaran=${filterTahunAjaran}`);
         if (cancelled) return;
         setData(res.data ?? []);
         setLoading(false);
