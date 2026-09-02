@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
-import { saveCurrentUser } from "@/services/authService";
+import { saveCurrentUser, getCurrentUser } from "@/services/authService";
 import {
   Eye, EyeOff, CheckCircle, X, Pencil, Camera, Phone, AlertCircle, Clock,
 } from "lucide-react";
@@ -70,6 +70,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 /* ── Mahasiswa full layout ─────────────────────────────────────────────── */
 function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
+  const { setUser } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -149,9 +150,13 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
       setEditMode(false);
       setToast({ show: true, msg: "Profil berhasil diperbarui" });
       setTimeout(() => setToast({ show: false, msg: "" }), 3000);
-      // reload
+      // reload profile data
       const res = await api.get('/profile');
       setData(res.data);
+      // Sync foto to localStorage & auth context so header updates immediately
+      saveCurrentUser({ foto: res.data.foto ?? undefined });
+      const currentUser = getCurrentUser();
+      if (currentUser) setUser({ ...currentUser, foto: res.data.foto ?? undefined });
     } catch (e: any) {
       alert("Gagal menyimpan profil");
     }
@@ -581,6 +586,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
 }
 /* ── Non-mahasiswa simple layout ──────────────────────────────────────── */
 function SimpleRoleProfil({ role }: { role: string }) {
+  const { setUser } = useAuth();
   const roleLabel: Record<string, string> = {
     admin: "Pengelola KIP-K",
     prodi: "Program Studi",
@@ -596,6 +602,17 @@ function SimpleRoleProfil({ role }: { role: string }) {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ show: boolean; msg: string; ok: boolean }>({ show: false, msg: "", ok: true });
 
+  // Edit mode
+  const [editMode, setEditMode] = useState(false);
+  const [editNama, setEditNama] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editNoHp, setEditNoHp] = useState("");
+
+  // Photo
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -609,10 +626,48 @@ function SimpleRoleProfil({ role }: { role: string }) {
 
   useEffect(() => {
     api.get('/profile').then((res: any) => {
-      setData(res.data);
+      const d = res.data;
+      setData(d);
+      setPhotoUrl(d.foto || null);
+      setEditNama(d.nama || "");
+      setEditEmail(d.email || "");
+      setEditNoHp(d.no_hp || "");
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoUrl(URL.createObjectURL(file));
+      setPhotoFile(file);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    const formData = new FormData();
+    if (editNama) formData.append("nama", editNama);
+    if (editEmail) formData.append("email", editEmail);
+    formData.append("no_hp", editNoHp);
+    if (photoFile) formData.append("foto_profil", photoFile);
+
+    try {
+      await api.post("/profile", formData);
+      // Reload profile data
+      const res = await api.get('/profile');
+      const d = res.data;
+      setData(d);
+      setPhotoUrl(d.foto || null);
+      setEditMode(false);
+      // Sync to localStorage & auth context so header updates immediately
+      saveCurrentUser({ foto: d.foto ?? undefined, nama: d.nama });
+      const currentUser = getCurrentUser();
+      if (currentUser) setUser({ ...currentUser, foto: d.foto ?? undefined, nama: d.nama });
+      showToast("Profil berhasil diperbarui");
+    } catch (e: any) {
+      showToast("Gagal menyimpan profil", false);
+    }
+  };
 
   const handleSavePw = async () => {
     if (!form.current) { setError("Password saat ini wajib diisi."); return; }
@@ -650,41 +705,126 @@ function SimpleRoleProfil({ role }: { role: string }) {
         <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
       </div>
 
+      {/* SECTION 1 — Informasi Profil */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="font-600 text-gray-800 text-sm mb-5">Informasi Profil</h2>
-        <div className="flex items-start gap-5 mb-6">
-          <div className="relative flex-shrink-0">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-display font-800 text-xl"
-              style={{ background: "#263F93" }}>
-              {initials}
-            </div>
-            <span className="absolute -bottom-1.5 -right-1.5 px-1.5 py-0.5 rounded-md text-white font-700"
-              style={{ background: "#D4A72C", fontSize: "10px", color: "#1a2d6e" }}>
-              {roleLabel[role] || role}
-            </span>
-          </div>
-          <div>
-            <h3 className="font-700 text-gray-900 text-lg">{nama}</h3>
-            <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-500 rounded">
-              <CheckCircle size={11} /> Akun Aktif
-            </span>
-          </div>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-600 text-gray-800 text-sm">Informasi Profil</h2>
+          <button
+            onClick={() => setEditMode(v => !v)}
+            className="flex items-center gap-1.5 text-xs font-600 px-3 py-1.5 rounded-lg border transition-colors"
+            style={editMode ? { background: "#263F93", color: "#fff", borderColor: "#263F93" } : { color: "#263F93", borderColor: "#263F93" }}
+          >
+            <Pencil size={12} />
+            {editMode ? "Batal Edit" : "Edit"}
+          </button>
         </div>
 
+        {/* Avatar */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative group" style={{ width: 120, height: 120 }}>
+            <div
+              className="w-full h-full rounded-full flex items-center justify-center overflow-hidden text-white font-display font-800 text-3xl"
+              style={{ background: "#263F93" }}
+            >
+              {photoUrl ? (
+                <img src={photoUrl} alt="Foto profil" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            {editMode && (
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <Camera size={20} className="text-white mb-1" />
+                <span className="text-white text-xs font-500">Ganti Foto</span>
+              </button>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+          </div>
+          {editMode && photoFile && (
+            <p className="mt-2 text-xs text-blue-600">Foto siap diupload (Simpan Perubahan)</p>
+          )}
+          {editMode && (
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="mt-3 flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-600"
+              style={{ background: "#D4A72C", color: "#263F93" }}
+            >
+              <Camera size={13} /> Ubah Foto
+            </button>
+          )}
+        </div>
+
+        {/* Fields grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-          <Field label="Nama" value={data?.nama || "-"} />
-          <Field label="Username" value={data?.username || "-"} />
-          <Field label="Email" value={data?.email || "-"} />
-          {data?.no_hp && <Field label="No. HP" value={data.no_hp} />}
+          <div>
+            <label className="text-xs text-gray-400 mb-0.5 block">Nama</label>
+            {editMode ? (
+              <input
+                value={editNama}
+                onChange={e => setEditNama(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+              />
+            ) : (
+              <p className="text-sm font-500 text-gray-700">{data?.nama || "-"}</p>
+            )}
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 mb-0.5">Username</p>
+            <p className="text-sm font-500 text-gray-700">{data?.username || "-"}</p>
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-0.5 block">Email</label>
+            {editMode ? (
+              <input
+                type="email"
+                value={editEmail}
+                onChange={e => setEditEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+              />
+            ) : (
+              <p className="text-sm font-500 text-gray-700">{data?.email || "-"}</p>
+            )}
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-0.5 block">No. HP</label>
+            {editMode ? (
+              <input
+                type="tel"
+                value={editNoHp}
+                onChange={e => setEditNoHp(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                placeholder="Nomor HP"
+              />
+            ) : (
+              <p className="text-sm font-500 text-gray-700">{data?.no_hp || "-"}</p>
+            )}
+          </div>
           {data?.prodi && <Field label="Program Studi" value={data.prodi} />}
-          <Field label="Role" value={
+          <div>
+            <p className="text-xs text-gray-400 mb-0.5">Role</p>
             <span className={`px-2 py-0.5 text-xs font-500 rounded ${roleColor[role] || "bg-gray-100 text-gray-700"}`}>
               {roleLabel[role] || role}
             </span>
-          } />
+          </div>
         </div>
+
+        {editMode && (
+          <div className="mt-5">
+            <button
+              onClick={handleSaveProfile}
+              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm"
+              style={{ background: "#263F93" }}
+            >
+              Simpan Perubahan
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* SECTION 2 — Ubah Password */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="font-600 text-gray-800 text-sm mb-5">Ubah Password</h2>
         <div className="space-y-4">
