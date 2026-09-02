@@ -35,8 +35,10 @@ class KonfigurasiController extends Controller
             'aktif'   => Konfigurasi::get('periode_input_aktif', '0') === '1',
             'buka'    => Konfigurasi::get('periode_input_buka'),
             'tutup'   => Konfigurasi::get('periode_input_tutup'),
+            'tahun_ajaran' => Konfigurasi::get('periode_input_tahun_ajaran'),
             'tahun_akademik' => Konfigurasi::get('tahun_akademik_aktif'),
             'semester'       => Konfigurasi::get('semester_aktif'),
+            'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
             'nilai_mutu'     => NilaiMutu::all()->keyBy(fn($n) => strtoupper($n->huruf))->map->poin,
         ]);
     }
@@ -152,6 +154,7 @@ class KonfigurasiController extends Controller
                 'periode_aktif' => [
                     'tahun_akademik' => $konfig['tahun_akademik_aktif'] ?? '',
                     'semester' => $konfig['semester_aktif'] ?? '',
+                    'tahun_ajaran' => $konfig['periode_input_tahun_ajaran'] ?? '',
                     'buka' => $konfig['periode_input_buka'] ?? '',
                     'tutup' => $konfig['periode_input_tutup'] ?? '',
                     'is_aktif' => ($konfig['periode_input_aktif'] ?? '0') === '1',
@@ -159,6 +162,7 @@ class KonfigurasiController extends Controller
                 'nilai_mutu' => NilaiMutu::orderByDesc('poin')->get(),
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
+                'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
                 'prodis' => Prodi::all(),
                 'dokumens' => DokumenJenis::with('fields')->orderBy('urutan')->get(),
             ]
@@ -219,6 +223,22 @@ class KonfigurasiController extends Controller
     }
 
     // --- Master Periode Akademik ---
+    private function buildTahunAjaranOptions(): array
+    {
+        // Generate 5 tahun ajaran: 3 sebelum, current, 1 setelah
+        $aktif = Konfigurasi::get('tahun_akademik_aktif', '2025/2026');
+        $options = [];
+        if (preg_match('/^(\d{4})\/(\d{4})$/', $aktif, $m)) {
+            $startYear = (int) $m[1];
+            for ($y = $startYear - 3; $y <= $startYear + 1; $y++) {
+                $y2 = $y + 1;
+                $options[] = "$y/$y2 Ganjil";
+                $options[] = "$y/$y2 Genap";
+            }
+        }
+        return $options;
+    }
+
     public function storePeriode(Request $request): JsonResponse
     {
         $request->validate(['tahun_akademik' => 'required|string', 'semester' => 'required|string', 'tanggal_buka' => 'required|date', 'tanggal_tutup' => 'required|date']);
@@ -249,6 +269,7 @@ class KonfigurasiController extends Controller
         Konfigurasi::where('key', 'periode_input_aktif')->update(['value' => '1']);
         Konfigurasi::where('key', 'periode_input_buka')->update(['value' => $p->tanggal_buka->format('Y-m-d')]);
         Konfigurasi::where('key', 'periode_input_tutup')->update(['value' => $p->tanggal_tutup->format('Y-m-d')]);
+        Konfigurasi::where('key', 'periode_input_tahun_ajaran')->update(['value' => $p->tahun_akademik . ' ' . $p->semester]);
         Konfigurasi::where('key', 'tahun_akademik_aktif')->update(['value' => $p->tahun_akademik]);
         Konfigurasi::where('key', 'semester_aktif')->update(['value' => $p->semester]);
 

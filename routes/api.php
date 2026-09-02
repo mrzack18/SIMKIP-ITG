@@ -77,6 +77,7 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::put("/mahasiswa/{id}/pelatihan/{itemId}/validate",  [MahasiswaController::class, "validatePelatihan"]);
     Route::get("/ipk",  [IPKController::class, "index"]);
     Route::post("/ipk", [IPKController::class, "store"]);
+    Route::post("/ipk/submit", [IPKController::class, "submit"]);
 
     Route::get("/prestasi",                [PrestasiController::class, "index"]);
     Route::post("/prestasi",               [PrestasiController::class, "store"]);

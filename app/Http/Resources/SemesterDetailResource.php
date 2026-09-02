@@ -25,7 +25,7 @@ class SemesterDetailResource extends JsonResource
             'tahun'         => $this->tahun_ajaran,
             'ips'           => (float) $this->ips,
             'ipk'           => (float) $this->ipk,
-            'status'        => $this->status,          // Menunggu | Disetujui | Ditolak
+            'status'        => $this->status,          // Draft | Diajukan | Disetujui | Ditolak
             'catatan_admin' => $this->catatan_admin,
             'mkBelumLulus'  => $mkBelumLulus,
             'mataKuliah'    => MataKuliahResource::collection($this->whenLoaded('mataKuliahs')),

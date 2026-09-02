@@ -60,7 +60,22 @@ export async function apiCall<T>(
 }
 
 export const api = {
-  get: <T>(endpoint: string) => apiCall<T>(endpoint, { method: "GET" }),
+  get: <T>(
+    endpoint: string,
+    params?: Record<string, string | number | undefined>
+  ) => {
+    const qs = params
+      ? '?' +
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined)
+          .map(
+            ([k, v]) =>
+              `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
+          )
+          .join('&')
+      : '';
+    return apiCall<T>(endpoint + qs, { method: 'GET' });
+  },
   post: <T>(endpoint: string, body: unknown) =>
     apiCall<T>(endpoint, {
       method: "POST",

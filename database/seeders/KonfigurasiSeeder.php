@@ -21,6 +21,7 @@ class KonfigurasiSeeder extends Seeder
             ['key' => 'periode_input_aktif',      'value' => '1',                            'label' => 'Periode Input Nilai Aktif',  'tipe' => 'boolean'],
             ['key' => 'periode_input_buka',       'value' => '2026-08-01',                   'label' => 'Tanggal Buka Input Nilai',   'tipe' => 'date'],
             ['key' => 'periode_input_tutup',      'value' => '2026-09-30',                   'label' => 'Tanggal Tutup Input Nilai',  'tipe' => 'date'],
+            ['key' => 'periode_input_tahun_ajaran', 'value' => null,                              'label' => 'TA Periode Input Nilai',     'tipe' => 'text'],
             ['key' => 'tahun_akademik_aktif',     'value' => '2025/2026',                    'label' => 'Tahun Akademik Aktif',       'tipe' => 'text'],
             ['key' => 'semester_aktif',           'value' => 'Genap',                        'label' => 'Semester Aktif',             'tipe' => 'text'],
         ];

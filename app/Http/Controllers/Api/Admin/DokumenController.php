@@ -189,7 +189,7 @@ class DokumenController extends Controller
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'ipk') {
             $ipk = \App\Models\IpkSemestr::findOrFail($realId);
-            $ipk->update(['status' => $status, 'catatan_admin' => $catatan]);
+            $ipk->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         }
 

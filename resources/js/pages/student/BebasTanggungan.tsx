@@ -92,11 +92,16 @@ export default function BebasTanggungan() {
 
   const handleDownloadPdf = async () => {
     try {
-      const response = await api.get('/bebas-tanggungan/pdf', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      window.open(url, '_blank');
+      const token = localStorage.getItem("simkip_token");
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'}/bebas-tanggungan/pdf`,
+        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' } }
+      );
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank');
     } catch (err: any) {
-      alert(err.response?.data?.message || "Gagal mengunduh surat (Status belum diterbitkan atau Error Jaringan).");
+      alert(err.message || "Gagal mengunduh surat (Status belum diterbitkan atau Error Jaringan).");
     }
   };
 

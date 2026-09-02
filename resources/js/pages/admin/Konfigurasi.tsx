@@ -125,6 +125,7 @@ export default function Konfigurasi() {
   const [periodeAktif, setPeriodeAktif] = useState(true)
   const [tglBuka, setTglBuka] = useState("2026-09-01")
   const [tglTutup, setTglTutup] = useState("2026-09-15")
+  const [selectedTA, setSelectedTA] = useState("") // TA yang dibuka untuk periode input
   const [prodis, setProdis] = useState<any[]>([])
   const [dokumens, setDokumens] = useState<any[]>([])
   const [toast, setToast] = useState("")
@@ -169,8 +170,9 @@ export default function Konfigurasi() {
   const [editRegulasiRow, setEditRegulasiRow] = useState<{nama: string, deskripsi: string, nilai: string, tipe: "number" | "text"} | null>(null)
 
   // Section 8 State: Jenis Pelanggaran
-  
+
   const [periodeHistory, setPeriodeHistory] = useState<any[]>([])
+  const [tahunAjaranOptions, setTahunAjaranOptions] = useState<string[]>([])
   
   const fetchData = async () => {
     try {
@@ -195,6 +197,7 @@ export default function Konfigurasi() {
         setDokumens(d.dokumens || [])
         const pHistory = d.periode_history || [];
         setPeriodeHistory(pHistory)
+        setTahunAjaranOptions(d.tahun_ajaran_options || [])
         
         const ipkMinObj = regArr.find((r:any) => r.nama === "IPK Minimum")
         if (ipkMinObj) setIpkMin(parseFloat(ipkMinObj.nilai))
@@ -204,8 +207,12 @@ export default function Konfigurasi() {
            setTglBuka(toDateInputValue(pAktif.tanggal_buka))
            setTglTutup(toDateInputValue(pAktif.tanggal_tutup))
            setPeriodeAktif(true)
+           setSelectedTA(`${pAktif.tahun_akademik} ${pAktif.semester}`)
         } else {
            setPeriodeAktif(false)
+           // Load dari konfigurasi fallback
+           const taKonfig = d.periode_aktif?.tahun_ajaran || ""
+           setSelectedTA(taKonfig)
         }
       }
     } catch(e) {}
@@ -280,6 +287,17 @@ export default function Konfigurasi() {
           await api.put('/konfigurasi/pelanggaran/'+id, {...p, aktif: !aktif});
           fetchData();
       }
+  }
+  const handleSavePeriode = async () => {
+    // Simpan konfigurasi satu per satu
+    await api.put('/konfigurasi', { periode_input_aktif: periodeAktif ? '1' : '0' });
+    await api.put('/konfigurasi', { periode_input_buka: tglBuka });
+    await api.put('/konfigurasi', { periode_input_tutup: tglTutup });
+    if (selectedTA) {
+      await api.put('/konfigurasi', { periode_input_tahun_ajaran: selectedTA });
+    }
+    fetchData();
+    showToast("Pengaturan periode berhasil disimpan");
   }
   const handleSavePelanggaran = async (data: any, id: number|null = null) => {
       if(id) {
@@ -373,21 +391,42 @@ export default function Konfigurasi() {
         <SectionHeader
           num={2}
           title="Periode Input Nilai (Kalender Akademik)"
-          onSave={() => showToast("Periode berhasil disimpan")}
+          onSave={handleSavePeriode}
         />
         <div className="p-5 space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             {periodeAktif ? (
               <span className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-600">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Periode Aktif: {tglBuka && tglTutup ? `${formatTgl(tglBuka)} – ${formatTgl(tglTutup)}` : "—"}
+                Aktif{selectedTA ? `: ${selectedTA}` : ''} ({tglBuka && tglTutup ? `${formatTgl(tglBuka)} – ${formatTgl(tglTutup)}` : '—'})
               </span>
             ) : (
               <span className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-full text-xs font-500">
                 Tidak ada periode aktif
               </span>
             )}
-            <div className="flex items-center gap-2 ml-auto">
+          </div>
+
+          {/* TA Dropdown */}
+          <div className="flex items-end gap-4 flex-wrap">
+            <div className="flex-1 min-w-[220px]">
+              <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                Tahun Ajaran
+              </label>
+              <select
+                value={selectedTA}
+                onChange={(e) => setSelectedTA(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+              >
+                <option value="">— Pilih Tahun Ajaran —</option>
+                {tahunAjaranOptions.map((ta: string) => (
+                  <option key={ta} value={ta}>
+                    {ta}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Status:</span>
               <button
                 onClick={() => setPeriodeAktif(!periodeAktif)}

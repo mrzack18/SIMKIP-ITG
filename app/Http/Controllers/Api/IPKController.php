@@ -19,4 +19,9 @@ class IPKController extends Controller
         if ($req->user()->role === "mahasiswa") return app(MhsIPK::class)->store($req);
         abort(403);
     }
+
+    public function submit(Request $req) {
+        if ($req->user()->role === "mahasiswa") return app(MhsIPK::class)->submit($req);
+        abort(403);
+    }
 }
