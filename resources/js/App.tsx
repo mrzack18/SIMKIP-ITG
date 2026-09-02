@@ -48,12 +48,14 @@ function resolveLayoutUser(role: string) {
   return {
     nama: u?.nama ?? u?.name ?? "User",
     nim: u?.nim ?? undefined,
+    foto: u?.foto ?? null,
   };
 }
 
 /** Wrapper that reads auth from context and passes resolved user to Layout. */
 function LayoutWrapper({ role }: { role: "admin" | "mahasiswa" | "prodi" | "warek" }) {
-  const { isLoading } = useAuth();
+  const { isLoading, user: authUser } = useAuth();
+  // Re-derive from localStorage each time authUser changes so foto updates propagate
   const user = resolveLayoutUser(role);
   if (isLoading) {
     return (
@@ -62,7 +64,7 @@ function LayoutWrapper({ role }: { role: "admin" | "mahasiswa" | "prodi" | "ware
       </div>
     );
   }
-  return <Layout role={role} user={user} />;
+  return <Layout role={role} user={user} key={authUser?.foto ?? "no-foto"} />;
 }
 
 export default function App() {

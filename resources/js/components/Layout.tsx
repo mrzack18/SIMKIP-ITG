@@ -8,7 +8,7 @@ type Role = "admin" | "mahasiswa" | "prodi" | "warek";
 
 interface LayoutProps {
   role: Role;
-  user: { nama: string; nim?: string };
+  user: { nama: string; nim?: string; foto?: string | null };
 }
 
 const roleLabel: Record<Role, string> = {
@@ -58,6 +58,8 @@ export default function Layout({ role, user }: LayoutProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  const initials = user.nama.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || user.nama.charAt(0);
+
   return (
     <div className="flex min-h-screen bg-[#F1F5F9]">
       <Sidebar role={role} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onLogout={handleLogout} badgeCounts={badgeCounts} />
@@ -83,8 +85,12 @@ export default function Layout({ role, user }: LayoutProps) {
                 onClick={() => { setShowProfile(v => !v); }}
                 className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg px-2 py-1.5 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-[#263F93] flex items-center justify-center text-white text-sm font-600">
-                  {user.nama.charAt(0)}
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#263F93] flex items-center justify-center text-white text-sm font-600">
+                  {user.foto ? (
+                    <img src={user.foto} alt={user.nama} className="w-full h-full object-cover" />
+                  ) : (
+                    initials
+                  )}
                 </div>
                 <div className="hidden md:block">
                   <div className="text-sm font-500 text-gray-800 leading-tight">{user.nama}</div>

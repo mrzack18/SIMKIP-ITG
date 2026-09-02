@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/services/api";
-import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { useAuth } from "@/context/AuthContext";
+import { saveCurrentUser } from "@/services/authService";
 import {
   Eye, EyeOff, CheckCircle, X, Pencil, Camera, Phone, AlertCircle, Clock,
 } from "lucide-react";
@@ -69,8 +70,6 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 /* ── Mahasiswa full layout ─────────────────────────────────────────────── */
 function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
-  const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
-
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -208,14 +207,9 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
         </div>
       )}
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Profil Saya</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
-        </div>
-        <div>
-          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
-        </div>
+      <div>
+        <h1 className="font-display font-700 text-2xl text-gray-900">Profil Saya</h1>
+        <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
       </div>
 
       {/* SECTION 1 — Informasi Pribadi */}
@@ -586,38 +580,68 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
   );
 }
 /* ── Non-mahasiswa simple layout ──────────────────────────────────────── */
-function SimpleRoleProfil({ role, user }: { role: string; user?: { nama: string; nim?: string } }) {
-  const nama = user?.nama || "User";
-  const initials = nama.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase();
-
+function SimpleRoleProfil({ role }: { role: string }) {
   const roleLabel: Record<string, string> = {
     admin: "Pengelola KIP-K",
     prodi: "Program Studi",
     warek: "Wakil Rektor III",
   };
+  const roleColor: Record<string, string> = {
+    admin: "bg-red-100 text-red-700",
+    prodi: "bg-blue-100 text-blue-700",
+    warek: "bg-purple-100 text-purple-700",
+  };
+
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ show: boolean; msg: string; ok: boolean }>({ show: false, msg: "", ok: true });
 
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({ current: "", newPw: "", confirm: "" });
-  const [toast, setToast] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSave = () => {
+  const showToast = (msg: string, ok = true) => {
+    setToast({ show: true, msg, ok });
+    setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
+  };
+
+  useEffect(() => {
+    api.get('/profile').then((res: any) => {
+      setData(res.data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const handleSavePw = async () => {
     if (!form.current) { setError("Password saat ini wajib diisi."); return; }
     if (form.newPw.length < 8) { setError("Password baru minimal 8 karakter."); return; }
     if (form.newPw !== form.confirm) { setError("Konfirmasi password tidak cocok."); return; }
     setError("");
-    setForm({ current: "", newPw: "", confirm: "" });
-    setToast(true);
-    setTimeout(() => setToast(false), 3000);
+    try {
+      await api.post("/profile/password", {
+        password_lama: form.current,
+        password_baru: form.newPw,
+        konfirmasi: form.confirm,
+      });
+      setForm({ current: "", newPw: "", confirm: "" });
+      showToast("Password berhasil diperbarui");
+    } catch (e: any) {
+      setError(e?.data?.message || e?.message || "Gagal mengubah password");
+    }
   };
+
+  if (loading) return <div className="text-center py-10 text-gray-500">Memuat profil...</div>;
+
+  const nama = data?.nama || "User";
+  const initials = nama.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
 
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
-      {toast && (
-        <div className="fixed top-5 right-5 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500">
-          <CheckCircle size={16} /> Password berhasil diperbarui
+      {toast.show && (
+        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 text-white ${toast.ok ? "bg-green-600" : "bg-red-600"}`}>
+          <CheckCircle size={16} /> {toast.msg}
         </div>
       )}
 
@@ -648,26 +672,16 @@ function SimpleRoleProfil({ role, user }: { role: string; user?: { nama: string;
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-          {role === "admin" && (
-            <>
-              <Field label="Nama" value={nama} />
-              <Field label="Username" value="encep.admin" />
-              <Field label="Role" value={<span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-500 rounded">Pengelola KIP-K</span>} />
-            </>
-          )}
-          {role === "prodi" && (
-            <>
-              <Field label="Nama Program Studi" value="Teknik Informatika" />
-              <Field label="Username" value="prodi.ti" />
-            </>
-          )}
-          {role === "warek" && (
-            <>
-              <Field label="Nama" value={nama} />
-              <Field label="Username" value="warek3.itg" />
-              <Field label="Role" value={<span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-500 rounded">Wakil Rektor III</span>} />
-            </>
-          )}
+          <Field label="Nama" value={data?.nama || "-"} />
+          <Field label="Username" value={data?.username || "-"} />
+          <Field label="Email" value={data?.email || "-"} />
+          {data?.no_hp && <Field label="No. HP" value={data.no_hp} />}
+          {data?.prodi && <Field label="Program Studi" value={data.prodi} />}
+          <Field label="Role" value={
+            <span className={`px-2 py-0.5 text-xs font-500 rounded ${roleColor[role] || "bg-gray-100 text-gray-700"}`}>
+              {roleLabel[role] || role}
+            </span>
+          } />
         </div>
       </div>
 
@@ -703,7 +717,7 @@ function SimpleRoleProfil({ role, user }: { role: string; user?: { nama: string;
           )}
           {error && <p className="text-xs text-red-600">{error}</p>}
           <div className="flex items-center gap-3 pt-2">
-            <button onClick={handleSave}
+            <button onClick={handleSavePw}
               className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm"
               style={{ background: "#263F93" }}>
               Simpan Password
@@ -722,5 +736,5 @@ function SimpleRoleProfil({ role, user }: { role: string; user?: { nama: string;
 /* ── Root export ──────────────────────────────────────────────────────── */
 export default function Profil({ role = "mahasiswa", user }: ProfilProps) {
   if (role === "mahasiswa") return <MahasiswaProfil user={user} />;
-  return <SimpleRoleProfil role={role} user={user} />;
+  return <SimpleRoleProfil role={role} />;
 }

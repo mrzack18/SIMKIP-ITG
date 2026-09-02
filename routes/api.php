@@ -36,6 +36,19 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::post("/profile",                 [ProfileController::class, "update"]);
     Route::post("/profile/password",        [ProfileController::class, "changePassword"]);
 
+    // Admin contact info (accessible by all authenticated users)
+    Route::get("/admin-contact", function (Request $request) {
+        $admin = \App\Models\User::where('role', 'admin')->first();
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'nama'  => $admin?->name ?? 'Biro Kemahasiswaan',
+                'no_hp' => $admin?->no_hp ?? null,
+                'email' => $admin?->email ?? null,
+            ]
+        ]);
+    });
+
     // Notifications
     Route::get("/notifications",            [NotificationController::class, "index"]);
     Route::get("/notifications/count",      [NotificationController::class, "count"]);

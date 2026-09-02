@@ -7,6 +7,7 @@ export interface UserSession {
   nim?: string;
   role: Role;
   prodi?: string;
+  foto?: string | null;
 }
 
 // Mahasiswa

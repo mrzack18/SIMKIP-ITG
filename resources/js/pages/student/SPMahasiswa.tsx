@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
-import { FileText, Download, CheckCircle, AlertTriangle, X } from "lucide-react";
+import { FileText, Download, CheckCircle, AlertTriangle, X, Phone, Mail } from "lucide-react";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import logoItg from "@/imports/logo_itg.jpg";
 
@@ -179,13 +179,32 @@ export default function SPMahasiswa() {
   const [taFilter, setTaFilter] = useState(getCurrentTahunAjaran());
   const [list, setList] = useState<SP[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adminContact, setAdminContact] = useState<{ nama: string; no_hp: string | null; email: string | null }>({
+    nama: 'Biro Kemahasiswaan',
+    no_hp: null,
+    email: null,
+  });
 
-  useEffect(() => {
-    api.get<{success: boolean, data: SP[]}>("/sp").then((res) => {
+  const fetchSP = () => {
+    setLoading(true);
+    api.get<{success: boolean, data: SP[]}>(
+      "/sp", 
+      taFilter ? { tahun_ajaran: taFilter } : undefined
+    ).then((res) => {
       setList(res.data || []);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    api.get<{ success: boolean; data: { nama: string; no_hp: string | null; email: string | null } }>("/admin-contact")
+      .then(res => { if (res.data) setAdminContact(res.data); })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchSP();
+  }, [taFilter]);
 
   const openDetail = (sp: SP) => {
     setSelectedSP(sp);
@@ -276,7 +295,7 @@ export default function SPMahasiswa() {
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
             <div className="space-y-6">
-              {[formatTA(taFilter)].map((ta) => (
+              {Array.from(new Set(list.map(s => s.tahunAjaran || "2025/2026 Ganjil"))).map((ta) => (
                 <div key={ta} className="relative">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-200 shadow-sm flex items-center justify-center flex-shrink-0 z-10 text-gray-500 font-bold text-xs">
@@ -342,25 +361,34 @@ export default function SPMahasiswa() {
               Apa yang harus saya lakukan?
             </h3>
             <ul className="space-y-1.5 text-sm" style={{ color: "#263F93" }}>
-              <li>• Tingkatkan IPK Anda pada semester berikutnya hingga di atas standar minimum (3,00)</li>
-              <li>• Penuhi semua kewajiban dokumen KIP-K yang belum tervalidasi</li>
+              <li>• Baca dan pahami alasan penerbitan surat peringatan ini</li>
+              <li>• Penuhi semua kewajiban KIP-K yang belum terpenuhi sesuai persyaratan</li>
               <li>• Hubungi Biro Kemahasiswaan jika Anda memiliki pertanyaan atau keberatan</li>
             </ul>
             <div className="mt-3 flex flex-wrap gap-3">
-              <a
-                href="tel:+6226254089"
-                className="flex items-center gap-1.5 text-xs font-500 hover:underline"
-                style={{ color: "#263F93" }}
-              >
-                <Phone size={12} /> (0262) 540-895
-              </a>
-              <a
-                href="mailto:kemahasiswaan@itg.ac.id"
-                className="flex items-center gap-1.5 text-xs font-500 hover:underline"
-                style={{ color: "#263F93" }}
-              >
-                <Mail size={12} /> kemahasiswaan@itg.ac.id
-              </a>
+              {adminContact.no_hp && (
+                <a
+                  href={`https://wa.me/${adminContact.no_hp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs font-500 hover:underline"
+                  style={{ color: "#263F93" }}
+                >
+                  <Phone size={12} /> {adminContact.no_hp}
+                </a>
+              )}
+              {adminContact.email && (
+                <a
+                  href={`mailto:${adminContact.email}`}
+                  className="flex items-center gap-1.5 text-xs font-500 hover:underline"
+                  style={{ color: "#263F93" }}
+                >
+                  <Mail size={12} /> {adminContact.email}
+                </a>
+              )}
+              {!adminContact.no_hp && !adminContact.email && (
+                <span className="text-xs text-gray-400">Kontak belum diatur oleh admin</span>
+              )}
             </div>
           </div>
         </div>

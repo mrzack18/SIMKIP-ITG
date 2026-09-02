@@ -75,3 +75,12 @@ export function getCurrentUser(): UserSession | null {
 export function isAuthenticated(): boolean {
   return !!localStorage.getItem("simkip_token");
 }
+
+/**
+ * Update current user session in localStorage (e.g. after profile update).
+ */
+export function saveCurrentUser(updates: Partial<UserSession>): void {
+  const current = getCurrentUser();
+  if (!current) return;
+  localStorage.setItem("simkip_user", JSON.stringify({ ...current, ...updates }));
+}

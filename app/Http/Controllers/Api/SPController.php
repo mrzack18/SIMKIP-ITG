@@ -9,8 +9,10 @@ class SPController extends Controller
     public function index(Request $req) {
         return match($req->user()->role) {
             "mahasiswa" => (function() use ($req) {
-                $m = $req->user()->mahasiswa()->with(["suratPeringatans.mahasiswa.user", "suratPeringatans.mahasiswa.prodi"])->first();
-                return response()->json(["success" => true, "data" => \App\Http\Resources\SuratPeringatanResource::collection($m->suratPeringatans)]);
+                $m = $req->user()->mahasiswa()->first();
+                $query = $m->suratPeringatans()->with(["mahasiswa.user", "mahasiswa.prodi"]);
+                \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($query, 'surat_peringatans.created_at', $req->tahun_ajaran);
+                return response()->json(["success" => true, "data" => \App\Http\Resources\SuratPeringatanResource::collection($query->get())]);
             })(),
             "admin" => app(AdminSP::class)->index($req),
             default => abort(403),

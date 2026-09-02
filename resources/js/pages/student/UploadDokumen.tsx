@@ -149,20 +149,6 @@ export default function UploadDokumen() {
         </div>
       </div>
 
-      {/* Student info */}
-      <div className="bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100 flex items-center gap-4">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-          style={{ background: "#263F93" }}
-        >
-          {user?.nama?.substring(0, 2).toUpperCase() || "MH"}
-        </div>
-        <div>
-          <p className="font-semibold text-gray-800 text-sm">{user?.nama || "Mahasiswa"}</p>
-          <p className="text-xs text-gray-400">NIM {user?.nim || "-"}</p>
-        </div>
-      </div>
-
       {/* Progress */}
       {total > 0 && (
         <div className="bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100">
