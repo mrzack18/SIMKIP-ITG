@@ -17,7 +17,8 @@ class MahasiswaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Mahasiswa::withDetails();
+        $ta = ($request->tahun_ajaran && $request->tahun_ajaran !== 'Semua') ? $request->tahun_ajaran : null;
+        $query = Mahasiswa::withDetails($ta)->with(['suratPeringatans']);
 
         if ($request->search) {
             $q = $request->search;
@@ -97,7 +98,8 @@ class MahasiswaController extends Controller
      */
     public function export(Request $request): BinaryFileResponse|JsonResponse
     {
-        $query = Mahasiswa::withDetails();
+        $ta = ($request->tahun_ajaran && $request->tahun_ajaran !== 'Semua') ? $request->tahun_ajaran : null;
+        $query = Mahasiswa::withDetails($ta)->with(['suratPeringatans']);
 
         if ($request->search) {
             $q = $request->search;

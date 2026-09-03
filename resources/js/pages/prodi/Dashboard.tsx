@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Users, TrendingUp, ArrowRight } from "lucide-react";
+import { Users, TrendingUp, ArrowRight, BookOpen } from "lucide-react";
 import { getProdiDashboardData, ProdiDashboardResponse } from "@/services/dashboardService";
 import { useAuth } from "@/context/AuthContext";
+import logoItg from "@/imports/logo_itg.jpg";
 
 export default function ProdiDashboard() {
   const { user } = useAuth();
@@ -22,12 +23,6 @@ export default function ProdiDashboard() {
 
   const prodiNama = data?.prodi?.nama ?? user?.prodi ?? "Program Studi";
 
-  const stats = [
-    { label: `Mahasiswa KIP-K Aktif (${prodiNama})`, value: data?.stats?.total_aktif ?? 0, icon: <Users size={20} className="text-[#263F93]" />, color: "text-[#263F93]" },
-    { label: "Reguler", value: data?.stats?.reguler ?? 0, icon: <Users size={20} className="text-blue-500" />, color: "text-blue-600" },
-    { label: "Aspirasi", value: data?.stats?.aspirasi ?? 0, icon: <Users size={20} className="text-purple-500" />, color: "text-purple-600" },
-    { label: "Rata-rata IPK", value: Number(data?.stats?.rata_ipk ?? 0).toFixed(2), icon: <TrendingUp size={20} className="text-green-500" />, color: "text-green-600" },
-  ];
 
   if (loading) {
     return (
@@ -39,24 +34,78 @@ export default function ProdiDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard — {prodiNama}</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Pantau perkembangan mahasiswa KIP-K di program studi Anda (read-only)</p>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <img src={logoItg} alt="ITG Logo" className="h-12 w-12 object-contain rounded-lg shadow-sm border border-gray-100" />
+          <div>
+            <h1 className="font-bold text-2xl text-[#263F93]">
+              Selamat datang, {user?.nama ?? "Ketua Prodi"}
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-[#D4A72C] text-[#263F93]">
+            {prodiNama}
+          </span>
+        </div>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(s => (
-          <div key={s.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">{s.icon}<span className="text-xs text-gray-500">{s.label}</span></div>
-            <div className={`font-display font-700 text-3xl ${s.color}`}>{s.value}</div>
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center">
+              <Users size={18} className="text-[#263F93]" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">
+              Total Mahasiswa<br />KIP-K Aktif
+            </p>
           </div>
-        ))}
+          <p className="text-3xl font-bold text-[#263F93]">{data?.stats?.total_aktif ?? 0}</p>
+          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+            {prodiNama}
+          </span>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <BookOpen size={18} className="text-blue-600" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">KIP-K Reguler</p>
+          </div>
+          <p className="text-3xl font-bold text-[#263F93]">{data?.stats?.reguler ?? 0}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+              <BookOpen size={18} className="text-purple-600" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">KIP-K Aspirasi</p>
+          </div>
+          <p className="text-3xl font-bold text-[#263F93]">{data?.stats?.aspirasi ?? 0}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+              <TrendingUp size={18} className="text-green-600" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">Rata-rata IPK</p>
+          </div>
+          <p className="text-3xl font-bold text-[#263F93]">{Number(data?.stats?.rata_ipk ?? 0).toFixed(2)}</p>
+        </div>
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-600 text-gray-800 text-sm">Sebaran per Angkatan</h2>
             <span className="text-xs text-gray-400">{prodiNama}</span>
@@ -87,7 +136,7 @@ export default function ProdiDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-600 text-gray-800 text-sm">Tren Rata-rata IPK per Semester</h2>
             <span className="text-xs text-gray-400">{prodiNama}</span>

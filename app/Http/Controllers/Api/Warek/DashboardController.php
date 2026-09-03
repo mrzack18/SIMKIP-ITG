@@ -21,13 +21,32 @@ class DashboardController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $tahunAjaranFilter = $request->tahun_ajaran;
+
         $currentSemester = Konfigurasi::get('semester_aktif', 'Genap');
         $currentTahun = Konfigurasi::get('tahun_akademik_aktif', '2025/2026');
 
-        // --- Stats: total mahasiswa aktif, kategori split ---
-        $totalMahasiswa = Mahasiswa::where('status', 'Aktif')->count();
+        if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
+            $ta = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaranFilter);
+            if (preg_match('/^(\d{4})\/(\d{4})\s+(Ganjil|Genap)$/', $ta, $matches)) {
+                $currentTahun = $matches[1] . '/' . $matches[2];
+                $currentSemester = $matches[3];
+            }
+        }
 
-        $countsByKategori = Mahasiswa::where('status', 'Aktif')
+        // --- Stats: total mahasiswa aktif, kategori split ---
+        $mQuery = Mahasiswa::query();
+        if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
+            if (isset($matches) && count($matches) >= 4) {
+                $startYear = (int) $matches[1];
+                $mQuery->where('angkatan', '<=', $startYear);
+            }
+        }
+        $mQuery->where('status', 'Aktif');
+
+        $totalMahasiswa = (clone $mQuery)->count();
+
+        $countsByKategori = (clone $mQuery)
             ->select('kategori', DB::raw('COUNT(*) as total'))
             ->groupBy('kategori')
             ->pluck('total', 'kategori');
@@ -42,10 +61,16 @@ class DashboardController extends Controller
             ->count();
 
         // --- Pending reports (Diajukan → FE label: "Menunggu") ---
-        $pendingReports = Laporan::with('dibuatOleh')
+        $pendingQuery = Laporan::with('dibuatOleh')
             ->where('status', 'Diajukan')
-            ->where('tujuan_warek', true)
-            ->latest('submitted_at')
+            ->where('tujuan_warek', true);
+            
+        if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
+            $pendingQuery->where('tahun_akademik', $currentTahun)
+                         ->where('semester', $currentSemester);
+        }
+
+        $pendingReports = $pendingQuery->latest('submitted_at')
             ->take(5)
             ->get()
             ->map(function ($l) {
@@ -61,9 +86,15 @@ class DashboardController extends Controller
             });
 
         // --- Approved reports (last 5) ---
-        $approvedReports = Laporan::with('latestReview')
-            ->where('status', 'Disetujui')
-            ->latest('tanggal_laporan')
+        $approvedQuery = Laporan::with('latestReview')
+            ->where('status', 'Disetujui');
+            
+        if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
+            $approvedQuery->where('tahun_akademik', $currentTahun)
+                          ->where('semester', $currentSemester);
+        }
+
+        $approvedReports = $approvedQuery->latest('tanggal_laporan')
             ->take(5)
             ->get()
             ->map(function ($l) {

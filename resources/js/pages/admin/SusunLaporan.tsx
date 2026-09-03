@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
@@ -8,7 +8,7 @@ import { createLaporan, submitLaporan, getPreviewStatistics, type LaporanPreview
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import logoItg from "@/imports/logo_itg.jpg";
-import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran, parseTahunAjaran } from "@/components/ui/TahunAjaranFilter";
 
 const STEPS = [
   { label: "Informasi Laporan", num: 1 },
@@ -20,12 +20,25 @@ type Cakupan = "semua" | "angkatan" | "prodi" | "keduanya";
 
 export default function SusunLaporan() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const inherited = (() => {
+    const t = searchParams.get('tahun');
+    const s = searchParams.get('semester');
+    if (t && (s === 'Ganjil' || s === 'Genap')) {
+      return { tahunAkademik: t, semester: s as 'Ganjil' | 'Genap' };
+    }
+    const cur = parseTahunAjaran(getCurrentTahunAjaran());
+    if (cur) return cur;
+    return { tahunAkademik: '2025/2026', semester: 'Genap' as const };
+  })();
+
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    judul: "Laporan Evaluasi Semester Genap Tahun Akademik 2025/2026",
+    judul: `Laporan Evaluasi Semester ${inherited.semester} Tahun Akademik ${inherited.tahunAkademik}`,
     nomorSK: "",
-    tahunAkademik: "Semua",
-    semester: "Genap",
+    tahunAkademik: inherited.tahunAkademik,
+    semester: inherited.semester,
     tanggalLaporan: "2026-08-19",
     catatan: "",
     cakupan: "semua" as Cakupan,
@@ -330,12 +343,9 @@ export default function SusunLaporan() {
 
             <div>
               <label className="block text-sm font-500 text-gray-700 mb-1.5">Tahun Akademik</label>
-              <div className="w-full flex items-center justify-start border border-gray-200 rounded-lg h-[42px] px-1 bg-white">
-                <TahunAjaranFilter
-                  value={form.tahunAkademik}
-                  onChange={(val) => setForm((f) => ({ ...f, tahunAkademik: val }))}
-                  className="w-full bg-white hover:bg-white border-0"
-                />
+              <div className="px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm bg-gray-50 text-gray-700 flex items-center justify-between">
+                <span className="font-600">{form.semester} {form.tahunAkademik}</span>
+                <span className="text-xs text-gray-400">Diwarisi dari filter daftar laporan</span>
               </div>
             </div>
 

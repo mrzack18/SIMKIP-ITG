@@ -209,7 +209,16 @@ export default function LaporanList() {
         <div className="flex items-center gap-2">
           <TahunAjaranFilter value={tahunFilter} onChange={handleTahunChange} />
           <Link
-            to="/admin/laporan/baru"
+            to={(() => {
+              const params = new URLSearchParams();
+              const parsed = parseTahunAjaran(tahunFilter) ?? parseTahunAjaran(getCurrentTahunAjaran());
+              if (parsed) {
+                params.set('tahun', parsed.tahun);
+                params.set('semester', parsed.semester);
+              }
+              const qs = params.toString();
+              return `/admin/laporan/baru${qs ? `?${qs}` : ''}`;
+            })()}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
             style={{ background: "#263F93" }}
           >

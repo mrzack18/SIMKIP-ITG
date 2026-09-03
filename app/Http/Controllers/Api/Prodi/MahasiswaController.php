@@ -24,7 +24,8 @@ class MahasiswaController extends Controller
             return response()->json(['success' => false, 'message' => 'Prodi tidak ditemukan untuk user ini.'], 403);
         }
 
-        $query = Mahasiswa::withDetails()->where('prodi_id', $prodiId);
+        $ta = ($request->tahun_ajaran && $request->tahun_ajaran !== 'Semua') ? $request->tahun_ajaran : null;
+        $query = Mahasiswa::withDetails($ta)->with(['suratPeringatans'])->where('prodi_id', $prodiId);
 
         if ($request->search) {
             $q = $request->search;
@@ -117,16 +118,17 @@ class MahasiswaController extends Controller
     public function detail(Request $request, int $id): JsonResponse
     {
         $prodiId = $this->getProdiId($request);
+        $ta = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
         $m = Mahasiswa::with([
             'prodi',
             'user.contactHistories',
-            'ipkSemestrs.mataKuliahs',
-            'dokumens.jenis',
-            'suratPeringatans' => fn($q) => $q->orderByDesc('tanggal_terbit'),
-            'prestasis',
-            'organisasis',
-            'pelatihans',
-            'bebasTanggungan',
+            'ipkSemestrs' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'ipk_semestrs.created_at', $ta)->with('mataKuliahs'),
+            'dokumens' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $ta)->with('jenis'),
+            'suratPeringatans' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'surat_peringatans.tanggal_terbit', $ta)->orderByDesc('tanggal_terbit'),
+            'prestasis' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'prestasis.tanggal_mulai', $ta),
+            'organisasis' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'organisasis.periode_mulai', $ta),
+            'pelatihans' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'pelatihans.tanggal_mulai', $ta),
+            'bebasTanggungan' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'bebas_tanggungans.tanggal_ajukan', $ta),
         ])
             ->where('prodi_id', $prodiId)
             ->findOrFail($id);
@@ -213,48 +215,9 @@ class MahasiswaController extends Controller
         // Prestasi, Organisasi, Pelatihan already via MahasiswaResource-like map
         $mapFiles = fn($path) => $path ? url('storage/' . $path) : null;
 
-        $prestasi = $m->prestasis->map(fn($p) => [
-            'id'               => $p->id,
-            'nama'             => $p->nama_prestasi,
-            'tingkat'          => $p->tingkat,
-            'pencapaian'       => $p->pencapaian,
-            'penyelenggara'    => $p->penyelenggara,
-            'tanggalMulai'     => $p->tanggal_mulai?->format('d M Y'),
-            'tanggalSelesai'   => $p->tanggal_selesai?->format('d M Y'),
-            'tempat'           => $p->tempat,
-            'deskripsi'        => $p->deskripsi,
-            'link'             => $p->link_penyelenggara,
-            'fileSertifikat'   => $mapFiles($p->file_sertifikat),
-            'fileFoto'         => $mapFiles($p->file_foto),
-            'status'           => $p->status,
-        ])->values();
-
-        $organisasi = $m->organisasis->map(fn($o) => [
-            'id'             => $o->id,
-            'nama'           => $o->nama,
-            'jenis'          => $o->jenis,
-            'jabatan'        => $o->jabatan,
-            'periodeMulai'   => $o->periode_mulai?->format('F Y'),
-            'periodeSelesai' => $o->periode_selesai?->format('F Y'),
-            'deskripsi'      => $o->deskripsi,
-            'fileSk'         => $mapFiles($o->file_sk),
-            'fotoKegiatan'   => $mapFiles($o->foto_kegiatan),
-            'status'         => $o->status,
-        ])->values();
-
-        $pelatihan = $m->pelatihans->map(fn($p) => [
-            'id'             => $p->id,
-            'nama'           => $p->nama,
-            'jenis'          => $p->jenis ?? 'Akademik',
-            'penyelenggara'  => $p->penyelenggara,
-            'tanggalMulai'   => $p->tanggal_mulai?->format('d M Y'),
-            'tanggalSelesai' => $p->tanggal_selesai?->format('d M Y'),
-            'tempat'         => $p->tempat,
-            'deskripsi'      => $p->deskripsi,
-            'sertifikat'     => $mapFiles($p->file_sertifikat),
-            'fotoKegiatan'   => $mapFiles($p->foto_kegiatan),
-            'status'         => $p->status,
-        ])->values();
+        $prestasi = \App\Http\Resources\PrestasiResource::collection($m->prestasis);
+        $organisasi = \App\Http\Resources\OrganisasiResource::collection($m->organisasis);
+        $pelatihan = \App\Http\Resources\PelatihanResource::collection($m->pelatihans);
 
         $sp = $m->suratPeringatans->map(fn($sp) => [
             'id'              => $sp->id,

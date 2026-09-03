@@ -6,13 +6,14 @@ import {
   XCircle,
   Calendar,
   Download,
-  Image,
+  Image, Eye,
 } from "lucide-react"
 import {
   getApprovalStatusBadge as statusBadge,
   ApprovalStatusIcon as StatusIcon,
 } from "@/constants/status"
 import { BackendNotReady } from "./Shared"
+import { downloadFile } from "@/utils/fileUrl";
 
 export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: boolean; error?: any }) {
   const [selectedOrg, setSelectedOrg] = useState<any | null>(null)

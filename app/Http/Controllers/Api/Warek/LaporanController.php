@@ -33,6 +33,14 @@ class LaporanController extends Controller
             $query->where('status', $beStatus);
         }
 
+        if ($request->tahun_ajaran && $request->tahun_ajaran !== 'Semua') {
+            $ta = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $request->tahun_ajaran);
+            if (preg_match('/^(\d{4})\/(\d{4})\s+(Ganjil|Genap)$/', $ta, $matches)) {
+                $query->where('tahun_akademik', $matches[1] . '/' . $matches[2])
+                      ->where('semester', $matches[3]);
+            }
+        }
+
         $limit = (int)($request->limit ?? 10);
         $page  = (int)($request->page ?? 1);
         $total = $query->count();

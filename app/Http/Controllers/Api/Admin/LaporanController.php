@@ -7,6 +7,7 @@ use App\Models\LaporanReview;
 use App\Models\Mahasiswa;
 use App\Models\Notification;
 use App\Models\Prodi;
+use App\Models\SuratPeringatan;
 use App\Models\User;
 use App\Models\IpkSemestr;
 use App\Http\Resources\LaporanResource;
@@ -213,7 +214,7 @@ class LaporanController extends Controller
         // Get Prestasi count and names
         $prestasiList = \App\Models\Prestasi::with('mahasiswa')
             ->whereIn('mahasiswa_id', $mIds)
-            ->where('status_validasi', 'Valid')
+            ->where('status', 'Disetujui')
             ->get();
         $totalPrestasi = $prestasiList->unique('mahasiswa_id')->count(); // How many unique students have achievements
         $namaPrestasi = $prestasiList->map(fn($p) => $p->mahasiswa->nama . ' - ' . $p->nama_kompetisi)->unique()->values();

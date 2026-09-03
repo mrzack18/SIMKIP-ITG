@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Users, FileCheck, ArrowRight, Download, CheckCircle, ClipboardList } from "lucide-react";
+import { Users, FileCheck, ArrowRight, Download, CheckCircle, ClipboardList, BookOpen } from "lucide-react";
 import { api } from "@/services/api";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { useAuth } from "@/context/AuthContext";
+import logoItg from "@/imports/logo_itg.jpg";
 interface PendingReport {
   id: number;
   judul: string;
@@ -33,6 +35,7 @@ interface DashboardData {
 }
 
 export default function WarekDashboard() {
+  const { user } = useAuth();
   const [filterTahunAjaran, setFilterTahunAjaran] = useState(getCurrentTahunAjaran());
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,65 +62,48 @@ export default function WarekDashboard() {
     };
   }, [filterTahunAjaran]);
 
-  const stats = data
-    ? [
-        {
-          label: "Total Mahasiswa KIP-K Aktif",
-          value: String(data.stats.totalMahasiswaAktif),
-          sub: "Semua prodi",
-        },
-        {
-          label: "Reguler / Aspirasi",
-          value: `${data.stats.regulerCount} / ${data.stats.aspirasiCount}`,
-          sub: "Split kategori",
-        },
-        {
-          label: "Laporan Disetujui Semester Ini",
-          value: String(data.stats.laporanDisetujuiSemesterIni),
-          sub: data.stats.currentPeriode || "2025/2026 Genap",
-        },
-      ]
-    : [];
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard Warek III</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Memuat data...</p>
-        </div>
-        <div className="bg-white rounded-xl p-10 shadow-sm border border-gray-100 text-center text-sm text-gray-400">
-          Sedang memuat data...
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#263F93]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard Warek III</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Overview KIP-K Institut Teknologi Garut</p>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">
-          {error}
-        </div>
+      <div className="flex items-center justify-center min-h-[400px] text-red-500">
+        {error}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Dashboard Warek III</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Overview KIP-K Institut Teknologi Garut</p>
+        <div className="flex items-center gap-4">
+          <img src={logoItg} alt="ITG Logo" className="h-12 w-12 object-contain rounded-lg shadow-sm border border-gray-100" />
+          <div>
+            <h1 className="font-bold text-2xl text-[#263F93]">
+              Selamat datang, {user?.nama ?? "Wakil Rektor III"}
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
         </div>
-        <TahunAjaranFilter
-          value={filterTahunAjaran}
-          onChange={setFilterTahunAjaran}
-        />
+
+        <div className="flex items-center gap-2">
+          <TahunAjaranFilter
+            value={filterTahunAjaran}
+            onChange={setFilterTahunAjaran}
+          />
+          <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-[#D4A72C] text-[#263F93]">
+            Wakil Rektor III
+          </span>
+        </div>
       </div>
 
       {/* Notification */}
@@ -138,20 +124,52 @@ export default function WarekDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {stats.map(s => (
-          <div key={s.label} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-3">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center">
               <Users size={18} className="text-[#263F93]" />
-              <span className="text-xs text-gray-500">{s.label}</span>
             </div>
-            <div className="font-display font-700 text-3xl text-[#263F93]">{s.value}</div>
-            <div className="text-xs text-gray-400 mt-1">{s.sub}</div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">
+              Total Mahasiswa<br />KIP-K Aktif
+            </p>
           </div>
-        ))}
+          <p className="text-3xl font-bold text-[#263F93]">{data?.stats.totalMahasiswaAktif}</p>
+          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+            Semua prodi
+          </span>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <BookOpen size={18} className="text-blue-600" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">Reguler / Aspirasi</p>
+          </div>
+          <p className="text-3xl font-bold text-[#263F93]">
+            {data?.stats.regulerCount} <span className="text-xl text-gray-400 font-medium">/ {data?.stats.aspirasiCount}</span>
+          </p>
+          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+            Split kategori
+          </span>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+              <FileCheck size={18} className="text-purple-600" />
+            </div>
+            <p className="text-xs font-medium text-gray-500 leading-tight">Laporan Disetujui<br />Semester Ini</p>
+          </div>
+          <p className="text-3xl font-bold text-[#263F93]">{data?.stats.laporanDisetujuiSemesterIni}</p>
+          <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+            {data?.stats.currentPeriode || "2025/2026 Genap"}
+          </span>
+        </div>
       </div>
 
       {/* Pending reports */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-600 text-gray-800 text-sm">Laporan Menunggu Persetujuan</h2>
           <Link to="/warek/laporan" className="text-xs text-[#263F93] hover:underline flex items-center gap-1">Lihat Semua <ArrowRight size={12} /></Link>
@@ -182,7 +200,7 @@ export default function WarekDashboard() {
       </div>
 
       {/* Approved reports */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h2 className="font-600 text-gray-800 text-sm">Laporan Telah Disetujui</h2>
         </div>
