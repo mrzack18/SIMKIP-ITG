@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { getBadgeCounts } from "@/services/dashboardService";
 
@@ -22,6 +22,7 @@ const roleLabel: Record<Role, string> = {
 
 export default function Layout({ role, user }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [badgeCounts, setBadgeCounts] = useState<{ dokumen_queue_menunggu: number; bebas_tanggungan_menunggu: number }>({
     dokumen_queue_menunggu: 0,
@@ -72,13 +73,41 @@ export default function Layout({ role, user }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-[#F1F5F9]">
-      <Sidebar role={role} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} onLogout={handleLogout} badgeCounts={badgeCounts} />
+      <Sidebar
+        role={role}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(!collapsed)}
+        onLogout={handleLogout}
+        badgeCounts={badgeCounts}
+        mobileOpen={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        onNavigate={() => setMobileOpen(false)}
+      />
 
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? "ml-16" : "ml-64"}`}>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-gray-900/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ml-0 ${collapsed ? "lg:ml-16" : "lg:ml-64"}`}>
         {/* Topbar */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-end px-6 sticky top-0 z-30 shadow-sm">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between gap-2 px-4 sm:px-6 sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => setMobileOpen(true)}
+              aria-label="Buka menu navigasi"
+              className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+            >
+              <Menu size={20} />
+            </button>
+            <span className="lg:hidden text-sm font-semibold text-[#263F93] truncate">{roleLabel[role]}</span>
+          </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Profile */}
             <div className="relative" ref={profileRef}>
               <div
@@ -92,16 +121,16 @@ export default function Layout({ role, user }: LayoutProps) {
                     initials
                   )}
                 </div>
-                <div className="hidden md:block">
-                  <div className="text-sm font-500 text-gray-800 leading-tight">{user.nama}</div>
-                  {user.nim && <div className="text-xs text-gray-400">{user.nim}</div>}
+                <div className="hidden sm:block min-w-0">
+                  <div className="text-sm font-500 text-gray-800 leading-tight truncate max-w-[140px] md:max-w-none">{user.nama}</div>
+                  {user.nim && <div className="text-xs text-gray-400 truncate">{user.nim}</div>}
                 </div>
                 <ChevronDown size={14} className="text-gray-400" />
               </div>
               {showProfile && (
-                <div className="absolute right-0 top-11 min-w-48 bg-white rounded-xl shadow-lg border border-[#E2E8F0] z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-700 text-gray-800">{user.nama}</p>
+                <div className="absolute right-0 top-11 w-48 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg border border-[#E2E8F0] z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 min-w-0">
+                    <p className="text-sm font-700 text-gray-800 truncate">{user.nama}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{roleLabel[role]}</p>
                   </div>
                   <div className="py-1">
@@ -126,7 +155,7 @@ export default function Layout({ role, user }: LayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 min-w-0 p-4 sm:p-6">
           <Outlet />
         </main>
       </div>

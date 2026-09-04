@@ -27,8 +27,8 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 text-gray-500">
-        <Loader2 className="animate-spin mr-2" /> Memuat data prestasi...
+      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+        <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data prestasi...
       </div>
     )
   }
@@ -37,7 +37,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
       return <BackendNotReady feature="Data Prestasi" />
     }
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center text-sm text-red-600">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 text-center text-xs sm:text-sm text-red-600 break-words">
         Terjadi kesalahan: {error.message || "Gagal memuat data prestasi."}
       </div>
     )
@@ -66,30 +66,29 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
   }
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded-xl border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 min-w-0">
+      <div className="bg-white p-4 rounded-xl border border-[#E2E8F0] min-w-0">
         <div>
           <span className="text-xs text-gray-500 font-medium block mb-0.5">Filter Tahun Akademik</span>
           <span className="text-sm font-bold text-gray-800">Data Prestasi</span>
         </div>
-        <span className="text-sm font-bold text-gray-800">Data Prestasi</span>
       </div>
 
-      <div className="flex items-center justify-between border-b border-[#E2E8F0]">
-        <div className="flex flex-1">
+      <div className="flex items-center justify-between border-b border-[#E2E8F0] min-w-0">
+        <div className="flex flex-1 min-w-0">
           {tiers.map((t) => (
             <button
               key={t}
               onClick={() => setSubTab(t)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+              className={`flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-2 px-1 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors ${
                 subTab === t
                   ? "bg-[#263F93] text-white"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              {t}
+              <span className="truncate">{t}</span>
               <span
-                className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                className={`flex-shrink-0 px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold ${
                   subTab === t
                     ? "bg-[#D4A72C] text-[#263F93]"
                     : "bg-gray-100 text-gray-500"
@@ -117,13 +116,13 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {filtered.map((p) => (
               <div
                 key={p.id}
-                className="bg-white rounded-xl p-5 border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl p-4 sm:p-5 border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow min-w-0"
               >
-                <div className="flex items-start gap-3 mb-3">
+                <div className="flex items-start gap-3 mb-3 min-w-0">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#263F93]/10"
                   >
@@ -136,17 +135,17 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-800 text-sm leading-snug">
+                    <h3 className="font-semibold text-gray-800 text-sm leading-snug break-words">
                       {p.namaPrestasi || p.nama}
                     </h3>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                       {p.pencapaian && (
-                        <span className="px-2 py-0.5 rounded text-xs font-medium text-white bg-[#263F93]">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium text-white bg-[#263F93] whitespace-nowrap">
                           {p.pencapaian}
                         </span>
                       )}
                       <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${statusBadge(p.status)}`}
+                        className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge(p.status)}`}
                       >
                         <StatusIcon status={p.status} /> {p.status}
                       </span>
@@ -154,30 +153,30 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-500 space-y-1.5 mb-3">
-                  <div className="flex items-center gap-1.5">
+                <div className="text-xs text-gray-500 space-y-1.5 mb-3 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <Trophy size={11} className="text-gray-400 flex-shrink-0" />
-                    <span>{p.penyelenggara}</span>
+                    <span className="break-words min-w-0">{p.penyelenggara}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <Calendar size={11} className="text-gray-400 flex-shrink-0" />
-                    <span>
+                    <span className="break-words min-w-0">
                       {fmtDate(p.tanggalMulai)} – {fmtDate(p.tanggalSelesai)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <MapPin size={11} className="text-gray-400 flex-shrink-0" />
-                    <span>{p.tempat}</span>
+                    <span className="break-words min-w-0">{p.tempat}</span>
                   </div>
                 </div>
 
                 {p.catatanAdmin && (
-                  <div className="mb-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                  <div className="mb-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg min-w-0">
                     <AlertTriangle
                       size={12}
                       className="text-red-500 flex-shrink-0 mt-0.5"
                     />
-                    <p className="text-xs text-red-700">
+                    <p className="text-xs text-red-700 break-words min-w-0">
                       <span className="font-medium">Catatan:</span>{" "}
                       {p.catatanAdmin}
                     </p>
@@ -205,18 +204,18 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
             className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between flex-shrink-0">
-              <h3 className="font-bold text-gray-800">Detail Prestasi</h3>
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">Detail Prestasi</h3>
               <button
                 onClick={() => setModalItem(null)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
               >
                 <XCircle size={18} />
               </button>
             </div>
 
-            <div className="p-5 space-y-4 overflow-y-auto">
-              <div className="flex items-start gap-3">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+              <div className="flex items-start gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#263F93]/10">
                   <Trophy
                     size={22}
@@ -226,23 +225,23 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                     }}
                   />
                 </div>
-                <div>
-                  <h4 className="font-bold text-gray-800 leading-snug">
+                <div className="min-w-0">
+                  <h4 className="font-bold text-sm sm:text-base text-gray-800 leading-snug break-words">
                     {modalItem.namaPrestasi || modalItem.nama}
                   </h4>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium ${tingkatBadgeStyle(modalItem.tingkat)}`}
+                      className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${tingkatBadgeStyle(modalItem.tingkat)}`}
                     >
                       {modalItem.tingkat}
                     </span>
                     {modalItem.pencapaian && (
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#F5EDD4] text-[#B8860B]">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#F5EDD4] text-[#B8860B] whitespace-nowrap">
                         {modalItem.pencapaian}
                       </span>
                     )}
                     <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${statusBadge(modalItem.status)}`}
+                      className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge(modalItem.status)}`}
                     >
                       <StatusIcon status={modalItem.status} /> {modalItem.status}
                     </span>
@@ -250,63 +249,63 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                 </div>
               </div>
 
-              <div className="space-y-2.5 text-sm">
-                <div className="flex items-center gap-2.5">
-                  <Building2 size={14} className="text-gray-400 flex-shrink-0" />
-                  <div>
+              <div className="space-y-2.5 text-sm min-w-0">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <Building2 size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <span className="text-xs text-gray-400 mr-1">Penyelenggara:</span>
-                    <span className="font-medium text-gray-700">{modalItem.penyelenggara}</span>
+                    <span className="font-medium text-gray-700 break-words">{modalItem.penyelenggara}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <Calendar size={14} className="text-gray-400 flex-shrink-0" />
-                  <div>
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <Calendar size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <span className="text-xs text-gray-400 mr-1">Tanggal:</span>
-                    <span className="font-medium text-gray-700">
+                    <span className="font-medium text-gray-700 break-words">
                       {fmtDate(modalItem.tanggalMulai)} – {fmtDate(modalItem.tanggalSelesai)}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={14} className="text-gray-400 flex-shrink-0" />
-                  <div>
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <MapPin size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
                     <span className="text-xs text-gray-400 mr-1">Tempat:</span>
-                    <span className="font-medium text-gray-700">{modalItem.tempat}</span>
+                    <span className="font-medium text-gray-700 break-words">{modalItem.tempat}</span>
                   </div>
                 </div>
               </div>
 
               {modalItem.deskripsi && (
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Deskripsi</p>
-                  <p className="text-sm text-gray-700">{modalItem.deskripsi}</p>
+                  <p className="text-sm text-gray-700 break-words">{modalItem.deskripsi}</p>
                 </div>
               )}
 
               {modalItem.linkPenyelenggara && (
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Link Penyelenggara</p>
                   <a
                     href={modalItem.linkPenyelenggara}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm flex items-center gap-1.5 hover:underline text-[#263F93]"
+                    className="text-sm flex items-center gap-1.5 hover:underline text-[#263F93] break-all min-w-0"
                   >
-                    <ExternalLink size={12} /> {modalItem.linkPenyelenggara}
+                    <ExternalLink size={12} className="flex-shrink-0" /> <span className="break-all">{modalItem.linkPenyelenggara}</span>
                   </a>
                 </div>
               )}
 
               {modalItem.catatanAdmin && (
-                <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl">
+                <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl min-w-0">
                   <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">
+                  <p className="text-xs sm:text-sm text-red-700 break-words min-w-0">
                     <span className="font-medium">Catatan Admin:</span> {modalItem.catatanAdmin}
                   </p>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-gray-400 mb-1.5">Sertifikat / Piagam</p>
                   {modalItem.fileSertifikat ? (
@@ -396,7 +395,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-[#E2E8F0] flex-shrink-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
               <button
                 onClick={() => setModalItem(null)}
                 className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
