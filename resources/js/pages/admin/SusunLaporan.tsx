@@ -463,17 +463,17 @@ export default function SusunLaporan() {
                 {/* Summary cards */}
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <div className="rounded-xl p-3 text-center border border-[#E2E8F0]" style={{ background: "#F8FAFC" }}>
-                    <div className="font-display font-700 text-xl text-gray-900">{preview.totalMahasiswa}</div>
+                    <div className="font-display font-700 text-xl text-gray-900">{preview.total_mahasiswa}</div>
                     <div className="text-xs text-gray-500 mt-0.5">Total Mahasiswa</div>
                   </div>
                   <div className="rounded-xl p-3 text-center border border-[#E2E8F0]" style={{ background: "#F8FAFC" }}>
-                    <div className="font-display font-700 text-xl text-gray-900">{preview.rataIpk ?? "—"}</div>
+                    <div className="font-display font-700 text-xl text-gray-900">{preview.rata_ipk ?? "—"}</div>
                     <div className="text-xs text-gray-500 mt-0.5">Rata-rata IPK</div>
                   </div>
                   <div className="rounded-xl p-3 text-center border border-[#E2E8F0]" style={{ background: "#F8FAFC" }}>
                     <div className="font-display font-700 text-xl text-gray-900">
-                      {preview.kipk.reguler.total + preview.kipk.aspirasi.total > 0
-                        ? Math.round((preview.kipk.reguler.total / preview.totalMahasiswa) * 100)
+                      {preview.total_reguler + preview.total_aspirasi > 0
+                        ? Math.round((preview.total_reguler / preview.total_mahasiswa) * 100)
                         : 0}%
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">Reguler</div>
@@ -485,9 +485,9 @@ export default function SusunLaporan() {
                   <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">
                     Distribusi IPK Mahasiswa
                   </p>
-                  {preview.ipkBuckets.some(b => b.count > 0) ? (
+                  {preview.ipk_distribution?.some(b => b.count > 0) ? (
                     <ResponsiveContainer width="100%" height={160}>
-                      <BarChart data={preview.ipkBuckets} margin={{ left: -20 }}>
+                      <BarChart data={preview.ipk_distribution} margin={{ left: -20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                         <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94A3B8" }} />
                         <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} allowDecimals={false} />
