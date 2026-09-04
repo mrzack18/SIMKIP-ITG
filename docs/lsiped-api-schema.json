@@ -1,0 +1,258 @@
+{
+  "judul": "Draft API Schema untuk Integrasi SIMKIP-ITG dengan LSIPD",
+  "versi": "1.0.0",
+  "tanggal": "2026-09-04",
+  "deskripsi": "Format data akademik yang dibutuhkan SIMKIP-ITG dari LSIPD agar tidak perlu input manual",
+
+  "endpoints": {
+
+    "1_get_semua_mahasiswa": {
+      "method": "GET",
+      "url": "/api/lsipd/mahasiswa",
+      "deskripsi": "Ambil data seluruh mahasiswa (atau filter per prodi/angkatan)",
+      "query_params": {
+        "prodi": "opsional - kode prodi (TI/SI/TE/TS/AR)",
+        "angkatan": "opsional - tahun angkatan",
+        "status": "opsional - Aktif/Lulus/Nonaktif"
+      },
+      "response_sample": {
+        "success": true,
+        "data": [
+          {
+            "nim": "2023001",
+            "nama": "Budi Santoso",
+            "tempat_lahir": "Bandung",
+            "tanggal_lahir": "2003-05-15",
+            "jenis_kelamin": "Laki-laki",
+            "alamat": "Jl. Merdeka No. 10, Bandung",
+            "no_hp": "081234567890",
+            "prodi_kode": "S1 Teknik Informatika",
+            "angkatan": 2023
+          }
+        ]
+      },
+      "atribut_detail": {
+        "nim": {
+          "type": "string",
+          "max_length": 20,
+          "wajib": true,
+          "unique": true,
+          "catatan": "Primary key identifier mahasiswa"
+        },
+        "nama": {
+          "type": "string",
+          "wajib": true,
+          "catatan": "Nama lengkap sesuai ijazah"
+        },
+        "tempat_lahir": {
+          "type": "string",
+          "max_length": 100,
+          "wajib": false
+        },
+        "tanggal_lahir": {
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "wajib": false
+        },
+        "jenis_kelamin": {
+          "type": "enum",
+          "values": ["Laki-laki", "Perempuan"],
+          "wajib": true
+        },
+        "alamat": {
+          "type": "text",
+          "wajib": false,
+          "catatan": "Alamat lengkap rumah"
+        },
+        "no_hp": {
+          "type": "string",
+          "max_length": 20,
+          "wajib": false,
+          "catatan": "Nomor HP aktif mahasiswa"
+        },
+        "prodi_kode": {
+          "type": "string",
+          "wajib": true,
+          "catatan": "Nama program studi lengkap (contoh: S1 Teknik Informatika)"
+        },
+        "angkatan": {
+          "type": "integer",
+          "wajib": true,
+          "catatan": "Tahun masuk (contoh: 2023)"
+        }
+      }
+    },
+
+    "2_get_ips_semester": {
+      "method": "GET",
+      "url": "/api/lsipd/mahasiswa/{nim}/ips",
+      "deskripsi": "Ambil data IPS dan IPK per semester untuk satu mahasiswa",
+      "path_params": {
+        "nim": "NIM mahasiswa"
+      },
+      "query_params": {
+        "semester": "opsional - filter semester tertentu (1-8)"
+      },
+      "response_sample": {
+        "success": true,
+        "data": [
+          {
+            "nim": "2023001",
+            "semester": 1,
+            "tahun_ajaran": "2023/2024 Ganjil",
+            "ips": 3.75,
+            "ipk": 3.75
+          },
+          {
+            "nim": "2023001",
+            "semester": 2,
+            "tahun_ajaran": "2023/2024 Genap",
+            "ips": 3.50,
+            "ipk": 3.63
+          }
+        ]
+      },
+      "atribut_detail": {
+        "nim": {
+          "type": "string",
+          "wajib": true,
+          "catatan": "NIM mahasiswa"
+        },
+        "semester": {
+          "type": "integer",
+          "min": 1,
+          "max": 14,
+          "wajib": true,
+          "catatan": "Nomor urut semester (1, 2, 3, dst)"
+        },
+        "tahun_ajaran": {
+          "type": "string",
+          "format": "YYYY/YYYY Semester",
+          "wajib": true,
+          "catatan": "Contoh: '2023/2024 Ganjil' atau '2023/2024 Genap'"
+        },
+        "ips": {
+          "type": "decimal",
+          "precision": "3,2",
+          "min": 0.00,
+          "max": 4.00,
+          "wajib": true,
+          "catatan": "Indeks Prestasi Semester"
+        },
+        "ipk": {
+          "type": "decimal",
+          "precision": "3,2",
+          "min": 0.00,
+          "max": 4.00,
+          "wajib": true,
+          "catatan": "Indeks Prestasi Kumulatif (kumulatif sampai semester ini)"
+        }
+      }
+    },
+
+    "3_get_mata_kuliah": {
+      "method": "GET",
+      "url": "/api/lsipd/mahasiswa/{nim}/mata-kuliah",
+      "deskripsi": "Ambil daftar mata kuliah + nilai per semester untuk satu mahasiswa",
+      "path_params": {
+        "nim": "NIM mahasiswa"
+      },
+      "query_params": {
+        "semester": "opsional - filter semester tertentu"
+      },
+      "response_sample": {
+        "success": true,
+        "data": [
+          {
+            "nim": "2023001",
+            "semester": 1,
+            "tahun_ajaran": "2023/2024 Ganjil",
+            "mata_kuliah": [
+              {
+                "kode_mk": "TI101",
+                "nama_mk": "Pemrograman Dasar",
+                "sks": 3,
+                "nilai_huruf": "A"
+              },
+              {
+                "kode_mk": "TI102",
+                "nama_mk": "Matematika Diskrit",
+                "sks": 3,
+                "nilai_huruf": "AB"
+              },
+              {
+                "kode_mk": "UN101",
+                "nama_mk": "Bahasa Indonesia",
+                "sks": 2,
+                "nilai_huruf": "A"
+              }
+            ]
+          }
+        ]
+      },
+      "atribut_detail": {
+        "nim": {
+          "type": "string",
+          "wajib": true
+        },
+        "semester": {
+          "type": "integer",
+          "min": 1,
+          "max": 14,
+          "wajib": true
+        },
+        "tahun_ajaran": {
+          "type": "string",
+          "wajib": true
+        },
+        "mata_kuliah": {
+          "type": "array",
+          "catatan": "Daftar mata kuliah yang diambil di semester ini",
+          "items": {
+            "kode_mk": {
+              "type": "string",
+              "max_length": 20,
+              "wajib": true,
+              "catatan": "Kode unik mata kuliah"
+            },
+            "nama_mk": {
+              "type": "string",
+              "wajib": true,
+              "catatan": "Nama mata kuliah"
+            },
+            "sks": {
+              "type": "integer",
+              "min": 1,
+              "max": 6,
+              "wajib": true,
+              "catatan": "Jumlah SKS"
+            },
+            "nilai_huruf": {
+              "type": "enum",
+              "values": ["A", "AB", "B", "BC", "C", "D", "E"],
+              "wajib": true,
+              "catatan": "Nilai huruf dari sistem akademik kampus. A=4.00, AB=3.50, B=3.00, BC=2.50, C=2.00, D=1.00 (tidak lulus), E=0.00 (tidak lulus)"
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "mapping_nilai": {
+    "catatan": "SIMKIP akan otomatis mengkonversi nilai huruf ke nilai mutu",
+    "A": { "nilai_mutu": 4.00, "lulus": true },
+    "AB": { "nilai_mutu": 3.50, "lulus": true },
+    "B": { "nilai_mutu": 3.00, "lulus": true },
+    "BC": { "nilai_mutu": 2.50, "lulus": true },
+    "C": { "nilai_mutu": 2.00, "lulus": true },
+    "D": { "nilai_mutu": 1.00, "lulus": false },
+    "E": { "nilai_mutu": 0.00, "lulus": false }
+  },
+
+  "format_tahun_ajaran": {
+    "opsi_1": "2023/2024 Ganjil",
+    "opsi_2": "2023/2024 Genap",
+    "catatan": "Gunakan format ini agar konsisten dengan SIMKIP. Ganjil = semester ganjil (1,3,5,7), Genap = semester genap (2,4,6,8)"
+  }
+}
