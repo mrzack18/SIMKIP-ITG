@@ -39,7 +39,7 @@ function SpBadges({ spList }: { spList?: { level: string; status: string }[] | n
   const sorted = [...spList].sort((a, b) => a.level.localeCompare(b.level));
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 flex-wrap">
       {sorted.map(sp => {
         const isActive = sp.status === "Aktif" || sp.status === "Masa Tenggang";
         let bg = "bg-gray-100";
@@ -78,7 +78,7 @@ function FilterSelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600 disabled:opacity-50"
+      className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600 disabled:opacity-50 w-full sm:w-auto max-w-full min-w-0 truncate"
     >
       {options.map((o) => (
         <option key={o}>{o}</option>
@@ -287,14 +287,14 @@ export default function WarekMahasiswaList() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0" onClick={() => setOpenMenu(null)}>
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="font-bold text-2xl text-gray-900">Data Mahasiswa KIP-K</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-bold text-xl sm:text-2xl text-gray-900 leading-tight">Data Mahasiswa KIP-K</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
           <TahunAjaranFilter
             value={tahunAjaranFilter}
             onChange={(v) => { setTahunAjaranFilter(v); setPage(1); }}
@@ -302,7 +302,7 @@ export default function WarekMahasiswaList() {
           <a
             href={`${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/warek/mahasiswa/export?tahun_ajaran=${tahunAjaranFilter}`}
             target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
           >
             <Download size={15} /> Export Excel
           </a>
@@ -310,23 +310,23 @@ export default function WarekMahasiswaList() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
           <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700 break-words min-w-0">{error}</p>
         </div>
       )}
 
       {/* Filter bar */}
-      <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-[#E2E8F0]">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="bg-white rounded-xl px-3 sm:px-4 py-3 shadow-sm border border-[#E2E8F0] min-w-0">
+        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-2 sm:gap-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-48">
+          <div className="relative col-span-1 min-[480px]:col-span-2 lg:flex-1 lg:min-w-48 min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={searchInput}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Cari NIM atau Nama..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]/30"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]/30 min-w-0"
             />
           </div>
 
@@ -389,21 +389,21 @@ export default function WarekMahasiswaList() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden min-w-0">
         <div className="overflow-x-auto relative">
           {loading && (
             <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
               <Loader2 className="animate-spin text-[#263F93]" size={28} />
             </div>
           )}
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[1020px] text-sm">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
                 {["No", "NIM", "Nama", "Program Studi", "Angkatan", "Kategori", "IPK", "Progres IPK", "Semester", "Status", "SP", "Aksi"].map(
                   (h) => (
                     <th
                       key={h}
-                      className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
+                      className={`text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === "Aksi" ? "sticky right-0 bg-[#F8FAFC] shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.1)]" : ""}`}
                     >
                       {h}
                     </th>
@@ -498,10 +498,10 @@ export default function WarekMahasiswaList() {
                       <td className="px-4 py-3">
                         <SpBadges spList={m.spList} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 sticky right-0 bg-white shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.1)]">
                         <Link
                           to={`/warek/mahasiswa/${m.id}`}
-                          className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 w-fit transition-colors"
+                          className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 w-fit transition-colors whitespace-nowrap"
                         >
                           <Eye size={12} /> Lihat
                         </Link>
@@ -515,13 +515,13 @@ export default function WarekMahasiswaList() {
         </div>
 
         {/* Pagination */}
-        <div className="px-4 py-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-gray-500">
-          <span>
+        <div className="px-4 py-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500">
+          <span className="text-center sm:text-left break-words">
             {students.length === 0
               ? "Tidak ada data"
               : `Menampilkan ${(page - 1) * LIMIT + 1}–${Math.min(page * LIMIT, total)} dari ${total} mahasiswa`}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center sm:justify-end gap-1 flex-wrap">
             <button
               onClick={() => goPage(page - 1)}
               disabled={page === 1 || loading}

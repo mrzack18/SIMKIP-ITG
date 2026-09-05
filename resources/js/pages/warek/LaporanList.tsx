@@ -88,23 +88,25 @@ export default function WarekLaporanList() {
   const filtered = data;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Laporan Semester</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Review dan setujui laporan evaluasi semester dari Biro Kemahasiswaan</p>
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+      <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Laporan Semester</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">Review dan setujui laporan evaluasi semester dari Biro Kemahasiswaan</p>
         </div>
-        <TahunAjaranFilter value={filterTahunAjaran} onChange={setFilterTahunAjaran} />
+        <div className="self-start min-[480px]:self-auto shrink-0">
+          <TahunAjaranFilter value={filterTahunAjaran} onChange={setFilterTahunAjaran} />
+        </div>
       </div>
 
       {/* Filters and Tabs */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4 min-w-0">
 
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-fit min-w-0">
           {TABS.map(t => (
             <button key={t.status}
               onClick={() => setActiveTab(t.status as LStatus)}
-              className={`px-4 py-2 rounded-lg text-sm font-500 transition-colors ${activeTab === t.status ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
+              className={`flex-1 sm:flex-none px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-500 transition-colors whitespace-nowrap ${activeTab === t.status ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>
               {t.label} ({counts[t.status as LStatus] ?? 0})
             </button>
           ))}
@@ -112,60 +114,60 @@ export default function WarekLaporanList() {
       </div>
 
       {/* Cards */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4 min-w-0">
         {loading && (
-          <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
-            <p className="text-gray-400 text-sm">Memuat data...</p>
+          <div className="bg-white rounded-xl p-8 sm:p-10 px-4 text-center shadow-sm border border-gray-100 min-w-0">
+            <p className="text-gray-400 text-xs sm:text-sm">Memuat data...</p>
           </div>
         )}
         {!loading && error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-red-700 break-words min-w-0">
             {error}
           </div>
         )}
         {!loading && !error && filtered.length === 0 && (
-          <div className="bg-white rounded-xl p-10 text-center shadow-sm border border-gray-100">
-            <p className="text-gray-400 text-sm">Tidak ada laporan dalam kategori ini.</p>
+          <div className="bg-white rounded-xl p-8 sm:p-10 px-4 text-center shadow-sm border border-gray-100 min-w-0">
+            <p className="text-gray-400 text-xs sm:text-sm">Tidak ada laporan dalam kategori ini.</p>
           </div>
         )}
         {!loading && !error && filtered.map(r => {
           const ss = statusStyle[r.status];
           return (
-            <div key={r.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-              <div className="flex items-start gap-4">
+            <div key={r.id} className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 min-w-0">
+              <div className="flex flex-wrap items-start gap-3 sm:gap-4 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
                   <FileText size={22} className="text-[#263F93]" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-600 text-gray-800">{r.judul}</h3>
-                    <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 ${ss.badge}`}>
+                <div className="flex-1 min-w-0 basis-48">
+                  <div className="flex flex-wrap items-center gap-2 mb-1 min-w-0">
+                    <h3 className="font-600 text-gray-800 text-sm sm:text-base break-words min-w-0">{r.judul}</h3>
+                    <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 whitespace-nowrap shrink-0 ${ss.badge}`}>
                       {ss.icon} {r.status}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400">{r.nomor}</p>
-                  <p className="text-xs text-gray-500 mt-1">{r.periode} · Diajukan: {r.tanggal}</p>
-                  <p className="text-xs text-gray-500 mt-1">{r.summary}</p>
+                  <p className="text-xs text-gray-400 font-mono break-all">{r.nomor}</p>
+                  <p className="text-xs text-gray-500 mt-1 break-words">{r.periode} · Diajukan: {r.tanggal}</p>
+                  <p className="text-xs text-gray-500 mt-1 break-words">{r.summary}</p>
                   {r.approvedDate && (
-                    <p className="text-xs text-green-600 mt-1 font-500">Disetujui: {r.approvedDate}</p>
+                    <p className="text-xs text-green-600 mt-1 font-500 break-words">Disetujui: {r.approvedDate}</p>
                   )}
                 </div>
-                <div className="flex flex-col gap-2 flex-shrink-0">
+                <div className="flex flex-col gap-2 flex-shrink-0 w-full min-[480px]:w-auto">
                   {r.status === "Menunggu" && (
                     <Link to={`/warek/laporan/${r.id}`}
-                      className="px-4 py-2 rounded-lg text-sm font-500 text-white bg-green-600 hover:bg-green-700 text-center">
+                      className="px-4 py-2 rounded-lg text-sm font-500 text-white bg-green-600 hover:bg-green-700 text-center whitespace-nowrap">
                       Review Detail
                     </Link>
                   )}
                   {r.status === "Disetujui" && (
                     <a href={`${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/laporan/${r.id}/pdf`}
                        target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                       className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap">
                       <Download size={14} /> Unduh PDF
                     </a>
                   )}
                   {r.status === "Dikembalikan" && (
-                    <Link to={`/warek/laporan/${r.id}`} className="px-4 py-2 rounded-lg text-sm border border-orange-200 text-orange-700 hover:bg-orange-50 text-center">
+                    <Link to={`/warek/laporan/${r.id}`} className="px-4 py-2 rounded-lg text-sm border border-orange-200 text-orange-700 hover:bg-orange-50 text-center whitespace-nowrap">
                       Lihat Detail
                     </Link>
                   )}

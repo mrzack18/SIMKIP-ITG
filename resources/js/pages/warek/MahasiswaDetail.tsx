@@ -114,14 +114,14 @@ function PlaceholderThumb({ label }: { label: string }) {
 
 function FilePlaceholderCard({ label }: { label: string }) {
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl">
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
           <FileText size={14} className="text-gray-500" />
         </div>
-        <span className="text-sm text-gray-700 font-medium">{label}</span>
+        <span className="text-sm text-gray-700 font-medium truncate">{label}</span>
       </div>
-      <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors shrink-0 whitespace-nowrap">
         <Download size={12} />
         Unduh
       </button>
@@ -144,10 +144,10 @@ function SemesterRow({
   return (
     <>
       <tr className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors">
-        <td className="py-3 px-3 text-sm text-gray-700">
+        <td className="py-3 px-3 text-sm text-gray-700 whitespace-nowrap">
           Semester {detail.semester}
         </td>
-        <td className="py-3 px-3 text-sm text-gray-500">{detail.tahun}</td>
+        <td className="py-3 px-3 text-sm text-gray-500 whitespace-nowrap">{detail.tahun}</td>
         <td className="py-3 px-3">
           <span
             className="font-semibold text-sm"
@@ -192,7 +192,7 @@ function SemesterRow({
         <td className="py-3 px-3">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="text-xs text-[#263F93] font-medium flex items-center gap-1 hover:underline"
+            className="text-xs text-[#263F93] font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
           >
             Lihat Detail Nilai
             {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -201,27 +201,28 @@ function SemesterRow({
       </tr>
       {open && (
         <tr>
-          <td colSpan={7} className="p-0">
-            <div className="bg-gray-50 border-t border-b border-gray-100 px-4 py-3">
-              <table className="w-full text-sm">
+          <td colSpan={7} className="p-0 min-w-0">
+            <div className="bg-gray-50 border-t border-b border-gray-100 px-3 sm:px-4 py-3 min-w-0">
+              <div className="overflow-x-auto min-w-0">
+              <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase w-8">
+                    <th className="text-left py-2 pr-2 text-xs font-semibold text-gray-500 uppercase w-8">
                       No
                     </th>
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">
+                    <th className="text-left py-2 pr-2 text-xs font-semibold text-gray-500 uppercase">
                       Kode MK
                     </th>
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">
+                    <th className="text-left py-2 pr-2 text-xs font-semibold text-gray-500 uppercase">
                       Nama MK
                     </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                    <th className="text-center py-2 pr-2 text-xs font-semibold text-gray-500 uppercase">
                       SKS
                     </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                    <th className="text-center py-2 pr-2 text-xs font-semibold text-gray-500 uppercase">
                       Nilai Huruf
                     </th>
-                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
+                    <th className="text-center py-2 pr-2 text-xs font-semibold text-gray-500 uppercase">
                       Nilai Mutu
                     </th>
                     <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase">
@@ -232,31 +233,31 @@ function SemesterRow({
                 <tbody className="divide-y divide-gray-100">
                   {detail.mataKuliah.map((mk, idx) => (
                     <tr key={`${detail.semester}-${mk.kode}-${idx}`} className={mk.lulus ? "" : "bg-red-50"}>
-                      <td className="py-2 text-gray-400 text-xs">{idx + 1}</td>
-                      <td className="py-2 text-gray-600 text-xs font-mono">
+                      <td className="py-2 pr-2 text-gray-400 text-xs">{idx + 1}</td>
+                      <td className="py-2 pr-2 text-gray-600 text-xs font-mono whitespace-nowrap">
                         {mk.kode}
                       </td>
-                      <td className="py-2 text-gray-800 text-sm">{mk.nama}</td>
-                      <td className="py-2 text-center text-gray-600 text-sm">
+                      <td className="py-2 pr-2 text-gray-800 text-xs sm:text-sm min-w-[140px] break-words">{mk.nama}</td>
+                      <td className="py-2 pr-2 text-center text-gray-600 text-xs sm:text-sm">
                         {mk.sks}
                       </td>
                       <td
-                        className="py-2 text-center font-semibold text-sm"
+                        className="py-2 pr-2 text-center font-semibold text-xs sm:text-sm"
                         style={{ color: mk.lulus ? "#059669" : "#DC2626" }}
                       >
                         {mk.nilaiHuruf}
                       </td>
-                      <td className="py-2 text-center text-gray-600 text-sm">
+                      <td className="py-2 pr-2 text-center text-gray-600 text-xs sm:text-sm">
                         {mk.nilaiMutu.toFixed(1)}
                       </td>
                       <td className="py-2 text-center">
                         {mk.lulus ? (
-                          <span className="text-xs text-green-700 flex items-center justify-center gap-1">
-                            <CheckCircle size={12} /> Lulus
+                          <span className="text-xs text-green-700 flex items-center justify-center gap-1 whitespace-nowrap">
+                            <CheckCircle size={12} className="flex-shrink-0" /> Lulus
                           </span>
                         ) : (
-                          <span className="text-xs text-red-700 flex items-center justify-center gap-1">
-                            <XCircle size={12} /> Belum Lulus
+                          <span className="text-xs text-red-700 flex items-center justify-center gap-1 whitespace-nowrap">
+                            <XCircle size={12} className="flex-shrink-0" /> Belum Lulus
                           </span>
                         )}
                       </td>
@@ -274,6 +275,7 @@ function SemesterRow({
                   </tr>
                 </tfoot>
               </table>
+              </div>
             </div>
           </td>
         </tr>
@@ -285,7 +287,7 @@ function SemesterRow({
 // Custom legend renderer for recharts with gray text
 function CustomLegend() {
   return (
-    <div className="flex items-center gap-3 justify-center mt-1">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-center mt-1 px-2">
       <span
         className="flex items-center gap-1.5 text-xs"
         style={{ color: "#64748B" }}
@@ -375,16 +377,16 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
 
   if (semesterDetails.length === 0) {
     return (
-      <div className="py-10 text-center text-gray-400 text-sm">
+      <div className="py-10 px-4 text-center text-gray-400 text-xs sm:text-sm">
         Belum ada data akademik untuk mahasiswa ini.
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 min-w-0">
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 sm:gap-4">
         {[
           {
             label: "IPK Tertinggi",
@@ -404,9 +406,9 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
         ].map(({ label, value, sub }) => (
           <div
             key={label}
-            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-center"
+            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-center min-w-0"
           >
-            <div className="text-2xl font-bold text-gray-900">{value}</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-900">{value}</div>
             <div className="text-xs font-semibold text-gray-700 mt-0.5">
               {label}
             </div>
@@ -416,14 +418,20 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
       </div>
 
       {/* Area Chart */}
-      <div>
+      <div className="min-w-0">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">
           Grafik Progres IPK
         </h4>
-        <ResponsiveContainer width="100%" height={220}>
+        {chartData.length === 0 ? (
+          <div className="h-[220px] flex items-center justify-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl px-4 text-center">
+            Belum ada data IPK.
+          </div>
+        ) : (
+          <div className="w-full h-[220px] sm:h-[240px] min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
-            margin={{ top: 10, right: 20, bottom: 5, left: 0 }}
+            margin={{ top: 10, right: 12, bottom: 5, left: -12 }}
           >
             <defs>
               <linearGradient id="ipkGrad" x1="0" y1="0" x2="0" y2="1">
@@ -436,8 +444,9 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
               dataKey="semester"
               tickFormatter={(v: number) => `Sem ${v}`}
               tick={{ fontSize: 11, fill: "#94A3B8" }}
+              minTickGap={4}
             />
-            <YAxis domain={[2, 4]} tick={{ fontSize: 11, fill: "#94A3B8" }} />
+            <YAxis domain={[2, 4]} width={32} tick={{ fontSize: 11, fill: "#94A3B8" }} />
             <Tooltip
               contentStyle={{
                 fontSize: 12,
@@ -472,15 +481,17 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
             <Legend content={<CustomLegend />} />
           </AreaChart>
         </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* IPK History Table */}
-      <div>
+      <div className="min-w-0">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">
           Riwayat IPK per Semester
         </h4>
-        <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-[#E2E8F0] min-w-0">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
                 {[
@@ -516,23 +527,23 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
 
       {/* MK Belum Lulus */}
       {mkBelumLulus.length > 0 && (
-        <div>
+        <div className="min-w-0">
           <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <AlertTriangle size={15} className="text-amber-500" />
+            <AlertTriangle size={15} className="text-amber-500 flex-shrink-0" />
             Mata Kuliah Belum Lulus
           </h4>
-          <div className="mb-6 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="mb-4 sm:mb-6 flex items-start gap-3 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-xl min-w-0">
             <AlertTriangle
               size={16}
               className="text-amber-600 flex-shrink-0 mt-0.5"
             />
-            <p className="text-sm text-amber-800 leading-relaxed">
+            <p className="text-xs sm:text-sm text-amber-800 leading-relaxed break-words min-w-0">
               <span className="font-semibold text-amber-900 block mb-0.5">Perhatian:</span>
               Mahasiswa ini memiliki {belumLulus.length} MK belum lulus yang berpotensi menghambat KP/Skripsi
             </p>
           </div>
-          <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-[#E2E8F0] min-w-0">
+            <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
                   {[
@@ -545,7 +556,7 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
                   ].map((h) => (
                     <th
                       key={h}
-                      className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase"
+                      className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -558,28 +569,28 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
                     key={`${mk.kode}-${mk.semesterAwal}`}
                     className="hover:bg-gray-50/60 transition-colors"
                   >
-                    <td className="py-2.5 px-3 font-mono text-xs text-gray-600">
+                    <td className="py-2.5 px-3 font-mono text-xs text-gray-600 whitespace-nowrap">
                       {mk.kode}
                     </td>
-                    <td className="py-2.5 px-3 text-gray-800">{mk.nama}</td>
-                    <td className="py-2.5 px-3 text-center text-gray-600">
+                    <td className="py-2.5 px-3 text-xs sm:text-sm text-gray-800 min-w-[140px] break-words">{mk.nama}</td>
+                    <td className="py-2.5 px-3 text-center text-gray-600 text-xs sm:text-sm">
                       {mk.sks}
                     </td>
-                    <td className="py-2.5 px-3 text-center font-semibold text-red-600">
+                    <td className="py-2.5 px-3 text-center font-semibold text-red-600 text-xs sm:text-sm">
                       {mk.nilai}
                     </td>
-                    <td className="py-2.5 px-3 text-gray-500">
+                    <td className="py-2.5 px-3 text-gray-500 text-xs sm:text-sm whitespace-nowrap">
                       Sem {mk.semesterAwal}
                     </td>
                     <td className="py-2.5 px-3">
                       <div className="text-right">
                         {mk.statusPerbaikan === "belum" ? (
-                          <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full flex items-center gap-1 inline-flex">
-                            <Clock size={12} /> Belum Diperbaiki
+                          <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full items-center gap-1 inline-flex whitespace-nowrap">
+                            <Clock size={12} className="flex-shrink-0" /> Belum Diperbaiki
                           </span>
                         ) : (
-                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full flex items-center gap-1 inline-flex">
-                            <CheckCircle size={12} /> Lulus di Sem {mk.lulusDiSem}
+                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full items-center gap-1 inline-flex whitespace-nowrap">
+                            <CheckCircle size={12} className="flex-shrink-0" /> Lulus di Sem {mk.lulusDiSem}
                           </span>
                         )}
                       </div>
@@ -614,14 +625,10 @@ function TabDokumen({ items }: { items: any[] }) {
   const total = items.length
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-gray-700">
-          Dokumen Kewajiban
-        </h4>
-        <span className="text-xs text-gray-500">
-          {approved} dari {total} dokumen lengkap
-        </span>
+    <div className="space-y-4 min-w-0">
+      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-1.5 sm:gap-2 min-w-0">
+        <h4 className="text-sm font-semibold text-gray-700">Dokumen Kewajiban</h4>
+        <span className="text-xs text-gray-500 whitespace-nowrap">{approved} dari {total} dokumen lengkap</span>
       </div>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
@@ -633,11 +640,11 @@ function TabDokumen({ items }: { items: any[] }) {
         />
       </div>
       {items.length === 0 ? (
-        <div className="py-10 text-center text-gray-400 text-sm">
+        <div className="py-10 px-4 text-center text-gray-400 text-xs sm:text-sm">
           Belum ada dokumen yang diunggah.
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 min-w-0">
           {items.map((d: any) => {
             const Icon = ICON_MAP[d.nama] ?? FileText
             // Adapt BE field names → FE shape (BE uses `jenis`, `nama_file`, `tanggal_upload`, `file_url`)
@@ -647,25 +654,25 @@ function TabDokumen({ items }: { items: any[] }) {
             return (
               <div
                 key={d.id}
-                className={`flex items-start gap-3 p-3.5 rounded-xl border-l-4 bg-white border border-[#E2E8F0] ${dokBorderColor(status)}`}
+                className={`flex flex-wrap items-start gap-2 sm:gap-3 p-3 sm:p-3.5 rounded-xl border-l-4 bg-white border border-[#E2E8F0] min-w-0 ${dokBorderColor(status)}`}
               >
                 <Icon size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-gray-800">
+                <div className="flex-1 min-w-0 basis-40">
+                  <div className="font-medium text-sm text-gray-800 break-words">
                     {nama}
                   </div>
                   {tanggal && (
-                    <div className="text-xs text-gray-400 mt-0.5">
+                    <div className="text-xs text-gray-400 mt-0.5 break-words">
                       {tanggal}
                     </div>
                   )}
                   {d.catatan && (
-                    <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
+                    <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded break-words">
                       Catatan: {d.catatan}
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0 w-full min-[420px]:w-auto min-[420px]:justify-end">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium ${statusBadge(status)}`}
                   >
@@ -691,21 +698,19 @@ function TabDokumen({ items }: { items: any[] }) {
           onClick={() => setModalItem(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 text-lg">
-                  {modalItem.nama}
-                </h3>
+            <div className="flex items-start justify-between gap-2 min-w-0">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 text-base sm:text-lg break-words">{modalItem.nama}</h3>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full whitespace-nowrap">
                     {modalItem.tipe ?? "Dokumen"}
                   </span>
                   <span
-                    className={`px-2 py-0.5 text-xs font-semibold rounded-full ${statusBadge(modalItem.status)}`}
+                    className={`px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap ${statusBadge(modalItem.status)}`}
                   >
                     {modalItem.status}
                   </span>
@@ -713,6 +718,7 @@ function TabDokumen({ items }: { items: any[] }) {
               </div>
               <button
                 onClick={() => setModalItem(null)}
+                aria-label="Tutup detail"
                 className="text-gray-400 hover:text-gray-600 flex-shrink-0"
               >
                 <XCircle size={20} />
@@ -720,38 +726,30 @@ function TabDokumen({ items }: { items: any[] }) {
             </div>
 
             {/* Details */}
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 min-w-0">
               {modalItem.tanggal && (
-                <div className="bg-gray-50 rounded-xl px-3 py-2.5">
+                <div className="bg-gray-50 rounded-xl px-3 py-2.5 min-w-0">
                   <div className="text-xs text-gray-400 mb-0.5">Tanggal</div>
-                  <div className="font-medium text-gray-800 text-sm">
-                    {modalItem.tanggal}
-                  </div>
+                  <div className="font-medium text-gray-800 text-sm break-words">{modalItem.tanggal}</div>
                 </div>
               )}
               {modalItem.deskripsi && (
-                <div className="bg-gray-50 rounded-xl px-3 py-2.5">
+                <div className="bg-gray-50 rounded-xl px-3 py-2.5 min-w-0">
                   <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
-                  <div className="text-gray-800 text-sm">
-                    {modalItem.deskripsi}
-                  </div>
+                  <div className="text-gray-800 text-sm break-words">{modalItem.deskripsi}</div>
                 </div>
               )}
               {modalItem.catatan && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
-                  <div className="text-xs text-red-500 mb-0.5">
-                    Catatan Penolakan
-                  </div>
-                  <div className="text-red-700 text-sm">
-                    {modalItem.catatan}
-                  </div>
+                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 min-w-0">
+                  <div className="text-xs text-red-500 mb-0.5">Catatan Penolakan</div>
+                  <div className="text-red-700 text-sm break-words">{modalItem.catatan}</div>
                 </div>
               )}
             </div>
 
             {/* File placeholder */}
             {modalItem.status !== "Belum Diunggah" && (modalItem.fileUrl || modalItem.file_url) && (
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Berkas
                 </div>
@@ -759,15 +757,15 @@ function TabDokumen({ items }: { items: any[] }) {
                   href={modalItem.fileUrl ?? modalItem.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between gap-2 p-3 bg-gray-50 border border-[#E2E8F0] rounded-xl hover:bg-gray-100 transition-colors min-w-0"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                       <FileText size={14} className="text-gray-500" />
                     </div>
-                    <span className="text-sm text-gray-700 font-medium">{modalItem.nama_file ?? `Dokumen ${modalItem.nama}`}</span>
+                    <span className="text-sm text-gray-700 font-medium truncate">{modalItem.nama_file ?? `Dokumen ${modalItem.nama}`}</span>
                   </div>
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors shrink-0 whitespace-nowrap">
                     <Download size={12} />
                     Unduh
                   </span>
@@ -801,8 +799,8 @@ function TabSP({ items }: { items: any[] }) {
 
   if (items.length === 0) {
     return (
-      <div className="space-y-5">
-        <div className="py-10 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+      <div className="space-y-4 sm:space-y-5 min-w-0">
+        <div className="py-10 px-4 text-center text-gray-400 text-xs sm:text-sm border border-dashed border-gray-200 rounded-xl">
           Belum ada Surat Peringatan untuk mahasiswa ini.
         </div>
       </div>
@@ -813,76 +811,76 @@ function TabSP({ items }: { items: any[] }) {
   const primary = items[0]
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 min-w-0">
       {/* Formal letter */}
-      <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+      <div className="border border-[#E2E8F0] rounded-xl overflow-hidden min-w-0">
         {/* Kop Surat */}
-        <div className="bg-[#263F93] px-6 py-4 flex items-center gap-4">
+        <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 min-w-0">
           <img
             src={logoItg}
             alt="Logo ITG"
-            className="h-12 w-12 object-contain rounded-full bg-white p-0.5 flex-shrink-0"
+            className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-full bg-white p-0.5 flex-shrink-0"
           />
-          <div className="text-white">
-            <div className="font-bold text-sm leading-snug">
+          <div className="text-white min-w-0">
+            <div className="font-bold text-xs sm:text-sm leading-snug">
               INSTITUT TEKNOLOGI GARUT
             </div>
-            <div className="text-xs text-white/80 leading-snug">
+            <div className="text-[11px] sm:text-xs text-white/80 leading-snug">
               Pengelola Kartu Indonesia Pintar – Kuliah (KIP-K)
             </div>
           </div>
         </div>
         {/* Letter body */}
-        <div className="p-6 space-y-4 bg-white">
-          <div className="text-xs text-gray-500 space-y-0.5">
-            <div>
+        <div className="p-4 sm:p-6 space-y-4 bg-white min-w-0">
+          <div className="text-xs text-gray-500 space-y-0.5 min-w-0">
+            <div className="break-words">
               Nomor:{" "}
-              <span className="font-mono font-medium text-gray-700">
+              <span className="font-mono font-medium text-gray-700 break-all">
                 {primary.nomorSurat ?? "-"}
               </span>
             </div>
-            <div>
+            <div className="break-words">
               Tanggal:{" "}
               <span className="font-medium text-gray-700">
                 {primary.tanggal ?? fmtDate(primary.tanggalTerbit)}
               </span>
             </div>
-            <div>
+            <div className="break-words">
               Perihal:{" "}
               <span className="font-medium text-gray-700">
                 Surat Peringatan {primary.level} ({(primary.level ?? "")}) Penerima KIP-K
               </span>
             </div>
           </div>
-          <div className="text-xs text-gray-500 space-y-0.5">
+          <div className="text-xs text-gray-500 space-y-0.5 min-w-0">
             <div className="font-medium text-gray-700">Kepada Yth.</div>
-            <div>Sdra/i. {primary.nama ?? "-"}</div>
-            <div>
+            <div className="break-words">Sdra/i. {primary.nama ?? "-"}</div>
+            <div className="break-words">
               NIM: {primary.nim ?? "-"} | {primary.prodi ?? "-"} | Semester {primary.semester ?? "-"}
             </div>
           </div>
-          <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+          <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed break-words min-w-0">
             {primary.alasan ?? primary.deskripsi ?? "-"}
           </div>
         </div>
       </div>
 
       {/* Timeline */}
-      <div>
+      <div className="min-w-0">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">
           Riwayat Surat Peringatan
         </h4>
-        <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-4">
+        <div className="relative pl-5 sm:pl-6 border-l-2 border-[#E2E8F0] space-y-4 min-w-0">
           {spHistoryData.map((sp: any, idx: number) => {
             return (
-              <div key={idx} className="relative">
-                <div className="absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow bg-amber-400" />
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                  <div>
-                    <span className="text-xs font-semibold text-amber-700">
+              <div key={idx} className="relative min-w-0">
+                <div className="absolute -left-[25px] sm:-left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow bg-amber-400" />
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl min-w-0">
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-amber-700 break-words">
                       {sp.level} — {sp.tahunAjaran}
                     </span>
-                    <div className="text-xs text-amber-600 mt-0.5">
+                    <div className="text-xs text-amber-600 mt-0.5 break-words">
                       {sp.tanggal} · {sp.alasan}
                     </div>
                   </div>
@@ -917,24 +915,24 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetail }) {
   ]
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 min-w-0">
       {/* Alert */}
-      <div className="bg-gray-50 border border-[#E2E8F0] rounded-xl px-4 py-3 mb-5 flex items-center gap-2">
+      <div className="bg-gray-50 border border-[#E2E8F0] rounded-xl px-3.5 sm:px-4 py-3 mb-5 flex items-center gap-2 min-w-0">
         <Lock size={14} className="text-gray-400 flex-shrink-0" />
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide break-words">
           RAHASIA — Data ini hanya dapat diakses oleh Pengelola KIP-K
         </span>
       </div>
 
       {/* Data grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
         {/* Avatar */}
-        <div className="col-span-full flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#263F93] flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
+        <div className="col-span-full flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
             {(mhs.nama ?? "?").charAt(0)}
           </div>
-          <div>
-            <div className="font-semibold text-gray-900">{mhs.nama}</div>
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900 text-sm sm:text-base break-words">{mhs.nama}</div>
             <div className="text-sm text-gray-500">NIM {mhs.nim}</div>
           </div>
         </div>
@@ -942,46 +940,46 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetail }) {
         {items.map(({ icon: Icon, label, value }) => (
           <div
             key={label}
-            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3"
+            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3.5 sm:px-4 py-2.5 sm:py-3 min-w-0"
           >
             <div className="flex items-center gap-1.5 mb-1">
-              <Icon size={12} className="text-gray-400" />
-              <span className="text-xs text-gray-400">{label}</span>
+              <Icon size={12} className="text-gray-400 flex-shrink-0" />
+              <span className="text-xs text-gray-400 truncate">{label}</span>
             </div>
-            <div className="text-sm font-medium text-gray-800">{value}</div>
+            <div className="text-sm font-medium text-gray-800 break-words">{value}</div>
           </div>
         ))}
       </div>
 
       {/* Riwayat kontak */}
-      <div>
+      <div className="min-w-0">
         <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Phone size={14} /> Riwayat Nomor Kontak
+          <Phone size={14} className="flex-shrink-0" /> Riwayat Nomor Kontak
         </h4>
         {(!mhs.contactHistories || mhs.contactHistories.length === 0) ? (
-          <div className="py-6 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+          <div className="py-6 px-4 text-center text-gray-400 text-xs sm:text-sm border border-dashed border-gray-200 rounded-xl">
             Belum ada riwayat kontak.
           </div>
         ) : (
-          <div className="relative pl-6 border-l-2 border-[#E2E8F0] space-y-3">
+          <div className="relative pl-5 sm:pl-6 border-l-2 border-[#E2E8F0] space-y-3 min-w-0">
             {mhs.contactHistories.map((c, i) => (
-              <div key={i} className="relative">
+              <div key={i} className="relative min-w-0">
                 <div
-                  className={`absolute -left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${
+                  className={`absolute -left-[25px] sm:-left-[29px] top-1 w-4 h-4 rounded-full border-2 border-white shadow ${
                     c.aktif ? "bg-green-400" : "bg-gray-300"
                   }`}
                 />
-                <div className="flex items-center justify-between p-3 bg-white border border-[#E2E8F0] rounded-xl">
-                  <div>
-                    <div className="text-sm font-medium text-gray-800">
+                <div className="flex items-center justify-between gap-2 p-3 bg-white border border-[#E2E8F0] rounded-xl min-w-0">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-800 break-all">
                       {c.nomor}
                     </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
+                    <div className="text-xs text-gray-400 mt-0.5 break-words">
                       {c.sem}
                     </div>
                   </div>
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 ${
                       c.aktif
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-100 text-gray-500"
@@ -1007,42 +1005,42 @@ function TabSuratPenyelesaian({ checklist }: { checklist?: { nama?: string; syar
   const total = list.length
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 min-w-0">
       {/* Status card */}
-      <div className="flex items-center gap-4 p-4 bg-gray-50 border border-[#E2E8F0] rounded-xl">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-3.5 sm:p-4 bg-gray-50 border border-[#E2E8F0] rounded-xl min-w-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
           <FileText size={22} className="text-gray-400" />
         </div>
-        <div>
-          <div className="font-semibold text-gray-700">
+        <div className="min-w-0 flex-1 basis-40">
+          <div className="font-semibold text-gray-700 text-sm sm:text-base break-words">
             {total === 0 ? "Belum ada data" : fulfilled === total ? "Siap Mengajukan" : "Belum Mengajukan"}
           </div>
-          <div className="text-xs text-gray-400 mt-0.5">
+          <div className="text-xs text-gray-400 mt-0.5 break-words">
             {total === 0
               ? "Belum ada data surat penyelesaian untuk mahasiswa ini."
               : `Mahasiswa ${fulfilled === total ? "siap" : "belum siap"} mengajukan permohonan Surat Penyelesaian`}
           </div>
         </div>
-        <span className="ml-auto text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium whitespace-nowrap">
+        <span className="ml-auto text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium whitespace-nowrap shrink-0">
           {fulfilled}/{total} syarat terpenuhi
         </span>
       </div>
 
       {/* Checklist */}
-      <div>
+      <div className="min-w-0">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">
           Persyaratan Surat Penyelesaian
         </h4>
         {list.length === 0 ? (
-          <div className="py-8 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">
+          <div className="py-8 px-4 text-center text-gray-400 text-xs sm:text-sm border border-dashed border-gray-200 rounded-xl">
             Belum ada persyaratan yang tercatat.
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             {list.map((s, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-3 p-3 rounded-xl border ${
+                className={`flex items-start gap-2 sm:gap-3 p-3 rounded-xl border min-w-0 ${
                   s.terpenuhi
                     ? "bg-green-50 border-green-200"
                     : "bg-red-50 border-red-200"
@@ -1051,13 +1049,13 @@ function TabSuratPenyelesaian({ checklist }: { checklist?: { nama?: string; syar
                 {s.terpenuhi ? (
                   <CheckCircle
                     size={15}
-                    className="text-green-500 flex-shrink-0"
+                    className="text-green-500 flex-shrink-0 mt-0.5"
                   />
                 ) : (
-                  <XCircle size={15} className="text-red-400 flex-shrink-0" />
+                  <XCircle size={15} className="text-red-400 flex-shrink-0 mt-0.5" />
                 )}
                 <span
-                  className={`text-sm ${
+                  className={`text-sm break-words min-w-0 ${
                     s.terpenuhi ? "text-green-800" : "text-red-700"
                   }`}
                 >
@@ -1161,8 +1159,8 @@ export default function WarekMahasiswaDetail() {
 
   if (error || !mhs) {
     return (
-      <div className="space-y-5 pb-10">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">
+      <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-red-700 break-words">
           {error ?? "Mahasiswa tidak ditemukan."}
         </div>
       </div>
@@ -1176,11 +1174,11 @@ export default function WarekMahasiswaDetail() {
   const progressPct = progress?.progressPct ?? (semesterNum > 0 ? Math.round((semesterNum / totalSem) * 100) : 0)
 
   return (
-    <div className="space-y-5 pb-10">
+    <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
       {/* Read-only info banner */}
-      <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-xl px-4 py-3 text-sm text-[#263F93] flex items-center gap-2">
-        <Info size={16} className="text-amber-500" />
-        <span>
+      <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-xl px-3.5 sm:px-4 py-3 text-xs sm:text-sm text-[#263F93] flex items-start gap-2 min-w-0">
+        <Info size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+        <span className="break-words min-w-0">
           Halaman ini bersifat read-only. Selain pengelola KIP-K tidak dapat
           melakukan perubahan data mahasiswa.
         </span>
@@ -1188,57 +1186,80 @@ export default function WarekMahasiswaDetail() {
 
       {/* Status Banner */}
       {mhs.status === "Nonaktif" && (
-        <div className="bg-amber-100 border border-amber-300 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-center gap-2 font-medium">
-          <AlertTriangle size={18} />
-          Mahasiswa ini berstatus NONAKTIF
+        <div className="bg-amber-100 border border-amber-300 rounded-xl px-3.5 sm:px-4 py-3 text-xs sm:text-sm text-amber-800 flex items-start gap-2 font-medium min-w-0">
+          <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+          <span className="break-words">Mahasiswa ini berstatus NONAKTIF</span>
         </div>
       )}
       {mhs.status === "Dicabut" && (
-        <div className="bg-red-100 border border-red-300 rounded-xl px-4 py-3 text-sm text-red-800 flex items-center gap-2 font-medium">
-          <XCircle size={18} />
-          KIP-K mahasiswa ini telah DICABUT pada Semester {mhs.semester}
+        <div className="bg-red-100 border border-red-300 rounded-xl px-3.5 sm:px-4 py-3 text-xs sm:text-sm text-red-800 flex items-start gap-2 font-medium min-w-0">
+          <XCircle size={18} className="flex-shrink-0 mt-0.5" />
+          <span className="break-words">KIP-K mahasiswa ini telah DICABUT pada Semester {mhs.semester}</span>
         </div>
       )}
 
       {/* Breadcrumb */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
         <Link to="../mahasiswa" relative="path"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors shrink-0">
           <ChevronLeft size={16} /> Data Mahasiswa
         </Link>
-        <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+        <div className="self-start min-[480px]:self-auto min-w-0">
+          <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+        </div>
       </div>
 
       {/* Profile Header Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">
-        <div className="flex flex-wrap items-start gap-5">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-4 sm:gap-5 min-w-0">
           {/* Avatar */}
-          <div className="w-16 h-16 rounded-full bg-[#263F93] flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
-            {(mhs.nama ?? "?").charAt(0)}
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
+              {(mhs.nama ?? "?").charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0 sm:hidden">
+              <h2 className="font-bold text-lg text-gray-900 break-words leading-tight">{mhs.nama}</h2>
+              <p className="text-gray-500 text-xs break-words mt-0.5">
+                {mhs.nim} · {mhs.prodi ?? mhs.prodiNama} · Angkatan {mhs.angkatan}
+              </p>
+            </div>
           </div>
 
           {/* Identity */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h2 className="font-bold text-xl text-gray-900">{mhs.nama}</h2>
+            <div className="hidden sm:flex flex-wrap items-center gap-2 mb-1 min-w-0">
+              <h2 className="font-bold text-xl text-gray-900 break-words leading-tight">{mhs.nama}</h2>
               {/* SP Badges */}
               {mhs.sp && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full flex items-center gap-1">
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full flex items-center gap-1 whitespace-nowrap">
                   <AlertTriangle size={11} /> {mhs.sp}
                 </span>
               )}
               {hasSP2 && (
-                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full flex items-center gap-1">
+                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full flex items-center gap-1 whitespace-nowrap">
                   <AlertTriangle size={11} /> SP2
                 </span>
               )}
             </div>
-            <p className="text-gray-500 text-sm mb-3">
+            <div className="flex sm:hidden flex-wrap items-center gap-1.5 mb-2">
+              {/* SP Badges */}
+              {mhs.sp && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full flex items-center gap-1 whitespace-nowrap">
+                  <AlertTriangle size={11} /> {mhs.sp}
+                </span>
+              )}
+              {hasSP2 && (
+                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full flex items-center gap-1 whitespace-nowrap">
+                  <AlertTriangle size={11} /> SP2
+                </span>
+              )}
+            </div>
+            <p className="hidden sm:block text-gray-500 text-sm mb-3 break-words">
               {mhs.nim} · {mhs.prodi ?? mhs.prodiNama} · Angkatan {mhs.angkatan}
             </p>
             <div className="flex flex-wrap gap-2">
               <span
-                className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${
                   mhs.kategori === "Reguler"
                     ? "bg-blue-100 text-blue-700"
                     : "bg-purple-100 text-purple-700"
@@ -1247,7 +1268,7 @@ export default function WarekMahasiswaDetail() {
                 {mhs.kategori}
               </span>
               <span
-                className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${
                   mhs.status === "Aktif"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
@@ -1259,10 +1280,10 @@ export default function WarekMahasiswaDetail() {
           </div>
 
           {/* Progress */}
-          <div className="flex-1 min-w-[200px]">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-              <span>Progress Semester</span>
-              <span className="font-semibold text-gray-700">
+          <div className="flex-1 min-w-0 sm:min-w-[200px]">
+            <div className="flex items-center justify-between gap-2 text-xs text-gray-500 mb-1.5">
+              <span className="shrink-0">Progress Semester</span>
+              <span className="font-semibold text-gray-700 text-right truncate">
                 Semester {semesterNum} dari {totalSem}
               </span>
             </div>
@@ -1280,13 +1301,13 @@ export default function WarekMahasiswaDetail() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] overflow-x-auto">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] overflow-x-auto min-w-0">
         <div className="flex min-w-max">
           {TAB_LABELS.map((label, i) => (
             <button
               key={label}
               onClick={() => setActiveTab(i)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              className={`px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === i
                   ? "border-[#263F93] text-[#263F93]"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200"
@@ -1299,7 +1320,7 @@ export default function WarekMahasiswaDetail() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 min-w-0 overflow-hidden">
         {activeTab === 0 && <TabRiwayatAkademik semesterDetails={semesterDetails} />}
         {activeTab === 1 && <TabPrestasi data={prestasi} loading={false} error={null} />}
         {activeTab === 2 && <TabOrganisasi data={organisasi} loading={false} error={null} />}
