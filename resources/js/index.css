@@ -32,6 +32,16 @@ body {
   color: #1E293B;
 }
 
+/* Skala desktop ≈ zoom 90%: kecilkan root agar seluruh utilitas rem
+   (spacing, tipografi, layout) menyusut proporsional. Hanya ≥1024px;
+   mobile/tablet tidak berubah. Nilai px arbitrer (badge mungil,
+   ambang scroll tabel, tinggi chart, border) sengaja tidak ikut. */
+@media (min-width: 1024px) {
+  html {
+    font-size: 14.4px;
+  }
+}
+
 .font-display {
   font-family: 'Outfit', sans-serif;
 }

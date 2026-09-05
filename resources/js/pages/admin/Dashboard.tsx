@@ -144,13 +144,13 @@ export default function Dashboard() {
   } = data;
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 min-w-0">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img src={logoItg} alt="ITG Logo" className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 object-contain rounded-lg shadow-sm border border-gray-100" />
           <div className="min-w-0">
-            <h1 className="font-bold text-xl sm:text-2xl text-[#263F93] leading-tight break-words">
+            <h1 className="font-bold text-lg sm:text-xl text-[#263F93] leading-tight break-words">
               Selamat datang, {user?.nama ?? "Admin"}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -172,8 +172,8 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2.5 sm:gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-[#263F93]/10 flex items-center justify-center">
               <Users size={18} className="text-[#263F93]" />
@@ -182,39 +182,39 @@ export default function Dashboard() {
               Total Mahasiswa<br />KIP-K Aktif
             </p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{stats.total_aktif}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{stats.total_aktif}</p>
           <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
             Terbaru
           </span>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-blue-50 flex items-center justify-center">
               <BookOpen size={18} className="text-blue-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">KIP-K Reguler</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-800">{stats.reguler}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.reguler}</p>
           <p className="text-xs text-gray-400 mt-1">
             {stats.total_aktif ? Math.round((stats.reguler / stats.total_aktif) * 100) : 0}% dari total
           </p>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-purple-50 flex items-center justify-center">
               <TrendingUp size={18} className="text-purple-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">KIP-K Aspirasi</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-800">{stats.aspirasi}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.aspirasi}</p>
           <p className="text-xs text-gray-400 mt-1">
             {stats.total_aktif ? Math.round((stats.aspirasi / stats.total_aktif) * 100) : 0}% dari total
           </p>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-red-50 flex items-center justify-center">
               <UserX size={18} className="text-red-500" />
@@ -223,7 +223,7 @@ export default function Dashboard() {
               Mahasiswa Dicabut
             </p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-red-600">{stats.mahasiswa_dicabut}</p>
+          <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.mahasiswa_dicabut}</p>
           <Link
             to="/admin/mahasiswa?status=dicabut"
             className="inline-flex items-center gap-1 mt-2 text-xs text-[#263F93] hover:underline font-medium"
@@ -232,7 +232,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 sm:col-span-2 xl:col-span-1">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 sm:col-span-2 xl:col-span-1">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-amber-50 flex items-center justify-center">
               <FileText size={18} className="text-amber-600" />
@@ -241,7 +241,7 @@ export default function Dashboard() {
               Dokumen Menunggu<br />Validasi
             </p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-800">{stats.dokumen_menunggu}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.dokumen_menunggu}</p>
           <Link
             to="/admin/dokumen"
             className="inline-flex items-center gap-1 mt-2 text-xs text-[#263F93] hover:underline font-medium"
@@ -252,9 +252,9 @@ export default function Dashboard() {
       </div>
 
       {/* Summary charts: Sebaran per Prodi + Sebaran per Angkatan */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* Sebaran per Program Studi — horizontal stacked */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden">
           <h2 className="font-bold text-sm sm:text-base text-gray-800 mb-1">Sebaran per Program Studi</h2>
           <p className="text-xs text-gray-400 mb-4">KIP-K Reguler &amp; Aspirasi per prodi</p>
           <div className="w-full h-[220px] sm:h-[240px] min-w-0">
@@ -278,7 +278,7 @@ export default function Dashboard() {
         </div>
 
         {/* Sebaran per Angkatan — vertical stacked */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden">
           <h2 className="font-bold text-sm sm:text-base text-gray-800 mb-1">Sebaran per Angkatan</h2>
           <p className="text-xs text-gray-400 mb-4">KIP-K Reguler &amp; Aspirasi per tahun masuk</p>
           <div className="w-full h-[220px] sm:h-[240px] min-w-0">
@@ -303,9 +303,9 @@ export default function Dashboard() {
       </div>
 
       {/* Middle charts: Per-prodi with Angkatan filter + Rekapitulasi Kendala Mahasiswa */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* Per-prodi chart with angkatan filter */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h2 className="font-bold text-sm sm:text-base text-gray-800">Sebaran Mahasiswa KIP-K per Prodi</h2>
@@ -350,7 +350,7 @@ export default function Dashboard() {
         </div>
 
         {/* Rekapitulasi Kendala Mahasiswa Chart Widget */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden flex flex-col justify-between">
           <div className="min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
               <h2 className="font-bold text-sm sm:text-base text-gray-800">Rekapitulasi Kendala Mahasiswa</h2>
@@ -435,9 +435,9 @@ export default function Dashboard() {
       </div>
 
       {/* Two-column widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* SP Widget */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
             <h2 className="font-bold text-sm sm:text-base text-gray-800 truncate">Mahasiswa dengan SP Aktif</h2>
             <Link
@@ -483,7 +483,7 @@ export default function Dashboard() {
         </div>
 
         {/* Dokumen Queue Widget */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
             <h2 className="font-bold text-sm sm:text-base text-gray-800 truncate">Antrian Validasi Dokumen</h2>
             <Link
@@ -513,13 +513,13 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom quick stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 flex items-start gap-4 min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 flex items-start gap-4 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
             <AlertTriangle size={18} className="text-amber-500" />
           </div>
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.semester_lebih_8}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.semester_lebih_8}</p>
             <p className="text-xs text-gray-500 leading-relaxed mt-0.5 break-words">
               Mahasiswa Semester &gt;8
               <br />
@@ -528,12 +528,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 flex items-start gap-4 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 flex items-start gap-4 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
             <AlertTriangle size={18} className="text-red-500" />
           </div>
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.sp_semester_ini}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.sp_semester_ini}</p>
             <p className="text-xs text-gray-500 leading-relaxed mt-0.5 break-words">
               SP Diterbitkan
               <br />
@@ -542,12 +542,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 flex items-start gap-4 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 flex items-start gap-4 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center shrink-0">
             <Clock size={18} className="text-[#263F93]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-bold text-gray-800">{stats.bebas_tanggungan_pending}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.bebas_tanggungan_pending}</p>
             <p className="text-xs text-gray-500 leading-relaxed mt-0.5 break-words">
               Permohonan Surat Penyelesaian
               <br />

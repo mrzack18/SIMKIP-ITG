@@ -199,21 +199,21 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
     }
   };
 
-  if (loading) return <div className="text-center py-10 px-4 text-gray-500 text-sm sm:text-base">Memuat profil...</div>;
+  if (loading) return <div className="text-center py-10 px-4 text-gray-500 text-xs sm:text-sm">Memuat profil...</div>;
 
   const nama = data?.nama || "";
   const initials = nama.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
 
   return (
-    <div className="space-y-4 sm:space-y-5 max-w-2xl mx-auto w-full min-w-0">
+    <div className="space-y-3 sm:space-y-4 max-w-2xl mx-auto w-full min-w-0">
       {toast.show && (
-        <div className="fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 bg-green-600 text-white px-4 sm:px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 min-w-0">
+        <div className="fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 bg-green-600 text-white px-3 sm:px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 min-w-0">
           <CheckCircle size={16} className="flex-shrink-0" /> <span className="break-words">{toast.msg}</span>
         </div>
       )}
 
       <div className="min-w-0">
-        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Profil Saya</h1>
+        <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Profil Saya</h1>
         <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
       </div>
 
@@ -687,21 +687,21 @@ function SimpleRoleProfil({ role }: { role: string }) {
     }
   };
 
-  if (loading) return <div className="text-center py-10 px-4 text-gray-500 text-sm sm:text-base">Memuat profil...</div>;
+  if (loading) return <div className="text-center py-10 px-4 text-gray-500 text-xs sm:text-sm">Memuat profil...</div>;
 
   const nama = data?.nama || "User";
   const initials = nama.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
 
   return (
-    <div className="space-y-4 sm:space-y-5 max-w-2xl mx-auto w-full min-w-0">
+    <div className="space-y-3 sm:space-y-4 max-w-2xl mx-auto w-full min-w-0">
       {toast.show && (
-        <div className={`fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 px-4 sm:px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 text-white min-w-0 ${toast.ok ? "bg-green-600" : "bg-red-600"}`}>
+        <div className={`fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 px-3 sm:px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 text-white min-w-0 ${toast.ok ? "bg-green-600" : "bg-red-600"}`}>
           <CheckCircle size={16} className="flex-shrink-0" /> <span className="break-words">{toast.msg}</span>
         </div>
       )}
 
       <div className="min-w-0">
-        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Profil Saya</h1>
+        <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Profil Saya</h1>
         <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
       </div>
 

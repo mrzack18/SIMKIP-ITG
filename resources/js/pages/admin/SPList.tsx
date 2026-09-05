@@ -140,10 +140,10 @@ export default function SPList() {
     : `Menampilkan ${Math.min((currentPage - 1) * 10 + 1, totalItems)}–${Math.min(currentPage * 10, totalItems)} dari ${totalItems}`;
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Surat Peringatan</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Surat Peringatan</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Daftar dan riwayat penerbitan SP mahasiswa KIP-K</p>
         </div>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
@@ -165,17 +165,17 @@ export default function SPList() {
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {[
           { label: "SP1 Aktif", value: cardCounts.sp1, color: "#F59E0B" },
           { label: "SP2 Aktif", value: cardCounts.sp2, color: "#EF4444" },
           { label: "SP3 (Diberhentikan)", value: cardCounts.sp3, color: "#7F1D1D" },
           { label: "SP Selesai (Dipulihkan)", value: cardCounts.selesai, color: "#059669" },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 shadow-sm border border-gray-100 flex items-center gap-3 min-w-0">
+          <div key={label} className="bg-white rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 shadow-sm border border-gray-100 flex items-center gap-3 min-w-0">
             <div className="w-3 h-8 rounded-full flex-shrink-0" style={{ background: color }} />
             <div className="min-w-0">
-              <div className="font-display font-700 text-xl sm:text-2xl text-gray-900">{value}</div>
+              <div className="font-display font-700 text-lg sm:text-xl text-gray-900">{value}</div>
               <div className="text-xs text-gray-500 break-words leading-tight">{label}</div>
             </div>
           </div>

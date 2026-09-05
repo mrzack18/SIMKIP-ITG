@@ -27,7 +27,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-12 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data prestasi...
       </div>
     )
@@ -116,11 +116,11 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             {filtered.map((p) => (
               <div
                 key={p.id}
-                className="bg-white rounded-xl p-4 sm:p-5 border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow min-w-0"
+                className="bg-white rounded-xl p-3 sm:p-4 border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow min-w-0"
               >
                 <div className="flex items-start gap-3 mb-3 min-w-0">
                   <div
@@ -204,8 +204,8 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
             className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">Detail Prestasi</h3>
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">Detail Prestasi</h3>
               <button
                 onClick={() => setModalItem(null)}
                 className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
@@ -214,7 +214,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
               </button>
             </div>
 
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#263F93]/10">
                   <Trophy
@@ -226,7 +226,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
                   />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-sm sm:text-base text-gray-800 leading-snug break-words">
+                  <h4 className="font-bold text-xs sm:text-sm text-gray-800 leading-snug break-words">
                     {modalItem.namaPrestasi || modalItem.nama}
                   </h4>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -395,7 +395,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
               </div>
             </div>
 
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
               <button
                 onClick={() => setModalItem(null)}
                 className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"

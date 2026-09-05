@@ -92,11 +92,11 @@ export default function BebasTanggunganList() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">
             Permohonan Surat Keterangan Penyelesaian Studi
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">

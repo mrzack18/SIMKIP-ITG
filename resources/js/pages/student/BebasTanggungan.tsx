@@ -112,10 +112,10 @@ export default function BebasTanggungan() {
   const activeRejectionHistory = permohonan?.rejectionHistory || [];
 
   return (
-    <div className="max-w-2xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-2xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       <div className="flex items-center justify-between gap-2 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight break-words">Surat Keterangan Penyelesaian Studi</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight break-words">Surat Keterangan Penyelesaian Studi</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">Mahasiswa KIP-K — {mahasiswa.prodi} · {mahasiswa.nim}</p>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function BebasTanggungan() {
       {state === "belum" && (
         <>
           {/* Checklist Syarat */}
-          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
+          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
               <span className="font-600 text-gray-800 text-sm">Syarat Pengajuan Bebas Tanggungan</span>
             </div>
@@ -187,7 +187,7 @@ export default function BebasTanggungan() {
               </button>
             </div>
           ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 min-w-0">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4 min-w-0">
               <div className="flex items-start gap-3 min-w-0">
                 <AlertTriangle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0">
@@ -203,7 +203,7 @@ export default function BebasTanggungan() {
       )}
 
       {state === "menunggu" && (
-        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-5 sm:p-8 text-center min-w-0">
+        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 text-center min-w-0">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Clock size={32} className="text-[#263F93]" />
           </div>
@@ -226,10 +226,10 @@ export default function BebasTanggungan() {
 
       {state === "diterbitkan" && (
         <div className="space-y-4 min-w-0">
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 sm:p-5 flex items-start gap-3 min-w-0">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4 flex items-start gap-3 min-w-0">
             <CheckCircle size={22} className="text-green-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="font-600 text-green-800 text-sm sm:text-base">Surat Keterangan Telah Diterbitkan</p>
+              <p className="font-600 text-green-800 text-xs sm:text-sm">Surat Keterangan Telah Diterbitkan</p>
               <p className="text-xs text-green-700 mt-0.5 break-words">Diterbitkan pada {permohonan?.tanggalTerbit || "-"} oleh Pengelola KIP-K</p>
             </div>
           </div>
@@ -255,10 +255,10 @@ export default function BebasTanggungan() {
 
       {state === "ditolak" && (
         <div className="space-y-4 min-w-0">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-5 flex items-start gap-3 min-w-0">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 flex items-start gap-3 min-w-0">
             <AlertTriangle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="font-600 text-red-800 text-sm sm:text-base">Permohonan Ditolak</p>
+              <p className="font-600 text-red-800 text-xs sm:text-sm">Permohonan Ditolak</p>
               <p className="text-xs sm:text-sm text-red-700 mt-1 break-words">
                 Permohonan Anda ditolak. Silakan periksa catatan penolakan di bawah, perbaiki persyaratan, lalu ajukan ulang.
               </p>
@@ -266,7 +266,7 @@ export default function BebasTanggungan() {
           </div>
 
           {/* Rejection history */}
-          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
+          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
             <h3 className="font-600 text-gray-800 text-sm mb-3 flex items-center gap-2">
               <XCircle size={15} className="text-[#DC2626] flex-shrink-0" /> Riwayat Penolakan
             </h3>

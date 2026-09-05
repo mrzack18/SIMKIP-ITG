@@ -376,16 +376,16 @@ export default function InputIPK() {
   }
 
   if (isLoading) return (
-    <div className="flex justify-center items-center h-64 px-4 text-center text-sm sm:text-base text-gray-500">
+    <div className="flex justify-center items-center h-64 px-4 text-center text-xs sm:text-sm text-gray-500">
       <Loader className="animate-spin w-8 h-8 mr-2 flex-shrink-0" /> Memuat...
     </div>
   )
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto w-full pb-10 min-w-0">
+    <div className="space-y-3 sm:space-y-4 max-w-5xl mx-auto w-full pb-10 min-w-0">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 bg-green-600 text-white px-4 sm:px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold min-w-0">
+        <div className="fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 bg-green-600 text-white px-3 sm:px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold min-w-0">
           <CheckCircle size={16} className="flex-shrink-0" /><span className="break-words">{toast}</span>
         </div>
       )}
@@ -393,7 +393,7 @@ export default function InputIPK() {
       {/* ─── SECTION 1: Header ─────────────────────────────────────────────── */}
       <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-bold text-xl sm:text-2xl text-gray-900 leading-tight">Input Nilai Semester</h1>
+          <h1 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight">Input Nilai Semester</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-1 break-words">Catat nilai mata kuliah dan pantau perkembangan akademik Anda</p>
         </div>
         <div className="self-start min-[420px]:self-auto shrink-0"><TahunAjaranFilter value={taFilter} onChange={setTaFilter} /></div>
@@ -444,14 +444,14 @@ export default function InputIPK() {
         ].map(({ icon, label, val, sub }) => (
           <div key={label} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-2 min-w-0"><span className="shrink-0 flex items-center">{icon}</span><span className="text-[11px] sm:text-xs text-gray-500 truncate">{label}</span></div>
-            <div className="font-bold text-xl sm:text-2xl text-[#263F93] break-words">{val}</div>
+            <div className="font-bold text-lg sm:text-xl text-[#263F93] break-words">{val}</div>
             <div className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">{sub}</div>
           </div>
         ))}
       </div>
 
       {/* ─── SECTION 3: Progres IPK Chart ────────────────────────────────── */}
-      <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 min-w-0 overflow-hidden">
+      <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 min-w-0 overflow-hidden">
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 mb-4 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <BarChart2 size={16} className="text-[#263F93] flex-shrink-0" />
@@ -484,13 +484,13 @@ export default function InputIPK() {
 
       {/* ─── SECTION 4: Input Nilai MK ───────────────────────────────────── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-w-0 overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-gray-100 min-w-0">
-          <h2 className="font-bold text-gray-900 text-sm sm:text-base break-words">Input Nilai Mata Kuliah — Semester {displayedSemester}</h2>
+        <div className="p-3 sm:p-4 border-b border-gray-100 min-w-0">
+          <h2 className="font-bold text-gray-900 text-xs sm:text-sm break-words">Input Nilai Mata Kuliah — Semester {displayedSemester}</h2>
         </div>
 
         {/* ── Locked: TA tidak cocok ── */}
         {isTANotMatched() && (
-          <div className="p-5 sm:p-8 text-center min-w-0">
+          <div className="p-4 sm:p-6 text-center min-w-0">
             <Lock size={32} className="mx-auto text-gray-300 mb-3" />
             <p className="text-gray-500 text-sm font-medium break-words">
               Periode input untuk {normalizeTA(taFilter)} belum dibuka.
@@ -503,7 +503,7 @@ export default function InputIPK() {
 
         {/* ── Locked: periode belum buka / sudah tutup (TA cocok tapi periode tidak aktif) ── */}
         {!isTANotMatched() && !isPeriodeAktif() && (
-          <div className="p-5 sm:p-8 text-center min-w-0">
+          <div className="p-4 sm:p-6 text-center min-w-0">
             <Lock size={32} className="mx-auto text-gray-300 mb-3" />
             <p className="text-gray-500 text-sm font-medium break-words">
               {isPeriodeClosed()
@@ -517,9 +517,9 @@ export default function InputIPK() {
 
         {/* ── Menunggu Validasi (locked, apapun kondisi periode) ── */}
         {!isTANotMatched() && formStatus === "diajukan" && (
-          <div className="p-5 sm:p-8 text-center min-w-0">
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 sm:px-6 py-4 rounded-xl inline-block w-full sm:w-auto sm:max-w-lg sm:mx-auto min-w-0">
-              <h3 className="font-bold mb-1 flex items-center justify-center gap-2 text-sm sm:text-base">
+          <div className="p-4 sm:p-6 text-center min-w-0">
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-3 sm:px-4 py-4 rounded-xl inline-block w-full sm:w-auto sm:max-w-lg sm:mx-auto min-w-0">
+              <h3 className="font-bold mb-1 flex items-center justify-center gap-2 text-xs sm:text-sm">
                 <Loader size={16} className="animate-spin flex-shrink-0" /> Menunggu Validasi Pengelola
               </h3>
               <p className="text-xs sm:text-sm break-words">Nilai Semester {displayedSemester} sedang dievaluasi. Anda tidak dapat melakukan perubahan saat ini.</p>
@@ -532,9 +532,9 @@ export default function InputIPK() {
 
         {/* ── Telah Disetujui (locked, apapun kondisi periode) ── */}
         {!isTANotMatched() && formStatus === "disetujui" && (
-          <div className="p-5 sm:p-8 text-center min-w-0">
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 sm:px-6 py-4 rounded-xl inline-block w-full sm:w-auto sm:max-w-lg sm:mx-auto min-w-0">
-              <h3 className="font-bold mb-1 flex items-center justify-center gap-2 text-sm sm:text-base">
+          <div className="p-4 sm:p-6 text-center min-w-0">
+            <div className="bg-green-50 border border-green-200 text-green-700 px-3 sm:px-4 py-4 rounded-xl inline-block w-full sm:w-auto sm:max-w-lg sm:mx-auto min-w-0">
+              <h3 className="font-bold mb-1 flex items-center justify-center gap-2 text-xs sm:text-sm">
                 <CheckCircle size={16} className="flex-shrink-0" /> Nilai Telah Disetujui
               </h3>
               <p className="text-xs sm:text-sm break-words">Nilai Semester {displayedSemester} sudah disetujui oleh pengelola dan terkunci permanen.</p>
@@ -544,9 +544,9 @@ export default function InputIPK() {
 
         {/* ── Ditolak + periode TIDAK aktif (locked — tidak bisa apa-apa) ── */}
         {!isTANotMatched() && formStatus === "ditolak" && !isPeriodeAktif() && (
-          <div className="p-5 sm:p-8 text-center min-w-0">
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-4 rounded-xl inline-block w-full sm:w-auto sm:max-w-lg sm:mx-auto min-w-0">
-              <h3 className="font-bold mb-1 flex items-center justify-center gap-2 text-sm sm:text-base">
+          <div className="p-4 sm:p-6 text-center min-w-0">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-4 rounded-xl inline-block w-full sm:w-auto sm:max-w-lg sm:mx-auto min-w-0">
+              <h3 className="font-bold mb-1 flex items-center justify-center gap-2 text-xs sm:text-sm">
                 <AlertTriangle size={16} className="flex-shrink-0" /> Evaluasi Semester {displayedSemester} Ditolak
               </h3>
               <p className="text-xs sm:text-sm mt-1 break-words">Silakan perbaiki isian nilai dan ajukan kembali saat periode dibuka.</p>
@@ -640,7 +640,7 @@ export default function InputIPK() {
             </div>
 
             {/* Footer + upload KHS */}
-            <div className="px-4 sm:px-5 pt-3 pb-4 border-t border-gray-100 flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
+            <div className="px-3 sm:px-4 pt-3 pb-4 border-t border-gray-100 flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
               <button onClick={addRow} disabled={isLocked()}
                 className="flex items-center justify-center min-[480px]:justify-start gap-2 text-sm text-[#263F93] font-semibold hover:text-[#1a2d6d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">
                 <Plus size={15} />Tambah Mata Kuliah
@@ -653,7 +653,7 @@ export default function InputIPK() {
             </div>
 
             {/* Upload KHS */}
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5 min-w-0">
+            <div className="px-3 sm:px-4 pb-4 sm:pb-5 min-w-0">
               <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center bg-gray-50/40 hover:border-gray-300 transition-colors cursor-pointer relative min-w-0">
                 {uploadedFile ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-green-700 font-medium min-w-0">
@@ -709,7 +709,7 @@ export default function InputIPK() {
 
         {/* ── Belum ada data + periode tidak aktif (locked) ── */}
         {!isTANotMatched() && formStatus === "idle" && !isPeriodeAktif() && (
-          <div className="p-5 sm:p-8 text-center min-w-0">
+          <div className="p-4 sm:p-6 text-center min-w-0">
             <Lock size={32} className="mx-auto text-gray-300 mb-3" />
             <p className="text-gray-500 text-sm font-medium break-words">
               {isPeriodeClosed()
@@ -792,7 +792,7 @@ export default function InputIPK() {
             </div>
 
             {/* Footer + upload KHS */}
-            <div className="px-4 sm:px-5 pt-3 pb-4 border-t border-gray-100 flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
+            <div className="px-3 sm:px-4 pt-3 pb-4 border-t border-gray-100 flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
               <button onClick={addRow} disabled={isLocked()}
                 className="flex items-center justify-center min-[480px]:justify-start gap-2 text-sm text-[#263F93] font-semibold hover:text-[#1a2d6d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">
                 <Plus size={15} />Tambah Mata Kuliah
@@ -805,7 +805,7 @@ export default function InputIPK() {
             </div>
 
             {/* Upload KHS */}
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3 border-t border-gray-100 pt-4 min-w-0">
+            <div className="px-3 sm:px-4 pb-4 sm:pb-5 space-y-3 border-t border-gray-100 pt-4 min-w-0">
               <div className="text-sm font-semibold text-gray-700">Upload Kartu Hasil Studi (KHS)</div>
               <div onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
                 onDragLeave={() => setDragOver(false)} onDrop={handleFileDrop}
@@ -864,9 +864,9 @@ export default function InputIPK() {
 
       {/* ─── SECTION 5: Carry-Over ───────────────────────────────────────── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-w-0 overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2 min-w-0">
+        <div className="p-3 sm:p-4 border-b border-gray-100 flex items-center gap-2 min-w-0">
           <AlertTriangle size={17} style={{ color: "#D4A72C" }} className="flex-shrink-0" />
-          <h2 className="font-bold text-gray-900 text-sm sm:text-base truncate">Mata Kuliah Belum Lulus</h2>
+          <h2 className="font-bold text-gray-900 text-xs sm:text-sm truncate">Mata Kuliah Belum Lulus</h2>
         </div>
 
         {carryOverData.length > 0 && (
@@ -907,7 +907,7 @@ export default function InputIPK() {
           </div>
         )}
 
-        <div className="overflow-x-auto p-4 sm:p-5 min-w-0">
+        <div className="overflow-x-auto p-3 sm:p-4 min-w-0">
           {carryOverData.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Tidak ada mata kuliah carry-over yang belum diperbaiki.</p>
           ) : (
@@ -944,8 +944,8 @@ export default function InputIPK() {
 
       {/* ─── SECTION 6: Riwayat per Semester ──────────────────────────────── */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-w-0 overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-gray-100 min-w-0">
-          <h2 className="font-bold text-gray-900 text-sm sm:text-base">Riwayat Nilai per Semester</h2>
+        <div className="p-3 sm:p-4 border-b border-gray-100 min-w-0">
+          <h2 className="font-bold text-gray-900 text-xs sm:text-sm">Riwayat Nilai per Semester</h2>
           <p className="text-xs text-gray-400 mt-0.5">Klik baris untuk melihat detail mata kuliah</p>
         </div>
         <div className="overflow-x-auto min-w-0">

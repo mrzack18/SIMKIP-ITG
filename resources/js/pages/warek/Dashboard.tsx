@@ -73,20 +73,20 @@ export default function WarekDashboard() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] px-4 text-center text-sm sm:text-base text-red-500 break-words">
+      <div className="flex items-center justify-center min-h-[400px] px-4 text-center text-xs sm:text-sm text-red-500 break-words">
         {error}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 min-w-0">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img src={logoItg} alt="ITG Logo" className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 object-contain rounded-lg shadow-sm border border-gray-100" />
           <div className="min-w-0">
-            <h1 className="font-bold text-xl sm:text-2xl text-[#263F93] leading-tight break-words">
+            <h1 className="font-bold text-lg sm:text-xl text-[#263F93] leading-tight break-words">
               Selamat datang, {user?.nama ?? "Wakil Rektor III"}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -108,11 +108,11 @@ export default function WarekDashboard() {
 
       {/* Notification */}
       {data && data.pendingReports.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-3 min-w-0">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-3 min-w-0">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <ClipboardList size={24} className="text-amber-500 mt-0.5 sm:mt-1 flex-shrink-0" />
             <div className="min-w-0">
-              <p className="font-600 text-amber-800 text-sm sm:text-base break-words">Terdapat {data.pendingReports.length} laporan semester menunggu persetujuan Anda.</p>
+              <p className="font-600 text-amber-800 text-xs sm:text-sm break-words">Terdapat {data.pendingReports.length} laporan semester menunggu persetujuan Anda.</p>
               <p className="text-xs text-amber-600 mt-0.5 break-words">Silakan review dan berikan tanda tangan digital untuk finalisasi laporan.</p>
             </div>
           </div>
@@ -123,8 +123,8 @@ export default function WarekDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-[#263F93]/10 flex items-center justify-center">
               <Users size={18} className="text-[#263F93]" />
@@ -133,20 +133,20 @@ export default function WarekDashboard() {
               Total Mahasiswa<br />KIP-K Aktif
             </p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{data?.stats.totalMahasiswaAktif}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{data?.stats.totalMahasiswaAktif}</p>
           <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
             Semua prodi
           </span>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-blue-50 flex items-center justify-center">
               <BookOpen size={18} className="text-blue-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">Reguler / Aspirasi</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93] break-words">
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93] break-words">
             {data?.stats.regulerCount} <span className="text-lg sm:text-xl text-gray-400 font-medium">/ {data?.stats.aspirasiCount}</span>
           </p>
           <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
@@ -154,14 +154,14 @@ export default function WarekDashboard() {
           </span>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-purple-50 flex items-center justify-center">
               <FileCheck size={18} className="text-purple-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">Laporan Disetujui<br />Semester Ini</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{data?.stats.laporanDisetujuiSemesterIni}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{data?.stats.laporanDisetujuiSemesterIni}</p>
           <span className="inline-block max-w-full truncate mt-2 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
             {data?.stats.currentPeriode || "2025/2026 Genap"}
           </span>
@@ -170,18 +170,18 @@ export default function WarekDashboard() {
 
       {/* Pending reports */}
       <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden min-w-0">
-        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+        <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
           <h2 className="font-600 text-gray-800 text-sm truncate">Laporan Menunggu Persetujuan</h2>
           <Link to="/warek/laporan" className="text-xs text-[#263F93] hover:underline flex items-center gap-1 shrink-0">Lihat Semua <ArrowRight size={12} /></Link>
         </div>
         <div className="divide-y divide-gray-50">
           {data && data.pendingReports.length === 0 && (
-            <div className="px-4 sm:px-5 py-8 text-center text-sm text-gray-400">
+            <div className="px-3 sm:px-4 py-8 text-center text-sm text-gray-400">
               Tidak ada laporan menunggu persetujuan.
             </div>
           )}
           {data && data.pendingReports.map(r => (
-            <div key={r.id} className="px-4 sm:px-5 py-3.5 sm:py-4 flex flex-wrap items-center gap-3 sm:gap-4 min-w-0">
+            <div key={r.id} className="px-3 sm:px-4 py-3.5 sm:py-4 flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
                 <FileCheck size={18} className="text-amber-500" />
               </div>
@@ -201,17 +201,17 @@ export default function WarekDashboard() {
 
       {/* Approved reports */}
       <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden min-w-0">
-        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 min-w-0">
+        <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 min-w-0">
           <h2 className="font-600 text-gray-800 text-sm">Laporan Telah Disetujui</h2>
         </div>
         <div className="divide-y divide-gray-50">
           {data && data.approvedReports.length === 0 && (
-            <div className="px-4 sm:px-5 py-8 text-center text-sm text-gray-400">
+            <div className="px-3 sm:px-4 py-8 text-center text-sm text-gray-400">
               Belum ada laporan yang disetujui.
             </div>
           )}
           {data && data.approvedReports.map(r => (
-            <div key={r.nomor} className="px-4 sm:px-5 py-3 sm:py-3.5 flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
+            <div key={r.nomor} className="px-3 sm:px-4 py-3 sm:py-3.5 flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
               <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
               <div className="flex-1 min-w-0 basis-48">
                 <p className="text-sm font-500 text-gray-700 break-words">{r.judul}</p>

@@ -71,7 +71,7 @@ export default function PeriodeAktifCard({
   const statusPeriode = hitungStatusPeriode(active);
 
   return (
-    <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5 relative overflow-hidden min-w-0">
+    <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-3 sm:p-4 relative overflow-hidden min-w-0">
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-green-100/40" />
       <div className="relative min-w-0">
         <div className="flex items-start justify-between gap-2 mb-3 min-w-0">

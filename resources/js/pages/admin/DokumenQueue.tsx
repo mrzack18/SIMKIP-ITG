@@ -62,7 +62,7 @@ const formatDate = (iso: string) => {
 
 // Skeleton loader
 const SkeletonCard = () => (
-  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3 sm:gap-4 animate-pulse min-w-0">
+  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-2.5 sm:gap-3 animate-pulse min-w-0">
     <div className="w-12 h-12 rounded-xl bg-gray-200 flex-shrink-0 hidden min-[420px]:block" />
     <div className="flex-1 space-y-2 min-w-0">
       <div className="h-4 bg-gray-200 rounded w-2/3" />
@@ -815,11 +815,11 @@ export default function DokumenQueue() {
     : [];
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 flex items-center gap-2 sm:gap-3 flex-wrap">
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 flex items-center gap-2 sm:gap-3 flex-wrap">
             Antrian Validasi Dokumen
             {counts.Menunggu > 0 && (
               <span className="text-xs sm:text-sm px-2.5 py-1 rounded-full font-600 whitespace-nowrap" style={{ background: "#F5EDD4", color: "#D4A72C" }}>
@@ -908,7 +908,7 @@ export default function DokumenQueue() {
             const status = getStatus(d);
             return (
               <div key={d.id}
-                className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow group min-w-0">
+                className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-2.5 sm:gap-3 hover:shadow-md transition-shadow group min-w-0">
                 <div className="hidden sm:flex w-12 h-12 rounded-xl bg-blue-50 items-center justify-center flex-shrink-0">
                   {typeIcon(d.jenis)}
                 </div>
@@ -1002,7 +1002,7 @@ export default function DokumenQueue() {
         <div className="fixed inset-0 bg-black/50 flex items-start justify-end z-50 p-0">
           <div className="bg-white shadow-2xl w-full sm:max-w-xl h-full sm:h-full flex flex-col overflow-hidden min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b flex-shrink-0 min-w-0" style={{ borderColor: "#E2E8F0" }}>
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b flex-shrink-0 min-w-0" style={{ borderColor: "#E2E8F0" }}>
               <div className="min-w-0">
                 <h3 className="font-600 text-gray-800 text-sm break-words">{reviewing.jenis}</h3>
                 <p className="text-xs text-gray-400 mt-0.5 truncate">{reviewing.nama} · {reviewing.nim}</p>
@@ -1025,7 +1025,7 @@ export default function DokumenQueue() {
 
             {/* Status banner for already-processed */}
             {currentStatus !== "Menunggu" && (
-              <div className={`flex items-start gap-2 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-500 flex-shrink-0 ${
+              <div className={`flex items-start gap-2 px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-500 flex-shrink-0 ${
                 currentStatus === "Disetujui" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
               }`}>
                 {currentStatus === "Disetujui" ? <CheckCircle size={15} className="flex-shrink-0 mt-0.5" /> : <XCircle size={15} className="flex-shrink-0 mt-0.5" />}
@@ -1074,7 +1074,7 @@ export default function DokumenQueue() {
             </div>
 
             {/* Action area */}
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t space-y-3 flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t space-y-3 flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
               {actionError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 flex items-center gap-2">
                   <AlertCircle size={13} className="flex-shrink-0" />

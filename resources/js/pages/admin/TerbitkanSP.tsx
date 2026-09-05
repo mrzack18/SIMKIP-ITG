@@ -206,7 +206,7 @@ export default function TerbitkanSP() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0" onClick={() => setShowDropdown(false)}>
+    <div className="max-w-2xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0" onClick={() => setShowDropdown(false)}>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
         <Link to="/admin/sp" className="hover:text-gray-700 flex items-center gap-1 shrink-0">
@@ -233,11 +233,11 @@ export default function TerbitkanSP() {
 
       {/* Section 1: Pilih Mahasiswa */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 min-w-0" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl min-w-0">
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 rounded-t-xl min-w-0">
           <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-700 flex-shrink-0">1</div>
           <h2 className="font-600 text-gray-800 text-sm truncate">Pilih Mahasiswa</h2>
         </div>
-        <div className="p-4 sm:p-5 min-w-0">
+        <div className="p-3 sm:p-4 min-w-0">
           <div className="relative min-w-0">
             <Search size={14} className="absolute left-3 top-3.5 text-gray-400" />
             {searching && <Loader2 size={14} className="absolute right-3 top-3.5 text-gray-400 animate-spin" />}
@@ -296,11 +296,11 @@ export default function TerbitkanSP() {
 
       {/* Section 2: Detail Pelanggaran */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
           <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white text-xs font-700 flex-shrink-0">2</div>
           <h2 className="font-600 text-gray-800 text-sm truncate">Detail Pelanggaran</h2>
         </div>
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           {/* SP Level — only shown after student is selected */}
           {selected && (
           <div className="min-w-0">
@@ -391,7 +391,7 @@ export default function TerbitkanSP() {
           </div>
 
           {/* Tanggal */}
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
             <div>
               <label className="block text-sm font-500 text-gray-700 mb-1.5">Tanggal Terbit <span className="text-red-500">*</span></label>
               <input type="date" value={tanggalTerbit} onChange={(e) => setTanggalTerbit(e.target.value)}
@@ -416,12 +416,12 @@ export default function TerbitkanSP() {
 
       {/* Section 3: Konsekuensi */}
       <div className={`rounded-xl border overflow-hidden shadow-sm min-w-0 ${spLevel === "SP3" ? "border-red-300 bg-red-50" : "border-gray-100 bg-white"}`}>
-        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-inherit min-w-0">
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-inherit min-w-0">
           <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-700 flex-shrink-0" style={{ background: levelColor[spLevel] }}>3</div>
           <h2 className="font-600 text-gray-800 text-sm truncate">Konsekuensi (Otomatis)</h2>
           <span className="ml-auto text-xs px-2 py-0.5 rounded font-600 text-white shrink-0 whitespace-nowrap" style={{ background: levelColor[spLevel] }}>{spLevel}</span>
         </div>
-        <div className="p-4 sm:p-5 min-w-0">
+        <div className="p-3 sm:p-4 min-w-0">
           <p className={`text-xs sm:text-sm leading-relaxed break-words ${spLevel === "SP3" ? "text-red-700 font-500" : "text-gray-600"}`}>
             {spLevel === "SP1" && "Mahasiswa diberikan masa perbaikan selama 1 semester berikutnya."}
             {spLevel === "SP2" && "Mahasiswa diberikan kesempatan perbaikan terakhir selama 1 semester."}
@@ -437,7 +437,7 @@ export default function TerbitkanSP() {
       </div>
 
       {/* Footer */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col-reverse min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 sm:px-4 py-3.5 sm:py-4 flex flex-col-reverse min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
         <Link to="/admin/sp" className="text-sm text-gray-500 hover:text-gray-700 text-center min-[420px]:text-left py-1">Batal</Link>
         <button onClick={handleSubmit} disabled={submitting}
           className="px-6 py-2.5 rounded-lg text-sm font-500 text-white flex items-center justify-center gap-2 disabled:opacity-40 whitespace-nowrap"
@@ -456,7 +456,7 @@ export default function TerbitkanSP() {
             </div>
             <h3 className="font-display font-700 text-base sm:text-lg text-gray-900 text-center mb-2">Konfirmasi Penerbitan</h3>
             <p className="text-gray-500 text-sm text-center mb-1">Apakah Anda yakin ingin menerbitkan</p>
-            <p className="text-center font-700 text-sm sm:text-base mb-4 break-words" style={{ color: levelColor[spLevel] }}>
+            <p className="text-center font-700 text-xs sm:text-sm mb-4 break-words" style={{ color: levelColor[spLevel] }}>
               {jenisP === "Cuti Tanpa Izin" ? "SP3" : spLevel} untuk {selected.nim} – {selected.nama}?
             </p>
             <p className="text-xs text-gray-400 text-center mb-5">Tindakan ini tidak dapat dibatalkan.</p>

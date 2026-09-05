@@ -33,13 +33,13 @@ export default function ProdiDashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 min-w-0">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img src={logoItg} alt="ITG Logo" className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 object-contain rounded-lg shadow-sm border border-gray-100" />
           <div className="min-w-0">
-            <h1 className="font-bold text-xl sm:text-2xl text-[#263F93] leading-tight break-words">
+            <h1 className="font-bold text-lg sm:text-xl text-[#263F93] leading-tight break-words">
               Selamat datang, {user?.nama ?? "Ketua Prodi"}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -56,8 +56,8 @@ export default function ProdiDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-[#263F93]/10 flex items-center justify-center">
               <Users size={18} className="text-[#263F93]" />
@@ -66,46 +66,46 @@ export default function ProdiDashboard() {
               Total Mahasiswa<br />KIP-K Aktif
             </p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{data?.stats?.total_aktif ?? 0}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{data?.stats?.total_aktif ?? 0}</p>
           <span className="inline-block max-w-full truncate mt-2 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
             {prodiNama}
           </span>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-blue-50 flex items-center justify-center">
               <BookOpen size={18} className="text-blue-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">KIP-K Reguler</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{data?.stats?.reguler ?? 0}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{data?.stats?.reguler ?? 0}</p>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-purple-50 flex items-center justify-center">
               <BookOpen size={18} className="text-purple-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">KIP-K Aspirasi</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{data?.stats?.aspirasi ?? 0}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{data?.stats?.aspirasi ?? 0}</p>
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0">
           <div className="flex items-center gap-3 mb-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-green-50 flex items-center justify-center">
               <TrendingUp size={18} className="text-green-600" />
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">Rata-rata IPK</p>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-[#263F93]">{Number(data?.stats?.rata_ipk ?? 0).toFixed(2)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{Number(data?.stats?.rata_ipk ?? 0).toFixed(2)}</p>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
             <h2 className="font-600 text-gray-800 text-sm truncate">Sebaran per Angkatan</h2>
             <span className="text-xs text-gray-400 truncate shrink-0">{prodiNama}</span>
@@ -138,7 +138,7 @@ export default function ProdiDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
             <h2 className="font-600 text-gray-800 text-sm truncate">Tren Rata-rata IPK per Semester</h2>
             <span className="text-xs text-gray-400 truncate shrink-0">{prodiNama}</span>
@@ -162,14 +162,14 @@ export default function ProdiDashboard() {
       </div>
 
       {/* Quick lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-          <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+          <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
             <h2 className="font-600 text-gray-800 text-sm truncate">Mahasiswa dengan SP Aktif</h2>
             <Link to="/prodi/mahasiswa" className="text-xs text-[#263F93] hover:underline flex items-center gap-1 shrink-0">Lihat Semua <ArrowRight size={12} /></Link>
           </div>
           {(data?.sp_mahasiswa?.length ?? 0) === 0 ? (
-            <div className="px-4 sm:px-5 py-8 text-center text-sm text-gray-400">Tidak ada mahasiswa dengan SP aktif</div>
+            <div className="px-3 sm:px-4 py-8 text-center text-sm text-gray-400">Tidak ada mahasiswa dengan SP aktif</div>
           ) : (
             <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
@@ -196,12 +196,12 @@ export default function ProdiDashboard() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-          <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+          <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
             <h2 className="font-600 text-gray-800 text-sm truncate">Mahasiswa Semester ≥ 7</h2>
             <Link to="/prodi/mahasiswa" className="text-xs text-[#263F93] hover:underline flex items-center gap-1 shrink-0">Lihat Semua <ArrowRight size={12} /></Link>
           </div>
           {(data?.semester_7plus?.length ?? 0) === 0 ? (
-            <div className="px-4 sm:px-5 py-8 text-center text-sm text-gray-400">Belum ada mahasiswa semester ≥ 7</div>
+            <div className="px-3 sm:px-4 py-8 text-center text-sm text-gray-400">Belum ada mahasiswa semester ≥ 7</div>
           ) : (
             <div className="overflow-x-auto">
             <table className="w-full min-w-[420px] text-sm">

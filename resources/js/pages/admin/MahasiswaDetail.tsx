@@ -296,7 +296,7 @@ export default function MahasiswaDetail() {
 
   if (loadingMain) {
     return (
-      <div className="flex items-center justify-center py-20 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-20 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data mahasiswa...
       </div>
     )
@@ -326,7 +326,7 @@ export default function MahasiswaDetail() {
   const progressPct = Math.round((semesterNum / totalSem) * 100)
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 pb-10 w-full max-w-7xl mx-auto min-w-0">
       {/* Breadcrumb and Filter */}
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 sm:justify-between min-w-0">
         <Link
@@ -345,7 +345,7 @@ export default function MahasiswaDetail() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl sm:rounded-2xl p-4 flex items-start gap-3 min-w-0">
           <UserMinus size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="min-w-0">
-            <h3 className="font-bold text-sm sm:text-base text-amber-800 break-words">Mahasiswa ini berstatus NONAKTIF</h3>
+            <h3 className="font-bold text-xs sm:text-sm text-amber-800 break-words">Mahasiswa ini berstatus NONAKTIF</h3>
             <p className="text-xs sm:text-sm text-amber-700 mt-1 break-words">
               Alasan: <strong>{mhs.alasanNonaktif || "—"}</strong><br />
               Tanggal: <strong>{mhs.tanggalNonaktif || "—"}</strong>
@@ -358,7 +358,7 @@ export default function MahasiswaDetail() {
         <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl p-4 flex items-start gap-3 min-w-0">
           <UserX size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
           <div className="min-w-0">
-            <h3 className="font-bold text-sm sm:text-base text-red-800 break-words">KIP-K mahasiswa ini telah DICABUT</h3>
+            <h3 className="font-bold text-xs sm:text-sm text-red-800 break-words">KIP-K mahasiswa ini telah DICABUT</h3>
             <p className="text-xs sm:text-sm text-red-700 mt-1 break-words">
               Dicabut pada Semester {mhs.semesterDicabut || "—"} oleh {mhs.dicabutOleh || "—"}<br />
               Alasan: <strong>{mhs.alasanDicabut || "—"}</strong><br />
@@ -370,9 +370,9 @@ export default function MahasiswaDetail() {
 
       {/* Profile Header Card */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-4 sm:gap-5 min-w-0">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-lg sm:text-xl font-bold text-white flex-shrink-0">
               {mhs.nama.charAt(0)}
             </div>
 
@@ -538,7 +538,7 @@ export default function MahasiswaDetail() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 sm:px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 min-w-0">
-              <h3 className="font-bold text-sm sm:text-base text-gray-800 flex items-center gap-2 min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm text-gray-800 flex items-center gap-2 min-w-0">
                 <AlertTriangle size={16} className="text-red-500 flex-shrink-0" />
                 <span className="truncate">Terbitkan Surat Peringatan</span>
               </h3>

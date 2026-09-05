@@ -287,11 +287,11 @@ export default function WarekMahasiswaList() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0" onClick={() => setOpenMenu(null)}>
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0" onClick={() => setOpenMenu(null)}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-bold text-xl sm:text-2xl text-gray-900 leading-tight">Data Mahasiswa KIP-K</h1>
+          <h1 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight">Data Mahasiswa KIP-K</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{total} mahasiswa ditemukan (read-only)</p>
         </div>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">

@@ -164,11 +164,11 @@ export default function Pelatihan() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 relative w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 relative w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between gap-2 sm:gap-4 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Pelatihan</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Pelatihan</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">
             Catat dan ajukan pelatihan akademik maupun non-akademik yang telah Anda ikuti.
           </p>
@@ -193,7 +193,7 @@ export default function Pelatihan() {
         </div>
       )}
 
-      <div className="space-y-4 sm:space-y-6 min-w-0">
+      <div className="space-y-3 sm:space-y-4 min-w-0">
         {[formatTA(taFilter)].map((ta) => (
           <div key={ta} className="space-y-3 min-w-0">
             <h2 className="font-600 text-gray-700 text-xs sm:text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100 break-words">
@@ -201,8 +201,8 @@ export default function Pelatihan() {
             </h2>
             <div className="space-y-3 min-w-0">
               {items.map(item => (
-                <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 min-w-0">
-                  <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 flex flex-col sm:flex-row sm:items-start gap-2.5 sm:gap-3 min-w-0">
+                  <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                     <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
                       <BookOpen size={20} style={{ color: "#263F93" }} />
                       {item.fotoKegiatan && (
@@ -289,13 +289,13 @@ export default function Pelatihan() {
         <>
           <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setShowForm(false)} />
           <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col overflow-hidden min-w-0">
-            <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
-              <h2 className="font-600 text-gray-800 text-sm sm:text-base truncate">Tambah Pelatihan</h2>
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
+              <h2 className="font-600 text-gray-800 text-xs sm:text-sm truncate">Tambah Pelatihan</h2>
               <button onClick={() => setShowForm(false)} aria-label="Tutup formulir" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 min-w-0">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 space-y-3 sm:space-y-4 min-w-0">
               {/* Jenis */}
               <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-2">
@@ -456,13 +456,13 @@ export default function Pelatihan() {
       {detail && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden min-w-0">
-            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
               <h3 className="font-600 text-gray-800 text-sm truncate pr-4">Detail Pelatihan</h3>
               <button onClick={() => setDetail(null)} aria-label="Tutup detail" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0">
                 <X size={18} />
               </button>
             </div>
-            <div className="overflow-y-auto p-4 sm:p-5 space-y-4 min-w-0">
+            <div className="overflow-y-auto p-3 sm:p-4 space-y-4 min-w-0">
               {/* Status + Jenis badges */}
               <div className="flex gap-2 flex-wrap min-w-0">
                 <span

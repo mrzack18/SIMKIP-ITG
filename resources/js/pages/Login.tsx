@@ -115,7 +115,7 @@ export default function Login() {
           </div>
 
           <div className="mb-6 sm:mb-8 min-w-0">
-            <h2 className="font-display font-700 text-gray-900 text-xl sm:text-2xl mb-1">Masuk ke SIMKIP-ITG</h2>
+            <h2 className="font-display font-700 text-gray-900 text-lg sm:text-xl mb-1">Masuk ke SIMKIP-ITG</h2>
             <p className="text-gray-500 text-xs sm:text-sm break-words">Gunakan kredensial yang diberikan oleh Biro Kemahasiswaan</p>
           </div>
 

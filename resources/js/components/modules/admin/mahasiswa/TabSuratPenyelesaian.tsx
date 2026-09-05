@@ -29,7 +29,7 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
     <div className={`rounded-xl border overflow-hidden min-w-0 ${ok ? "border-green-200" : "border-yellow-300"}`}>
       <button
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 min-w-0 ${ok ? "bg-green-50" : "bg-yellow-50"}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 min-w-0 ${ok ? "bg-green-50" : "bg-yellow-50"}`}
       >
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="text-gray-400 flex items-center justify-center flex-shrink-0">{icon}</div>
@@ -42,7 +42,7 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
         </div>
         {open ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
       </button>
-      {open && <div className="p-4 sm:p-5 bg-white min-w-0">{children}</div>}
+      {open && <div className="p-3 sm:p-4 bg-white min-w-0">{children}</div>}
     </div>
   )
 }
@@ -70,7 +70,7 @@ function FormalSurat({
           <img src={logoItg} alt="ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
           <div className="flex-1 text-center min-w-0">
             <p className="font-bold text-[10px] sm:text-xs leading-snug">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET DAN TEKNOLOGI</p>
-            <p className="font-bold text-sm sm:text-base leading-snug">INSTITUT TEKNOLOGI GARUT</p>
+            <p className="font-bold text-xs sm:text-sm leading-snug">INSTITUT TEKNOLOGI GARUT</p>
             <p className="text-[10px] sm:text-xs text-gray-500 leading-snug">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
             <p className="text-[10px] sm:text-xs text-gray-400 leading-snug break-words">Telp. (0262) 540895 · www.itg.ac.id · info@itg.ac.id</p>
           </div>
@@ -175,7 +175,7 @@ export function TabSuratPenyelesaian({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-400">
         <Loader2 size={32} className="animate-spin mb-3 text-[#263F93]" />
-        <p className="text-sm sm:text-base">Memuat data Surat Penyelesaian...</p>
+        <p className="text-xs sm:text-sm">Memuat data Surat Penyelesaian...</p>
       </div>
     )
   }
@@ -184,7 +184,7 @@ export function TabSuratPenyelesaian({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-red-500">
         <AlertTriangle size={32} className="mb-3" />
-        <p className="text-sm sm:text-base break-words">{error?.message || "Gagal memuat data Surat Penyelesaian."}</p>
+        <p className="text-xs sm:text-sm break-words">{error?.message || "Gagal memuat data Surat Penyelesaian."}</p>
       </div>
     )
   }
@@ -198,11 +198,11 @@ export function TabSuratPenyelesaian({
   const missingDocs = dokumen.filter((d) => d.status !== "Disetujui")
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       {/* Status Header */}
       <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 sm:gap-3 bg-gray-50 border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 min-w-0">
         <div className="min-w-0">
-          <h3 className="font-600 text-sm sm:text-base text-gray-800">Status Surat Penyelesaian</h3>
+          <h3 className="font-600 text-xs sm:text-sm text-gray-800">Status Surat Penyelesaian</h3>
           {permohonan ? (
             <p className="text-xs text-gray-500 mt-0.5 break-words">Diajukan pada: {permohonan.tanggalAjukan}</p>
           ) : (
@@ -235,7 +235,7 @@ export function TabSuratPenyelesaian({
 
       {/* Incomplete docs warning */}
       {missingDocs.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 min-w-0">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0">
             <AlertTriangle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
@@ -347,7 +347,7 @@ export function TabSuratPenyelesaian({
           {rejection_history.length > 0 ? (
             <div className="space-y-4 min-w-0">
               {rejection_history.map((h, i) => (
-                <div key={i} className="flex gap-3 sm:gap-4 min-w-0">
+                <div key={i} className="flex gap-2.5 sm:gap-3 min-w-0">
                   <div className="flex flex-col items-center flex-shrink-0">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-500 mt-1.5"></div>
                     {i !== rejection_history.length - 1 && <div className="w-0.5 h-full bg-gray-200 my-1"></div>}
@@ -373,7 +373,7 @@ export function TabSuratPenyelesaian({
       {currentStatus === "diterbitkan" && (
         <div className="mt-6 sm:mt-8 border-t border-[#E2E8F0] pt-6 sm:pt-8 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-4 min-w-0">
-            <h3 className="font-600 text-sm sm:text-base text-gray-800 flex items-center gap-2">
+            <h3 className="font-600 text-xs sm:text-sm text-gray-800 flex items-center gap-2">
               <Printer size={18} className="text-gray-500 flex-shrink-0" />
               Preview Surat Formal
             </h3>
@@ -394,15 +394,15 @@ export function TabSuratPenyelesaian({
 
       {/* Overall assessment */}
       {allConditionsMet ? (
-        <div className="flex items-start gap-3 bg-green-50 border border-green-300 rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 min-w-0">
+        <div className="flex items-start gap-3 bg-green-50 border border-green-300 rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 min-w-0">
           <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="font-600 text-sm sm:text-base text-green-800">Semua persyaratan terpenuhi</p>
+            <p className="font-600 text-xs sm:text-sm text-green-800">Semua persyaratan terpenuhi</p>
             <p className="text-xs sm:text-sm text-green-700 mt-0.5">Mahasiswa layak mendapatkan Surat Keterangan Penyelesaian KIP-K.</p>
           </div>
         </div>
       ) : (
-        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 min-w-0">
+        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 min-w-0">
           <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs sm:text-sm text-yellow-700 break-words min-w-0">
             Terdapat syarat atau dokumen yang belum lengkap/diverifikasi. Permohonan belum dapat diterbitkan.

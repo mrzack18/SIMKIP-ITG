@@ -103,7 +103,7 @@ export default function LaporanDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 px-4 text-gray-500 text-sm sm:text-base text-center">
+      <div className="flex items-center justify-center py-20 px-4 text-gray-500 text-xs sm:text-sm text-center">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat laporan...
       </div>
     );
@@ -124,7 +124,7 @@ export default function LaporanDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-4xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       {/* Breadcrumb and Filter */}
       <div className="flex items-center justify-between gap-2 text-xs sm:text-sm text-gray-500 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
@@ -146,7 +146,7 @@ export default function LaporanDetail() {
       {/* Formal report document */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         {!isApproved && (
-          <div className="bg-yellow-50 border-b border-yellow-200 px-4 sm:px-5 py-2.5 flex items-center justify-center gap-2 min-w-0">
+          <div className="bg-yellow-50 border-b border-yellow-200 px-3 sm:px-4 py-2.5 flex items-center justify-center gap-2 min-w-0">
             <span className="text-[11px] sm:text-xs font-600 text-yellow-700 flex items-center justify-center gap-1 text-center">
               <Clock size={14} className="flex-shrink-0" />
               {currentStatus === "Dikembalikan" ? "Dikembalikan untuk Revisi" : "Menunggu Persetujuan Warek III"}
@@ -156,7 +156,7 @@ export default function LaporanDetail() {
 
         <div className="p-3 sm:p-8 min-w-0">
           <div className="border-2 border-[#263F93] rounded-xl p-1 min-w-0">
-            <div className="border border-[#263F93] rounded-lg p-3 sm:p-8 space-y-4 sm:space-y-6 min-w-0">
+            <div className="border border-[#263F93] rounded-lg p-3 sm:p-8 space-y-3 sm:space-y-4 min-w-0">
 
               <div className="flex items-center gap-2.5 sm:gap-4 border-b-2 border-[#263F93] pb-3 sm:pb-5 mb-4 sm:mb-6 min-w-0">
                 <img src={logoItg} alt="Logo ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
@@ -324,7 +324,7 @@ export default function LaporanDetail() {
       </div>
 
       {/* Sticky action bar */}
-      <div className="sticky bottom-4 bg-white rounded-xl shadow-lg border border-gray-200 px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 min-w-0">
+      <div className="sticky bottom-4 bg-white rounded-xl shadow-lg border border-gray-200 px-3 sm:px-4 py-3.5 sm:py-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 min-w-0">
         {isApproved ? (
           <>
             <span className="flex items-center gap-1.5 text-sm text-green-600 font-500">

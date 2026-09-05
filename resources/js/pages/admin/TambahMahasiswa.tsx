@@ -195,7 +195,7 @@ export default function TambahMahasiswa() {
     }`;
 
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       {/* Breadcrumb and Filter */}
       <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -208,7 +208,7 @@ export default function TambahMahasiswa() {
       </div>
 
       <div className="min-w-0">
-        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Registrasi Mahasiswa KIP-K Baru</h1>
+        <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Registrasi Mahasiswa KIP-K Baru</h1>
         <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Isi data SK dan informasi mahasiswa untuk membuat akun otomatis.</p>
       </div>
 
@@ -228,12 +228,12 @@ export default function TambahMahasiswa() {
 
       {/* Section 1: Data SK */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
           <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">1</div>
           <h2 className="font-600 text-gray-800 text-sm truncate">Data SK Penetapan KIP-K</h2>
         </div>
 
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
@@ -305,12 +305,12 @@ export default function TambahMahasiswa() {
 
       {/* Section 2: Data Mahasiswa */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
           <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">2</div>
           <h2 className="font-600 text-gray-800 text-sm truncate">Data Mahasiswa</h2>
         </div>
 
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* NIM */}
             <div>
@@ -409,12 +409,12 @@ export default function TambahMahasiswa() {
 
       {/* Section 3: Kredensial */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
           <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">3</div>
           <h2 className="font-600 text-gray-800 text-sm truncate">Kredensial Akun (Otomatis)</h2>
         </div>
 
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-500 text-gray-700 mb-1.5">Username (NIM)</label>
@@ -449,7 +449,7 @@ export default function TambahMahasiswa() {
       </div>
 
       {/* Footer */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col-reverse min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-3 min-w-0">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 sm:px-4 py-3.5 sm:py-4 flex flex-col-reverse min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-3 min-w-0">
         <Link to="/admin/mahasiswa" className="text-sm text-gray-500 hover:text-gray-700 text-center min-[480px]:text-left py-1">Batal</Link>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 sm:gap-3 w-full min-[480px]:w-auto">
           <button

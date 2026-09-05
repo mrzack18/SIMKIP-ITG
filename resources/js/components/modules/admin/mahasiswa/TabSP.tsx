@@ -7,7 +7,7 @@ import { spHistoryData } from "@/data/mockData"
 export function TabSP({ data, loading, error }: { data: any[]; loading: boolean; error?: any }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-12 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data SP...
       </div>
     )
@@ -25,14 +25,14 @@ export function TabSP({ data, loading, error }: { data: any[]; loading: boolean;
 
   if (!data.length) {
     return (
-      <div className="space-y-4 sm:space-y-5 min-w-0">
+      <div className="space-y-3 sm:space-y-4 min-w-0">
         <div className="bg-white p-4 rounded-xl border border-[#E2E8F0] min-w-0">
           <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
             Riwayat Surat Peringatan
           </span>
         </div>
         <div className="border border-[#E2E8F0] rounded-xl overflow-hidden min-w-0">
-          <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
             <img src={logoItg} alt="Logo ITG" className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-full bg-white p-0.5 flex-shrink-0" />
             <div className="text-white min-w-0">
               <div className="font-bold text-xs sm:text-sm leading-snug">INSTITUT TEKNOLOGI GARUT</div>
@@ -53,7 +53,7 @@ export function TabSP({ data, loading, error }: { data: any[]; loading: boolean;
   const riwayatSPs = data.filter(sp => sp.status === 'Selesai' || sp.status === 'Kedaluwarsa' || sp.status === 'Dicabut');
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       
       {/* Active SPs */}
       <div className="space-y-3 sm:space-y-4 min-w-0">
@@ -67,7 +67,7 @@ export function TabSP({ data, loading, error }: { data: any[]; loading: boolean;
         ) : (
           aktifSPs.map((sp, idx) => (
             <div key={idx} className="border border-red-200 rounded-xl overflow-hidden shadow-sm min-w-0">
-              <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <img src={logoItg} alt="Logo ITG" className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-full bg-white p-0.5 flex-shrink-0" />
                 <div className="text-white min-w-0">
                   <div className="font-bold text-xs sm:text-sm leading-snug">INSTITUT TEKNOLOGI GARUT</div>
@@ -78,7 +78,7 @@ export function TabSP({ data, loading, error }: { data: any[]; loading: boolean;
               </div>
               <div className="bg-red-50 p-4 sm:p-6 space-y-3 sm:space-y-4 min-w-0">
                 <div className="text-center pb-3 sm:pb-4 border-b border-red-200 min-w-0">
-                  <h4 className="font-bold text-gray-900 uppercase underline text-sm sm:text-base leading-snug break-words">
+                  <h4 className="font-bold text-gray-900 uppercase underline text-xs sm:text-sm leading-snug break-words">
                     {sp.level === 'SP1' ? 'SURAT PERINGATAN PERTAMA (SP 1)' : 
                      sp.level === 'SP2' ? 'SURAT PERINGATAN KEDUA (SP 2)' : 
                      'SURAT PERINGATAN KETIGA (SP 3)'}

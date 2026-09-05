@@ -500,15 +500,15 @@ function TabRiwayatAkademik({ data }: { data: DetailResponse }) {
   const chartData = (data.ipk_chart ?? []).map((c) => ({ ...c, ipkVal: c.ipk }))
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-w-0">
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 sm:gap-4">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2.5 sm:gap-3">
         {[
           { label: "IPK Tertinggi", value: highest.toFixed(2), sub: `di Sem ${highestSem || "-"}` },
           { label: "IPK Terendah",  value: lowest.toFixed(2),  sub: `di Sem ${lowestSem || "-"}` },
           { label: "IPK Rata-rata", value: avg.toFixed(2),    sub: `dari ${ipkHistory.length} semester` },
         ].map(({ label, value, sub }) => (
-          <div key={label} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-center min-w-0">
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">{value}</div>
+          <div key={label} className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-center min-w-0">
+            <div className="text-lg sm:text-xl font-bold text-gray-900">{value}</div>
             <div className="text-xs font-semibold text-gray-700 mt-0.5">{label}</div>
             <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
           </div>
@@ -767,9 +767,9 @@ function TabSP({ sp, mhs }: { sp: SpItem[]; mhs: MahasiswaDetailData }) {
 
   if (sp.length === 0) {
     return (
-      <div className="space-y-4 sm:space-y-5 min-w-0">
+      <div className="space-y-3 sm:space-y-4 min-w-0">
         <div className="border border-[#E2E8F0] rounded-xl overflow-hidden min-w-0">
-          <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 min-w-0">
+          <div className="bg-[#263F93] px-3 sm:px-4 py-3.5 sm:py-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
             <img src={logoItg} alt="Logo ITG"
               className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-full bg-white p-0.5 flex-shrink-0" />
             <div className="text-white min-w-0">
@@ -790,9 +790,9 @@ function TabSP({ sp, mhs }: { sp: SpItem[]; mhs: MahasiswaDetailData }) {
   const utama = spAktif ?? sp[0]
 
   return (
-    <div className="space-y-4 sm:space-y-5 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       <div className="border border-[#E2E8F0] rounded-xl overflow-hidden min-w-0">
-        <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="bg-[#263F93] px-3 sm:px-4 py-3.5 sm:py-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img src={logoItg} alt="Logo ITG"
             className="h-10 w-10 sm:h-12 sm:w-12 object-contain rounded-full bg-white p-0.5 flex-shrink-0" />
           <div className="text-white min-w-0">
@@ -859,7 +859,7 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetailData }) {
   ]
 
   return (
-    <div className="space-y-4 sm:space-y-5 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       <div className="bg-gray-50 border border-[#E2E8F0] rounded-xl px-3.5 sm:px-4 py-3 mb-5 flex items-center gap-2 min-w-0">
         <Lock size={14} className="text-gray-400 flex-shrink-0" />
         <span className="text-xs font-medium text-gray-500 uppercase tracking-wide break-words">
@@ -867,13 +867,13 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetailData }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
-        <div className="col-span-full flex items-center gap-3 sm:gap-4 min-w-0">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
+        <div className="col-span-full flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-lg sm:text-xl font-bold text-white flex-shrink-0">
             {inisial}
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-gray-900 text-sm sm:text-base break-words">{mhs.nama}</div>
+            <div className="font-semibold text-gray-900 text-xs sm:text-sm break-words">{mhs.nama}</div>
             <div className="text-xs sm:text-sm text-gray-500 break-words">NIM {mhs.nim}</div>
           </div>
         </div>
@@ -932,13 +932,13 @@ function TabSuratPenyelesaian({ items, bebas, meta }: {
   const total = items.length
 
   return (
-    <div className="space-y-4 sm:space-y-5 min-w-0">
-      <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-3.5 sm:p-4 bg-gray-50 border border-[#E2E8F0] rounded-xl min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 p-3.5 sm:p-4 bg-gray-50 border border-[#E2E8F0] rounded-xl min-w-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
           <FileText size={22} className="text-gray-400" />
         </div>
         <div className="min-w-0 flex-1 basis-40">
-          <div className="font-semibold text-gray-700 text-sm sm:text-base break-words">
+          <div className="font-semibold text-gray-700 text-xs sm:text-sm break-words">
             {bebas ? `Permohonan ${bebas.status}` : "Belum Mengajukan"}
           </div>
           <div className="text-xs text-gray-400 mt-0.5 break-words">
@@ -1023,7 +1023,7 @@ export default function MahasiswaDetail() {
 
   if (error || !data) {
     return (
-      <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+      <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
         <Link to="../mahasiswa" relative="path" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
           <ChevronLeft size={16} /> Manajemen Mahasiswa
         </Link>
@@ -1044,7 +1044,7 @@ export default function MahasiswaDetail() {
   const inisial = (mhs.nama ?? "?").charAt(0)
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 pb-10 w-full max-w-7xl mx-auto min-w-0">
       <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-xl px-3.5 sm:px-4 py-3 text-xs sm:text-sm text-[#263F93] flex items-start gap-2 min-w-0">
         <Info size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
         <span className="break-words min-w-0">
@@ -1077,9 +1077,9 @@ export default function MahasiswaDetail() {
       </div>
 
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-4 sm:gap-5 min-w-0">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-lg sm:text-xl font-bold text-white flex-shrink-0">
               {inisial}
             </div>
             <div className="flex-1 min-w-0 sm:hidden">

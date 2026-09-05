@@ -88,10 +88,10 @@ export default function WarekLaporanList() {
   const filtered = data;
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-4 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Laporan Semester</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Laporan Semester</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">Review dan setujui laporan evaluasi semester dari Biro Kemahasiswaan</p>
         </div>
         <div className="self-start min-[480px]:self-auto shrink-0">
@@ -121,7 +121,7 @@ export default function WarekLaporanList() {
           </div>
         )}
         {!loading && error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-red-700 break-words min-w-0">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-red-700 break-words min-w-0">
             {error}
           </div>
         )}
@@ -133,14 +133,14 @@ export default function WarekLaporanList() {
         {!loading && !error && filtered.map(r => {
           const ss = statusStyle[r.status];
           return (
-            <div key={r.id} className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 min-w-0">
-              <div className="flex flex-wrap items-start gap-3 sm:gap-4 min-w-0">
+            <div key={r.id} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 min-w-0">
+              <div className="flex flex-wrap items-start gap-2.5 sm:gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
                   <FileText size={22} className="text-[#263F93]" />
                 </div>
                 <div className="flex-1 min-w-0 basis-48">
                   <div className="flex flex-wrap items-center gap-2 mb-1 min-w-0">
-                    <h3 className="font-600 text-gray-800 text-sm sm:text-base break-words min-w-0">{r.judul}</h3>
+                    <h3 className="font-600 text-gray-800 text-xs sm:text-sm break-words min-w-0">{r.judul}</h3>
                     <span className={`px-2 py-0.5 rounded text-xs font-500 flex items-center gap-1 whitespace-nowrap shrink-0 ${ss.badge}`}>
                       {ss.icon} {r.status}
                     </span>

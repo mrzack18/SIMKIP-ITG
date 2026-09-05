@@ -48,7 +48,7 @@ const SectionHeader = ({
   title: string
   onSave?: () => void
 }) => (
-  <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+  <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
     <div className="flex items-center gap-2.5 min-w-0">
       <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
         {num}
@@ -371,9 +371,9 @@ export default function Konfigurasi() {
   
 
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       <div className="min-w-0">
-        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
+        <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">
           Konfigurasi Sistem
         </h1>
         <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
@@ -388,8 +388,8 @@ export default function Konfigurasi() {
           title="Ambang Batas IPK (Threshold)"
           onSave={() => setShowIpkWarning(true)}
         />
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
-          <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center gap-3 sm:gap-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
+          <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="shrink-0">
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
                 IPK Minimum
@@ -448,7 +448,7 @@ export default function Konfigurasi() {
 
       {/* Section 2: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
               2
@@ -468,7 +468,7 @@ export default function Konfigurasi() {
             <Plus size={12} /> Tambah Periode
           </button>
         </div>
-        <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 min-w-0">
+        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
           <PeriodeAktifCard
             active={periodeList.find(p => p.is_aktif) || null}
             totalMahasiswaAktif={totalMahasiswaAktif}
@@ -503,7 +503,7 @@ export default function Konfigurasi() {
       {/* Section 3: Master Prodi */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader num={3} title="Master Data Program Studi" />
-        <div className="p-4 sm:p-5 space-y-3 min-w-0">
+        <div className="p-3 sm:p-4 space-y-3 min-w-0">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
@@ -616,7 +616,7 @@ export default function Konfigurasi() {
           title="Jenis Dokumen Kewajiban"
           onSave={() => showToast("Konfigurasi dokumen disimpan")}
         />
-        <div className="p-4 sm:p-5 space-y-1 min-w-0">
+        <div className="p-3 sm:p-4 space-y-1 min-w-0">
           {dokumens.map((d: any) => (
             <div key={d.id} className="border-b border-gray-50 last:border-0 min-w-0">
               <div className="flex items-center gap-2 sm:gap-3 py-2 min-w-0">
@@ -697,7 +697,7 @@ export default function Konfigurasi() {
           title="Informasi Institusi"
           onSave={() => showToast("Informasi institusi diperbarui")}
         />
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div>
             <label className="block text-sm font-500 text-gray-700 mb-1.5">
               Nama Institusi
@@ -742,7 +742,7 @@ export default function Konfigurasi() {
           title="Konfigurasi Nilai Mutu"
           onSave={() => showToast("Konfigurasi nilai mutu berhasil disimpan")}
         />
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           {/* Deskripsi */}
           <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
             <GraduationCap
@@ -1037,7 +1037,7 @@ export default function Konfigurasi() {
           title="Regulasi & Aturan"
           onSave={() => showToast("Regulasi berhasil disimpan")}
         />
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
@@ -1175,7 +1175,7 @@ export default function Konfigurasi() {
           title="Jenis Pelanggaran"
           onSave={() => showToast("Jenis pelanggaran disimpan")}
         />
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[640px] text-sm">
               <thead>

@@ -136,11 +136,11 @@ function PreviewModal({ preview, onClose }: { preview: FileItem; onClose: () => 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden min-w-0">
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
+        <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
           <h3 className="font-600 text-gray-800 text-sm break-words min-w-0 flex-1">{preview.nama}</h3>
           <button onClick={onClose} aria-label="Tutup pratinjau" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"><X size={18} /></button>
         </div>
-        <div className="overflow-y-auto p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="overflow-y-auto p-3 sm:p-4 space-y-4 min-w-0">
               {/* Common fields */}
               <div className="space-y-3 min-w-0">
                 <DetailRow icon={<FileText size={14} />} label="Nama File" value={preview.nama} />
@@ -368,10 +368,10 @@ export default function ArsipDigital() {
   })).filter(g => g.items.length > 0);
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between gap-2 sm:gap-4 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Arsip Digital Saya</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Arsip Digital Saya</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">Semua dokumen Anda tersimpan aman di sini. Gunakan arsip ini untuk persiapan sidang dan SKPI.</p>
         </div>
         <button 
@@ -415,7 +415,7 @@ export default function ArsipDigital() {
           <p className="text-xs sm:text-sm text-gray-500">Memuat arsip digital...</p>
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-100 rounded-xl p-4 sm:p-5 text-center text-red-600 text-xs sm:text-sm font-500 break-words min-w-0">
+        <div className="bg-red-50 border border-red-100 rounded-xl p-3 sm:p-4 text-center text-red-600 text-xs sm:text-sm font-500 break-words min-w-0">
           {error}
         </div>
       ) : (
@@ -428,7 +428,7 @@ export default function ArsipDigital() {
         {grouped.map(({ cat, items }) => (
           <div key={cat} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
             <button onClick={() => toggle(cat)}
-              className="w-full flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3.5 sm:py-4 hover:bg-gray-50 transition-colors text-left min-w-0">
+              className="w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 hover:bg-gray-50 transition-colors text-left min-w-0">
               <span className="text-xl flex-shrink-0 flex items-center">{catIcons[cat]}</span>
               <div className="flex-1 min-w-0">
                 <span className="font-600 text-gray-800 text-xs sm:text-sm break-words">{cat}</span>

@@ -37,7 +37,7 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex justify-center items-center h-64 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader className="animate-spin w-8 h-8 mr-2 flex-shrink-0" /> Memuat dashboard...
       </div>
     );
@@ -60,11 +60,11 @@ export default function StudentDashboard() {
   const rejectedDocs = dokumen.list_status.filter(d => d.status === "Ditolak");
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {/* Greeting */}
       <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight break-words">Halo, {firstName}!</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight break-words">Halo, {firstName}!</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">{today} · NIM {mahasiswa.nim}</p>
         </div>
         <div className="self-start min-[420px]:self-auto shrink-0">
@@ -107,7 +107,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Status cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div className="bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-gray-100 text-center min-w-0">
           <div className="relative w-16 h-16 mx-auto mb-2">
             <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
@@ -124,7 +124,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-gray-100 text-center min-w-0">
-          <div className="font-display font-700 text-2xl sm:text-3xl text-gray-900 mb-1">{akademik.ipk_terakhir.toFixed(2)}</div>
+          <div className="font-display font-700 text-xl sm:text-2xl text-gray-900 mb-1">{akademik.ipk_terakhir.toFixed(2)}</div>
           {akademik.ipk_delta !== null && (
             <div className={`flex items-center justify-center gap-1 text-xs mb-1 ${akademik.ipk_delta >= 0 ? "text-green-500" : "text-red-500"}`}>
               <TrendingUp size={12} className={akademik.ipk_delta < 0 ? "rotate-180" : ""} /> {akademik.ipk_delta >= 0 ? "+" : ""}{akademik.ipk_delta.toFixed(2)} dari Sem {akademik.semester > 1 ? akademik.semester - 1 : 1}
@@ -134,7 +134,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-gray-100 text-center min-w-0">
-          <div className="font-display font-700 text-2xl sm:text-3xl text-gray-900 mb-1">{dokumen.total_disetujui}<span className="text-base text-gray-300">/{dokumen.total_wajib}</span></div>
+          <div className="font-display font-700 text-xl sm:text-2xl text-gray-900 mb-1">{dokumen.total_disetujui}<span className="text-base text-gray-300">/{dokumen.total_wajib}</span></div>
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-2 mb-1">
             <div className="h-full bg-green-500 rounded-full" style={{ width: `${(dokumen.total_disetujui / dokumen.total_wajib) * 100 || 0}%` }} />
           </div>
@@ -177,9 +177,9 @@ export default function StudentDashboard() {
       </div>
 
       {/* IPK chart + Doc checklist side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3">
         {/* IPK Chart */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 min-w-0 overflow-hidden">
           <h3 className="font-600 text-gray-800 text-sm mb-4 flex items-center justify-between gap-2 min-w-0">
             <span className="truncate">Progres IPK Saya</span>
             <Link to="/mahasiswa/ipk" className="text-xs text-[#263F93] hover:underline flex items-center gap-1 shrink-0">
@@ -207,7 +207,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Document checklist */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 min-w-0 overflow-hidden">
+        <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 min-w-0 overflow-hidden">
           <h3 className="font-600 text-gray-800 text-sm mb-4 flex items-center justify-between gap-2 min-w-0">
             <span className="truncate">Dokumen Kewajiban</span>
             <Link to="/mahasiswa/upload" className="text-xs text-[#263F93] hover:underline flex items-center gap-1 shrink-0">

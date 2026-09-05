@@ -112,10 +112,10 @@ export default function EksporLaporan() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Ekspor Laporan</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Ekspor Laporan</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">Generate dan download laporan mahasiswa KIP-K {prodiNama}</p>
         </div>
         <div className="self-start min-[480px]:self-auto shrink-0">
@@ -123,9 +123,9 @@ export default function EksporLaporan() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 min-w-0">
         {/* Form */}
-        <div className="lg:col-span-1 bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 space-y-4 min-w-0">
+        <div className="lg:col-span-1 bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 space-y-4 min-w-0">
           <h2 className="font-600 text-gray-800 text-sm">Parameter Laporan</h2>
 
           {[
@@ -188,7 +188,7 @@ export default function EksporLaporan() {
             </div>
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
+              <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
                 <div className="min-w-0">
                   <h3 className="font-600 text-gray-800 text-sm">Pratinjau Laporan</h3>
                   <p className="text-xs text-gray-400 mt-0.5 break-words">{prodiNama} — {form.tahunAkademik} Semester {form.semester} — Angkatan {form.angkatan}</p>
@@ -201,7 +201,7 @@ export default function EksporLaporan() {
               </div>
 
               {error && (
-                <div className="px-4 sm:px-5 py-3 bg-red-50 border-b border-red-200 text-xs sm:text-sm text-red-700 break-words">{error}</div>
+                <div className="px-3 sm:px-4 py-3 bg-red-50 border-b border-red-200 text-xs sm:text-sm text-red-700 break-words">{error}</div>
               )}
 
               <div className="grid grid-cols-3 gap-px bg-gray-100 min-w-0">
@@ -211,7 +211,7 @@ export default function EksporLaporan() {
                   { label: "Mahasiswa dengan SP", val: preview?.summary?.mahasiswaDenganSp ?? 0 },
                 ].map(s => (
                   <div key={s.label} className="bg-white px-2 sm:px-4 py-2.5 sm:py-3 text-center min-w-0">
-                    <p className="font-display font-700 text-xl sm:text-2xl text-[#263F93] break-words">{s.val}</p>
+                    <p className="font-display font-700 text-lg sm:text-xl text-[#263F93] break-words">{s.val}</p>
                     <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 break-words leading-tight">{s.label}</p>
                   </div>
                 ))}

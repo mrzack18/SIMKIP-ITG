@@ -9,7 +9,7 @@ import { BackendNotReady } from "./Shared"
 export function TabDokumen({ data, loading, error }: { data: any[]; loading: boolean; error?: any }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-12 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat dokumen kewajiban...
       </div>
     )
@@ -48,13 +48,13 @@ export function TabDokumen({ data, loading, error }: { data: any[]; loading: boo
         </span>
       </div>
       {data.map((doc) => (
-        <div key={doc.id} className="p-3 sm:p-4 border border-[#E2E8F0] rounded-xl flex items-start gap-3 sm:gap-4 hover:shadow-sm transition-shadow bg-white min-w-0">
+        <div key={doc.id} className="p-3 sm:p-4 border border-[#E2E8F0] rounded-xl flex items-start gap-2.5 sm:gap-3 hover:shadow-sm transition-shadow bg-white min-w-0">
           <div className="p-2.5 sm:p-3 bg-blue-50 text-blue-600 rounded-lg flex-shrink-0">
             <FileText size={20} className="sm:w-6 sm:h-6" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 mb-2 min-w-0">
-              <h4 className="font-semibold text-sm sm:text-base text-gray-900 break-words min-w-0">
+              <h4 className="font-semibold text-xs sm:text-sm text-gray-900 break-words min-w-0">
                 {doc.jenis}
                 {doc.is_wajib && (
                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 whitespace-nowrap align-middle">

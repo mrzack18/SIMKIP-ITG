@@ -40,7 +40,7 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
     <div className={`rounded-xl border overflow-hidden min-w-0 ${ok ? "border-green-200" : "border-yellow-300"}`}>
       <button
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 min-w-0 ${ok ? "bg-green-50" : "bg-yellow-50"}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 min-w-0 ${ok ? "bg-green-50" : "bg-yellow-50"}`}
       >
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="text-gray-400 flex items-center justify-center flex-shrink-0">{icon}</div>
@@ -53,7 +53,7 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
         </div>
         {open ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
       </button>
-      {open && <div className="p-4 sm:p-5 bg-white min-w-0">{children}</div>}
+      {open && <div className="p-3 sm:p-4 bg-white min-w-0">{children}</div>}
     </div>
   );
 }
@@ -77,7 +77,7 @@ function FormalSurat({ data, signature }: { data: BebasTanggunganDetailResponse;
           <img src={logoItg} alt="ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
           <div className="flex-1 text-center min-w-0">
             <p className="font-bold text-[10px] sm:text-xs leading-snug">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET DAN TEKNOLOGI</p>
-            <p className="font-bold text-sm sm:text-base leading-snug">INSTITUT TEKNOLOGI GARUT</p>
+            <p className="font-bold text-xs sm:text-sm leading-snug">INSTITUT TEKNOLOGI GARUT</p>
             <p className="text-[10px] sm:text-xs text-gray-500 leading-snug">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
             <p className="text-[10px] sm:text-xs text-gray-400 leading-snug break-words">Telp. (0262) 540895 · www.itg.ac.id · info@itg.ac.id</p>
           </div>
@@ -300,7 +300,7 @@ export default function BebasTanggunganDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] px-4">
-        <div className="flex items-center gap-3 text-gray-500 text-sm sm:text-base text-center">
+        <div className="flex items-center gap-3 text-gray-500 text-xs sm:text-sm text-center">
           <Loader2 size={22} className="animate-spin flex-shrink-0" />
           <span>Memuat detail permohonan...</span>
         </div>
@@ -311,7 +311,7 @@ export default function BebasTanggunganDetail() {
   // ── Not Found ──
   if (notFound) {
     return (
-      <div className="max-w-2xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+      <div className="max-w-2xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
         <Link to="/admin/bebas-tanggungan" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
           <ChevronLeft size={15} /> Surat Penyelesaian
         </Link>
@@ -327,7 +327,7 @@ export default function BebasTanggunganDetail() {
   // ── Error ──
   if (error || !data) {
     return (
-      <div className="max-w-2xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+      <div className="max-w-2xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
         <Link to="/admin/bebas-tanggungan" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
           <ChevronLeft size={15} /> Surat Penyelesaian
         </Link>
@@ -352,7 +352,7 @@ export default function BebasTanggunganDetail() {
   const allChecklistOk = checklist.every((c) => c.terpenuhi);
 
   return (
-    <div className="max-w-2xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-2xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       {/* Breadcrumb and Filter */}
       <div className="flex items-center justify-between gap-2 text-xs sm:text-sm text-gray-500 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
@@ -365,8 +365,8 @@ export default function BebasTanggunganDetail() {
               </div>
 
       {/* Student card */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 min-w-0">
+      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#263F93] flex items-center justify-center text-white font-display font-700 text-lg sm:text-xl flex-shrink-0">
             {mahasiswa.nama.charAt(0)}
           </div>
@@ -399,7 +399,7 @@ export default function BebasTanggunganDetail() {
 
       {/* Incomplete docs warning */}
       {missingDocs.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 min-w-0">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0">
             <AlertTriangle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
@@ -519,7 +519,7 @@ export default function BebasTanggunganDetail() {
 
       {/* Rejection history */}
       {rejectionHistory.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
+        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
           <h3 className="font-600 text-gray-800 text-sm mb-3 flex items-center gap-2">
             <XCircle size={15} className="text-[#DC2626] flex-shrink-0" /> Riwayat Penolakan
           </h3>
@@ -548,15 +548,15 @@ export default function BebasTanggunganDetail() {
 
       {/* Overall assessment */}
       {canApply ? (
-        <div className="flex items-start gap-3 bg-green-50 border border-green-300 rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 min-w-0">
+        <div className="flex items-start gap-3 bg-green-50 border border-green-300 rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 min-w-0">
           <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
           <div className="min-w-0">
-            <p className="font-600 text-sm sm:text-base text-green-800">Semua persyaratan terpenuhi</p>
+            <p className="font-600 text-xs sm:text-sm text-green-800">Semua persyaratan terpenuhi</p>
             <p className="text-xs sm:text-sm text-green-700 mt-0.5">Mahasiswa layak mendapatkan Surat Keterangan Penyelesaian KIP-K.</p>
           </div>
         </div>
       ) : (
-        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 min-w-0">
+        <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-300 rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 min-w-0">
           <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs sm:text-sm text-yellow-700 break-words min-w-0">
             Terdapat dokumen yang belum lengkap atau belum diverifikasi. Permohonan belum dapat diterbitkan.
@@ -567,7 +567,7 @@ export default function BebasTanggunganDetail() {
       {/* Formal surat — shown when diterbitkan */}
       {currentStatus === "diterbitkan" && (
         <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden min-w-0">
-          <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
+          <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
             <h3 className="font-600 text-gray-800 text-sm flex items-center gap-2 min-w-0">
               <CheckCircle size={15} className="text-[#059669] flex-shrink-0" /> <span className="truncate">Surat Penyelesaian Telah Diterbitkan</span>
             </h3>
@@ -605,7 +605,7 @@ export default function BebasTanggunganDetail() {
 
       {/* Action buttons — only for menunggu */}
       {currentStatus === "menunggu" && (
-        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:items-center gap-2 sm:gap-3 min-w-0">
+        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] px-3 sm:px-4 py-3.5 sm:py-4 flex flex-col min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:items-center gap-2 sm:gap-3 min-w-0">
           <Link to="/admin/bebas-tanggungan" className="text-sm text-gray-500 hover:text-gray-700 text-center min-[480px]:text-left py-1 order-last min-[480px]:order-first">
             ← Kembali
           </Link>

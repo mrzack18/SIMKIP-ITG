@@ -132,14 +132,14 @@ export default function UploadDokumen() {
   const currentExtraFields = uploadDoc?.fields || [];
 
   if (error && docs.length === 0) {
-    return <div className="p-8 text-center text-red-500 text-sm sm:text-base break-words">{error}</div>;
+    return <div className="p-8 text-center text-red-500 text-xs sm:text-sm break-words">{error}</div>;
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-bold text-xl sm:text-2xl text-gray-900 leading-tight">Upload Dokumen Kewajiban</h1>
+          <h1 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight">Upload Dokumen Kewajiban</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">
             Seluruh dokumen berikut wajib diunggah dan divalidasi sebagai syarat KIP-K dan kelulusan.
           </p>
@@ -151,7 +151,7 @@ export default function UploadDokumen() {
 
       {/* Progress */}
       {total > 0 && (
-        <div className="bg-white rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 shadow-sm border border-gray-100 min-w-0">
+        <div className="bg-white rounded-xl px-3 sm:px-4 py-3.5 sm:py-4 shadow-sm border border-gray-100 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
             <p className="text-xs sm:text-sm font-semibold text-gray-700 break-words min-w-0">
               {approved} dari {total} dokumen telah disetujui
@@ -177,9 +177,9 @@ export default function UploadDokumen() {
         {docs.map((doc) => (
           <div
             key={doc.id}
-            className={`bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 border-l-4 min-w-0 ${borderColor[doc.status]}`}
+            className={`bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 border-l-4 min-w-0 ${borderColor[doc.status]}`}
           >
-            <div className="flex flex-wrap items-start gap-3 sm:gap-4 min-w-0">
+            <div className="flex flex-wrap items-start gap-2.5 sm:gap-3 min-w-0">
               <div className="flex-shrink-0 mt-0.5">
                 <StatusIcon status={doc.status} />
               </div>
@@ -248,9 +248,9 @@ export default function UploadDokumen() {
       {uploadTarget && uploadDoc && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
               <div className="min-w-0">
-                <h3 className="font-bold text-sm sm:text-base text-gray-800">Upload Dokumen</h3>
+                <h3 className="font-bold text-xs sm:text-sm text-gray-800">Upload Dokumen</h3>
                 <p className="text-xs text-gray-400 mt-0.5 truncate">{uploadDoc.nama}</p>
               </div>
               <button
@@ -261,14 +261,14 @@ export default function UploadDokumen() {
                 <X size={18} />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto flex-1 min-w-0">
               {/* File drop zone */}
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-5 sm:p-8 text-center cursor-pointer transition-colors min-w-0 ${
+                className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center cursor-pointer transition-colors min-w-0 ${
                   dragOver
                     ? "border-[#263F93] bg-[#263F93]/5"
                     : "border-[#E2E8F0] hover:border-[#263F93]/40 hover:bg-gray-50/50"
@@ -385,9 +385,9 @@ export default function UploadDokumen() {
       {viewTarget && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
               <div className="min-w-0">
-                <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">{viewTarget.nama}</h3>
+                <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">{viewTarget.nama}</h3>
                 <p className="text-xs text-gray-400 mt-0.5 break-all">{viewTarget.fileName}</p>
               </div>
               <button
@@ -398,7 +398,7 @@ export default function UploadDokumen() {
                 <X size={18} />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
               <div className="h-48 sm:h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex flex-col items-center justify-center gap-3 relative overflow-hidden px-4 min-w-0">
                 {viewTarget.fileUrl && (viewTarget.fileName?.endsWith('.jpg') || viewTarget.fileName?.endsWith('.png') || viewTarget.fileName?.endsWith('.jpeg')) ? (
                   <img src={viewTarget.fileUrl} alt="Preview" className="w-full h-full object-contain" />

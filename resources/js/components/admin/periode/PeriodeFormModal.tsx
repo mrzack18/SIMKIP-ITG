@@ -96,10 +96,10 @@ export default function PeriodeFormModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto overflow-hidden min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b min-w-0" style={{ borderColor: "#E2E8F0" }}>
+        <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b min-w-0" style={{ borderColor: "#E2E8F0" }}>
           <div className="flex items-center gap-2 min-w-0">
             <Calendar size={18} className="text-[#263F93] flex-shrink-0" />
-            <h3 className="font-display font-700 text-sm sm:text-base text-gray-900 truncate">
+            <h3 className="font-display font-700 text-xs sm:text-sm text-gray-900 truncate">
               {initial ? "Edit Periode" : "Tambah Periode"}
             </h3>
           </div>
@@ -109,7 +109,7 @@ export default function PeriodeFormModal({
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+        <div className="p-3 sm:p-4 space-y-4 min-w-0">
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 flex items-center gap-2">
               <AlertTriangle size={13} />
@@ -190,7 +190,7 @@ export default function PeriodeFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 px-4 sm:px-5 py-3 border-t" style={{ borderColor: "#E2E8F0", background: "#F8FAFC" }}>
+        <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 px-3 sm:px-4 py-3 border-t" style={{ borderColor: "#E2E8F0", background: "#F8FAFC" }}>
           <button
             onClick={onClose}
             disabled={saving}

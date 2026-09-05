@@ -165,10 +165,10 @@ export default function Organisasi() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight break-words">Keaktifan Organisasi & Kepanitiaan</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight break-words">Keaktifan Organisasi & Kepanitiaan</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{list.length} organisasi tercatat</p>
         </div>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
@@ -182,7 +182,7 @@ export default function Organisasi() {
       </div>
 
       {/* List */}
-      <div className="space-y-4 sm:space-y-6 min-w-0">
+      <div className="space-y-3 sm:space-y-4 min-w-0">
         <div className="space-y-3 min-w-0">
           <h2 className="font-600 text-gray-700 text-xs sm:text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100 break-words">
             Tahun Ajaran {formatTA(taFilter)}
@@ -194,12 +194,12 @@ export default function Organisasi() {
               <p className="text-gray-500 font-500 text-xs sm:text-sm break-words">Belum ada catatan keaktifan pada tahun ajaran ini.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               {list.map((org) => {
                 const ss = statusStyle[org.status];
                 const duration = calcDuration(org.mulai, org.selesai);
                 return (
-                  <div key={org.id} className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-[#E2E8F0] hover:shadow-md transition-shadow flex flex-col min-w-0">
+                  <div key={org.id} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-[#E2E8F0] hover:shadow-md transition-shadow flex flex-col min-w-0">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
                         <Building2 size={18} className="text-[#263F93]" />
@@ -275,24 +275,24 @@ export default function Organisasi() {
       {detail && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h3 className="font-display font-700 text-sm sm:text-base text-gray-800 truncate">Detail Keaktifan Organisasi</h3>
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h3 className="font-display font-700 text-xs sm:text-sm text-gray-800 truncate">Detail Keaktifan Organisasi</h3>
               <button onClick={() => setDetail(null)} aria-label="Tutup detail" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"><X size={18} /></button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
                   <Building2 size={22} className="text-[#263F93]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-700 text-sm sm:text-base text-gray-800 break-words">{detail.nama}</h4>
+                  <h4 className="font-700 text-xs sm:text-sm text-gray-800 break-words">{detail.nama}</h4>
                   <p className="text-sm text-gray-500 font-500 mt-0.5 break-words">{detail.jabatan}</p>
                   <span className={`mt-1.5 inline-flex px-2 py-0.5 rounded text-xs font-500 items-center gap-1 whitespace-nowrap ${statusStyle[detail.status].badge}`}>
                     {statusStyle[detail.status].icon} {detail.status}
                   </span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm min-w-0">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 text-sm min-w-0">
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Periode</p>
                   <p className="font-500 text-gray-700 break-words">{fmtMonth(detail.mulai)} – {fmtMonth(detail.selesai)}</p>
@@ -374,26 +374,26 @@ export default function Organisasi() {
       {skOrg && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
               <div className="min-w-0">
-                <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">SK Kepengurusan</h3>
+                <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">SK Kepengurusan</h3>
                 <p className="text-xs text-gray-400 mt-0.5 truncate">{skOrg.nama}</p>
               </div>
               <button onClick={() => setSkOrg(null)} aria-label="Tutup pratinjau" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0">
                 <X size={18} />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
               {/* SK document preview */}
               <div className="border border-[#E2E8F0] rounded-xl overflow-hidden min-w-0">
                 {/* SK header */}
-                <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 text-center min-w-0">
+                <div className="bg-[#263F93] px-3 sm:px-4 py-3.5 sm:py-4 text-center min-w-0">
                   <p className="text-white text-[10px] sm:text-xs font-semibold uppercase tracking-widest opacity-80">Institut Teknologi Garut</p>
-                  <p className="text-white font-bold text-sm sm:text-base mt-1 break-words">SURAT KEPUTUSAN KEPENGURUSAN</p>
+                  <p className="text-white font-bold text-xs sm:text-sm mt-1 break-words">SURAT KEPUTUSAN KEPENGURUSAN</p>
                   <p className="text-white/70 text-[11px] sm:text-xs mt-0.5 break-words">Tahun Akademik {skOrg.mulai ? skOrg.mulai.split("-")[0] : "—"}/{skOrg.selesai ? skOrg.selesai.split("-")[0] : "—"}</p>
                 </div>
                 {/* SK body */}
-                <div className="bg-[#F8FAFC] px-4 sm:px-6 py-4 sm:py-5 space-y-3 min-w-0">
+                <div className="bg-[#F8FAFC] px-3 sm:px-4 py-4 sm:py-5 space-y-3 min-w-0">
                   <div className="flex items-center justify-center mb-3">
                     <div className="w-14 h-14 rounded-full bg-[#263F93]/10 flex items-center justify-center">
                       <FileText size={28} className="text-[#263F93]" />
@@ -458,12 +458,12 @@ export default function Organisasi() {
         <div className="fixed inset-0 z-50 flex">
           <div className="flex-1 bg-black/40 min-w-0" onClick={() => { setOpen(false); setEditingId(null); setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" }); }} />
           <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col min-w-0">
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h2 className="font-display font-700 text-sm sm:text-base text-gray-800 truncate">{editingId ? "Edit Data" : "Tambah Data"}</h2>
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h2 className="font-display font-700 text-xs sm:text-sm text-gray-800 truncate">{editingId ? "Edit Data" : "Tambah Data"}</h2>
               <button onClick={() => { setOpen(false); setEditingId(null); setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" }); }} aria-label="Tutup formulir" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"><X size={18} /></button>
             </div>
 
-            <div className="flex-1 px-4 sm:px-5 py-4 space-y-4 min-w-0">
+            <div className="flex-1 px-3 sm:px-4 py-4 space-y-4 min-w-0">
               <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">Jenis <span className="text-red-500">*</span></label>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -515,7 +515,7 @@ export default function Organisasi() {
               <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">Sertifikat / SK Pengurus</label>
                 <div onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-5 sm:p-6 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-[#F8FAFC] transition-colors min-w-0">
+                  className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-4 sm:p-5 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-[#F8FAFC] transition-colors min-w-0">
                   {fileName ? (
                     <div className="text-sm text-[#263F93] font-500 break-all">📎 {fileName}</div>
                   ) : (
@@ -532,7 +532,7 @@ export default function Organisasi() {
               <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">Foto Dokumentasi Kegiatan</label>
                 <div onClick={() => fotoRef.current?.click()}
-                  className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-5 sm:p-6 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-[#F8FAFC] transition-colors min-w-0">
+                  className="border-2 border-dashed border-[#E2E8F0] rounded-xl p-4 sm:p-5 text-center cursor-pointer hover:border-[#263F93]/30 hover:bg-[#F8FAFC] transition-colors min-w-0">
                   {fotoName ? (
                     <div className="text-sm text-[#263F93] font-500 break-all">📎 {fotoName}</div>
                   ) : (
@@ -548,7 +548,7 @@ export default function Organisasi() {
               </div>
             </div>
 
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex flex-col-reverse min-[420px]:flex-row gap-2 flex-shrink-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex flex-col-reverse min-[420px]:flex-row gap-2 flex-shrink-0">
               <button onClick={() => { setOpen(false); setEditingId(null); setForm({ jenis: "Organisasi", nama: "", jabatan: "", mulai: "", selesai: "", deskripsi: "" }); }} className="flex-1 py-2.5 border border-[#E2E8F0] rounded-xl text-sm text-gray-600">Batal</button>
               <button onClick={handleSubmit} disabled={!form.nama.trim() || !form.jabatan.trim() || isSubmitting}
                 className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white disabled:opacity-40"

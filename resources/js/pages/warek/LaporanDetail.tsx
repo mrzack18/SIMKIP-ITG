@@ -101,7 +101,7 @@ export default function WarekLaporanDetail() {
 
   if (loading) {
     return (
-      <div className="space-y-4 sm:space-y-5 pb-24 w-full max-w-7xl mx-auto min-w-0">
+      <div className="space-y-3 sm:space-y-4 pb-24 w-full max-w-7xl mx-auto min-w-0">
         <Link to="/warek/laporan" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Link>
@@ -114,7 +114,7 @@ export default function WarekLaporanDetail() {
 
   if (error || !report || !stats) {
     return (
-      <div className="space-y-4 sm:space-y-5 pb-24 w-full max-w-7xl mx-auto min-w-0">
+      <div className="space-y-3 sm:space-y-4 pb-24 w-full max-w-7xl mx-auto min-w-0">
         <Link to="/warek/laporan" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Link>
@@ -126,7 +126,7 @@ export default function WarekLaporanDetail() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-24 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 pb-24 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
         <Link to="/warek/laporan" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 shrink-0">
           <ArrowLeft size={16} /> Kembali ke Daftar
@@ -147,7 +147,7 @@ export default function WarekLaporanDetail() {
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
             <div className="min-w-0">
-              <p className="font-600 text-green-800 text-sm sm:text-base break-words">Laporan berhasil disetujui dengan tanda tangan digital Anda.</p>
+              <p className="font-600 text-green-800 text-xs sm:text-sm break-words">Laporan berhasil disetujui dengan tanda tangan digital Anda.</p>
               <p className="text-xs text-green-600 mt-0.5">Laporan telah menjadi dokumen final dan dapat diunduh.</p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function WarekLaporanDetail() {
       {returned && (
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-3.5 sm:p-4 flex items-start gap-3 min-w-0">
           <RotateCcw size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />
-          <p className="font-600 text-orange-800 text-sm sm:text-base break-words min-w-0">Laporan telah dikembalikan ke Admin untuk revisi.</p>
+          <p className="font-600 text-orange-800 text-xs sm:text-sm break-words min-w-0">Laporan telah dikembalikan ke Admin untuk revisi.</p>
         </div>
       )}
 
@@ -181,7 +181,7 @@ export default function WarekLaporanDetail() {
           </div>
 
           <div className="text-center mb-4 sm:mb-6 min-w-0">
-            <p className="font-bold text-sm sm:text-base text-gray-800 uppercase underline break-words">LAPORAN EVALUASI KIP-K</p>
+            <p className="font-bold text-xs sm:text-sm text-gray-800 uppercase underline break-words">LAPORAN EVALUASI KIP-K</p>
             <p className="text-xs text-gray-500 mt-1 break-all">Nomor: {report.nomor}</p>
             <p className="text-xs font-semibold text-[#263F93] mt-1 break-words">Tahun Ajaran: {report.periode}</p>
           </div>
@@ -195,7 +195,7 @@ export default function WarekLaporanDetail() {
               { label: "Surat Penyelesaian", val: stats.bebas },
             ].map(s => (
               <div key={s.label} className="bg-gray-50 rounded-xl p-2.5 sm:p-3 text-center min-w-0">
-                <p className="font-display font-700 text-xl sm:text-2xl text-[#263F93] break-words">{s.val}</p>
+                <p className="font-display font-700 text-lg sm:text-xl text-[#263F93] break-words">{s.val}</p>
                 <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 break-words leading-tight">{s.label}</p>
               </div>
             ))}
@@ -281,17 +281,17 @@ export default function WarekLaporanDetail() {
 
       {/* Sticky action bar */}
       {!approved && !returned && report.status === "Menunggu" && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 px-3 sm:px-4 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 shadow-lg">
           <div className="hidden sm:block flex-1" />
           <button onClick={() => window.print()} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 w-full sm:w-auto whitespace-nowrap">
             <Download size={14} /> Download Preview
           </button>
           <button onClick={() => setShowReturnModal(true)}
-            className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl border border-orange-300 text-sm font-500 text-orange-700 hover:bg-orange-50 w-full sm:w-auto whitespace-nowrap">
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-orange-300 text-sm font-500 text-orange-700 hover:bg-orange-50 w-full sm:w-auto whitespace-nowrap">
             <RotateCcw size={14} /> Kembalikan untuk Revisi
           </button>
           <button onClick={() => setShowApproveModal(true)}
-            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-sm font-700 text-white bg-green-600 hover:bg-green-700 shadow-sm w-full sm:w-auto whitespace-nowrap">
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-700 text-white bg-green-600 hover:bg-green-700 shadow-sm w-full sm:w-auto whitespace-nowrap">
             <CheckCircle size={14} /> Setujui & Tanda Tangani
           </button>
         </div>
@@ -302,7 +302,7 @@ export default function WarekLaporanDetail() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto min-w-0">
             <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
-              <h3 className="font-display font-700 text-sm sm:text-base text-gray-800 truncate">Konfirmasi Persetujuan</h3>
+              <h3 className="font-display font-700 text-xs sm:text-sm text-gray-800 truncate">Konfirmasi Persetujuan</h3>
               <button onClick={() => setShowApproveModal(false)} aria-label="Tutup" className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"><X size={18} /></button>
             </div>
             <p className="text-xs sm:text-sm text-gray-600 mb-4 break-words">
@@ -329,7 +329,7 @@ export default function WarekLaporanDetail() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto min-w-0">
             <div className="flex items-center justify-between gap-2 mb-4 min-w-0">
-              <h3 className="font-display font-700 text-sm sm:text-base text-gray-800 truncate">Kembalikan untuk Revisi</h3>
+              <h3 className="font-display font-700 text-xs sm:text-sm text-gray-800 truncate">Kembalikan untuk Revisi</h3>
               <button onClick={() => setShowReturnModal(false)} aria-label="Tutup" className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"><X size={18} /></button>
             </div>
             <p className="text-xs sm:text-sm text-gray-600 mb-3">Berikan catatan revisi untuk Admin Kemahasiswaan:</p>

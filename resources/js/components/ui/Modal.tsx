@@ -45,7 +45,7 @@ export function Modal({ open, onClose, title, children, width = "max-w-lg", hide
       >
         {(title || !hideClose) && (
           <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E2E8F0] min-w-0">
-            {title && <h2 className="font-display font-700 text-gray-800 text-sm sm:text-base truncate min-w-0">{title}</h2>}
+            {title && <h2 className="font-display font-700 text-gray-800 text-xs sm:text-sm truncate min-w-0">{title}</h2>}
             {!hideClose && (
               <button
                 onClick={onClose}

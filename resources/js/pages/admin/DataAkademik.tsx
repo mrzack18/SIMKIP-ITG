@@ -110,9 +110,9 @@ function PrestasiModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-2 px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
+        <div className="flex items-start justify-between gap-2 px-3 sm:px-4 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
           <div>
-            <h3 className="font-700 text-gray-800 text-sm sm:text-base break-words">
+            <h3 className="font-700 text-gray-800 text-xs sm:text-sm break-words">
               {item.namaPrestasi}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5 break-words">
@@ -126,7 +126,7 @@ function PrestasiModal({
             <X size={18} />
           </button>
         </div>
-        <div className="px-4 sm:px-5 py-4 space-y-4 min-w-0">
+        <div className="px-3 sm:px-4 py-4 space-y-4 min-w-0">
           <div className="flex flex-wrap gap-2">
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-600 ${tingkatBadge(item.tingkat)}`}
@@ -320,9 +320,9 @@ function OrganisasiModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-2 px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
+        <div className="flex items-start justify-between gap-2 px-3 sm:px-4 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
           <div>
-            <h3 className="font-700 text-gray-800 text-sm sm:text-base break-words">
+            <h3 className="font-700 text-gray-800 text-xs sm:text-sm break-words">
               {item.organisasi}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5 break-words">
@@ -336,7 +336,7 @@ function OrganisasiModal({
             <X size={18} />
           </button>
         </div>
-        <div className="px-4 sm:px-5 py-4 space-y-4 min-w-0">
+        <div className="px-3 sm:px-4 py-4 space-y-4 min-w-0">
           {/* Status */}
           <div className="flex gap-2">
             <span
@@ -476,9 +476,9 @@ function PelatihanModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between gap-2 px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
+        <div className="flex items-start justify-between gap-2 px-3 sm:px-4 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
           <div>
-            <h3 className="font-700 text-gray-800 text-sm sm:text-base break-words">
+            <h3 className="font-700 text-gray-800 text-xs sm:text-sm break-words">
               {item.namaPelatihan}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5 break-words">
@@ -492,7 +492,7 @@ function PelatihanModal({
             <X size={18} />
           </button>
         </div>
-        <div className="px-4 sm:px-5 py-4 space-y-4 min-w-0">
+        <div className="px-3 sm:px-4 py-4 space-y-4 min-w-0">
           {/* Status & Jenis */}
           <div className="flex gap-2">
             <span
@@ -985,7 +985,7 @@ export default function DataAkademik() {
   const tdCls = "px-4 py-3"
 
   return (
-    <div className="relative space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="relative space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       {loading && (
         <div className="absolute inset-0 z-50 flex items-start justify-center pt-[20vh] pointer-events-none">
           <Loader2 className="w-10 h-10 text-[#263F93] animate-spin" />
@@ -1001,7 +1001,7 @@ export default function DataAkademik() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">
             Data Akademik &amp; Non-Akademik Mahasiswa
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
@@ -1034,7 +1034,7 @@ export default function DataAkademik() {
       {mainTab === "akademik" && (
         <div className="space-y-5">
           {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle size={18} className="text-red-600" />
@@ -1353,7 +1353,7 @@ export default function DataAkademik() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+                <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <Award size={15} className="text-[#263F93]" />
                     <span className="font-600 text-gray-800 text-sm truncate min-w-0 flex-1">
@@ -1499,7 +1499,7 @@ export default function DataAkademik() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+                <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <Users size={15} className="text-[#263F93]" />
                     <span className="font-600 text-gray-800 text-sm truncate min-w-0 flex-1">
@@ -1644,7 +1644,7 @@ export default function DataAkademik() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+                <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <BookOpen size={15} className="text-[#263F93]" />
                     <span className="font-600 text-gray-800 text-sm truncate min-w-0 flex-1">

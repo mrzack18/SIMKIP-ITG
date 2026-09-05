@@ -130,7 +130,7 @@ export default function SPDetail() {
   // ── Loading ──
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh] px-4">
-      <div className="flex items-center gap-3 text-gray-500 text-sm sm:text-base text-center">
+      <div className="flex items-center gap-3 text-gray-500 text-xs sm:text-sm text-center">
         <Loader2 size={22} className="animate-spin flex-shrink-0" />
         <span>Memuat detail SP...</span>
       </div>
@@ -139,7 +139,7 @@ export default function SPDetail() {
 
   // ── Not Found ──
   if (notFound) return (
-    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       <Link to="/admin/sp" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ChevronLeft size={15} /> Surat Peringatan
       </Link>
@@ -153,7 +153,7 @@ export default function SPDetail() {
 
   // ── Error ──
   if (error || !detail) return (
-    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       <Link to="/admin/sp" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ChevronLeft size={15} /> Surat Peringatan
       </Link>
@@ -177,7 +177,7 @@ export default function SPDetail() {
   const isSelesai  = sp.status === "Selesai" || sp.status === "Pemberhentian";
 
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       {/* Breadcrumb and Filter */}
       <div className="flex items-center justify-between gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
@@ -198,7 +198,7 @@ export default function SPDetail() {
             style={{ background: lc.bg, borderColor: lc.border }}
           >
             <span className="text-[10px] sm:text-xs font-600" style={{ color: lc.text }}>SURAT</span>
-            <span className="font-display font-800 text-xl sm:text-2xl leading-none" style={{ color: lc.text }}>
+            <span className="font-display font-800 text-lg sm:text-xl leading-none" style={{ color: lc.text }}>
               {sp.level.replace("SP", "")}
             </span>
             <span className="text-[10px] sm:text-xs font-600" style={{ color: lc.text }}>SP</span>
@@ -249,9 +249,9 @@ export default function SPDetail() {
       </div>
 
       {/* Details */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 space-y-3 sm:space-y-4 min-w-0">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
         <h3 className="font-600 text-gray-800 text-sm border-b border-gray-100 pb-3">Detail Pelanggaran</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-sm min-w-0">
           <div className="min-w-0">
             <span className="text-xs text-gray-400 uppercase tracking-wide">Jenis Pelanggaran</span>
             <div className="mt-1">
@@ -283,7 +283,7 @@ export default function SPDetail() {
       </div>
 
       {/* SP History Timeline */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 min-w-0">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 min-w-0">
         <h3 className="font-600 text-gray-800 text-sm mb-4">Riwayat Surat Peringatan</h3>
         {history.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-4">Belum ada riwayat SP tercatat.</p>
@@ -294,7 +294,7 @@ export default function SPDetail() {
               const isExpanded = expandedTimeline === i;
               const { outcome, text } = spOutcome(t);
               return (
-                <div key={t.id} className="flex gap-3 sm:gap-4 min-w-0">
+                <div key={t.id} className="flex gap-2.5 sm:gap-3 min-w-0">
                   <div className="flex flex-col items-center flex-shrink-0">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-700 border-2 z-10"
@@ -357,7 +357,7 @@ export default function SPDetail() {
 
       {/* Actions */}
       {!isSelesai && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 sm:px-5 py-3.5 sm:py-4 grid grid-cols-1 min-[480px]:grid-cols-2 gap-2 sm:gap-3 min-w-0">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 sm:px-4 py-3.5 sm:py-4 grid grid-cols-1 min-[480px]:grid-cols-2 gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setShowMarkDone(true)}
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white transition-colors whitespace-nowrap"
@@ -446,8 +446,8 @@ export default function SPDetail() {
       {showSuratModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col min-w-0">
-            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
-              <h3 className="font-600 text-sm sm:text-base text-gray-800 truncate">Surat Peringatan Resmi</h3>
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
+              <h3 className="font-600 text-xs sm:text-sm text-gray-800 truncate">Surat Peringatan Resmi</h3>
               <button
                 onClick={() => setShowSuratModal(false)}
                 className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 text-lg leading-none flex-shrink-0"
@@ -516,7 +516,7 @@ export default function SPDetail() {
               </div>
             </div>
 
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100 flex flex-col-reverse min-[420px]:flex-row min-[420px]:justify-end gap-2 sm:gap-3 flex-shrink-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-gray-100 flex flex-col-reverse min-[420px]:flex-row min-[420px]:justify-end gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={() => setShowSuratModal(false)}
                 className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"

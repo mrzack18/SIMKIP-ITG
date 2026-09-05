@@ -229,10 +229,10 @@ export default function SPMahasiswa() {
   if (loading) return null;
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Surat Peringatan</h1>
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">Surat Peringatan</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Status surat peringatan KIP-K Anda</p>
         </div>
         <div className="self-start min-[420px]:self-auto shrink-0">
@@ -252,7 +252,7 @@ export default function SPMahasiswa() {
       {/* Active SP banner */}
       {ACTIVE_SP && (
         <div className={`rounded-2xl bg-gradient-to-br ${spHeaderColor[ACTIVE_SP.level]} text-white p-4 sm:p-6 shadow-lg min-w-0`}>
-          <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText size={22} className="text-white" />
             </div>
@@ -296,11 +296,11 @@ export default function SPMahasiswa() {
 
       {/* SP History */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 min-w-0">
+        <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 min-w-0">
           <h2 className="font-600 text-gray-800 text-sm">Riwayat Surat Peringatan</h2>
           <p className="text-xs text-gray-400 mt-0.5">Klik item untuk melihat detail dan surat resmi</p>
         </div>
-        <div className="p-4 sm:p-5 min-w-0">
+        <div className="p-3 sm:p-4 min-w-0">
           <div className="relative min-w-0">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
             <div className="space-y-6 min-w-0">
@@ -354,7 +354,7 @@ export default function SPMahasiswa() {
       </div>
 
       {/* Info box */}
-      <div className="bg-[#EDF0F8] border border-[#263F93] rounded-xl p-4 sm:p-5 min-w-0">
+      <div className="bg-[#EDF0F8] border border-[#263F93] rounded-xl p-3 sm:p-4 min-w-0">
         <div className="flex items-start gap-3 min-w-0">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -410,7 +410,7 @@ export default function SPMahasiswa() {
         >
           <div className="bg-[#F8FAFC] rounded-2xl w-full max-w-2xl shadow-2xl my-4 sm:my-6 min-w-0">
             {/* Modal header */}
-            <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E2E8F0] bg-white rounded-t-2xl min-w-0">
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] bg-white rounded-t-2xl min-w-0">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <span
                   className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 whitespace-nowrap shrink-0 ${spBadgeColor[selectedSP.level]}`}
@@ -433,9 +433,9 @@ export default function SPMahasiswa() {
               </div>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-w-0">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 min-w-0">
               {/* Full SP detail section */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 space-y-4 min-w-0">
+              <div className="bg-white rounded-xl border border-[#E2E8F0] p-3 sm:p-4 space-y-4 min-w-0">
                 <h4 className="font-700 text-[#263F93] text-xs sm:text-sm flex items-center gap-2">
                   <AlertTriangle size={15} className="flex-shrink-0" />
                   Informasi Surat Peringatan

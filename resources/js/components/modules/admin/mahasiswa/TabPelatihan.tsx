@@ -34,7 +34,7 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-12 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data pelatihan...
       </div>
     )
@@ -117,7 +117,7 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
           Belum ada pelatihan {subTab.toLowerCase()}.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
           {items.map((item) => (
             <div
               key={item.id}
@@ -168,8 +168,8 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
             className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">Detail Pelatihan</h3>
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">Detail Pelatihan</h3>
               <button
                 onClick={() => setSelectedPelatihan(null)}
                 className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
@@ -177,13 +177,13 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
                 <XCircle size={18} />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
                   <GraduationCap size={22} className="text-[#263F93]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-sm sm:text-base text-gray-800 leading-snug break-words">{selectedPelatihan.nama}</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-gray-800 leading-snug break-words">{selectedPelatihan.nama}</h4>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <span
                       className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${
@@ -280,7 +280,7 @@ export function TabPelatihan({ data, loading, error }: { data: any[]; loading: b
                 </div>
               </div>
             </div>
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
               <button
                 onClick={() => setSelectedPelatihan(null)}
                 className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"

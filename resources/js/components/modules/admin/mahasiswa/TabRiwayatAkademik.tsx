@@ -229,7 +229,7 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-12 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data akademik...
       </div>
     )
@@ -291,8 +291,8 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
   }))
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-w-0">
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 sm:gap-4">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2.5 sm:gap-3">
         {[
           {
             label: "IPK Tertinggi",
@@ -312,9 +312,9 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
         ].map(({ label, value, sub }) => (
           <div
             key={label}
-            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-center min-w-0"
+            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-center min-w-0"
           >
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">{value}</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900">{value}</div>
             <div className="text-xs font-semibold text-gray-700 mt-0.5">
               {label}
             </div>

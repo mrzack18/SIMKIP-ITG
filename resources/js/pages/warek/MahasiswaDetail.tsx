@@ -384,9 +384,9 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       {/* Stat cards */}
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2.5 sm:gap-3">
         {[
           {
             label: "IPK Tertinggi",
@@ -406,9 +406,9 @@ function TabRiwayatAkademik({ semesterDetails }: { semesterDetails: SemesterDeta
         ].map(({ label, value, sub }) => (
           <div
             key={label}
-            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-center min-w-0"
+            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-center min-w-0"
           >
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">{value}</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900">{value}</div>
             <div className="text-xs font-semibold text-gray-700 mt-0.5">
               {label}
             </div>
@@ -799,7 +799,7 @@ function TabSP({ items }: { items: any[] }) {
 
   if (items.length === 0) {
     return (
-      <div className="space-y-4 sm:space-y-5 min-w-0">
+      <div className="space-y-3 sm:space-y-4 min-w-0">
         <div className="py-10 px-4 text-center text-gray-400 text-xs sm:text-sm border border-dashed border-gray-200 rounded-xl">
           Belum ada Surat Peringatan untuk mahasiswa ini.
         </div>
@@ -811,11 +811,11 @@ function TabSP({ items }: { items: any[] }) {
   const primary = items[0]
 
   return (
-    <div className="space-y-4 sm:space-y-5 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       {/* Formal letter */}
       <div className="border border-[#E2E8F0] rounded-xl overflow-hidden min-w-0">
         {/* Kop Surat */}
-        <div className="bg-[#263F93] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="bg-[#263F93] px-3 sm:px-4 py-3.5 sm:py-4 flex items-center gap-2.5 sm:gap-3 min-w-0">
           <img
             src={logoItg}
             alt="Logo ITG"
@@ -915,7 +915,7 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetail }) {
   ]
 
   return (
-    <div className="space-y-4 sm:space-y-5 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       {/* Alert */}
       <div className="bg-gray-50 border border-[#E2E8F0] rounded-xl px-3.5 sm:px-4 py-3 mb-5 flex items-center gap-2 min-w-0">
         <Lock size={14} className="text-gray-400 flex-shrink-0" />
@@ -925,14 +925,14 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetail }) {
       </div>
 
       {/* Data grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
         {/* Avatar */}
-        <div className="col-span-full flex items-center gap-3 sm:gap-4 min-w-0">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
+        <div className="col-span-full flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-lg sm:text-xl font-bold text-white flex-shrink-0">
             {(mhs.nama ?? "?").charAt(0)}
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-gray-900 text-sm sm:text-base break-words">{mhs.nama}</div>
+            <div className="font-semibold text-gray-900 text-xs sm:text-sm break-words">{mhs.nama}</div>
             <div className="text-sm text-gray-500">NIM {mhs.nim}</div>
           </div>
         </div>
@@ -1005,14 +1005,14 @@ function TabSuratPenyelesaian({ checklist }: { checklist?: { nama?: string; syar
   const total = list.length
 
   return (
-    <div className="space-y-4 sm:space-y-5 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       {/* Status card */}
-      <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-3.5 sm:p-4 bg-gray-50 border border-[#E2E8F0] rounded-xl min-w-0">
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 p-3.5 sm:p-4 bg-gray-50 border border-[#E2E8F0] rounded-xl min-w-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
           <FileText size={22} className="text-gray-400" />
         </div>
         <div className="min-w-0 flex-1 basis-40">
-          <div className="font-semibold text-gray-700 text-sm sm:text-base break-words">
+          <div className="font-semibold text-gray-700 text-xs sm:text-sm break-words">
             {total === 0 ? "Belum ada data" : fulfilled === total ? "Siap Mengajukan" : "Belum Mengajukan"}
           </div>
           <div className="text-xs text-gray-400 mt-0.5 break-words">
@@ -1159,8 +1159,8 @@ export default function WarekMahasiswaDetail() {
 
   if (error || !mhs) {
     return (
-      <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-red-700 break-words">
+      <div className="space-y-3 sm:space-y-4 pb-10 w-full max-w-7xl mx-auto min-w-0">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-red-700 break-words">
           {error ?? "Mahasiswa tidak ditemukan."}
         </div>
       </div>
@@ -1174,7 +1174,7 @@ export default function WarekMahasiswaDetail() {
   const progressPct = progress?.progressPct ?? (semesterNum > 0 ? Math.round((semesterNum / totalSem) * 100) : 0)
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 pb-10 w-full max-w-7xl mx-auto min-w-0">
       {/* Read-only info banner */}
       <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-xl px-3.5 sm:px-4 py-3 text-xs sm:text-sm text-[#263F93] flex items-start gap-2 min-w-0">
         <Info size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
@@ -1211,10 +1211,10 @@ export default function WarekMahasiswaDetail() {
 
       {/* Profile Header Card */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-4 sm:gap-5 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 sm:gap-4 min-w-0">
           {/* Avatar */}
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-xl sm:text-2xl font-bold text-white flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#263F93] flex items-center justify-center text-lg sm:text-xl font-bold text-white flex-shrink-0">
               {(mhs.nama ?? "?").charAt(0)}
             </div>
             <div className="flex-1 min-w-0 sm:hidden">

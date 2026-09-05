@@ -196,10 +196,10 @@ export default function LaporanList() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0" style={{ background: "#F8FAFC", minHeight: "100%" }}>
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0" style={{ background: "#F8FAFC", minHeight: "100%" }}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
+          <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">
             Laporan Evaluasi Semester
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
@@ -309,7 +309,7 @@ export default function LaporanList() {
             return (
               <div
                 key={l.id}
-                className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 hover:shadow-md transition-shadow min-w-0"
+                className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 hover:shadow-md transition-shadow min-w-0"
               >
                 <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 min-w-0">
                   <div className="flex-1 min-w-0">

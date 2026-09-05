@@ -111,13 +111,13 @@ export function IPKStatsStrip({ data }: IPKStatsStripProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 sm:gap-4 min-w-0">
+    <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2.5 sm:gap-3 min-w-0">
       {stats.map(({ label, value, sub }) => (
         <div
           key={label}
-          className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-center min-w-0"
+          className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-center min-w-0"
         >
-          <div className="text-xl sm:text-2xl font-700 text-gray-900">{value}</div>
+          <div className="text-lg sm:text-xl font-700 text-gray-900">{value}</div>
           <div className="text-xs font-600 text-gray-700 mt-0.5">{label}</div>
           <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
         </div>

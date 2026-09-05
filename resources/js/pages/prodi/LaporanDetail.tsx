@@ -73,7 +73,7 @@ export default function ProdiLaporanDetail() {
 
   if (error || !data) {
     return (
-      <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+      <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
         <Link to="/prodi/laporan" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft size={16} /> Kembali ke Daftar
         </Link>
@@ -115,7 +115,7 @@ export default function ProdiLaporanDetail() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-24 w-full max-w-7xl mx-auto min-w-0">
+    <div className="space-y-3 sm:space-y-4 pb-24 w-full max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
         <Link to="/prodi/laporan" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 shrink-0">
           <ArrowLeft size={16} /> Kembali ke Daftar
@@ -137,7 +137,7 @@ export default function ProdiLaporanDetail() {
           </div>
 
           <div className="text-center mb-4 sm:mb-6 min-w-0">
-            <p className="font-bold text-sm sm:text-base text-gray-800 uppercase underline break-words">LAPORAN EVALUASI KIP-K</p>
+            <p className="font-bold text-xs sm:text-sm text-gray-800 uppercase underline break-words">LAPORAN EVALUASI KIP-K</p>
             <p className="text-xs text-gray-500 mt-1 break-all">Nomor: {l.nomorSurat}</p>
             <p className="text-xs font-semibold text-[#263F93] mt-1 break-words">Tahun Ajaran: {l.periode || (l.tahunAkademik + " " + l.semester)}</p>
           </div>
@@ -150,7 +150,7 @@ export default function ProdiLaporanDetail() {
               { label: "Surat Penyelesaian", val: s.suratPenyelesaian ?? 0 },
             ].map((st) => (
               <div key={st.label} className="bg-gray-50 rounded-xl p-2.5 sm:p-3 text-center min-w-0">
-                <p className="font-display font-700 text-xl sm:text-2xl text-[#263F93] break-words">{st.val}</p>
+                <p className="font-display font-700 text-lg sm:text-xl text-[#263F93] break-words">{st.val}</p>
                 <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 break-words">{st.label}</p>
               </div>
             ))}
@@ -222,9 +222,9 @@ export default function ProdiLaporanDetail() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-3 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 px-3 sm:px-4 py-3 sm:py-4 flex items-center gap-2 sm:gap-3 shadow-lg">
         <div className="hidden sm:block flex-1" />
-        <Link to="/prodi/laporan" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-500 text-gray-600 hover:bg-gray-50 whitespace-nowrap">
+        <Link to="/prodi/laporan" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-500 text-gray-600 hover:bg-gray-50 whitespace-nowrap">
           <ArrowLeft size={14} /> Kembali
         </Link>
         <button onClick={handleDownloadPdf}

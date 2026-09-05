@@ -20,7 +20,7 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12 px-4 text-center text-sm sm:text-base text-gray-500">
+      <div className="flex items-center justify-center py-12 px-4 text-center text-xs sm:text-sm text-gray-500">
         <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat data organisasi...
       </div>
     )
@@ -111,8 +111,8 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
             className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">Detail Organisasi</h3>
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">Detail Organisasi</h3>
               <button
                 onClick={() => setSelectedOrg(null)}
                 className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
@@ -120,13 +120,13 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
                 <XCircle size={18} />
               </button>
             </div>
-            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
               <div className="flex items-start gap-3 min-w-0">
                 <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
                   <Users size={22} className="text-[#263F93]" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-sm sm:text-base text-gray-800 leading-snug break-words">{selectedOrg.nama}</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-gray-800 leading-snug break-words">{selectedOrg.nama}</h4>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
                       {selectedOrg.jenis || "Organisasi"}
@@ -202,7 +202,7 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
                 </div>
               </div>
             </div>
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
               <button
                 onClick={() => setSelectedOrg(null)}
                 className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"

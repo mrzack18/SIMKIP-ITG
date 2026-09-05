@@ -49,45 +49,45 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
   if (!data) return null;
 
   return (
-    <div className="space-y-4 sm:space-y-6 min-w-0">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 min-w-0">
         {/* Basic Info Card */}
         <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm min-w-0">
           <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-[#E2E8F0]">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 flex items-center gap-2">
               <User size={18} className="text-gray-500 flex-shrink-0" />
               Informasi Dasar
             </h3>
           </div>
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
             <div className="sm:col-span-2 min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Nama Lengkap</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.nama || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.nama || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">NIM</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-all">{data.nim || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-all">{data.nim || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Kategori KIP-K</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.kategori ? `KIP-K ${data.kategori}` : "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.kategori ? `KIP-K ${data.kategori}` : "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">NIK</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-all">{data.nik || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-all">{data.nik || "—"}</span>
             </div>
 
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Tempat Lahir</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.tempatLahir || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.tempatLahir || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Tanggal Lahir</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.tanggalLahir || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.tanggalLahir || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Jenis Kelamin</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.jenisKelamin || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.jenisKelamin || "—"}</span>
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
         {/* Academic Info Card */}
         <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm min-w-0">
           <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-[#E2E8F0]">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 flex items-center gap-2">
               <GraduationCap size={18} className="text-gray-500 flex-shrink-0" />
               Informasi Akademik
             </h3>
@@ -103,15 +103,15 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
           <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 min-w-0">
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Program Studi</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.prodi || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.prodi || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Angkatan</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.angkatan || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.angkatan || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Status Mahasiswa</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.status || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.status || "—"}</span>
             </div>
           </div>
         </div>
@@ -119,23 +119,23 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
         {/* Contact Info Card */}
         <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm md:col-span-2 min-w-0">
           <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-[#E2E8F0]">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 flex items-center gap-2">
               <Phone size={18} className="text-gray-500 flex-shrink-0" />
               Kontak & Alamat
             </h3>
           </div>
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Email</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-all">{data.email || <span className="text-gray-400 italic">Belum ada data</span>}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-all">{data.email || <span className="text-gray-400 italic">Belum ada data</span>}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Nomor HP</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-all">{data.noHp || <span className="text-gray-400 italic">Belum ada data</span>}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-all">{data.noHp || <span className="text-gray-400 italic">Belum ada data</span>}</span>
             </div>
             <div className="sm:col-span-2 min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Alamat Lengkap</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.alamat || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.alamat || "—"}</span>
             </div>
             
             <div className="sm:col-span-2 mt-1 sm:mt-2 pt-3 sm:pt-4 border-t border-gray-100 min-w-0">
@@ -190,27 +190,27 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
         {/* Family Info Card */}
         <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm md:col-span-2 min-w-0">
           <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-[#E2E8F0]">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 flex items-center gap-2">
               <Users size={18} className="text-gray-500 flex-shrink-0" />
               Informasi Orang Tua/Wali
             </h3>
           </div>
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Nama Ayah</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.namaAyah || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.namaAyah || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">Nama Ibu</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-words">{data.namaIbu || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-words">{data.namaIbu || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">No. HP Ayah</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-all">{data.telAyah || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-all">{data.telAyah || "—"}</span>
             </div>
             <div className="min-w-0">
               <span className="block text-xs sm:text-sm text-gray-500 mb-1">No. HP Ibu</span>
-              <span className="block font-medium text-sm sm:text-base text-gray-900 break-all">{data.telIbu || "—"}</span>
+              <span className="block font-medium text-xs sm:text-sm text-gray-900 break-all">{data.telIbu || "—"}</span>
             </div>
           </div>
         </div>
@@ -261,7 +261,7 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between gap-2 border-b border-[#E2E8F0] pb-3 min-w-0">
-                <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">Tambah Catatan/Kendala</h3>
+                <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">Tambah Catatan/Kendala</h3>
                 <button
                   onClick={() => setCatatanModal(false)}
                   className="text-gray-400 hover:text-gray-600 flex-shrink-0"

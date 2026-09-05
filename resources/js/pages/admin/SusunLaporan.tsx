@@ -208,7 +208,7 @@ export default function SusunLaporan() {
   })();
 
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
         <Link to="/admin/laporan" className="hover:text-gray-700 flex items-center gap-1 shrink-0">
@@ -270,7 +270,7 @@ export default function SusunLaporan() {
           <Database size={120} />
         </div>
         <div className="relative z-10 min-w-0">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-5 sm:mb-6 min-w-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 sm:gap-3 mb-5 sm:mb-6 min-w-0">
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl font-bold mb-1 flex items-center gap-2 leading-tight">
                 <Database size={24} className="text-blue-300 flex-shrink-0" /> <span>Pusat Generasi Laporan Terintegrasi</span>
@@ -290,22 +290,22 @@ export default function SusunLaporan() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 min-w-0">
             <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
               <Users size={24} className="text-green-300 mb-2" />
-              <div className="text-xl sm:text-2xl font-bold break-words">{dashboardStats?.total_mahasiswa ?? preview?.total_mahasiswa ?? 0} <span className="text-base sm:text-lg text-blue-200 font-normal">/ {(dashboardStats?.total_sp ?? preview?.total_sp ?? 0)}</span></div>
+              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.total_mahasiswa ?? preview?.total_mahasiswa ?? 0} <span className="text-base sm:text-lg text-blue-200 font-normal">/ {(dashboardStats?.total_sp ?? preview?.total_sp ?? 0)}</span></div>
               <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Total Mhs / SP Aktif</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
               <Activity size={24} className="text-yellow-300 mb-2" />
-              <div className="text-xl sm:text-2xl font-bold break-words">{dashboardStats?.rata_ipk ?? preview?.rata_ipk ?? "—"}</div>
+              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.rata_ipk ?? preview?.rata_ipk ?? "—"}</div>
               <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Rata-rata IPK</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
               <FileText size={24} className="text-red-300 mb-2" />
-              <div className="text-xl sm:text-2xl font-bold break-words">{dashboardStats?.total_sp ?? preview?.total_sp ?? 0}</div>
+              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.total_sp ?? preview?.total_sp ?? 0}</div>
               <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Mhs Bermasalah</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
               <Award size={24} className="text-purple-300 mb-2" />
-              <div className="text-xl sm:text-2xl font-bold break-words">{dashboardStats?.total_prestasi ?? preview?.total_prestasi ?? 0}</div>
+              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.total_prestasi ?? preview?.total_prestasi ?? 0}</div>
               <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Mhs Berprestasi</div>
             </div>
           </div>
@@ -314,8 +314,8 @@ export default function SusunLaporan() {
 
       {/* ── STEP 1: Informasi Laporan ── */}
       {step === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 space-y-4 sm:space-y-5 min-w-0">
-          <h2 className="font-600 text-gray-800 text-sm sm:text-base">Informasi Laporan</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
+          <h2 className="font-600 text-gray-800 text-xs sm:text-sm">Informasi Laporan</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
@@ -448,8 +448,8 @@ export default function SusunLaporan() {
       {/* ── STEP 2: Review Data ── */}
       {step === 1 && (
         <div className="space-y-4 min-w-0">
-          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
-            <h2 className="font-600 text-gray-800 text-sm sm:text-base mb-1">Review Data Mahasiswa</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
+            <h2 className="font-600 text-gray-800 text-xs sm:text-sm mb-1">Review Data Mahasiswa</h2>
             <p className="text-xs text-gray-400 mb-4 break-words">Cakupan: {cakupanLabel}</p>
 
             {previewLoading ? (
@@ -565,12 +565,12 @@ export default function SusunLaporan() {
       {/* ── STEP 3: Preview Laporan ── */}
       {step === 2 && (
         <div className="space-y-4 min-w-0">
-          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 min-w-0">
-            <h2 className="font-600 text-gray-800 text-sm sm:text-base mb-4">Preview Laporan</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
+            <h2 className="font-600 text-gray-800 text-xs sm:text-sm mb-4">Preview Laporan</h2>
 
             {/* Formal letter */}
             <div className="border-2 border-[#263F93] rounded-xl p-1 min-w-0">
-              <div className="border border-[#263F93] rounded-lg p-3 sm:p-8 space-y-4 sm:space-y-5 text-xs text-gray-700 bg-white min-w-0">
+              <div className="border border-[#263F93] rounded-lg p-3 sm:p-8 space-y-3 sm:space-y-4 text-xs text-gray-700 bg-white min-w-0">
 
                 {/* Kop surat */}
                 <div className="flex items-center gap-2.5 sm:gap-4 border-b-2 border-[#263F93] pb-3 sm:pb-5 mb-4 sm:mb-6 min-w-0">
@@ -748,10 +748,10 @@ export default function SusunLaporan() {
 
           {/* Tujuan Pengiriman */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
               <h3 className="font-600 text-gray-800 text-sm">Tujuan Pengiriman</h3>
             </div>
-            <div className="p-4 sm:p-5 space-y-3 min-w-0">
+            <div className="p-3 sm:p-4 space-y-3 min-w-0">
               <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer min-w-0">
                 <input type="checkbox" checked={tujuanWarek} onChange={e => setTujuanWarek(e.target.checked)} className="accent-[#263F93] mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
@@ -785,7 +785,7 @@ export default function SusunLaporan() {
       )}
 
       {/* Navigation bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] px-4 sm:px-5 py-3.5 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] px-3 sm:px-4 py-3.5 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
         {step > 0 ? (
           <button
             onClick={goBack}
@@ -803,7 +803,7 @@ export default function SusunLaporan() {
           <button
             onClick={goNext}
             disabled={step === 0 && !step1Valid}
-            className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg text-sm font-500 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg text-sm font-500 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
             style={{ background: "#263F93" }}
           >
             {previewLoading ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -822,7 +822,7 @@ export default function SusunLaporan() {
             <button
               onClick={handleKirimWarek}
               disabled={saving || submitting}
-              className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg text-sm font-700 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg text-sm font-700 text-white disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
               style={{ background: "#263F93" }}
             >
               {submitting && <Loader2 size={14} className="animate-spin" />}
@@ -834,7 +834,7 @@ export default function SusunLaporan() {
 
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 bg-gray-900 text-white px-4 sm:px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 min-w-0">
+        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 bg-gray-900 text-white px-3 sm:px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 min-w-0">
           {syncing ? (
             <Loader2 size={18} className="animate-spin text-blue-400 flex-shrink-0" />
           ) : (

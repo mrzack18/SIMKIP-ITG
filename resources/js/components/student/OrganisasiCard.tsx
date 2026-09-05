@@ -82,7 +82,7 @@ export function OrganisasiCard({
   const duration = calcDuration(organisasi.mulai, organisasi.selesai);
 
   return (
-    <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 hover:shadow-sm transition-shadow min-w-0">
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-3 sm:p-4 hover:shadow-sm transition-shadow min-w-0">
       <div className="flex items-start gap-3 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
           <Building2 size={18} className="text-[#263F93]" />

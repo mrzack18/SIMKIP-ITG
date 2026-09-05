@@ -63,7 +63,7 @@ export function PrestasiCard({
   const tingkatCls = tingkatColor[tingkat] ?? "bg-gray-100 text-gray-600";
 
   return (
-    <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 hover:shadow-sm transition-shadow min-w-0">
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-3 sm:p-4 hover:shadow-sm transition-shadow min-w-0">
       <div className="flex items-start gap-3 min-w-0">
         {/* Trophy icon */}
         <div className="w-10 h-10 rounded-xl bg-[#D4A72C]/10 flex items-center justify-center flex-shrink-0">
