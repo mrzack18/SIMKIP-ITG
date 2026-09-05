@@ -44,19 +44,20 @@ export function Modal({ open, onClose, title, children, width = "max-w-lg", hide
         onClick={(e) => e.stopPropagation()}
       >
         {(title || !hideClose) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
-            {title && <h2 className="font-display font-700 text-gray-800 text-base">{title}</h2>}
+          <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E2E8F0] min-w-0">
+            {title && <h2 className="font-display font-700 text-gray-800 text-sm sm:text-base truncate min-w-0">{title}</h2>}
             {!hideClose && (
               <button
                 onClick={onClose}
-                className="ml-auto w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                aria-label="Tutup"
+                className="ml-auto w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600 flex-shrink-0"
               >
                 <X size={16} />
               </button>
             )}
           </div>
         )}
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 min-w-0">{children}</div>
       </div>
     </div>
   );
@@ -86,8 +87,8 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal open={open} onClose={onClose} title={title} width="max-w-sm">
-      <p className="text-sm text-gray-600 mb-5">{message}</p>
-      <div className="flex justify-end gap-2">
+      <p className="text-sm text-gray-600 mb-5 break-words">{message}</p>
+      <div className="flex flex-col-reverse min-[420px]:flex-row min-[420px]:justify-end gap-2">
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-lg text-sm text-gray-600 border border-[#E2E8F0] hover:bg-gray-50 transition-colors"

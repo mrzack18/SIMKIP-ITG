@@ -28,7 +28,7 @@ export function StatusBadge({ status }: { status: string }) {
     icon: null,
   };
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-500 ${config.className}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${config.className}`}>
       {config.icon}
       {status}
     </span>
@@ -40,17 +40,17 @@ type SPLevel = "SP1" | "SP2" | "SP3";
 
 export function SPBadge({ level }: { level: SPLevel }) {
   return (
-    <div className="flex items-center gap-1">
-      <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-amber-100 text-amber-700">
+    <div className="flex items-center gap-1 flex-wrap">
+      <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-amber-100 text-amber-700 whitespace-nowrap">
         SP1
       </span>
       {(level === "SP2" || level === "SP3") && (
-        <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-red-100 text-red-700">
+        <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-red-100 text-red-700 whitespace-nowrap">
           SP2
         </span>
       )}
       {level === "SP3" && (
-        <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-red-900/10 text-red-900">
+        <span className="px-1.5 py-0.5 rounded text-xs font-500 bg-red-900/10 text-red-900 whitespace-nowrap">
           SP3
         </span>
       )}
@@ -62,7 +62,7 @@ export function SPBadge({ level }: { level: SPLevel }) {
 export function KategoriBadge({ kategori }: { kategori: "Reguler" | "Aspirasi" }) {
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded-full text-xs font-500 ${
+      className={`inline-block px-2 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${
         kategori === "Reguler"
           ? "bg-[#263F93]/10 text-[#263F93]"
           : "bg-[#D4A72C]/10 text-[#C09526]"
@@ -82,7 +82,7 @@ export function MahasiswaStatusBadge({ status }: { status: string }) {
     Cuti: "bg-gray-100 text-gray-600",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-500 ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
       {status}
     </span>
   );
@@ -97,7 +97,7 @@ export function SPStatusBadge({ status }: { status: string }) {
     Selesai: "bg-green-100 text-green-700",
   };
   return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
       {status}
     </span>
   );
@@ -112,7 +112,7 @@ export function LaporanStatusBadge({ status }: { status: string }) {
     Ditolak: "bg-red-100 text-red-700",
   };
   return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
       {status}
     </span>
   );

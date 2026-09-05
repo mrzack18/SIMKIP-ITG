@@ -132,31 +132,31 @@ export default function UploadDokumen() {
   const currentExtraFields = uploadDoc?.fields || [];
 
   if (error && docs.length === 0) {
-    return <div className="p-8 text-center text-red-500">{error}</div>;
+    return <div className="p-8 text-center text-red-500 text-sm sm:text-base break-words">{error}</div>;
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="font-bold text-2xl text-gray-900">Upload Dokumen Kewajiban</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-bold text-xl sm:text-2xl text-gray-900 leading-tight">Upload Dokumen Kewajiban</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">
             Seluruh dokumen berikut wajib diunggah dan divalidasi sebagai syarat KIP-K dan kelulusan.
           </p>
         </div>
-        <div>
+        <div className="self-start min-[420px]:self-auto shrink-0">
           <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
         </div>
       </div>
 
       {/* Progress */}
       {total > 0 && (
-        <div className="bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-gray-700">
+        <div className="bg-white rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 shadow-sm border border-gray-100 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <p className="text-xs sm:text-sm font-semibold text-gray-700 break-words min-w-0">
               {approved} dari {total} dokumen telah disetujui
             </p>
-            <p className="text-sm text-gray-400">{pct}%</p>
+            <p className="text-xs sm:text-sm text-gray-400 shrink-0">{pct}%</p>
           </div>
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -165,74 +165,74 @@ export default function UploadDokumen() {
             />
           </div>
           {approved === total && (
-            <div className="flex items-center gap-2 mt-3 text-green-600 text-sm font-medium">
-              <CheckCircle size={16} /> Semua dokumen kewajiban telah disetujui!
+            <div className="flex items-start gap-2 mt-3 text-green-600 text-xs sm:text-sm font-medium min-w-0">
+              <CheckCircle size={16} className="flex-shrink-0 mt-0.5" /> <span className="break-words">Semua dokumen kewajiban telah disetujui!</span>
             </div>
           )}
         </div>
       )}
 
       {/* Document cards — fixed order */}
-      <div className="space-y-3">
+      <div className="space-y-3 min-w-0">
         {docs.map((doc) => (
           <div
             key={doc.id}
-            className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 border-l-4 ${borderColor[doc.status]}`}
+            className={`bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 border-l-4 min-w-0 ${borderColor[doc.status]}`}
           >
-            <div className="flex items-start gap-4">
+            <div className="flex flex-wrap items-start gap-3 sm:gap-4 min-w-0">
               <div className="flex-shrink-0 mt-0.5">
                 <StatusIcon status={doc.status} />
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-800 text-sm">{doc.nama}</h3>
+              <div className="flex-1 min-w-0 basis-48">
+                <div className="flex flex-wrap items-center gap-2 mb-1 min-w-0">
+                  <h3 className="font-semibold text-gray-800 text-sm break-words min-w-0">{doc.nama}</h3>
                   {doc.isWajib ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-50 text-[#263F93] border border-blue-100">Wajib</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-50 text-[#263F93] border border-blue-100 whitespace-nowrap shrink-0">Wajib</span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-gray-50 text-gray-400 border border-gray-200">Opsional</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-gray-50 text-gray-400 border border-gray-200 whitespace-nowrap shrink-0">Opsional</span>
                   )}
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${badgeStyle[doc.status]}`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap shrink-0 ${badgeStyle[doc.status]}`}>
                     {doc.status}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">{doc.desc}</p>
+                <p className="text-xs text-gray-500 break-words">{doc.desc}</p>
 
                 {doc.fileName && doc.status !== "Belum Diunggah" && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <FileText size={12} className="text-gray-400" />
-                    <span className="text-xs text-gray-500">{doc.fileName}</span>
+                  <div className="flex items-center gap-1.5 mt-1.5 min-w-0">
+                    <FileText size={12} className="text-gray-400 flex-shrink-0" />
+                    <span className="text-xs text-gray-500 break-all min-w-0">{doc.fileName}</span>
                   </div>
                 )}
 
                 {doc.catatan && (
-                  <div className="mt-2 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                  <div className="mt-2 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg min-w-0">
                     <AlertTriangle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-red-700">
+                    <p className="text-xs text-red-700 break-words min-w-0">
                       <span className="font-medium">Catatan Admin:</span> {doc.catatan}
                     </p>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 w-full min-[480px]:w-auto min-[480px]:ml-auto flex-shrink-0">
                 {(doc.status === "Disetujui" || doc.status === "Menunggu Validasi") && (
                   <button
                     onClick={() => setViewTarget(doc)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-[#263F93] rounded-lg text-[#263F93] hover:bg-[#EDF0F8] transition-colors"
+                    className="flex-1 min-[480px]:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-[#263F93] rounded-lg text-[#263F93] hover:bg-[#EDF0F8] transition-colors whitespace-nowrap"
                   >
                     <Eye size={13} /> Lihat
                   </button>
                 )}
                 {doc.status === "Disetujui" && doc.fileUrl && (
-                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="flex-1 min-[480px]:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
                     <Download size={13} /> Unduh
                   </a>
                 )}
                 {(doc.status === "Belum Diunggah" || doc.status === "Ditolak") && !isReadOnly && (
                   <button
                     onClick={() => openUpload(doc.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white font-medium transition-colors hover:opacity-90"
+                    className="flex-1 min-[480px]:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white font-medium transition-colors hover:opacity-90 whitespace-nowrap"
                     style={{ background: doc.status === "Ditolak" ? "#DC2626" : "#263F93" }}
                   >
                     <Upload size={13} /> {doc.status === "Ditolak" ? "Upload Ulang" : "Upload"}
@@ -247,38 +247,39 @@ export default function UploadDokumen() {
       {/* Upload modal */}
       {uploadTarget && uploadDoc && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between flex-shrink-0">
-              <div>
-                <h3 className="font-bold text-gray-800">Upload Dokumen</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{uploadDoc.nama}</p>
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-gray-800">Upload Dokumen</h3>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{uploadDoc.nama}</p>
               </div>
               <button
                 onClick={() => setUploadTarget(null)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
+                aria-label="Tutup upload"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-w-0">
               {/* File drop zone */}
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 onClick={() => fileRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                className={`border-2 border-dashed rounded-xl p-5 sm:p-8 text-center cursor-pointer transition-colors min-w-0 ${
                   dragOver
                     ? "border-[#263F93] bg-[#263F93]/5"
                     : "border-[#E2E8F0] hover:border-[#263F93]/40 hover:bg-gray-50/50"
                 }`}
               >
                 {selectedFile ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center mx-auto">
                       <FileText size={24} className="text-[#263F93]" />
                     </div>
-                    <p className="font-medium text-[#263F93] text-sm">{selectedFile.name}</p>
+                    <p className="font-medium text-[#263F93] text-sm break-all min-w-0">{selectedFile.name}</p>
                     <p className="text-xs text-gray-400">
                       {(selectedFile.size / 1024).toFixed(1)} KB — Klik untuk ganti
                     </p>
@@ -303,23 +304,23 @@ export default function UploadDokumen() {
               />
 
               {/* Tahun Ajaran */}
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tahun Ajaran</label>
-                <div className="inline-block px-3 py-1.5 bg-[#263F93]/10 text-[#263F93] rounded-lg text-sm font-semibold">
+                <div className="inline-block px-3 py-1.5 bg-[#263F93]/10 text-[#263F93] rounded-lg text-sm font-semibold max-w-full truncate">
                   {formatTA(extraFields.tahunAjaran || getCurrentTahunAjaran())}
                 </div>
               </div>
 
               {/* Extra info fields */}
               {currentExtraFields.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-3 min-w-0">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Informasi Tambahan
                   </p>
-                  <div className={`grid gap-3 ${currentExtraFields.length > 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+                  <div className={`grid gap-3 min-w-0 ${currentExtraFields.length > 2 ? "grid-cols-1 min-[420px]:grid-cols-2" : "grid-cols-1"}`}>
                     {currentExtraFields.map((field: any) => (
-                      <div key={field.id}>
-                        <label className="block text-xs text-gray-400 mb-1">{field.label} {field.is_required && <span className="text-red-500">*</span>}</label>
+                      <div key={field.id} className="min-w-0">
+                        <label className="block text-xs text-gray-400 mb-1 break-words">{field.label} {field.is_required && <span className="text-red-500">*</span>}</label>
                         {field.tipe === "dropdown" && field.opsi ? (
                           <select
                             value={extraFields[field.id] ?? ""}
@@ -327,7 +328,7 @@ export default function UploadDokumen() {
                               setExtraFields((prev) => ({ ...prev, [field.id]: e.target.value }))
                             }
                             required={field.is_required}
-                            className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]"
+                            className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93] min-w-0"
                           >
                             <option value="">Pilih...</option>
                             {field.opsi.map((op: string) => <option key={op} value={op}>{op}</option>)}
@@ -341,7 +342,7 @@ export default function UploadDokumen() {
                             }
                             required={field.is_required}
                             placeholder={field.label}
-                            className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93]"
+                            className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 focus:border-[#263F93] min-w-0"
                           />
                         )}
                       </div>
@@ -350,7 +351,7 @@ export default function UploadDokumen() {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex flex-col-reverse min-[420px]:flex-row gap-2">
                 <button
                   onClick={() => setUploadTarget(null)}
                   className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
@@ -383,46 +384,47 @@ export default function UploadDokumen() {
       {/* Preview modal */}
       {viewTarget && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-gray-800">{viewTarget.nama}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{viewTarget.fileName}</p>
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">{viewTarget.nama}</h3>
+                <p className="text-xs text-gray-400 mt-0.5 break-all">{viewTarget.fileName}</p>
               </div>
               <button
                 onClick={() => setViewTarget(null)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
+                aria-label="Tutup pratinjau"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex flex-col items-center justify-center gap-3 relative overflow-hidden">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+              <div className="h-48 sm:h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex flex-col items-center justify-center gap-3 relative overflow-hidden px-4 min-w-0">
                 {viewTarget.fileUrl && (viewTarget.fileName?.endsWith('.jpg') || viewTarget.fileName?.endsWith('.png') || viewTarget.fileName?.endsWith('.jpeg')) ? (
                   <img src={viewTarget.fileUrl} alt="Preview" className="w-full h-full object-contain" />
                 ) : (
                   <>
                     <FileText size={48} className="text-gray-300" />
-                    <p className="text-sm text-gray-500 font-medium">{viewTarget.fileName}</p>
+                    <p className="text-sm text-gray-500 font-medium break-all">{viewTarget.fileName}</p>
                     <p className="text-xs text-gray-400">Pratinjau dokumen (PDF atau lainnya)</p>
                   </>
                 )}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${badgeStyle[viewTarget.status]}`}>
+              <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${badgeStyle[viewTarget.status]}`}>
                     {viewTarget.status}
                   </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full min-[420px]:w-auto">
                   {viewTarget.fileUrl && (
-                    <a href={viewTarget.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                    <a href={viewTarget.fileUrl} target="_blank" rel="noopener noreferrer" className="flex-1 min-[420px]:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
                       <Download size={14} /> Unduh
                     </a>
                   )}
                   <button
                     onClick={() => setViewTarget(null)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium text-white"
+                    className="flex-1 min-[420px]:flex-none px-4 py-2 rounded-lg text-sm font-medium text-white whitespace-nowrap"
                     style={{ background: "#263F93" }}
                   >
                     Tutup

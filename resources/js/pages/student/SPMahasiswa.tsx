@@ -66,20 +66,20 @@ const spLevelIsi: Record<SPLevel, string> = {
 
 function FormalSurat({ sp }: { sp: SP }) {
   return (
-    <div className="border-2 border-[#263F93] rounded-xl p-1">
-      <div className="border border-[#263F93] rounded-lg p-6 font-serif text-gray-800 text-sm leading-relaxed">
+    <div className="border-2 border-[#263F93] rounded-xl p-1 min-w-0">
+      <div className="border border-[#263F93] rounded-lg p-3 sm:p-6 font-serif text-gray-800 text-xs sm:text-sm leading-relaxed min-w-0">
         {/* Kop surat */}
-        <div className="flex items-center gap-4 border-b-2 border-[#263F93] pb-4 mb-6">
-          <img src={logoItg} alt="ITG" className="h-16 w-16 object-contain flex-shrink-0" />
-          <div className="flex-1 text-center">
-            <p className="font-bold text-base uppercase">Kementerian Pendidikan, Kebudayaan, Riset dan Teknologi</p>
-            <p className="font-bold text-base uppercase">Institut Teknologi Garut</p>
-            <p className="text-sm">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
+        <div className="flex items-center gap-2.5 sm:gap-4 border-b-2 border-[#263F93] pb-3 sm:pb-4 mb-4 sm:mb-6 min-w-0">
+          <img src={logoItg} alt="ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
+          <div className="flex-1 text-center min-w-0">
+            <p className="font-bold text-xs sm:text-base uppercase leading-snug">Kementerian Pendidikan, Kebudayaan, Riset dan Teknologi</p>
+            <p className="font-bold text-xs sm:text-base uppercase leading-snug">Institut Teknologi Garut</p>
+            <p className="text-[11px] sm:text-sm leading-snug">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
           </div>
         </div>
 
         {/* Nomor & perihal */}
-        <div className="mb-5 space-y-1">
+        <div className="mb-4 sm:mb-5 space-y-1 min-w-0">
           {(
             [
               ["Nomor", sp.nomorSurat],
@@ -87,26 +87,26 @@ function FormalSurat({ sp }: { sp: SP }) {
               ["Perihal", `Surat Peringatan ${spLevelLabel[sp.level]} (${sp.level}) Penerima KIP-K`],
             ] as [string, string][]
           ).map(([k, v]) => (
-            <div key={k} className="grid grid-cols-[5rem_0.5rem_1fr] gap-x-2 text-xs">
+            <div key={k} className="grid grid-cols-[4.5rem_0.5rem_1fr] sm:grid-cols-[5rem_0.5rem_1fr] gap-x-2 text-xs min-w-0">
               <span className="text-gray-600">{k}</span>
               <span>:</span>
-              <span className={k === "Perihal" || k === "Nomor" ? "font-semibold" : ""}>{v}</span>
+              <span className={`break-words min-w-0 ${k === "Perihal" || k === "Nomor" ? "font-semibold" : ""}`}>{v}</span>
             </div>
           ))}
         </div>
 
         {/* Kepada */}
-        <div className="mb-5 text-xs space-y-0.5">
+        <div className="mb-4 sm:mb-5 text-xs space-y-0.5 min-w-0">
           <p>Kepada Yth.</p>
-          <p className="font-semibold">{sp.nama}</p>
-          <p>NIM: {sp.nim}</p>
-          <p>Program Studi {sp.prodi}</p>
+          <p className="font-semibold break-words">{sp.nama}</p>
+          <p className="break-words">NIM: {sp.nim}</p>
+          <p className="break-words">Program Studi {sp.prodi}</p>
           <p className="mt-1 italic">di Tempat</p>
         </div>
 
         <p className="mb-4 text-xs">Dengan hormat,</p>
 
-        <div className="space-y-3 text-xs text-justify leading-relaxed">
+        <div className="space-y-3 text-xs text-justify leading-relaxed min-w-0">
           <p>
             Sehubungan dengan evaluasi akademik Penerima Beasiswa KIP Kuliah (KIP-K) Institut Teknologi Garut
             Semester IV Tahun Akademik 2024/2025, bersama surat ini kami menyampaikan bahwa saudara/i tersebut
@@ -117,19 +117,19 @@ function FormalSurat({ sp }: { sp: SP }) {
             dengan dasar sebagai berikut:
           </p>
 
-          <div className="bg-[#FFF8EC] border-l-4 border-[#D4A72C] rounded-r-lg px-4 py-3">
+          <div className="bg-[#FFF8EC] border-l-4 border-[#D4A72C] rounded-r-lg px-3 sm:px-4 py-2.5 sm:py-3 min-w-0">
             <p className="font-semibold text-[#7A5A00] mb-1">Dasar Peringatan:</p>
-            <p className="text-[#7A5A00]">{spLevelIsi[sp.level]}</p>
+            <p className="text-[#7A5A00] break-words">{spLevelIsi[sp.level]}</p>
           </div>
 
           <p>Sebagai konsekuensi dari peringatan ini, saudara/i diberikan:</p>
 
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-4 py-3">
-            <p>{sp.konsekuensi || spKonsekuensi[sp.level]}</p>
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 min-w-0">
+            <p className="break-words">{sp.konsekuensi || spKonsekuensi[sp.level]}</p>
           </div>
 
           <p>Surat Peringatan ini diterbitkan berdasarkan:</p>
-          <p className="pl-4">{sp.dasarHukum || spDasarHukum[sp.level]}</p>
+          <p className="pl-4 break-words">{sp.dasarHukum || spDasarHukum[sp.level]}</p>
 
           <p>
             Demikian surat peringatan ini disampaikan. Apabila saudara/i memiliki keberatan atau pertanyaan
@@ -137,32 +137,32 @@ function FormalSurat({ sp }: { sp: SP }) {
           </p>
         </div>
 
-        <div className="mt-6 text-xs">
-          <p>Garut, {sp.tanggal}</p>
+        <div className="mt-5 sm:mt-6 text-xs min-w-0">
+          <p className="break-words">Garut, {sp.tanggal}</p>
         </div>
 
         {/* TTD */}
-        <div className="mt-5 flex justify-between text-xs">
-          <div className="text-center">
+        <div className="mt-4 sm:mt-5 flex justify-between gap-3 text-[11px] sm:text-xs min-w-0">
+          <div className="text-center flex-1 min-w-0">
             <p className="mb-0.5">Pengelola KIP-K,</p>
-            <div className="h-16" />
-            <p className="font-bold underline">Encep Jianul Hayat, S.T., M.T.</p>
-            <p className="text-gray-500">NIP. 197804202006041001</p>
+            <div className="h-10 sm:h-16" />
+            <p className="font-bold underline break-words">Encep Jianul Hayat, S.T., M.T.</p>
+            <p className="text-gray-500 break-words">NIP. 197804202006041001</p>
           </div>
-          <div className="text-center">
+          <div className="text-center flex-1 min-w-0">
             <p className="mb-0.5">Wakil Rektor,</p>
-            <div className="h-16" />
-            <p className="font-bold underline">Dr. Rina Kurniawati, S.E., M.Si.</p>
-            <p className="text-gray-500">NIP. 198203152008012002</p>
+            <div className="h-10 sm:h-16" />
+            <p className="font-bold underline break-words">Dr. Rina Kurniawati, S.E., M.Si.</p>
+            <p className="text-gray-500 break-words">NIP. 198203152008012002</p>
           </div>
         </div>
 
-        <div className="mt-5 border-t border-[#E2E8F0] pt-3 text-xs text-gray-500">
+        <div className="mt-4 sm:mt-5 border-t border-[#E2E8F0] pt-3 text-xs text-gray-500 min-w-0">
           <p className="font-semibold mb-1">Tembusan:</p>
           <ol className="list-decimal list-inside space-y-0.5">
-            <li>Rektor Institut Teknologi Garut</li>
-            <li>Ketua Program Studi Teknik Informatika</li>
-            <li>Orang Tua/Wali Mahasiswa yang bersangkutan</li>
+            <li className="break-words">Rektor Institut Teknologi Garut</li>
+            <li className="break-words">Ketua Program Studi Teknik Informatika</li>
+            <li className="break-words">Orang Tua/Wali Mahasiswa yang bersangkutan</li>
             <li>Arsip</li>
           </ol>
         </div>
@@ -229,48 +229,50 @@ export default function SPMahasiswa() {
   if (loading) return null;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Surat Peringatan</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Status surat peringatan KIP-K Anda</p>
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Surat Peringatan</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Status surat peringatan KIP-K Anda</p>
         </div>
-        <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        <div className="self-start min-[420px]:self-auto shrink-0">
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        </div>
       </div>
 
       {!HAS_SP ? (
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-10 text-center">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-6 sm:p-10 px-4 text-center min-w-0">
           <CheckCircle size={48} className="text-green-500 mx-auto mb-3" />
-          <h2 className="font-display font-700 text-xl text-green-800 mb-1">Tidak Ada Surat Peringatan</h2>
-          <p className="text-green-600 text-sm">Anda tidak memiliki Surat Peringatan. Pertahankan prestasi Anda!</p>
+          <h2 className="font-display font-700 text-lg sm:text-xl text-green-800 mb-1">Tidak Ada Surat Peringatan</h2>
+          <p className="text-green-600 text-xs sm:text-sm break-words">Anda tidak memiliki Surat Peringatan. Pertahankan prestasi Anda!</p>
         </div>
       ) : (
         <>
 
       {/* Active SP banner */}
       {ACTIVE_SP && (
-        <div className={`rounded-2xl bg-gradient-to-br ${spHeaderColor[ACTIVE_SP.level]} text-white p-6 shadow-lg`}>
-          <div className="flex items-start gap-4">
+        <div className={`rounded-2xl bg-gradient-to-br ${spHeaderColor[ACTIVE_SP.level]} text-white p-4 sm:p-6 shadow-lg min-w-0`}>
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText size={22} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="text-xs font-700 bg-white/20 px-2 py-0.5 rounded">{ACTIVE_SP.level} AKTIF</span>
-                <span className="text-xs text-white/70">No. {ACTIVE_SP.nomorSurat}</span>
+              <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
+                <span className="text-xs font-700 bg-white/20 px-2 py-0.5 rounded whitespace-nowrap">{ACTIVE_SP.level} AKTIF</span>
+                <span className="text-xs text-white/70 break-all">No. {ACTIVE_SP.nomorSurat}</span>
               </div>
-              <p className="font-display font-800 text-lg leading-tight mb-1">{ACTIVE_SP.perihal}</p>
-              <p className="text-sm text-white/80 mb-4">Diterbitkan: {ACTIVE_SP.tanggal}</p>
+              <p className="font-display font-800 text-base sm:text-lg leading-tight mb-1 break-words">{ACTIVE_SP.perihal}</p>
+              <p className="text-xs sm:text-sm text-white/80 mb-4 break-words">Diterbitkan: {ACTIVE_SP.tanggal}</p>
 
-              <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <div className="bg-white/10 rounded-xl p-3.5 sm:p-4 mb-4 min-w-0">
                 <p className="text-xs text-white/60 font-600 uppercase tracking-wide mb-1">Alasan Peringatan</p>
-                <p className="text-sm text-white leading-relaxed">{ACTIVE_SP.alasan}</p>
+                <p className="text-xs sm:text-sm text-white leading-relaxed break-words">{ACTIVE_SP.alasan}</p>
               </div>
 
-              <div className="space-y-1.5 mb-4">
-                <div className="flex items-center justify-between text-sm">
+              <div className="space-y-1.5 mb-4 min-w-0">
+                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm min-w-0">
                   <span className="text-white/80">Sisa masa perbaikan</span>
-                  <span className="font-700">{ACTIVE_SP.sisaHari} hari</span>
+                  <span className="font-700 whitespace-nowrap">{ACTIVE_SP.sisaHari} hari</span>
                 </div>
                 <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
                   <div
@@ -278,12 +280,12 @@ export default function SPMahasiswa() {
                     style={{ width: `${(ACTIVE_SP.sisaHari / 180) * 100}%` }}
                   />
                 </div>
-                <p className="text-xs text-white/50">dari 180 hari masa perbaikan (1 semester)</p>
+                <p className="text-[11px] sm:text-xs text-white/50">dari 180 hari masa perbaikan (1 semester)</p>
               </div>
 
               <button
                 onClick={() => openDetail(ACTIVE_SP)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-600 text-white transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-600 text-white transition-colors w-full sm:w-auto"
               >
                 <FileText size={14} /> Lihat Detail & Surat Resmi
               </button>
@@ -293,50 +295,47 @@ export default function SPMahasiswa() {
       )}
 
       {/* SP History */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 min-w-0">
           <h2 className="font-600 text-gray-800 text-sm">Riwayat Surat Peringatan</h2>
           <p className="text-xs text-gray-400 mt-0.5">Klik item untuk melihat detail dan surat resmi</p>
         </div>
-        <div className="p-5">
-          <div className="relative">
+        <div className="p-4 sm:p-5 min-w-0">
+          <div className="relative min-w-0">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0">
               {Array.from(new Set(list.map(s => s.tahunAjaran || "2025/2026 Ganjil"))).map((ta) => (
-                <div key={ta} className="relative">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-200 shadow-sm flex items-center justify-center flex-shrink-0 z-10 text-gray-500 font-bold text-xs">
-                      {ta.split(" ")[0]}
-                    </div>
-                    <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                <div key={ta} className="relative min-w-0">
+                  <div className="flex items-center gap-3 mb-4 min-w-0 pl-8">
+                    <h2 className="font-600 text-gray-700 text-xs sm:text-sm bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 break-words min-w-0">
                       Tahun Ajaran {ta}
                     </h2>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3 min-w-0">
                     {list.filter(sp => (sp.tahunAjaran || "2025/2026 Ganjil") === ta).map((sp) => (
-                      <div key={sp.id} className="relative pl-12">
+                      <div key={sp.id} className="relative pl-12 min-w-0">
                         <div className="absolute left-2.5 top-4 w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm z-10" />
                         <button
                           onClick={() => openDetail(sp)}
-                          className="w-full bg-gray-50 hover:bg-[#263F93]/5 border border-transparent hover:border-[#263F93]/20 rounded-xl transition-all text-left group"
+                          className="w-full bg-gray-50 hover:bg-[#263F93]/5 border border-transparent hover:border-[#263F93]/20 rounded-xl transition-all text-left group min-w-0"
                         >
-                          <div className="flex items-center justify-between px-4 py-3.5">
+                          <div className="flex items-center justify-between px-3.5 sm:px-4 py-3 sm:py-3.5 gap-2 min-w-0">
                             <div className="flex items-center gap-3 min-w-0">
                               <span
-                                className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 flex-shrink-0 ${spBadgeColor[sp.level]}`}
+                                className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 flex-shrink-0 whitespace-nowrap ${spBadgeColor[sp.level]}`}
                               >
                                 {sp.level}
                               </span>
                               <div className="min-w-0">
                                 <p className="text-sm font-600 text-gray-800 truncate">{sp.perihal}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">
+                                <p className="text-xs text-gray-400 mt-0.5 truncate">
                                   {sp.tanggal} · No. {sp.nomorSurat}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-1 sm:ml-3">
                               {sp.outcome && (
-                                <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 font-500">
+                                <span className="hidden min-[420px]:inline px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 font-500 whitespace-nowrap">
                                   Diselesaikan
                                 </span>
                               )}
@@ -355,42 +354,42 @@ export default function SPMahasiswa() {
       </div>
 
       {/* Info box */}
-      <div className="bg-[#EDF0F8] border border-[#263F93] rounded-xl p-5">
-        <div className="flex items-start gap-3">
+      <div className="bg-[#EDF0F8] border border-[#263F93] rounded-xl p-4 sm:p-5 min-w-0">
+        <div className="flex items-start gap-3 min-w-0">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
             style={{ background: "#263F9320" }}
           >
             <FileText size={16} style={{ color: "#263F93" }} />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="font-600 text-sm mb-2" style={{ color: "#263F93" }}>
               Apa yang harus saya lakukan?
             </h3>
-            <ul className="space-y-1.5 text-sm" style={{ color: "#263F93" }}>
+            <ul className="space-y-1.5 text-xs sm:text-sm break-words" style={{ color: "#263F93" }}>
               <li>• Baca dan pahami alasan penerbitan surat peringatan ini</li>
               <li>• Penuhi semua kewajiban KIP-K yang belum terpenuhi sesuai persyaratan</li>
               <li>• Hubungi Biro Kemahasiswaan jika Anda memiliki pertanyaan atau keberatan</li>
             </ul>
-            <div className="mt-3 flex flex-wrap gap-3">
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 min-w-0">
               {adminContact.no_hp && (
                 <a
                   href={`https://wa.me/${adminContact.no_hp.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs font-500 hover:underline"
+                  className="flex items-center gap-1.5 text-xs font-500 hover:underline break-all"
                   style={{ color: "#263F93" }}
                 >
-                  <Phone size={12} /> {adminContact.no_hp}
+                  <Phone size={12} className="flex-shrink-0" /> {adminContact.no_hp}
                 </a>
               )}
               {adminContact.email && (
                 <a
                   href={`mailto:${adminContact.email}`}
-                  className="flex items-center gap-1.5 text-xs font-500 hover:underline"
+                  className="flex items-center gap-1.5 text-xs font-500 hover:underline break-all"
                   style={{ color: "#263F93" }}
                 >
-                  <Mail size={12} /> {adminContact.email}
+                  <Mail size={12} className="flex-shrink-0" /> {adminContact.email}
                 </a>
               )}
               {!adminContact.no_hp && !adminContact.email && (
@@ -409,23 +408,24 @@ export default function SPMahasiswa() {
           className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
           onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
-          <div className="bg-[#F8FAFC] rounded-2xl w-full max-w-2xl shadow-2xl my-6">
+          <div className="bg-[#F8FAFC] rounded-2xl w-full max-w-2xl shadow-2xl my-4 sm:my-6 min-w-0">
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0] bg-white rounded-t-2xl">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E2E8F0] bg-white rounded-t-2xl min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <span
-                  className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 ${spBadgeColor[selectedSP.level]}`}
+                  className={`px-2.5 py-0.5 rounded-lg border text-xs font-700 whitespace-nowrap shrink-0 ${spBadgeColor[selectedSP.level]}`}
                 >
                   {selectedSP.level}
                 </span>
-                <h3 className="font-600 text-gray-800 text-sm">Detail Surat Peringatan</h3>
+                <h3 className="font-600 text-gray-800 text-xs sm:text-sm truncate">Detail Surat Peringatan</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E8F0] rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-2 shrink-0">
+                <button className="hidden min-[420px]:flex items-center gap-1.5 px-3 py-1.5 border border-[#E2E8F0] rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
                   <Download size={12} /> Unduh PDF
                 </button>
                 <button
                   onClick={closeModal}
+                  aria-label="Tutup detail"
                   className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
                 >
                   <X size={18} />
@@ -433,57 +433,57 @@ export default function SPMahasiswa() {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 min-w-0">
               {/* Full SP detail section */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 space-y-4">
-                <h4 className="font-700 text-[#263F93] text-sm flex items-center gap-2">
-                  <AlertTriangle size={15} />
+              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 space-y-4 min-w-0">
+                <h4 className="font-700 text-[#263F93] text-xs sm:text-sm flex items-center gap-2">
+                  <AlertTriangle size={15} className="flex-shrink-0" />
                   Informasi Surat Peringatan
                 </h4>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
+                <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 text-xs min-w-0">
+                  <div className="min-w-0">
                     <p className="text-gray-400 font-600 uppercase tracking-wide mb-0.5">Nomor Surat</p>
-                    <p className="text-gray-800 font-600">{selectedSP.nomorSurat}</p>
+                    <p className="text-gray-800 font-600 break-all">{selectedSP.nomorSurat}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-gray-400 font-600 uppercase tracking-wide mb-0.5">Tanggal Diterbitkan</p>
-                    <p className="text-gray-800">{selectedSP.tanggal}</p>
+                    <p className="text-gray-800 break-words">{selectedSP.tanggal}</p>
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 min-[420px]:col-span-2 min-w-0">
                     <p className="text-gray-400 font-600 uppercase tracking-wide mb-0.5">Perihal</p>
-                    <p className="text-gray-800 font-600">{selectedSP.perihal || `Surat Peringatan ${spLevelLabel[selectedSP.level]} (${selectedSP.level})`}</p>
+                    <p className="text-gray-800 font-600 break-words">{selectedSP.perihal || `Surat Peringatan ${spLevelLabel[selectedSP.level]} (${selectedSP.level})`}</p>
                   </div>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 font-600 uppercase tracking-wide mb-1">Alasan Peringatan</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{selectedSP.alasan}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed break-words">{selectedSP.alasan}</p>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 font-600 uppercase tracking-wide mb-1">Yang Harus Dilakukan</p>
-                  <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-lg p-3 text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-[#EDF0F8] border border-[#263F93]/20 rounded-lg p-3 text-sm text-gray-700 leading-relaxed break-words">
                     {selectedSP.konsekuensi || spKonsekuensi[selectedSP.level]}
                   </div>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 font-600 uppercase tracking-wide mb-1">Dasar Hukum</p>
-                  <p className="text-sm text-gray-500 leading-relaxed">{selectedSP.dasarHukum || spDasarHukum[selectedSP.level]}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed break-words">{selectedSP.dasarHukum || spDasarHukum[selectedSP.level]}</p>
                 </div>
 
                 {selectedSP.outcome && (
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-400 font-600 uppercase tracking-wide mb-1">Hasil Penyelesaian</p>
-                    <p className="text-sm text-green-700">{selectedSP.outcome}</p>
+                    <p className="text-sm text-green-700 break-words">{selectedSP.outcome}</p>
                   </div>
                 )}
 
                 {!selectedSP.outcome && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
-                    <AlertTriangle size={14} className="text-amber-600 flex-shrink-0" />
-                    <p className="text-xs text-amber-700">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2 min-w-0">
+                    <AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 break-words">
                       <span className="font-600">Sisa masa perbaikan:</span> {selectedSP.sisaHari} hari dari 180 hari
                     </p>
                   </div>
@@ -493,7 +493,7 @@ export default function SPMahasiswa() {
               {/* Divider */}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-[#E2E8F0]" />
-                <span className="text-xs text-gray-400 font-600 uppercase tracking-wide">Surat Resmi</span>
+                <span className="text-xs text-gray-400 font-600 uppercase tracking-wide whitespace-nowrap">Surat Resmi</span>
                 <div className="flex-1 h-px bg-[#E2E8F0]" />
               </div>
 

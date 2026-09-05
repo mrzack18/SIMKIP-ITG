@@ -164,20 +164,20 @@ export default function Pelatihan() {
   };
 
   return (
-    <div className="space-y-5 relative">
+    <div className="space-y-4 sm:space-y-5 relative w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Pelatihan</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+      <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-start min-[480px]:justify-between gap-2 sm:gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Pelatihan</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">
             Catat dan ajukan pelatihan akademik maupun non-akademik yang telah Anda ikuti.
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full min-[480px]:w-auto shrink-0">
           <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white whitespace-nowrap"
             style={{ background: "#263F93" }}
           >
             <Plus size={15} /> Tambah Pelatihan
@@ -187,59 +187,61 @@ export default function Pelatihan() {
 
       {/* Cards */}
       {items.length === 0 && (
-        <div className="bg-white rounded-xl p-12 text-center border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-xl p-8 sm:p-12 px-4 text-center border border-gray-100 shadow-sm min-w-0">
           <BookOpen size={40} className="mx-auto text-gray-200 mb-3" />
-          <p className="text-gray-400 text-sm">Belum ada pelatihan yang diajukan.</p>
+          <p className="text-gray-400 text-xs sm:text-sm">Belum ada pelatihan yang diajukan.</p>
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 min-w-0">
         {[formatTA(taFilter)].map((ta) => (
-          <div key={ta} className="space-y-3">
-            <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
+          <div key={ta} className="space-y-3 min-w-0">
+            <h2 className="font-600 text-gray-700 text-xs sm:text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100 break-words">
               Tahun Ajaran {ta}
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 min-w-0">
               {items.map(item => (
-                <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-5 flex flex-col sm:flex-row sm:items-start gap-4">
-                  <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
-                    <BookOpen size={20} style={{ color: "#263F93" }} />
-                    {item.fotoKegiatan && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                        <span className="text-[8px] text-white font-bold">✓</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="font-600 text-gray-800 text-sm">{item.nama}</h3>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-500 ${
-                          item.jenis === "Akademik"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-purple-100 text-purple-700"
-                        }`}
-                      >
-                        {item.jenis}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Building2 size={12} /> {item.penyelenggara}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar size={12} /> {formatDate(item.tanggalMulai)} — {formatDate(item.tanggalSelesai)}
-                      </span>
-                      {item.tempat && (
-                        <span className="flex items-center gap-1">
-                          <MapPin size={12} /> {item.tempat}
-                        </span>
+                <div key={item.id} className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 min-w-0">
+                  <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: "#EEF1FB" }}>
+                      <BookOpen size={20} style={{ color: "#263F93" }} />
+                      {item.fotoKegiatan && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <span className="text-[8px] text-white font-bold">✓</span>
+                        </div>
                       )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1 min-w-0">
+                        <h3 className="font-600 text-gray-800 text-sm break-words min-w-0">{item.nama}</h3>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-500 whitespace-nowrap shrink-0 ${
+                            item.jenis === "Akademik"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-purple-100 text-purple-700"
+                          }`}
+                        >
+                          {item.jenis}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mt-1 min-w-0">
+                        <span className="flex items-center gap-1 min-w-0">
+                          <Building2 size={12} className="flex-shrink-0" /> <span className="break-words">{item.penyelenggara}</span>
+                        </span>
+                        <span className="flex items-center gap-1 min-w-0">
+                          <Calendar size={12} className="flex-shrink-0" /> <span className="break-words">{formatDate(item.tanggalMulai)} — {formatDate(item.tanggalSelesai)}</span>
+                        </span>
+                        {item.tempat && (
+                          <span className="flex items-center gap-1 min-w-0">
+                            <MapPin size={12} className="flex-shrink-0" /> <span className="break-words">{item.tempat}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-3">
                     <span
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 ${
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 whitespace-nowrap ${
                         item.status === "Disetujui"
                           ? "bg-green-100 text-green-700"
                           : item.status === "Ditolak"
@@ -251,10 +253,10 @@ export default function Pelatihan() {
                       {item.status}
                     </span>
                   </div>
-                  <div className="flex gap-2 w-full sm:w-auto flex-col sm:flex-row mt-3 sm:mt-0">
+                  <div className="flex gap-2 w-full sm:w-auto flex-row mt-1 sm:mt-0">
                     <button
                       onClick={() => setDetail(item)}
-                      className="px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                     >
                       <Eye size={12} /> Detail
                     </button>
@@ -262,13 +264,13 @@ export default function Pelatihan() {
                       <>
                         <button
                           onClick={() => openEditForm(item)}
-                          className="px-3 py-1.5 rounded-lg border border-amber-300 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5"
+                          className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-amber-300 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                         >
                           <Pencil size={12} /> Edit
                         </button>
                         <button
                           onClick={() => handleResubmit(item.id)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#263F93] hover:bg-[#1a2e6e] transition-colors flex items-center justify-center gap-1.5"
+                          className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#263F93] hover:bg-[#1a2e6e] transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
                         >
                           <Send size={12} /> Ajukan Ulang
                         </button>
@@ -286,20 +288,20 @@ export default function Pelatihan() {
       {showForm && (
         <>
           <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setShowForm(false)} />
-          <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-600 text-gray-800">Tambah Pelatihan</h2>
-              <button onClick={() => setShowForm(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400">
+          <div className="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col overflow-hidden min-w-0">
+            <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
+              <h2 className="font-600 text-gray-800 text-sm sm:text-base truncate">Tambah Pelatihan</h2>
+              <button onClick={() => setShowForm(false)} aria-label="Tutup formulir" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 min-w-0">
               {/* Jenis */}
-              <div>
+              <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-2">
                   <Tag size={14} className="inline mr-1.5" />Jenis Pelatihan
                 </label>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {(["Akademik", "Non-Akademik"] as const).map(j => (
                     <label key={j} className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -310,7 +312,7 @@ export default function Pelatihan() {
                         onChange={() => handleFormChange("jenis", j)}
                         className="accent-[#263F93]"
                       />
-                      <span className="text-sm text-gray-700">{j}</span>
+                      <span className="text-sm text-gray-700 whitespace-nowrap">{j}</span>
                     </label>
                   ))}
                 </div>
@@ -347,7 +349,7 @@ export default function Pelatihan() {
               </div>
 
               {/* Tanggal */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 min-w-0">
                 <div>
                   <label className="block text-sm font-500 text-gray-700 mb-1.5">
                     <Calendar size={14} className="inline mr-1.5" />Tanggal Mulai
@@ -400,13 +402,13 @@ export default function Pelatihan() {
               </div>
 
               {/* Upload Sertifikat */}
-              <div>
+              <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   <Upload size={14} className="inline mr-1.5" />Upload Sertifikat
                 </label>
-                <label className="flex items-center gap-3 px-3 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#263F93]/40 hover:bg-[#EEF1FB]/30 transition-colors">
+                <label className="flex items-center gap-3 px-3 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#263F93]/40 hover:bg-[#EEF1FB]/30 transition-colors min-w-0">
                   <FileText size={18} className="text-gray-300 flex-shrink-0" />
-                  <span className="text-xs text-gray-500 truncate">{fileLabel}</span>
+                  <span className="text-xs text-gray-500 break-all min-w-0">{fileLabel}</span>
                   <input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
@@ -418,13 +420,13 @@ export default function Pelatihan() {
               </div>
 
               {/* Upload Foto Kegiatan */}
-              <div>
+              <div className="min-w-0">
                 <label className="block text-sm font-500 text-gray-700 mb-1.5">
                   <Upload size={14} className="inline mr-1.5" />Foto Saat Kegiatan
                 </label>
-                <label className="flex items-center gap-3 px-3 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#263F93]/40 hover:bg-[#EEF1FB]/30 transition-colors">
+                <label className="flex items-center gap-3 px-3 py-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-[#263F93]/40 hover:bg-[#EEF1FB]/30 transition-colors min-w-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300 flex-shrink-0"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
-                  <span className="text-xs text-gray-500 truncate">{fotoLabel}</span>
+                  <span className="text-xs text-gray-500 break-all min-w-0">{fotoLabel}</span>
                   <input
                     type="file"
                     accept=".jpg,.jpeg,.png"
@@ -453,16 +455,16 @@ export default function Pelatihan() {
       {/* Detail modal */}
       {detail && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden min-w-0">
+            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
               <h3 className="font-600 text-gray-800 text-sm truncate pr-4">Detail Pelatihan</h3>
-              <button onClick={() => setDetail(null)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0">
+              <button onClick={() => setDetail(null)} aria-label="Tutup detail" className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0">
                 <X size={18} />
               </button>
             </div>
-            <div className="overflow-y-auto p-5 space-y-4">
+            <div className="overflow-y-auto p-4 sm:p-5 space-y-4 min-w-0">
               {/* Status + Jenis badges */}
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap min-w-0">
                 <span
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-500 ${
                     detail.status === "Disetujui" ? "bg-green-100 text-green-700" : detail.status === "Ditolak" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
@@ -480,25 +482,25 @@ export default function Pelatihan() {
                 </span>
               </div>
 
-              <div className="space-y-3 text-sm">
+              <div className="space-y-3 text-sm min-w-0">
                 <DetailRow icon={<BookOpen size={14} />} label="Nama Pelatihan" value={detail.nama} />
                 <DetailRow icon={<Building2 size={14} />} label="Penyelenggara" value={detail.penyelenggara} />
                 <DetailRow icon={<Calendar size={14} />} label="Tanggal Mulai" value={formatDate(detail.tanggalMulai)} />
                 <DetailRow icon={<Calendar size={14} />} label="Tanggal Selesai" value={formatDate(detail.tanggalSelesai)} />
                 <DetailRow icon={<MapPin size={14} />} label="Tempat" value={detail.tempat || "-"} />
                 {detail.deskripsi && (
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 text-gray-500 mb-1">
                       <AlignLeft size={14} />
                       <span className="text-xs font-500 uppercase tracking-wide">Deskripsi</span>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed pl-6">{detail.deskripsi}</p>
+                    <p className="text-gray-700 text-sm leading-relaxed pl-6 break-words">{detail.deskripsi}</p>
                   </div>
                 )}
               </div>
 
               {/* File preview */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 min-w-0">
                 <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 flex flex-col items-center gap-2 text-center">
                   {detail.sertifikat ? (
                     <>
@@ -525,9 +527,9 @@ export default function Pelatihan() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-1">
+              <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 sm:gap-3 pt-1">
                 {detail.sertifikat && (
-                  <button onClick={() => window.open(detail.sertifikat, '_blank')} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                  <button onClick={() => window.open(detail.sertifikat, '_blank')} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap">
                     <FileText size={14} /> Unduh
                   </button>
                 )}
@@ -549,11 +551,11 @@ export default function Pelatihan() {
 
 function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 min-w-0">
       <div className="flex-shrink-0 mt-0.5 text-gray-400">{icon}</div>
-      <div>
+      <div className="min-w-0">
         <div className="text-xs text-gray-400 font-500 uppercase tracking-wide">{label}</div>
-        <div className="text-gray-700">{value}</div>
+        <div className="text-gray-700 break-words">{value}</div>
       </div>
     </div>
   );

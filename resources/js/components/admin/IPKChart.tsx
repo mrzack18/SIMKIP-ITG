@@ -24,7 +24,7 @@ interface IPKChartProps {
 
 function CustomLegend() {
   return (
-    <div className="flex items-center gap-3 justify-center mt-1">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-center mt-1 px-2">
       <span className="flex items-center gap-1.5 text-xs" style={{ color: "#64748B" }}>
         <span className="inline-block w-3 h-3 rounded-full" style={{ background: "#263F93" }} />
         IPK
@@ -41,8 +41,9 @@ export function IPKChart({ data, minIPK = 3.0, height = 220 }: IPKChartProps) {
   const chartData = data.map((h) => ({ ...h, ipkVal: h.ipk }));
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={chartData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
+    <div className="w-full min-w-0" style={{ height }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={chartData} margin={{ top: 10, right: 12, bottom: 5, left: -12 }}>
         <defs>
           <linearGradient id="ipkGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#263F93" stopOpacity={0.3} />
@@ -56,9 +57,11 @@ export function IPKChart({ data, minIPK = 3.0, height = 220 }: IPKChartProps) {
           tick={{ fontSize: 11, fill: "#94A3B8" }}
           axisLine={false}
           tickLine={false}
+          minTickGap={4}
         />
         <YAxis
           domain={[2, 4]}
+          width={32}
           tick={{ fontSize: 11, fill: "#94A3B8" }}
           axisLine={false}
           tickLine={false}
@@ -86,6 +89,7 @@ export function IPKChart({ data, minIPK = 3.0, height = 220 }: IPKChartProps) {
         <Legend content={<CustomLegend />} />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -107,13 +111,13 @@ export function IPKStatsStrip({ data }: IPKStatsStripProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 sm:gap-4 min-w-0">
       {stats.map(({ label, value, sub }) => (
         <div
           key={label}
-          className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-5 py-4 text-center"
+          className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-center min-w-0"
         >
-          <div className="text-2xl font-700 text-gray-900">{value}</div>
+          <div className="text-xl sm:text-2xl font-700 text-gray-900">{value}</div>
           <div className="text-xs font-600 text-gray-700 mt-0.5">{label}</div>
           <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
         </div>

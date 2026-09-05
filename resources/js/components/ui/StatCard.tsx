@@ -26,15 +26,15 @@ export function StatCard({
   hrefLabel = "Lihat",
 }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-5">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBgClass}`}>
+    <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-4 sm:p-5 min-w-0">
+      <div className="flex items-center gap-3 mb-3 min-w-0">
+        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBgClass}`}>
           <Icon size={18} className={iconColorClass} />
         </div>
-        <p className="text-xs font-500 text-gray-500 leading-tight">{label}</p>
+        <p className="text-xs font-500 text-gray-500 leading-tight break-words min-w-0">{label}</p>
       </div>
-      <p className="text-3xl font-700 text-gray-800">{value}</p>
-      {sub && <p className={`text-xs mt-1 ${subColorClass}`}>{sub}</p>}
+      <p className="text-2xl sm:text-3xl font-700 text-gray-800 break-words">{value}</p>
+      {sub && <p className={`text-xs mt-1 break-words ${subColorClass}`}>{sub}</p>}
       {href && (
         <Link
           to={href}

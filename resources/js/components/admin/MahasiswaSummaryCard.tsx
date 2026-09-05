@@ -32,35 +32,36 @@ export function MahasiswaSummaryCard({
       : "text-red-600";
 
   return (
-    <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 hover:shadow-sm transition-shadow">
-      <div className="flex items-start gap-3">
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 sm:p-4 hover:shadow-sm transition-shadow min-w-0">
+      <div className="flex items-start gap-3 min-w-0">
         {/* Avatar */}
         <div className="w-10 h-10 rounded-full bg-[#263F93] flex items-center justify-center text-white text-sm font-600 flex-shrink-0">
           {initials}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <div className="min-w-0">
               <p className="text-sm font-600 text-gray-800 truncate">{mahasiswa.nama}</p>
-              <p className="text-xs text-gray-400 mt-0.5 font-mono">{mahasiswa.nim}</p>
+              <p className="text-xs text-gray-400 mt-0.5 font-mono truncate">{mahasiswa.nim}</p>
             </div>
             <Link
               to={`${baseRoute}/mahasiswa/${mahasiswa.id}`}
+              aria-label={`Detail ${mahasiswa.nama}`}
               className="flex-shrink-0 w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-[#263F93] transition-colors"
             >
               <ChevronRight size={15} />
             </Link>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="text-xs text-gray-500">{mahasiswa.prodi}</span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2 min-w-0">
+            <span className="text-xs text-gray-500 break-words">{mahasiswa.prodi}</span>
             <span className="text-gray-300">·</span>
-            <span className="text-xs text-gray-500">Ang. {mahasiswa.angkatan}</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">Ang. {mahasiswa.angkatan}</span>
           </div>
 
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 mt-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <span className={`text-sm font-700 ${ipkColor}`}>
                 {mahasiswa.ipk.toFixed(2)}
               </span>
@@ -68,7 +69,7 @@ export function MahasiswaSummaryCard({
             </div>
 
             {mahasiswa.sp ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <AlertTriangle size={11} className="text-amber-500" />
                 <SPProgressBadge
                   level={mahasiswa.sp as "SP1" | "SP2" | "SP3"}
@@ -76,7 +77,7 @@ export function MahasiswaSummaryCard({
                 />
               </div>
             ) : (
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                 Normal
               </span>
             )}

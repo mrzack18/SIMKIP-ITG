@@ -61,9 +61,9 @@ function PasswordField({ label, value, show, onToggle, onChange }: {
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-      <div className="text-sm font-500 text-gray-700">{value}</div>
+      <div className="text-sm font-500 text-gray-700 break-words">{value}</div>
     </div>
   );
 }
@@ -199,31 +199,31 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
     }
   };
 
-  if (loading) return <div className="text-center py-10 text-gray-500">Memuat profil...</div>;
+  if (loading) return <div className="text-center py-10 px-4 text-gray-500 text-sm sm:text-base">Memuat profil...</div>;
 
   const nama = data?.nama || "";
   const initials = nama.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
+    <div className="space-y-4 sm:space-y-5 max-w-2xl mx-auto w-full min-w-0">
       {toast.show && (
-        <div className="fixed top-5 right-5 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500">
-          <CheckCircle size={16} /> {toast.msg}
+        <div className="fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 bg-green-600 text-white px-4 sm:px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 min-w-0">
+          <CheckCircle size={16} className="flex-shrink-0" /> <span className="break-words">{toast.msg}</span>
         </div>
       )}
 
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Profil Saya</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
+      <div className="min-w-0">
+        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Profil Saya</h1>
+        <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
       </div>
 
       {/* SECTION 1 — Informasi Pribadi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-600 text-gray-800 text-sm">Informasi Pribadi</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-5 min-w-0">
+          <h2 className="font-600 text-gray-800 text-sm truncate">Informasi Pribadi</h2>
           <button
             onClick={() => setEditMode(v => !v)}
-            className="flex items-center gap-1.5 text-xs font-600 px-3 py-1.5 rounded-lg border transition-colors"
+            className="flex items-center gap-1.5 text-xs font-600 px-3 py-1.5 rounded-lg border transition-colors shrink-0 whitespace-nowrap"
             style={editMode ? { background: "#263F93", color: "#fff", borderColor: "#263F93" } : { color: "#263F93", borderColor: "#263F93" }}
           >
             <Pencil size={12} />
@@ -269,15 +269,15 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
           <div>
             <p className="text-xs text-gray-400 mb-0.5">NIM</p>
-            <p className="text-sm font-500 text-gray-700">{data?.nim || "-"}</p>
+            <p className="text-sm font-500 text-gray-700 break-words">{data?.nim || "-"}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Nama Lengkap</p>
-            <p className="text-sm font-500 text-gray-700">{data?.nama || "-"}</p>
+            <p className="text-sm font-500 text-gray-700 break-words">{data?.nama || "-"}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Email</p>
-            <p className="text-sm font-500 text-gray-700">{data?.email || "-"}</p>
+            <p className="text-sm font-500 text-gray-700 break-words">{data?.email || "-"}</p>
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-0.5 block">NIK</label>
@@ -288,7 +288,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.nik || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.nik || "-"}</p>
             )}
           </div>
           <div>
@@ -300,7 +300,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.tempat_lahir || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.tempat_lahir || "-"}</p>
             )}
           </div>
           <div>
@@ -316,7 +316,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 <option value="Perempuan">Perempuan</option>
               </select>
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.jenis_kelamin || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.jenis_kelamin || "-"}</p>
             )}
           </div>
           <div>
@@ -329,16 +329,16 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.tanggal_lahir || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.tanggal_lahir || "-"}</p>
             )}
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Program Studi</p>
-            <p className="text-sm font-500 text-gray-700">{data?.prodi || "-"}</p>
+            <p className="text-sm font-500 text-gray-700 break-words">{data?.prodi || "-"}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Angkatan</p>
-            <p className="text-sm font-500 text-gray-700">{data?.angkatan || "-"}</p>
+            <p className="text-sm font-500 text-gray-700 break-words">{data?.angkatan || "-"}</p>
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Kategori KIP-K</p>
@@ -360,14 +360,14 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 resize-none"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.alamat || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.alamat || "-"}</p>
             )}
           </div>
         </div>
       </div>
 
       {/* SECTION 2 — Data Orang Tua */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
         <h2 className="font-600 text-gray-800 text-sm mb-5">Data Orang Tua</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
           <div>
@@ -379,7 +379,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.nama_ayah || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.nama_ayah || "-"}</p>
             )}
           </div>
           <div>
@@ -391,7 +391,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.nama_ibu || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.nama_ibu || "-"}</p>
             )}
           </div>
           <div>
@@ -403,7 +403,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.tel_ayah || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.tel_ayah || "-"}</p>
             )}
           </div>
           <div>
@@ -415,7 +415,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.tel_ibu || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.tel_ibu || "-"}</p>
             )}
           </div>
         </div>
@@ -423,7 +423,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
           <div className="mt-5">
             <button
               onClick={handleSaveProfile}
-              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm"
+              className="w-full min-[420px]:w-auto px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm whitespace-nowrap"
               style={{ background: "#263F93" }}
             >
               Simpan Perubahan
@@ -433,7 +433,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
       </div>
 
       {/* SECTION 3 — Nomor Handphone Pribadi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
         <h2 className="font-600 text-gray-800 text-sm mb-5">Nomor Handphone Mahasiswa</h2>
 
         <div className="flex items-center gap-3 mb-4">
@@ -457,7 +457,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
 
         <button
           onClick={() => setShowHpForm(v => !v)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-600 transition-colors mb-4"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-600 transition-colors mb-4 w-full min-[420px]:w-auto whitespace-nowrap"
           style={{ color: "#263F93", borderColor: "#263F93" }}
         >
           <Phone size={14} />
@@ -465,17 +465,17 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
         </button>
 
         {showHpForm && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center gap-2 sm:gap-3 min-w-0">
             <input
               type="tel"
               value={newHp}
               onChange={e => setNewHp(e.target.value)}
               placeholder="Nomor baru, contoh: 0813-1234-5678"
-              className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+              className="flex-1 min-w-0 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
             />
             <button
               onClick={handleSaveHp}
-              className="px-5 py-2.5 rounded-lg text-sm font-700 text-white flex-shrink-0"
+              className="px-5 py-2.5 rounded-lg text-sm font-700 text-white flex-shrink-0 whitespace-nowrap"
               style={{ background: "#263F93" }}
             >
               Simpan
@@ -494,14 +494,14 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                   <div className="w-px flex-1 mt-1" style={{ background: "#E2E8F0" }} />
                 )}
               </div>
-              <div className="flex-1 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-500 text-gray-700">{data.no_hp}</p>
+              <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-500 text-gray-700 break-all">{data.no_hp}</p>
                   <p className="text-xs text-gray-400 flex items-center gap-1">
-                    <Clock size={10} /> Saat Ini
+                    <Clock size={10} className="flex-shrink-0" /> Saat Ini
                   </p>
                 </div>
-                <span className="text-xs font-500 px-2 py-0.5 rounded-full" style={{ background: "#dcfce7", color: "#15803d" }}>Aktif</span>
+                <span className="text-xs font-500 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: "#dcfce7", color: "#15803d" }}>Aktif</span>
               </div>
             </div>
           )}
@@ -514,14 +514,14 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
                   <div className="w-px flex-1 mt-1" style={{ background: "#E2E8F0" }} />
                 )}
               </div>
-              <div className="flex-1 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-500 text-gray-700">{item.nomor}</p>
+              <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-500 text-gray-700 break-all">{item.nomor}</p>
                   <p className="text-xs text-gray-400 flex items-center gap-1">
-                    <Clock size={10} /> {item.sem}
+                    <Clock size={10} className="flex-shrink-0" /> {item.sem}
                   </p>
                 </div>
-                <span className="text-xs font-500 px-2 py-0.5 rounded-full" style={{ background: "#f1f5f9", color: "#94a3b8" }}>Tidak Aktif</span>
+                <span className="text-xs font-500 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0" style={{ background: "#f1f5f9", color: "#94a3b8" }}>Tidak Aktif</span>
               </div>
             </div>
           ))}
@@ -533,7 +533,7 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
       </div>
 
       {/* SECTION 4 — Ubah Password */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
         <h2 className="font-600 text-gray-800 text-sm mb-5">Ubah Password</h2>
         <div className="space-y-4">
           <PasswordField
@@ -563,18 +563,18 @@ function MahasiswaProfil({ user }: { user?: { nama: string; nim?: string } }) {
           {pwForm.confirm && pwForm.confirm !== pwForm.newPw && (
             <p className="text-xs text-red-600 flex items-center gap-1"><X size={12} /> Password tidak cocok</p>
           )}
-          {pwError && <p className="text-xs text-red-600">{pwError}</p>}
-          <div className="flex items-center gap-3 pt-2">
+          {pwError && <p className="text-xs text-red-600 break-words">{pwError}</p>}
+          <div className="flex flex-col-reverse min-[420px]:flex-row min-[420px]:items-center gap-2 sm:gap-3 pt-2">
             <button
               onClick={handleSavePw}
-              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm"
+              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm whitespace-nowrap"
               style={{ background: "#263F93" }}
             >
               Simpan Password
             </button>
             <button
               onClick={() => { setPwForm({ current: "", newPw: "", confirm: "" }); setPwError(""); }}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-gray-500 hover:text-gray-700 py-1"
             >
               Batal
             </button>
@@ -687,31 +687,31 @@ function SimpleRoleProfil({ role }: { role: string }) {
     }
   };
 
-  if (loading) return <div className="text-center py-10 text-gray-500">Memuat profil...</div>;
+  if (loading) return <div className="text-center py-10 px-4 text-gray-500 text-sm sm:text-base">Memuat profil...</div>;
 
   const nama = data?.nama || "User";
   const initials = nama.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase();
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
+    <div className="space-y-4 sm:space-y-5 max-w-2xl mx-auto w-full min-w-0">
       {toast.show && (
-        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 text-white ${toast.ok ? "bg-green-600" : "bg-red-600"}`}>
-          <CheckCircle size={16} /> {toast.msg}
+        <div className={`fixed top-5 right-4 sm:right-5 left-4 sm:left-auto z-50 px-4 sm:px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-500 text-white min-w-0 ${toast.ok ? "bg-green-600" : "bg-red-600"}`}>
+          <CheckCircle size={16} className="flex-shrink-0" /> <span className="break-words">{toast.msg}</span>
         </div>
       )}
 
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Profil Saya</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
+      <div className="min-w-0">
+        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Profil Saya</h1>
+        <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Informasi akun dan pengaturan keamanan</p>
       </div>
 
       {/* SECTION 1 — Informasi Profil */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-600 text-gray-800 text-sm">Informasi Profil</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-5 min-w-0">
+          <h2 className="font-600 text-gray-800 text-sm truncate">Informasi Profil</h2>
           <button
             onClick={() => setEditMode(v => !v)}
-            className="flex items-center gap-1.5 text-xs font-600 px-3 py-1.5 rounded-lg border transition-colors"
+            className="flex items-center gap-1.5 text-xs font-600 px-3 py-1.5 rounded-lg border transition-colors shrink-0 whitespace-nowrap"
             style={editMode ? { background: "#263F93", color: "#fff", borderColor: "#263F93" } : { color: "#263F93", borderColor: "#263F93" }}
           >
             <Pencil size={12} />
@@ -768,12 +768,12 @@ function SimpleRoleProfil({ role }: { role: string }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.nama || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.nama || "-"}</p>
             )}
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Username</p>
-            <p className="text-sm font-500 text-gray-700">{data?.username || "-"}</p>
+            <p className="text-sm font-500 text-gray-700 break-words">{data?.username || "-"}</p>
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-0.5 block">Email</label>
@@ -785,7 +785,7 @@ function SimpleRoleProfil({ role }: { role: string }) {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.email || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.email || "-"}</p>
             )}
           </div>
           <div>
@@ -799,7 +799,7 @@ function SimpleRoleProfil({ role }: { role: string }) {
                 placeholder="Nomor HP"
               />
             ) : (
-              <p className="text-sm font-500 text-gray-700">{data?.no_hp || "-"}</p>
+              <p className="text-sm font-500 text-gray-700 break-words">{data?.no_hp || "-"}</p>
             )}
           </div>
           {data?.prodi && <Field label="Program Studi" value={data.prodi} />}
@@ -815,7 +815,7 @@ function SimpleRoleProfil({ role }: { role: string }) {
           <div className="mt-5">
             <button
               onClick={handleSaveProfile}
-              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm"
+              className="w-full min-[420px]:w-auto px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm whitespace-nowrap"
               style={{ background: "#263F93" }}
             >
               Simpan Perubahan
@@ -825,7 +825,7 @@ function SimpleRoleProfil({ role }: { role: string }) {
       </div>
 
       {/* SECTION 2 — Ubah Password */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
         <h2 className="font-600 text-gray-800 text-sm mb-5">Ubah Password</h2>
         <div className="space-y-4">
           <PasswordField
@@ -855,15 +855,15 @@ function SimpleRoleProfil({ role }: { role: string }) {
           {form.confirm && form.confirm !== form.newPw && (
             <p className="text-xs text-red-600 flex items-center gap-1"><X size={12} /> Password tidak cocok</p>
           )}
-          {error && <p className="text-xs text-red-600">{error}</p>}
-          <div className="flex items-center gap-3 pt-2">
+          {error && <p className="text-xs text-red-600 break-words">{error}</p>}
+          <div className="flex flex-col-reverse min-[420px]:flex-row min-[420px]:items-center gap-2 sm:gap-3 pt-2">
             <button onClick={handleSavePw}
-              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm"
+              className="px-6 py-2.5 rounded-xl text-sm font-700 text-white shadow-sm whitespace-nowrap"
               style={{ background: "#263F93" }}>
               Simpan Password
             </button>
             <button onClick={() => { setForm({ current: "", newPw: "", confirm: "" }); setError(""); }}
-              className="text-sm text-gray-500 hover:text-gray-700">
+              className="text-sm text-gray-500 hover:text-gray-700 py-1">
               Batal
             </button>
           </div>

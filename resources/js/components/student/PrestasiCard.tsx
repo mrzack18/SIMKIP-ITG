@@ -63,34 +63,34 @@ export function PrestasiCard({
   const tingkatCls = tingkatColor[tingkat] ?? "bg-gray-100 text-gray-600";
 
   return (
-    <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 hover:shadow-sm transition-shadow">
-      <div className="flex items-start gap-3">
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 hover:shadow-sm transition-shadow min-w-0">
+      <div className="flex items-start gap-3 min-w-0">
         {/* Trophy icon */}
         <div className="w-10 h-10 rounded-xl bg-[#D4A72C]/10 flex items-center justify-center flex-shrink-0">
           <Trophy size={18} className="text-[#D4A72C]" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-600 text-gray-800 leading-snug">
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <p className="text-sm font-600 text-gray-800 leading-snug break-words min-w-0">
               {prestasi.namaPrestasi}
             </p>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-500 flex-shrink-0 ${cfg.badge}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-500 flex-shrink-0 whitespace-nowrap ${cfg.badge}`}>
               {cfg.icon}
               {status}
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-500 ${tingkatCls}`}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 min-w-0">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${tingkatCls}`}>
               {tingkat}
             </span>
-            <span className="text-xs text-gray-500">{prestasi.pencapaian}</span>
+            <span className="text-xs text-gray-500 break-words">{prestasi.pencapaian}</span>
             <span className="text-gray-300">·</span>
-            <span className="text-xs text-gray-400">{prestasi.penyelenggara}</span>
+            <span className="text-xs text-gray-400 break-words">{prestasi.penyelenggara}</span>
           </div>
 
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-gray-400 mt-1 break-words">
             {prestasi.tanggalMulai
               ? `${formatDate(prestasi.tanggalMulai)} – ${formatDate(prestasi.tanggalSelesai)}`
               : prestasi.tanggal}
@@ -99,19 +99,19 @@ export function PrestasiCard({
 
           {/* Rejected note */}
           {(status === "Ditolak") && (prestasi.catatanAdmin || prestasi.catatan) && (
-            <div className="mt-2 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600">
+            <div className="mt-2 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600 break-words min-w-0">
               <span className="font-500">Catatan Admin:</span> {prestasi.catatanAdmin ?? prestasi.catatan}
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 mt-3 flex-wrap min-w-0">
             {(prestasi.link ?? prestasi.linkPenyelenggara) && (
               <a
                 href={prestasi.link ?? prestasi.linkPenyelenggara}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-[#263F93] hover:underline flex items-center gap-1"
+                className="text-xs text-[#263F93] hover:underline flex items-center gap-1 whitespace-nowrap"
               >
                 <ExternalLink size={11} />
                 Lihat Link
@@ -121,7 +121,7 @@ export function PrestasiCard({
             {!adminView && onViewDetail && (
               <button
                 onClick={() => onViewDetail(prestasi)}
-                className="text-xs text-[#263F93] hover:underline ml-auto"
+                className="text-xs text-[#263F93] hover:underline ml-auto whitespace-nowrap"
               >
                 Lihat Detail
               </button>
@@ -129,7 +129,7 @@ export function PrestasiCard({
             {!adminView && onEdit && status !== "Disetujui" && (
               <button
                 onClick={() => onEdit(prestasi.id)}
-                className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 transition-colors ml-auto"
+                className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 transition-colors ml-auto whitespace-nowrap"
               >
                 Edit
               </button>
@@ -137,7 +137,7 @@ export function PrestasiCard({
             {!adminView && onDelete && status !== "Disetujui" && (
               <button
                 onClick={() => onDelete(prestasi.id)}
-                className="text-xs text-red-500 hover:text-red-700 border border-red-100 rounded-lg px-2 py-1 hover:bg-red-50 transition-colors"
+                className="text-xs text-red-500 hover:text-red-700 border border-red-100 rounded-lg px-2 py-1 hover:bg-red-50 transition-colors whitespace-nowrap"
               >
                 Hapus
               </button>
@@ -147,13 +147,13 @@ export function PrestasiCard({
               <>
                 <button
                   onClick={() => onReject?.(prestasi.id)}
-                  className="ml-auto text-xs border border-red-200 text-red-600 rounded-lg px-2.5 py-1 hover:bg-red-50 transition-colors"
+                  className="ml-auto text-xs border border-red-200 text-red-600 rounded-lg px-2.5 py-1 hover:bg-red-50 transition-colors whitespace-nowrap"
                 >
                   Tolak
                 </button>
                 <button
                   onClick={() => onApprove(prestasi.id)}
-                  className="text-xs bg-[#263F93] text-white rounded-lg px-2.5 py-1 hover:bg-[#1B2F73] transition-colors"
+                  className="text-xs bg-[#263F93] text-white rounded-lg px-2.5 py-1 hover:bg-[#1B2F73] transition-colors whitespace-nowrap"
                 >
                   Setujui
                 </button>

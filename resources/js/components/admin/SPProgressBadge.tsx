@@ -23,7 +23,7 @@ const levelConfig: Record<SPLevel, { active: string; bg: string }> = {
 function SPChain({ level }: { level: SPLevel }) {
   const activeIdx = LEVELS.indexOf(level);
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 flex-wrap">
       {LEVELS.map((l, idx) => {
         const isPast   = idx < activeIdx;
         const isActive = idx === activeIdx;
@@ -31,7 +31,7 @@ function SPChain({ level }: { level: SPLevel }) {
         return (
           <span
             key={l}
-            className={`px-1.5 py-0.5 rounded text-xs font-500 ${
+            className={`px-1.5 py-0.5 rounded text-xs font-500 whitespace-nowrap ${
               (isActive || isPast) ? cfg.active : "bg-gray-50 text-gray-300"
             }`}
           >
@@ -51,7 +51,7 @@ function SPPill({ level }: { level: SPLevel }) {
     SP3: "bg-red-900/10 text-red-900 font-700",
   };
   return (
-    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 ${colors[level]}`}>
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-500 whitespace-nowrap ${colors[level]}`}>
       {level}
     </span>
   );

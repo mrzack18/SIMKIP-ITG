@@ -82,49 +82,49 @@ export function OrganisasiCard({
   const duration = calcDuration(organisasi.mulai, organisasi.selesai);
 
   return (
-    <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 hover:shadow-sm transition-shadow">
-      <div className="flex items-start gap-3">
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 sm:p-5 hover:shadow-sm transition-shadow min-w-0">
+      <div className="flex items-start gap-3 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
           <Building2 size={18} className="text-[#263F93]" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-sm font-600 text-gray-800">{organisasi.nama}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{organisasi.jabatan}</p>
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <div className="min-w-0">
+              <p className="text-sm font-600 text-gray-800 break-words">{organisasi.nama}</p>
+              <p className="text-xs text-gray-500 mt-0.5 break-words">{organisasi.jabatan}</p>
             </div>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-500 flex-shrink-0 ${cfg.badge}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-500 flex-shrink-0 whitespace-nowrap ${cfg.badge}`}>
               {cfg.icon}
               {status}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 mt-2">
-            <Calendar size={11} className="text-gray-400" />
-            <span className="text-xs text-gray-400">
+          <div className="flex items-center gap-2 mt-2 min-w-0">
+            <Calendar size={11} className="text-gray-400 flex-shrink-0" />
+            <span className="text-xs text-gray-400 break-words min-w-0">
               {fmtMonth(organisasi.mulai)} – {fmtMonth(organisasi.selesai)}
               {duration && <span className="ml-1 text-gray-300">({duration})</span>}
             </span>
           </div>
 
           {organisasi.deskripsi && (
-            <p className="text-xs text-gray-500 mt-2 line-clamp-2">{organisasi.deskripsi}</p>
+            <p className="text-xs text-gray-500 mt-2 line-clamp-2 break-words">{organisasi.deskripsi}</p>
           )}
 
           {/* Rejected note */}
           {status === "Ditolak" && organisasi.catatanAdmin && (
-            <div className="mt-2 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600">
+            <div className="mt-2 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs text-red-600 break-words min-w-0">
               <span className="font-500">Catatan Admin:</span> {organisasi.catatanAdmin}
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex items-center gap-2 mt-3 flex-wrap min-w-0">
             {!adminView && onViewDetail && (
               <button
                 onClick={() => onViewDetail(organisasi)}
-                className="text-xs text-[#263F93] hover:underline"
+                className="text-xs text-[#263F93] hover:underline whitespace-nowrap"
               >
                 Lihat Detail
               </button>
@@ -132,7 +132,7 @@ export function OrganisasiCard({
             {!adminView && onEdit && status !== "Disetujui" && (
               <button
                 onClick={() => onEdit(organisasi.id)}
-                className="ml-auto text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 transition-colors"
+                className="ml-auto text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 transition-colors whitespace-nowrap"
               >
                 Edit
               </button>
@@ -140,7 +140,7 @@ export function OrganisasiCard({
             {!adminView && onDelete && status !== "Disetujui" && (
               <button
                 onClick={() => onDelete(organisasi.id)}
-                className="text-xs text-red-500 border border-red-100 rounded-lg px-2 py-1 hover:bg-red-50 transition-colors"
+                className="text-xs text-red-500 border border-red-100 rounded-lg px-2 py-1 hover:bg-red-50 transition-colors whitespace-nowrap"
               >
                 Hapus
               </button>
@@ -150,13 +150,13 @@ export function OrganisasiCard({
               <>
                 <button
                   onClick={() => onReject?.(organisasi.id)}
-                  className="ml-auto text-xs border border-red-200 text-red-600 rounded-lg px-2.5 py-1 hover:bg-red-50 transition-colors"
+                  className="ml-auto text-xs border border-red-200 text-red-600 rounded-lg px-2.5 py-1 hover:bg-red-50 transition-colors whitespace-nowrap"
                 >
                   Tolak
                 </button>
                 <button
                   onClick={() => onApprove(organisasi.id)}
-                  className="text-xs bg-[#263F93] text-white rounded-lg px-2.5 py-1 hover:bg-[#1B2F73] transition-colors"
+                  className="text-xs bg-[#263F93] text-white rounded-lg px-2.5 py-1 hover:bg-[#1B2F73] transition-colors whitespace-nowrap"
                 >
                   Setujui
                 </button>

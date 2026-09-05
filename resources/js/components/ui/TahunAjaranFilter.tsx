@@ -101,11 +101,11 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-sm font-semibold rounded-xl shadow-sm transition-colors ${className}`}
+        className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors max-w-full min-w-0 ${className}`}
       >
-        <Calendar size={16} className="text-[#263F93]" />
-        <span className="text-[#263F93]">{displayLabel}</span>
-        <svg className="w-3 h-3 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <Calendar size={16} className="text-[#263F93] flex-shrink-0" />
+        <span className="text-[#263F93] truncate">{displayLabel}</span>
+        <svg className="w-3 h-3 text-gray-400 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>

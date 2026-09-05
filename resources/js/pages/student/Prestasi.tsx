@@ -194,27 +194,29 @@ export default function Prestasi() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" /> Memuat data prestasi...</div>;
+    return <div className="p-8 text-center text-gray-500 text-sm sm:text-base"><Loader2 className="animate-spin mx-auto mb-2" /> Memuat data prestasi...</div>;
   }
   if (error) {
-    return <div className="p-8 text-center text-red-500">{error}</div>;
+    return <div className="p-8 text-center text-red-500 text-sm sm:text-base break-words">{error}</div>;
   }
 
   return (
-    <div className="space-y-5 pb-10">
+    <div className="space-y-4 sm:space-y-5 pb-10 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-bold text-2xl text-gray-900">Prestasi Saya</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{list.length} prestasi tercatat</p>
+      <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 sm:gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-bold text-xl sm:text-2xl text-gray-900 leading-tight">Prestasi Saya</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{list.length} prestasi tercatat</p>
         </div>
-        <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        <div className="self-start min-[420px]:self-auto shrink-0">
+          <TahunAjaranFilter value={taFilter} onChange={setTaFilter} />
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         {/* Tab bar */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-gray-100 min-w-0">
           {TABS.map((tab) => {
             const count = list.filter((p) => p.tab === tab).length;
             const active = activeTab === tab;
@@ -222,13 +224,13 @@ export default function Prestasi() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                className={`flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-2 px-1 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors ${
                   active ? "bg-[#263F93] text-white" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                {tab}
+                <span className="truncate">{tab}</span>
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold flex-shrink-0 ${
                     active ? "bg-[#D4A72C] text-[#263F93]" : "bg-gray-100 text-gray-500"
                   }`}
                 >
@@ -240,14 +242,14 @@ export default function Prestasi() {
         </div>
 
         {/* Tab content */}
-        <div className="p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+          <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 min-w-0">
+            <p className="text-xs sm:text-sm text-gray-500">
               {tabItems.length} prestasi tingkat {activeTab.toLowerCase()}
             </p>
             <button
               onClick={openAddForm}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90 w-full min-[420px]:w-auto whitespace-nowrap"
               style={{ background: "#263F93" }}
             >
               <Plus size={15} /> Tambah Prestasi
@@ -255,14 +257,14 @@ export default function Prestasi() {
           </div>
 
           {tabItems.length === 0 ? (
-            <div className="py-14 flex flex-col items-center gap-3 text-center">
+            <div className="py-10 sm:py-14 px-4 flex flex-col items-center gap-3 text-center min-w-0">
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center"
                 style={{ background: "#263F93" + "1a" }}
               >
                 <Trophy size={24} style={{ color: "#263F93" }} />
               </div>
-              <p className="text-gray-500 text-sm">Belum ada prestasi tingkat {activeTab.toLowerCase()}.</p>
+              <p className="text-gray-500 text-xs sm:text-sm break-words">Belum ada prestasi tingkat {activeTab.toLowerCase()}.</p>
               <button
                 onClick={openAddForm}
                 className="flex items-center gap-1.5 text-sm font-medium"
@@ -272,20 +274,20 @@ export default function Prestasi() {
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
-                <div className="space-y-3">
-                  <h2 className="font-600 text-gray-700 text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
+            <div className="space-y-6 min-w-0">
+                <div className="space-y-3 min-w-0">
+                  <h2 className="font-600 text-gray-700 text-xs sm:text-sm bg-gray-50 px-3 py-1.5 rounded-lg inline-block border border-gray-100">
                     Tahun Ajaran {formatTA(taFilter)}
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {tabItems.map((p) => {
                       const ss = statusStyle[p.status];
                       return (
                         <div
                           key={p.id}
-                          className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                          className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow min-w-0"
                         >
-                          <div className="flex items-start gap-3 mb-3">
+                          <div className="flex items-start gap-3 mb-3 min-w-0">
                             <div
                               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                               style={{ background: "#263F93" + "1a" }}
@@ -293,18 +295,18 @@ export default function Prestasi() {
                               <Trophy size={18} style={{ color: "#D4A72C", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-800 text-sm leading-snug">{p.nama}</h3>
+                              <h3 className="font-semibold text-gray-800 text-sm leading-snug break-words">{p.nama}</h3>
                               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 {p.pencapaian && (
                                   <span
-                                    className="px-2 py-0.5 rounded text-xs font-medium text-white"
+                                    className="px-2 py-0.5 rounded text-xs font-medium text-white whitespace-nowrap"
                                     style={{ background: "#263F93" }}
                                   >
                                     {p.pencapaian}
                                   </span>
                                 )}
                                 <span
-                                  className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${ss.badge}`}
+                                  className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 whitespace-nowrap ${ss.badge}`}
                                 >
                                   {ss.icon} {p.status}
                                 </span>
@@ -312,27 +314,27 @@ export default function Prestasi() {
                             </div>
                           </div>
 
-                          <div className="text-xs text-gray-500 space-y-1.5 mb-3">
-                            <div className="flex items-center gap-1.5">
+                          <div className="text-xs text-gray-500 space-y-1.5 mb-3 min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <Trophy size={11} className="text-gray-400 flex-shrink-0" />
-                              <span>{p.penyelenggara}</span>
+                              <span className="break-words min-w-0">{p.penyelenggara}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <Calendar size={11} className="text-gray-400 flex-shrink-0" />
-                              <span>
+                              <span className="break-words min-w-0">
                                 {formatDate(p.tanggalMulai)} – {formatDate(p.tanggalSelesai)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <MapPin size={11} className="text-gray-400 flex-shrink-0" />
-                              <span>{p.tempat}</span>
+                              <span className="break-words min-w-0">{p.tempat}</span>
                             </div>
                           </div>
 
                           {p.catatanAdmin && (
-                            <div className="mb-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg">
+                            <div className="mb-3 flex items-start gap-2 bg-red-50 px-3 py-2 rounded-lg min-w-0">
                               <AlertTriangle size={12} className="text-red-500 flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-red-700">
+                              <p className="text-xs text-red-700 break-words min-w-0">
                                 <span className="font-medium">Catatan Admin:</span> {p.catatanAdmin}
                               </p>
                             </div>
@@ -374,29 +376,30 @@ export default function Prestasi() {
       {/* Detail modal */}
       {detail && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-              <h3 className="font-bold text-gray-800">Detail Prestasi</h3>
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col min-w-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-gray-800 truncate">Detail Prestasi</h3>
               <button
                 onClick={() => setDetail(null)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
+                aria-label="Tutup detail"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4 overflow-y-auto">
-              <div className="flex items-start gap-3">
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto min-w-0">
+              <div className="flex items-start gap-3 min-w-0">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: "#263F93" + "1a" }}
                 >
                   <Trophy size={22} style={{ color: "#D4A72C", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-gray-800 leading-snug">{detail.nama}</h4>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-sm sm:text-base text-gray-800 leading-snug break-words">{detail.nama}</h4>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${
                         detail.tab === "Internasional"
                           ? "bg-[#F5EDD4] text-[#D4A72C]"
                           : detail.tab === "Nasional"
@@ -408,14 +411,14 @@ export default function Prestasi() {
                     </span>
                     {detail.pencapaian && (
                       <span
-                        className="px-2 py-0.5 rounded text-xs font-medium text-white"
+                        className="px-2 py-0.5 rounded text-xs font-medium text-white whitespace-nowrap"
                         style={{ background: "#263F93" }}
                       >
                         {detail.pencapaian}
                       </span>
                     )}
                     <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${statusStyle[detail.status].badge}`}
+                      className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 whitespace-nowrap ${statusStyle[detail.status].badge}`}
                     >
                       {statusStyle[detail.status].icon} {detail.status}
                     </span>
@@ -423,57 +426,57 @@ export default function Prestasi() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
+              <div className="grid grid-cols-2 gap-3 text-sm min-w-0">
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Penyelenggara</p>
-                  <p className="font-medium text-gray-700">{detail.penyelenggara || "—"}</p>
+                  <p className="font-medium text-gray-700 break-words">{detail.penyelenggara || "—"}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Tempat</p>
-                  <p className="font-medium text-gray-700">{detail.tempat || "—"}</p>
+                  <p className="font-medium text-gray-700 break-words">{detail.tempat || "—"}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Tanggal Mulai</p>
-                  <p className="font-medium text-gray-700">{formatDate(detail.tanggalMulai)}</p>
+                  <p className="font-medium text-gray-700 break-words">{formatDate(detail.tanggalMulai)}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Tanggal Selesai</p>
-                  <p className="font-medium text-gray-700">{formatDate(detail.tanggalSelesai)}</p>
+                  <p className="font-medium text-gray-700 break-words">{formatDate(detail.tanggalSelesai)}</p>
                 </div>
               </div>
 
               {detail.deskripsi && (
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Deskripsi</p>
-                  <p className="text-sm text-gray-700">{detail.deskripsi}</p>
+                  <p className="text-sm text-gray-700 break-words">{detail.deskripsi}</p>
                 </div>
               )}
 
               {detail.linkPenyelenggara && (
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Link Penyelenggara</p>
                   <a
                     href={detail.linkPenyelenggara}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm flex items-center gap-1.5 hover:underline"
+                    className="text-sm flex items-start gap-1.5 hover:underline break-all min-w-0"
                     style={{ color: "#263F93" }}
                   >
-                    <Link size={12} /> {detail.linkPenyelenggara}
+                    <Link size={12} className="flex-shrink-0 mt-0.5" /> <span className="break-all">{detail.linkPenyelenggara}</span>
                   </a>
                 </div>
               )}
 
               {detail.catatanAdmin && (
-                <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl">
+                <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl min-w-0">
                   <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">
+                  <p className="text-xs sm:text-sm text-red-700 break-words min-w-0">
                     <span className="font-medium">Catatan Admin:</span> {detail.catatanAdmin}
                   </p>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-gray-400 mb-1.5">Sertifikat / Piagam</p>
                   {detail.fileSertifikat ? (
@@ -562,7 +565,7 @@ export default function Prestasi() {
                 </div>
               </div>
             </div>
-            <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100 flex-shrink-0">
               <button
                 onClick={() => setDetail(null)}
                 className="w-full py-2.5 rounded-xl text-sm font-medium text-white"
@@ -578,19 +581,20 @@ export default function Prestasi() {
       {/* Add form slide-over */}
       {openForm && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="flex-1 bg-black/40" onClick={() => { setEditingItem(null); setOpenForm(false); }} />
-          <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-              <h2 className="font-bold text-gray-800">{editingItem ? "Perbaiki Prestasi" : "Tambah Prestasi"}</h2>
+          <div className="flex-1 bg-black/40 min-w-0" onClick={() => { setEditingItem(null); setOpenForm(false); }} />
+          <div className="w-full max-w-md bg-white h-full overflow-y-auto shadow-2xl flex flex-col min-w-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
+              <h2 className="font-bold text-sm sm:text-base text-gray-800 truncate">{editingItem ? "Perbaiki Prestasi" : "Tambah Prestasi"}</h2>
               <button
                 onClick={() => { setEditingItem(null); setOpenForm(false); }}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400"
+                aria-label="Tutup formulir"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="flex-1 px-5 py-4 space-y-4">
+            <div className="flex-1 px-4 sm:px-5 py-4 space-y-4 min-w-0">
               {editingItem && editingItem.status === "Ditolak" && editingItem.catatanAdmin && (
                 <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl">
                   <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -777,7 +781,7 @@ export default function Prestasi() {
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100 flex flex-col-reverse min-[420px]:flex-row gap-2 flex-shrink-0">
               <button
                 onClick={() => { setEditingItem(null); setOpenForm(false); }}
                 className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
