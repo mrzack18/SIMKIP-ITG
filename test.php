@@ -1,1 +1,0 @@
-<?php require __DIR__.'/vendor/autoload.php';  = require_once __DIR__.'/bootstrap/app.php';  = ->make(Illuminate\\Contracts\\Console\\Kernel::class); ->bootstrap();  = \App\\Models\\Mahasiswa::find(45);  = \App\\Http\\Resources\\SemesterDetailResource::collection(->ipkSemestrs()->get()); echo json_encode(['data' => ]);
