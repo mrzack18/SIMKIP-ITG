@@ -30,10 +30,10 @@ import {
 } from "lucide-react"
 
 const Toast = ({ msg, onClose }: { msg: string; onClose: () => void }) => (
-  <div className="fixed bottom-6 right-6 flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-xl shadow-lg z-50 text-sm animate-fade-in">
-    <CheckCircle size={16} className="text-green-400" />
-    {msg}
-    <button onClick={onClose} className="ml-2 text-white/60 hover:text-white">
+  <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-xl shadow-lg z-50 text-sm animate-fade-in min-w-0">
+    <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+    <span className="break-words min-w-0 flex-1">{msg}</span>
+    <button onClick={onClose} className="ml-2 text-white/60 hover:text-white flex-shrink-0">
       ✕
     </button>
   </div>
@@ -48,17 +48,17 @@ const SectionHeader = ({
   title: string
   onSave?: () => void
 }) => (
-  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-    <div className="flex items-center gap-2.5">
-      <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700">
+  <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+    <div className="flex items-center gap-2.5 min-w-0">
+      <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
         {num}
       </div>
-      <h2 className="font-600 text-gray-800 text-sm">{title}</h2>
+      <h2 className="font-600 text-gray-800 text-sm truncate">{title}</h2>
     </div>
     {onSave && (
       <button
         onClick={onSave}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors shrink-0 whitespace-nowrap"
         style={{ background: "#263F93" }}
       >
         <Save size={12} /> Simpan
@@ -87,18 +87,18 @@ function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: ()
   };
 
   return (
-    <div className="flex gap-2 items-center flex-wrap">
+    <div className="flex gap-2 items-center flex-wrap min-w-0">
       <input
         type="text"
         placeholder="Nama Field (misal: Tanggal Sidang)"
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        className="flex-1 min-w-0 text-xs px-2 py-1.5 border border-gray-200 rounded"
+        className="flex-1 min-w-0 basis-40 text-xs px-2 py-1.5 border border-gray-200 rounded"
       />
       <select
         value={tipe}
         onChange={(e) => setTipe(e.target.value)}
-        className="w-32 text-xs px-2 py-1.5 border border-gray-200 rounded"
+        className="w-full min-[420px]:w-32 text-xs px-2 py-1.5 border border-gray-200 rounded"
       >
         <option value="text">Teks Singkat</option>
         <option value="date">Tanggal</option>
@@ -106,13 +106,13 @@ function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: ()
         <option value="number">Angka</option>
         <option value="dropdown">Dropdown</option>
       </select>
-      <label className="flex items-center gap-1 text-xs text-gray-600">
+      <label className="flex items-center gap-1 text-xs text-gray-600 whitespace-nowrap">
         <input type="checkbox" checked={isRequired} onChange={(e) => setIsRequired(e.target.checked)} /> Wajib
       </label>
       <button
         onClick={handleAdd}
         disabled={saving || !label.trim()}
-        className="px-3 py-1.5 bg-[#263F93] text-white text-xs rounded hover:bg-blue-800 disabled:opacity-50"
+        className="px-3 py-1.5 bg-[#263F93] text-white text-xs rounded hover:bg-blue-800 disabled:opacity-50 w-full min-[420px]:w-auto whitespace-nowrap"
       >
         {saving ? "..." : "Tambah"}
       </button>
@@ -371,36 +371,37 @@ export default function Konfigurasi() {
   
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">
+    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
+      <div className="min-w-0">
+        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
           Konfigurasi Sistem
         </h1>
-        <p className="text-gray-500 text-sm mt-0.5">
+        <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
           Pengaturan global yang mempengaruhi seluruh logika bisnis SIMKIP-ITG
         </p>
       </div>
 
       {/* Section 1: IPK Threshold */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
           num={1}
           title="Ambang Batas IPK (Threshold)"
           onSave={() => setShowIpkWarning(true)}
         />
-        <div className="p-5 space-y-4">
-          <div className="flex items-center gap-4">
-            <div>
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+          <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center gap-3 sm:gap-4 min-w-0">
+            <div className="shrink-0">
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
                 IPK Minimum
               </label>
-              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden w-fit">
                 <button
                   onClick={() =>
                     setIpkMin((v) =>
                       Math.max(0, Math.round((v - 0.1) * 10) / 10),
                     )
                   }
+                  aria-label="Kurangi IPK minimum"
                   className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-700 text-lg border-r border-gray-200"
                 >
                   −
@@ -420,23 +421,24 @@ export default function Konfigurasi() {
                       Math.min(4, Math.round((v + 0.1) * 10) / 10),
                     )
                   }
+                  aria-label="Tambah IPK minimum"
                   className="px-3 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-700 text-lg border-l border-gray-200"
                 >
                   +
                 </button>
               </div>
             </div>
-            <p className="text-sm text-gray-500 flex-1">
+            <p className="text-sm text-gray-500 flex-1 min-w-0 break-words">
               Mahasiswa dengan IPK di bawah nilai ini akan ditandai untuk
               evaluasi dan penerbitan SP.
             </p>
           </div>
-          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
             <AlertTriangle
               size={15}
               className="text-amber-600 flex-shrink-0 mt-0.5"
             />
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-amber-700 break-words min-w-0">
               Perubahan threshold akan mempengaruhi evaluasi seluruh {167}{" "}
               mahasiswa aktif secara real-time.
             </p>
@@ -445,28 +447,28 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 2: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
               2
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="font-600 text-gray-800 text-sm">Periode Input Nilai KHS</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5 break-words">
                 Atur kapan mahasiswa KIP-K dapat mengajukan nilai KHS untuk divalidasi admin
               </p>
             </div>
           </div>
           <button
             onClick={handleAddPeriode}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
             style={{ background: "#263F93" }}
           >
             <Plus size={12} /> Tambah Periode
           </button>
         </div>
-        <div className="p-5 space-y-5">
+        <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 min-w-0">
           <PeriodeAktifCard
             active={periodeList.find(p => p.is_aktif) || null}
             totalMahasiswaAktif={totalMahasiswaAktif}
@@ -499,16 +501,17 @@ export default function Konfigurasi() {
       />
 
       {/* Section 3: Master Prodi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader num={3} title="Master Data Program Studi" />
-        <div className="p-5 space-y-3">
-          <table className="w-full text-sm">
+        <div className="p-4 sm:p-5 space-y-3 min-w-0">
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="border-b border-gray-100">
                 {["Nama Prodi", "Kode", "Status", "Aksi"].map((h) => (
                   <th
                     key={h}
-                    className="text-left py-2 text-xs font-600 text-gray-500 uppercase"
+                    className="text-left py-2 pr-3 last:pr-0 text-xs font-600 text-gray-500 uppercase whitespace-nowrap"
                   >
                     {h}
                   </th>
@@ -518,9 +521,9 @@ export default function Konfigurasi() {
             <tbody className="divide-y divide-gray-50">
               {prodis.map((p) => (
                 <tr key={p.id}>
-                  <td className="py-2.5 font-500 text-gray-800">{p.nama}</td>
-                  <td className="py-2.5 font-mono text-gray-500">{p.kode}</td>
-                  <td className="py-2.5">
+                  <td className="py-2.5 pr-3 font-500 text-gray-800 break-words min-w-[140px]">{p.nama}</td>
+                  <td className="py-2.5 pr-3 font-mono text-gray-500 whitespace-nowrap">{p.kode}</td>
+                  <td className="py-2.5 pr-3">
                     <button
                       onClick={() =>
                         setProdis((prev) =>
@@ -531,11 +534,11 @@ export default function Konfigurasi() {
                       }
                     >
                       {p.aktif ? (
-                        <span className="flex items-center gap-1 text-xs text-green-600">
+                        <span className="flex items-center gap-1 text-xs text-green-600 whitespace-nowrap">
                           <ToggleRight size={16} /> Aktif
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <span className="flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap">
                           <ToggleLeft size={16} /> Nonaktif
                         </span>
                       )}
@@ -543,10 +546,10 @@ export default function Konfigurasi() {
                   </td>
                   <td className="py-2.5">
                     <div className="flex items-center gap-2">
-                      <button className="text-xs text-[#263F93] hover:underline">
+                      <button className="text-xs text-[#263F93] hover:underline whitespace-nowrap">
                         Edit
                       </button>
-                      <button className="text-xs text-red-500 hover:underline">
+                      <button className="text-xs text-red-500 hover:underline whitespace-nowrap">
                         Hapus
                       </button>
                     </div>
@@ -555,16 +558,17 @@ export default function Konfigurasi() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {showAddProdi && (
-            <div className="flex gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row gap-2 mt-3 min-w-0">
               <input
                 value={newProdi.nama}
                 onChange={(e) =>
                   setNewProdi((f) => ({ ...f, nama: e.target.value }))
                 }
                 placeholder="Nama Prodi"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
               />
               <input
                 value={newProdi.kode}
@@ -572,7 +576,7 @@ export default function Konfigurasi() {
                   setNewProdi((f) => ({ ...f, kode: e.target.value }))
                 }
                 placeholder="Kode"
-                className="w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                className="w-full sm:w-20 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
               />
               <button
                 onClick={() => {
@@ -588,7 +592,7 @@ export default function Konfigurasi() {
                   setShowAddProdi(false)
                   setNewProdi({ nama: "", kode: "" })
                 }}
-                className="px-3 py-2 rounded-lg text-sm font-500 text-white"
+                className="px-3 py-2 rounded-lg text-sm font-500 text-white whitespace-nowrap"
                 style={{ background: "#059669" }}
               >
                 Simpan
@@ -606,16 +610,16 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 4: Dokumen Kewajiban */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
           num={4}
           title="Jenis Dokumen Kewajiban"
           onSave={() => showToast("Konfigurasi dokumen disimpan")}
         />
-        <div className="p-5 space-y-1">
+        <div className="p-4 sm:p-5 space-y-1 min-w-0">
           {dokumens.map((d: any) => (
-            <div key={d.id} className="border-b border-gray-50 last:border-0">
-              <div className="flex items-center gap-3 py-2">
+            <div key={d.id} className="border-b border-gray-50 last:border-0 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 py-2 min-w-0">
                 <button
                   onClick={async () => {
                     try {
@@ -623,6 +627,7 @@ export default function Konfigurasi() {
                       fetchData();
                     } catch { showToast("Gagal mengubah status dokumen"); }
                   }}
+                  className="flex-shrink-0"
                 >
                   {d.is_wajib ? (
                     <ToggleRight size={22} className="text-[#263F93]" />
@@ -630,10 +635,10 @@ export default function Konfigurasi() {
                     <ToggleLeft size={22} className="text-gray-400" />
                   )}
                 </button>
-                <span className="flex-1 text-sm text-gray-700">{d.nama}</span>
-                <span className="text-xs font-mono text-gray-400">{d.kode}</span>
+                <span className="flex-1 min-w-0 text-sm text-gray-700 break-words">{d.nama}</span>
+                <span className="text-xs font-mono text-gray-400 hidden min-[420px]:inline shrink-0">{d.kode}</span>
                 <span
-                  className={`text-xs px-2 py-0.5 rounded font-500 ${
+                  className={`text-xs px-2 py-0.5 rounded font-500 whitespace-nowrap shrink-0 ${
                     d.is_wajib
                       ? "bg-blue-100 text-blue-700"
                       : "bg-gray-100 text-gray-500"
@@ -643,22 +648,22 @@ export default function Konfigurasi() {
                 </span>
                 <button
                   onClick={() => setExpandedDokumen(expandedDokumen === d.id ? null : d.id)}
-                  className="p-1 text-gray-400 hover:text-[#263F93] rounded"
+                  className="p-1 text-gray-400 hover:text-[#263F93] rounded flex-shrink-0"
                   title="Atur custom fields"
                 >
                   <Settings size={16} />
                 </button>
               </div>
               {expandedDokumen === d.id && (
-                <div className="pl-10 pr-4 pb-4">
+                <div className="pl-2 sm:pl-10 pr-0 sm:pr-4 pb-4 min-w-0">
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                     <h4 className="text-xs font-600 text-gray-700 mb-2">Custom Fields (Opsional)</h4>
-                    <div className="space-y-2 mb-3">
+                    <div className="space-y-2 mb-3 min-w-0">
                       {(d.fields || []).map((f: any) => (
-                        <div key={f.id} className="flex items-center gap-2 text-xs bg-white p-2 border border-gray-100 rounded">
-                          <span className="font-500 text-gray-700 flex-1">{f.label}</span>
-                          <span className="text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] uppercase">{f.tipe}</span>
-                          {f.is_required && <span className="text-red-500 bg-red-50 px-1.5 py-0.5 rounded text-[10px]">Wajib</span>}
+                        <div key={f.id} className="flex items-center gap-2 text-xs bg-white p-2 border border-gray-100 rounded min-w-0">
+                          <span className="font-500 text-gray-700 flex-1 min-w-0 break-words">{f.label}</span>
+                          <span className="text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] uppercase shrink-0 whitespace-nowrap">{f.tipe}</span>
+                          {f.is_required && <span className="text-red-500 bg-red-50 px-1.5 py-0.5 rounded text-[10px] shrink-0 whitespace-nowrap">Wajib</span>}
                           <button
                             onClick={async () => {
                               if (confirm("Hapus field ini?")) {
@@ -666,7 +671,7 @@ export default function Konfigurasi() {
                                 fetchData();
                               }
                             }}
-                            className="text-red-400 hover:text-red-600"
+                            className="text-red-400 hover:text-red-600 flex-shrink-0"
                           >
                             <X size={14} />
                           </button>
@@ -686,13 +691,13 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 5: Informasi Institusi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
           num={5}
           title="Informasi Institusi"
           onSave={() => showToast("Informasi institusi diperbarui")}
         />
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
           <div>
             <label className="block text-sm font-500 text-gray-700 mb-1.5">
               Nama Institusi
@@ -721,8 +726,8 @@ export default function Konfigurasi() {
             <label className="block text-sm font-500 text-gray-700 mb-1.5">
               Logo Institusi
             </label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-gray-300 cursor-pointer transition-colors">
-              <p className="text-sm text-gray-400">
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 sm:p-6 text-center hover:border-gray-300 cursor-pointer transition-colors min-w-0">
+              <p className="text-xs sm:text-sm text-gray-400 break-words">
                 Klik untuk upload logo (PNG/SVG, maks. 2MB)
               </p>
             </div>
@@ -731,20 +736,20 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 6: Konfigurasi Nilai Mutu */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
           num={6}
           title="Konfigurasi Nilai Mutu"
           onSave={() => showToast("Konfigurasi nilai mutu berhasil disimpan")}
         />
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
           {/* Deskripsi */}
-          <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+          <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
             <GraduationCap
               size={15}
               className="text-[#263F93] flex-shrink-0 mt-0.5"
             />
-            <p className="text-xs text-[#263F93]">
+            <p className="text-xs text-[#263F93] break-words min-w-0">
               Tabel konversi nilai angka ke nilai huruf dan poin mutu.
               Konfigurasi ini digunakan sebagai acuan penilaian mata kuliah
               mahasiswa KIP-K.
@@ -752,8 +757,8 @@ export default function Konfigurasi() {
           </div>
 
           {/* Tabel Nilai Mutu */}
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[560px] text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   {[
@@ -974,7 +979,7 @@ export default function Konfigurasi() {
           </div>
 
           {/* Preview Keterangan */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 min-w-0">
             {[
               {
                 label: "Nilai Tertinggi",
@@ -999,11 +1004,11 @@ export default function Konfigurasi() {
             ].map((card) => (
               <div
                 key={card.label}
-                className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100"
+                className="bg-gray-50 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-100 min-w-0"
               >
-                <div className="text-xs text-gray-400 mb-1">{card.label}</div>
+                <div className="text-xs text-gray-400 mb-1 break-words">{card.label}</div>
                 <span
-                  className={`px-2 py-0.5 rounded text-xs font-700 ${card.color}`}
+                  className={`inline-block px-2 py-0.5 rounded text-xs font-700 whitespace-nowrap ${card.color}`}
                 >
                   {card.value}
                 </span>
@@ -1011,12 +1016,12 @@ export default function Konfigurasi() {
             ))}
           </div>
 
-          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
             <AlertTriangle
               size={14}
               className="text-amber-600 flex-shrink-0 mt-0.5"
             />
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-amber-700 break-words min-w-0">
               Perubahan konfigurasi nilai mutu akan mempengaruhi perhitungan IPK
               dan status kelulusan mata kuliah seluruh mahasiswa aktif secara
               real-time.
@@ -1026,19 +1031,19 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 7: Regulasi & Aturan */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
           num={7}
           title="Regulasi & Aturan"
           onSave={() => showToast("Regulasi berhasil disimpan")}
         />
-        <div className="p-5 space-y-4">
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
-            <table className="w-full text-sm">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+          <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   {["Nama Aturan", "Deskripsi", "Nilai", "Status", "Aksi"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide">
+                    <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -1122,9 +1127,9 @@ export default function Konfigurasi() {
           </div>
 
           {showAddRegulasi ? (
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mt-4 space-y-3">
+            <div className="bg-gray-50 rounded-xl p-3.5 sm:p-4 border border-gray-200 mt-4 space-y-3 min-w-0">
               <h3 className="text-sm font-600 text-gray-800 border-b border-gray-200 pb-2">Tambah Regulasi Baru</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div>
                   <label className="block text-xs font-500 text-gray-600 mb-1">Nama Aturan</label>
                   <input type="text" value={regulasiForm.nama} onChange={(e) => setRegulasiForm({ ...regulasiForm, nama: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
@@ -1136,23 +1141,23 @@ export default function Konfigurasi() {
                     <label className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" checked={regulasiForm.tipe === "text"} onChange={() => setRegulasiForm({ ...regulasiForm, tipe: "text" })} className="text-[#263F93]" /> Teks</label>
                   </div>
                 </div>
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2 min-w-0">
                   <label className="block text-xs font-500 text-gray-600 mb-1">Deskripsi</label>
-                  <textarea value={regulasiForm.deskripsi} onChange={(e) => setRegulasiForm({ ...regulasiForm, deskripsi: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" rows={2} />
+                  <textarea value={regulasiForm.deskripsi} onChange={(e) => setRegulasiForm({ ...regulasiForm, deskripsi: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm min-w-0" rows={2} />
                 </div>
                 <div>
                   <label className="block text-xs font-500 text-gray-600 mb-1">Nilai/Parameter</label>
                   <input type={regulasiForm.tipe} value={regulasiForm.nilai} onChange={(e) => setRegulasiForm({ ...regulasiForm, nilai: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
                 </div>
               </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button onClick={() => setShowAddRegulasi(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg">Batal</button>
+              <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 min-[420px]:justify-end pt-2">
+                <button onClick={() => setShowAddRegulasi(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg whitespace-nowrap">Batal</button>
                 <button onClick={() => {
                   setRegulasi(prev => [...prev, { id: Date.now(), ...regulasiForm, aktif: true }]);
                   setShowAddRegulasi(false);
                   setRegulasiForm({ nama: "", deskripsi: "", nilai: "", tipe: "number" });
                   showToast("Regulasi baru ditambahkan");
-                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg" style={{ background: "#263F93" }}>Simpan</button>
+                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg whitespace-nowrap" style={{ background: "#263F93" }}>Simpan</button>
               </div>
             </div>
           ) : (
@@ -1164,19 +1169,19 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 8: Jenis Pelanggaran */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
           num={8}
           title="Jenis Pelanggaran"
           onSave={() => showToast("Jenis pelanggaran disimpan")}
         />
-        <div className="p-5 space-y-4">
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
-            <table className="w-full text-sm">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
+          <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   {["Nama Jenis", "Deskripsi", "Eskalasi", "Status", "Aksi"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide">
+                    <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -1260,9 +1265,9 @@ export default function Konfigurasi() {
           </div>
 
           {showAddPelanggaran ? (
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mt-4 space-y-3">
+            <div className="bg-gray-50 rounded-xl p-3.5 sm:p-4 border border-gray-200 mt-4 space-y-3 min-w-0">
               <h3 className="text-sm font-600 text-gray-800 border-b border-gray-200 pb-2">Tambah Jenis Pelanggaran</h3>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-w-0">
                 <div>
                   <label className="block text-xs font-500 text-gray-600 mb-1">Nama</label>
                   <input type="text" value={pelanggaranForm.nama} onChange={(e) => setPelanggaranForm({ ...pelanggaranForm, nama: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
@@ -1271,9 +1276,9 @@ export default function Konfigurasi() {
                   <label className="block text-xs font-500 text-gray-600 mb-1">Deskripsi</label>
                   <textarea value={pelanggaranForm.deskripsi} onChange={(e) => setPelanggaranForm({ ...pelanggaranForm, deskripsi: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" rows={2} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs font-500 text-gray-600 mb-1">Eskalasi</label>
-                  <div className="flex flex-col gap-2 mt-1">
+                  <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center gap-2 min-[420px]:gap-4 mt-1">
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input type="radio" checked={pelanggaranForm.eskalasi === "normal"} onChange={() => setPelanggaranForm({ ...pelanggaranForm, eskalasi: "normal" })} className="text-[#263F93]" />
                       Normal (urut SP1→SP2→SP3)
@@ -1284,21 +1289,21 @@ export default function Konfigurasi() {
                     </label>
                   </div>
                   {pelanggaranForm.eskalasi === "langsung_sp3" && (
-                    <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                      <AlertTriangle size={14} className="text-red-600 mt-0.5" />
-                      <p className="text-xs text-red-700">Peringatan: Mahasiswa yang melakukan pelanggaran ini akan langsung diberikan SP3 tanpa melalui SP1 dan SP2.</p>
+                    <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 min-w-0">
+                      <AlertTriangle size={14} className="text-red-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-red-700 break-words min-w-0">Peringatan: Mahasiswa yang melakukan pelanggaran ini akan langsung diberikan SP3 tanpa melalui SP1 dan SP2.</p>
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button onClick={() => setShowAddPelanggaran(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg">Batal</button>
+              <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 min-[420px]:justify-end pt-2">
+                <button onClick={() => setShowAddPelanggaran(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg whitespace-nowrap">Batal</button>
                 <button onClick={() => {
                   setJenisPelanggaran(prev => [...prev, { id: Date.now(), ...pelanggaranForm, aktif: true }]);
                   setShowAddPelanggaran(false);
                   setPelanggaranForm({ nama: "", deskripsi: "", eskalasi: "normal" });
                   showToast("Jenis pelanggaran baru ditambahkan");
-                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg" style={{ background: "#263F93" }}>Simpan</button>
+                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg whitespace-nowrap" style={{ background: "#263F93" }}>Simpan</button>
               </div>
             </div>
           ) : (
@@ -1312,18 +1317,18 @@ export default function Konfigurasi() {
       {/* IPK Warning Modal */}
       {showIpkWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl min-w-0">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle size={28} className="text-amber-600" />
             </div>
-            <h3 className="font-display font-700 text-lg text-gray-900 text-center mb-2">
+            <h3 className="font-display font-700 text-base sm:text-lg text-gray-900 text-center mb-2">
               Konfirmasi Perubahan
             </h3>
-            <p className="text-gray-500 text-sm text-center mb-5">
+            <p className="text-gray-500 text-sm text-center mb-5 break-words">
               Mengubah threshold IPK ke <strong>{ipkMin}</strong> akan
               mempengaruhi evaluasi seluruh mahasiswa aktif. Lanjutkan?
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => setShowIpkWarning(false)}
                 className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600"

@@ -196,17 +196,17 @@ export default function LaporanList() {
   }
 
   return (
-    <div className="space-y-5" style={{ background: "#F8FAFC", minHeight: "100%" }}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0" style={{ background: "#F8FAFC", minHeight: "100%" }}>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
             Laporan Evaluasi Semester
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
             Kelola laporan semester untuk persetujuan Warek III
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
           <TahunAjaranFilter value={tahunFilter} onChange={handleTahunChange} />
           <Link
             to={(() => {
@@ -219,7 +219,7 @@ export default function LaporanList() {
               const qs = params.toString();
               return `/admin/laporan/baru${qs ? `?${qs}` : ''}`;
             })()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white whitespace-nowrap"
             style={{ background: "#263F93" }}
           >
             <Plus size={15} /> Susun Laporan Baru
@@ -228,26 +228,26 @@ export default function LaporanList() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
           <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700 break-words min-w-0">{error}</p>
         </div>
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
         <input
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Cari judul / nomor surat..."
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600 min-w-48"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-600 col-span-1 min-[480px]:col-span-2 lg:col-span-1 lg:flex-1 lg:min-w-48 min-w-0"
         />
 
 
         <select
           value={semesterFilter}
           onChange={(e) => handleSemesterChange(e.target.value)}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
         >
           {["", "1", "2", "3", "4", "5", "6", "7", "8"].map((o) => (
             <option key={o} value={o}>{o === "" ? "Semua Semester" : "Semester " + o}</option>
@@ -257,7 +257,7 @@ export default function LaporanList() {
         <select
           value={statusFilter}
           onChange={(e) => handleStatusChange(e.target.value)}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
         >
           {["", "Draf", "Menunggu Approval", "Disetujui", "Dikembalikan"].map((o) => (
             <option key={o} value={o}>{o === "" ? "Semua Status" : o}</option>
@@ -267,7 +267,7 @@ export default function LaporanList() {
         <select
           value={cakupanFilter}
           onChange={(e) => handleCakupanChange(e.target.value)}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
         >
           {Object.entries(CAKUPAN_MAP).map(([label, value]) => (
             <option key={label} value={value === "" ? "" : label}>{label}</option>
@@ -277,7 +277,7 @@ export default function LaporanList() {
         <select
           value={selectedProdi}
           onChange={(e) => { setSelectedProdi(e.target.value); setPage(1); }}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
         >
           {prodiOptions.map((o) => (
             <option key={o} value={o}>{o}</option>
@@ -287,7 +287,7 @@ export default function LaporanList() {
         <select
           value={selectedAngkatan}
           onChange={(e) => { setSelectedAngkatan(e.target.value); setPage(1); }}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
         >
           {angkatanOptions.map((o) => (
             <option key={o} value={o}>{o}</option>
@@ -296,82 +296,76 @@ export default function LaporanList() {
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-12 text-gray-500 text-sm">
-          <Loader2 className="animate-spin mr-2" /> Memuat laporan...
+        <div className="flex items-center justify-center py-12 px-4 text-gray-500 text-sm text-center">
+          <Loader2 className="animate-spin mr-2 flex-shrink-0" /> Memuat laporan...
         </div>
       )}
 
       {/* Report cards */}
       {!loading && (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4 min-w-0">
           {laporan.map((l) => {
             const ss = statusStyle[l.status] ?? statusStyle.Draft
             return (
               <div
                 key={l.id}
-                className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-5 hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-5 hover:shadow-md transition-shadow min-w-0"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      {ss.icon}
-                      <h3 className="font-600 text-gray-800 text-sm truncate">
+                    <div className="flex items-center gap-2 flex-wrap mb-1 min-w-0">
+                      <span className="flex-shrink-0 flex items-center">{ss.icon}</span>
+                      <h3 className="font-600 text-gray-800 text-sm break-words min-w-0 flex-1 basis-32">
                         {l.judul}
                       </h3>
-                      <span className={`px-2 py-0.5 rounded text-xs font-500 ${ss.badge}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-500 whitespace-nowrap shrink-0 ${ss.badge}`}>
                         {ss.label}
                       </span>
                     </div>
 
                     {l.nomorSurat && (
-                      <p className="text-xs text-gray-400 font-mono mb-1">
+                      <p className="text-xs text-gray-400 font-mono mb-1 break-all">
                         {l.nomorSurat}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mb-1">
+                    <p className="text-xs text-gray-500 mb-1 break-words">
                       Tahun Ajaran: {l.tahunAkademik ?? "—"} {l.semester ?? ""}
                     </p>
 
                     {l.cakupan && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-0.5 rounded text-xs font-500 ${cakupanBadgeStyle[l.cakupan] ?? "bg-gray-100 text-gray-600"}`}>
+                      <div className="flex items-center gap-2 flex-wrap mb-2 min-w-0">
+                        <span className={`px-2 py-0.5 rounded text-xs font-500 break-words ${cakupanBadgeStyle[l.cakupan] ?? "bg-gray-100 text-gray-600"}`}>
                           Cakupan:{" "}
                           {l.angkatan || l.prodi
                             ? `${cakupanLabel(l.cakupan)} — ${[l.angkatan, l.prodi].filter(Boolean).join(" ")}`
                             : cakupanLabel(l.cakupan)}
                         </span>
                         {l.tujuanWarek && (
-                          <span className="px-2 py-0.5 rounded text-xs font-500 bg-[#263F93] text-white">Warek III</span>
+                          <span className="px-2 py-0.5 rounded text-xs font-500 bg-[#263F93] text-white whitespace-nowrap">Warek III</span>
                         )}
                         {l.tujuanProdi && (
-                          <span className="px-2 py-0.5 rounded text-xs font-500 bg-purple-600 text-white">Prodi</span>
+                          <span className="px-2 py-0.5 rounded text-xs font-500 bg-purple-600 text-white whitespace-nowrap">Prodi</span>
                         )}
                       </div>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-1">
-                      <span>Dibuat: {formatDate(l.tanggalLaporan)}</span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 mt-1 min-w-0">
+                      <span className="whitespace-nowrap">Dibuat: {formatDate(l.tanggalLaporan)}</span>
                       {l.submittedAt && (
-                        <>
-                          <span>·</span>
-                          <span>Diajukan: {formatDate(l.submittedAt)}</span>
-                        </>
+                        <span className="whitespace-nowrap">Diajukan: {formatDate(l.submittedAt)}</span>
                       )}
                       {l.catatanWarek && (
-                        <>
-                          <span>·</span>
-                          <span className="text-amber-600">
-                            Catatan Warek: {l.catatanWarek.slice(0, 80)}
-                          </span>
-                        </>
+                        <span className="text-amber-600 break-words min-w-0">
+                          Catatan Warek: {l.catatanWarek.slice(0, 80)}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
                     <Link
                       to={`/admin/laporan/${l.id}`}
-                      className="px-3 py-1.5 text-xs border border-[#263F93]/30 rounded-lg text-[#263F93] hover:bg-blue-50 transition-colors"
+                      className="flex-1 sm:flex-none text-center px-3 py-1.5 text-xs border border-[#263F93]/30 rounded-lg text-[#263F93] hover:bg-blue-50 transition-colors whitespace-nowrap"
                     >
                       Lihat Detail
                     </Link>
@@ -380,7 +374,7 @@ export default function LaporanList() {
                         href={`/api/laporan/${l.id}/pdf`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-colors whitespace-nowrap"
                         style={{ background: "#059669" }}
                       >
                         <Download size={12} /> PDF
@@ -393,9 +387,9 @@ export default function LaporanList() {
           })}
 
           {laporan.length === 0 && (
-            <div className="bg-white rounded-xl border border-[#E2E8F0] py-12 text-center">
+            <div className="bg-white rounded-xl border border-[#E2E8F0] py-8 sm:py-12 px-4 text-center min-w-0">
               <FileText size={28} className="mx-auto text-gray-200 mb-2" />
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-xs sm:text-sm break-words">
                 {total === 0 ? "Belum ada laporan. Klik 'Susun Laporan Baru' untuk membuat." : "Tidak ada laporan yang sesuai filter"}
               </p>
             </div>
@@ -404,22 +398,22 @@ export default function LaporanList() {
       )}
 
       {!loading && totalPages > 1 && (
-        <div className="px-4 py-3 bg-white rounded-xl border border-[#E2E8F0] flex items-center justify-between text-xs text-gray-500">
-          <span>
+        <div className="px-4 py-3 bg-white rounded-xl border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500 min-w-0">
+          <span className="text-center sm:text-left">
             Halaman {page} dari {totalPages} ({total} laporan)
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center sm:justify-end gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1 rounded border border-[#E2E8F0] hover:bg-gray-50 disabled:opacity-40"
+              className="px-3 py-1 rounded border border-[#E2E8F0] hover:bg-gray-50 disabled:opacity-40 whitespace-nowrap"
             >
               Sebelumnya
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1 rounded border border-[#E2E8F0] hover:bg-gray-50 disabled:opacity-40"
+              className="px-3 py-1 rounded border border-[#E2E8F0] hover:bg-gray-50 disabled:opacity-40 whitespace-nowrap"
             >
               Berikutnya
             </button>

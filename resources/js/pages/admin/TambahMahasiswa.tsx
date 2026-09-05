@@ -195,45 +195,45 @@ export default function TambahMahasiswa() {
     }`;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
       {/* Breadcrumb and Filter */}
-      <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <Link to="/admin/mahasiswa" className="hover:text-gray-700 flex items-center gap-1">
+      <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Link to="/admin/mahasiswa" className="hover:text-gray-700 flex items-center gap-1 shrink-0">
             <ChevronLeft size={15} /> Manajemen Mahasiswa
           </Link>
-          <span>/</span>
-          <span className="text-gray-800 font-500">Tambah Mahasiswa</span>
+          <span className="shrink-0">/</span>
+          <span className="text-gray-800 font-500 truncate">Tambah Mahasiswa</span>
         </div>
       </div>
 
-      <div>
-        <h1 className="font-display font-700 text-2xl text-gray-900">Registrasi Mahasiswa KIP-K Baru</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Isi data SK dan informasi mahasiswa untuk membuat akun otomatis.</p>
+      <div className="min-w-0">
+        <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Registrasi Mahasiswa KIP-K Baru</h1>
+        <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Isi data SK dan informasi mahasiswa untuk membuat akun otomatis.</p>
       </div>
 
       {errors.umum && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
           <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{errors.umum}</p>
+          <p className="text-sm text-red-700 break-words min-w-0">{errors.umum}</p>
         </div>
       )}
 
       {optionsError && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
           <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-700">{optionsError}</p>
+          <p className="text-sm text-amber-700 break-words min-w-0">{optionsError}</p>
         </div>
       )}
 
       {/* Section 1: Data SK */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-          <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700">1</div>
-          <h2 className="font-600 text-gray-800 text-sm">Data SK Penetapan KIP-K</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">1</div>
+          <h2 className="font-600 text-gray-800 text-sm truncate">Data SK Penetapan KIP-K</h2>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-500 text-gray-700 mb-1.5">
@@ -264,7 +264,7 @@ export default function TambahMahasiswa() {
           </div>
 
           {/* File upload */}
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-500 text-gray-700 mb-1.5">Upload File SK</label>
             {!form.fileSK ? (
               <div
@@ -272,7 +272,7 @@ export default function TambahMahasiswa() {
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onClick={() => fileRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-xl p-5 sm:p-8 text-center cursor-pointer transition-all ${
                   dragOver ? "border-[#263F93] bg-blue-50" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
@@ -281,7 +281,7 @@ export default function TambahMahasiswa() {
                 <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG · Maks. 5MB</p>
               </div>
             ) : (
-              <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-green-50 border border-green-200 rounded-xl min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
                   {form.fileSK.type.startsWith("image/") ? <ImageIcon size={20} className="text-blue-600" /> : <FileText size={20} className="text-green-600" />}
                 </div>
@@ -290,7 +290,8 @@ export default function TambahMahasiswa() {
                   <p className="text-xs text-gray-400">{(form.fileSK.size / 1024).toFixed(0)} KB</p>
                 </div>
                 <button onClick={() => setForm(f => ({ ...f, fileSK: null }))}
-                  className="p-1.5 rounded-lg hover:bg-green-100 text-gray-400 hover:text-gray-600">
+                  aria-label="Hapus file"
+                  className="p-1.5 rounded-lg hover:bg-green-100 text-gray-400 hover:text-gray-600 flex-shrink-0">
                   <X size={16} />
                 </button>
               </div>
@@ -303,13 +304,13 @@ export default function TambahMahasiswa() {
       </div>
 
       {/* Section 2: Data Mahasiswa */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-          <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700">2</div>
-          <h2 className="font-600 text-gray-800 text-sm">Data Mahasiswa</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">2</div>
+          <h2 className="font-600 text-gray-800 text-sm truncate">Data Mahasiswa</h2>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* NIM */}
             <div>
@@ -379,21 +380,21 @@ export default function TambahMahasiswa() {
           </div>
 
           {/* Kategori */}
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-500 text-gray-700 mb-2">
               Kategori Kepesertaan <span className="text-red-500">*</span>
             </label>
-            <div className="flex gap-4">
+            <div className="flex flex-col min-[480px]:flex-row gap-2 sm:gap-4">
               {(["Reguler", "Aspirasi"] as const).map(kat => (
-                <label key={kat} className={`flex items-start gap-3 flex-1 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                <label key={kat} className={`flex items-start gap-3 flex-1 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all min-w-0 ${
                   form.kategori === kat ? "border-[#263F93] bg-blue-50/50" : "border-gray-200 hover:border-gray-300"
                 }`}>
                   <input type="radio" name="kategori" value={kat} checked={form.kategori === kat}
                     onChange={() => setForm(f => ({ ...f, kategori: kat }))}
-                    className="mt-0.5 accent-[#263F93]" />
-                  <div>
+                    className="mt-0.5 accent-[#263F93] flex-shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-sm font-600 text-gray-800">{kat}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-gray-500 mt-0.5 break-words">
                       {kat === "Reguler"
                         ? "Penerima KIP-K jalur reguler berdasarkan seleksi nasional."
                         : "Penerima KIP-K jalur aspirasi (rekomendasi DPR/instansi)."}
@@ -407,13 +408,13 @@ export default function TambahMahasiswa() {
       </div>
 
       {/* Section 3: Kredensial */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-          <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700">3</div>
-          <h2 className="font-600 text-gray-800 text-sm">Kredensial Akun (Otomatis)</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+        <div className="flex items-center gap-2.5 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">3</div>
+          <h2 className="font-600 text-gray-800 text-sm truncate">Kredensial Akun (Otomatis)</h2>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-500 text-gray-700 mb-1.5">Username (NIM)</label>
@@ -438,9 +439,9 @@ export default function TambahMahasiswa() {
             </div>
           </div>
 
-          <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
             <Info size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700 leading-relaxed">
+            <p className="text-xs text-amber-700 leading-relaxed break-words min-w-0">
               Password default akan diberikan kepada mahasiswa. <strong>Mahasiswa wajib mengubah password saat login pertama</strong> sebelum dapat mengakses fitur sistem.
             </p>
           </div>
@@ -448,19 +449,19 @@ export default function TambahMahasiswa() {
       </div>
 
       {/* Footer */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-        <Link to="/admin/mahasiswa" className="text-sm text-gray-500 hover:text-gray-700">Batal</Link>
-        <div className="flex items-center gap-3">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 sm:px-5 py-3.5 sm:py-4 flex flex-col-reverse min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-3 min-w-0">
+        <Link to="/admin/mahasiswa" className="text-sm text-gray-500 hover:text-gray-700 text-center min-[480px]:text-left py-1">Batal</Link>
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 sm:gap-3 w-full min-[480px]:w-auto">
           <button
             onClick={() => handleSubmit(true)}
             disabled={submitting || optionsLoading}
-            className="px-4 py-2.5 border border-[#263F93] rounded-lg text-sm font-500 text-[#263F93] hover:bg-blue-50 disabled:opacity-50 transition-colors">
+            className="px-4 py-2.5 border border-[#263F93] rounded-lg text-sm font-500 text-[#263F93] hover:bg-blue-50 disabled:opacity-50 transition-colors whitespace-nowrap">
             Simpan & Tambah Lagi
           </button>
           <button
             onClick={() => handleSubmit(false)}
             disabled={submitting || optionsLoading}
-            className="px-5 py-2.5 rounded-lg text-sm font-500 text-white disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-lg text-sm font-500 text-white disabled:opacity-50 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
             style={{ background: submitting ? "#94A3B8" : "#263F93" }}>
             {submitting
               ? <><Loader2 size={15} className="animate-spin" /> Menyimpan...</>
@@ -472,28 +473,28 @@ export default function TambahMahasiswa() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl min-w-0">
             <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={28} className="text-green-500" />
             </div>
-            <h3 className="font-display font-700 text-xl text-gray-900 text-center mb-1">Berhasil Didaftarkan!</h3>
-            <p className="text-gray-500 text-sm text-center mb-5">
+            <h3 className="font-display font-700 text-lg sm:text-xl text-gray-900 text-center mb-1">Berhasil Didaftarkan!</h3>
+            <p className="text-gray-500 text-sm text-center mb-5 break-words">
               Mahasiswa <strong>{form.nama}</strong> berhasil didaftarkan ke SIMKIP-ITG.
             </p>
 
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2 mb-5">
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2 mb-5 min-w-0">
               <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">Kredensial Akun</p>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">NIM / Username</span>
-                <span className="font-mono font-600 text-gray-800">{form.nim}</span>
+              <div className="flex justify-between gap-3 text-sm min-w-0">
+                <span className="text-gray-500 shrink-0">NIM / Username</span>
+                <span className="font-mono font-600 text-gray-800 break-all text-right">{form.nim}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Password Default</span>
-                <span className="font-mono font-600 text-gray-800">{generatedPassword}</span>
+              <div className="flex justify-between gap-3 text-sm min-w-0">
+                <span className="text-gray-500 shrink-0">Password Default</span>
+                <span className="font-mono font-600 text-gray-800 break-all text-right">{generatedPassword}</span>
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col min-[420px]:flex-row gap-2">
               <button onClick={copyCredentials}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl text-sm font-500 text-gray-700 hover:bg-gray-50">
                 {copied ? <CheckCircle size={15} className="text-green-500" /> : <Copy size={15} />}

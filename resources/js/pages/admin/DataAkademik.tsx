@@ -110,23 +110,23 @@ function PrestasiModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-2 px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
           <div>
-            <h3 className="font-700 text-gray-800 text-base">
+            <h3 className="font-700 text-gray-800 text-sm sm:text-base break-words">
               {item.namaPrestasi}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5 break-words">
               {item.nama} &middot; {item.nim} &middot; {item.prodi}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-4 sm:px-5 py-4 space-y-4 min-w-0">
           <div className="flex flex-wrap gap-2">
             <span
               className={`px-2.5 py-1 rounded-full text-xs font-600 ${tingkatBadge(item.tingkat)}`}
@@ -139,41 +139,41 @@ function PrestasiModal({
               {item.status}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 text-sm min-w-0">
             <div>
               <span className="text-xs text-gray-400 block">Pencapaian</span>
-              <span className="font-500 text-gray-800">{item.pencapaian}</span>
+              <span className="font-500 text-gray-800 break-words min-w-0">{item.pencapaian}</span>
             </div>
             <div>
               <span className="text-xs text-gray-400 block">Penyelenggara</span>
-              <span className="font-500 text-gray-800">
+              <span className="font-500 text-gray-800 break-words min-w-0">
                 {item.penyelenggara}
               </span>
             </div>
             <div>
               <span className="text-xs text-gray-400 block">Tanggal</span>
-              <span className="font-500 text-gray-800">{item.tanggal}</span>
+              <span className="font-500 text-gray-800 break-words min-w-0">{item.tanggal}</span>
             </div>
             <div>
               <span className="text-xs text-gray-400 block">Tempat</span>
-              <span className="font-500 text-gray-800">{item.tempat}</span>
+              <span className="font-500 text-gray-800 break-words min-w-0">{item.tempat}</span>
             </div>
           </div>
           <div>
             <span className="text-xs text-gray-400 block mb-1">Deskripsi</span>
-            <p className="text-sm text-gray-700">{item.deskripsi}</p>
+            <p className="text-sm text-gray-700 break-words">{item.deskripsi}</p>
           </div>
           {item.linkPenyelenggara && (
             <a
               href={item.linkPenyelenggara}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-[#263F93] hover:underline"
+              className="inline-flex items-start gap-1 text-xs text-[#263F93] hover:underline break-all min-w-0"
             >
-              <ExternalLink size={11} /> {item.linkPenyelenggara}
+              <ExternalLink size={11} className="flex-shrink-0 mt-0.5" /> <span className="break-all">{item.linkPenyelenggara}</span>
             </a>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
             <div>
               <p className="text-xs text-gray-400 mb-1.5">Sertifikat / Piagam</p>
               {item.fileSertifikat ? (
@@ -262,7 +262,7 @@ function PrestasiModal({
             </div>
           </div>
           {item.catatan && (
-            <div className="bg-yellow-50 rounded-xl p-3 text-xs text-yellow-800">
+            <div className="bg-yellow-50 rounded-xl p-3 text-xs text-yellow-800 break-words">
               <span className="font-600">Catatan Admin: </span>
               {item.catatan}
             </div>
@@ -320,23 +320,23 @@ function OrganisasiModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-2 px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
           <div>
-            <h3 className="font-700 text-gray-800 text-base">
+            <h3 className="font-700 text-gray-800 text-sm sm:text-base break-words">
               {item.organisasi}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5 break-words">
               {item.nama} &middot; {item.nim} &middot; {item.prodi}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-4 sm:px-5 py-4 space-y-4 min-w-0">
           {/* Status */}
           <div className="flex gap-2">
             <span
@@ -350,15 +350,15 @@ function OrganisasiModal({
             <div className="font-600 text-gray-700 mb-1">Data Mahasiswa</div>
             <div className="grid grid-cols-2 gap-1">
               <span className="text-gray-400">Nama:</span>
-              <span className="font-500">{item.nama}</span>
+              <span className="font-500 break-words min-w-0">{item.nama}</span>
               <span className="text-gray-400">NIM:</span>
-              <span className="font-500">{item.nim}</span>
+              <span className="font-500 break-words min-w-0">{item.nim}</span>
               <span className="text-gray-400">Program Studi:</span>
-              <span className="font-500">{item.prodi}</span>
+              <span className="font-500 break-words min-w-0">{item.prodi}</span>
               <span className="text-gray-400">Angkatan:</span>
-              <span className="font-500">{item.angkatan}</span>
+              <span className="font-500 break-words min-w-0">{item.angkatan}</span>
               <span className="text-gray-400">Kategori:</span>
-              <span className="font-500">{item.kipk}</span>
+              <span className="font-500 break-words min-w-0">{item.kipk}</span>
             </div>
           </div>
           {/* Data Organisasi */}
@@ -366,24 +366,24 @@ function OrganisasiModal({
             <div className="font-600 text-gray-700 text-xs mb-2 uppercase tracking-wide">
               Detail Organisasi
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-sm min-w-0">
               <div className="col-span-2">
                 <span className="text-xs text-gray-400 block">
                   Nama Organisasi
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.organisasi}
                 </span>
               </div>
               <div className="col-span-2">
                 <span className="text-xs text-gray-400 block">Jabatan</span>
-                <span className="font-500 text-gray-800">{item.jabatan}</span>
+                <span className="font-500 text-gray-800 break-words min-w-0">{item.jabatan}</span>
               </div>
               <div>
                 <span className="text-xs text-gray-400 block">
                   Periode Mulai
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.periodeMulai}
                 </span>
               </div>
@@ -391,7 +391,7 @@ function OrganisasiModal({
                 <span className="text-xs text-gray-400 block">
                   Periode Selesai
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.periodeSelesai}
                 </span>
               </div>
@@ -401,7 +401,7 @@ function OrganisasiModal({
                 <span className="text-xs text-gray-400 block mb-0.5">
                   Deskripsi Kegiatan
                 </span>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-sm text-gray-700 leading-relaxed break-words">
                   {item.deskripsi}
                 </p>
               </div>
@@ -414,7 +414,7 @@ function OrganisasiModal({
             </span>
             <div className="bg-gray-100 rounded-xl flex flex-col items-center justify-center py-6 gap-2">
               <FileImage size={24} className="text-gray-300" />
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 break-all px-2">
                 sk_kepengurusan_{item.nim}.pdf
               </span>
               <button className="flex items-center gap-1 text-xs text-[#263F93] font-500 hover:underline">
@@ -476,23 +476,23 @@ function PelatihanModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-2 px-4 sm:px-5 pt-4 sm:pt-5 pb-3 border-b border-gray-100 min-w-0">
           <div>
-            <h3 className="font-700 text-gray-800 text-base">
+            <h3 className="font-700 text-gray-800 text-sm sm:text-base break-words">
               {item.namaPelatihan}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5 break-words">
               {item.nama} &middot; {item.nim} &middot; {item.prodi}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-4 sm:px-5 py-4 space-y-4 min-w-0">
           {/* Status & Jenis */}
           <div className="flex gap-2">
             <span
@@ -515,15 +515,15 @@ function PelatihanModal({
             <div className="font-600 text-gray-700 mb-1">Data Mahasiswa</div>
             <div className="grid grid-cols-2 gap-1">
               <span className="text-gray-400">Nama:</span>
-              <span className="font-500">{item.nama}</span>
+              <span className="font-500 break-words min-w-0">{item.nama}</span>
               <span className="text-gray-400">NIM:</span>
-              <span className="font-500">{item.nim}</span>
+              <span className="font-500 break-words min-w-0">{item.nim}</span>
               <span className="text-gray-400">Program Studi:</span>
-              <span className="font-500">{item.prodi}</span>
+              <span className="font-500 break-words min-w-0">{item.prodi}</span>
               <span className="text-gray-400">Angkatan:</span>
-              <span className="font-500">{item.angkatan}</span>
+              <span className="font-500 break-words min-w-0">{item.angkatan}</span>
               <span className="text-gray-400">Kategori:</span>
-              <span className="font-500">{item.kipk}</span>
+              <span className="font-500 break-words min-w-0">{item.kipk}</span>
             </div>
           </div>
           {/* Data Pelatihan */}
@@ -531,12 +531,12 @@ function PelatihanModal({
             <div className="font-600 text-gray-700 text-xs mb-2 uppercase tracking-wide">
               Detail Pelatihan
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 text-sm min-w-0">
               <div className="col-span-2">
                 <span className="text-xs text-gray-400 block">
                   Nama Pelatihan
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.namaPelatihan}
                 </span>
               </div>
@@ -544,7 +544,7 @@ function PelatihanModal({
                 <span className="text-xs text-gray-400 block">
                   Penyelenggara
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.penyelenggara}
                 </span>
               </div>
@@ -552,7 +552,7 @@ function PelatihanModal({
                 <span className="text-xs text-gray-400 block">
                   Tanggal Mulai
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.tanggalMulai}
                 </span>
               </div>
@@ -560,7 +560,7 @@ function PelatihanModal({
                 <span className="text-xs text-gray-400 block">
                   Tanggal Selesai
                 </span>
-                <span className="font-500 text-gray-800">
+                <span className="font-500 text-gray-800 break-words min-w-0">
                   {item.tanggalSelesai}
                 </span>
               </div>
@@ -568,7 +568,7 @@ function PelatihanModal({
                 <span className="text-xs text-gray-400 block">
                   Tempat Pelaksanaan
                 </span>
-                <span className="font-500 text-gray-800">{item.tempat}</span>
+                <span className="font-500 text-gray-800 break-words min-w-0">{item.tempat}</span>
               </div>
             </div>
             {item.deskripsi && (
@@ -576,7 +576,7 @@ function PelatihanModal({
                 <span className="text-xs text-gray-400 block mb-0.5">
                   Deskripsi Kegiatan
                 </span>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-sm text-gray-700 leading-relaxed break-words">
                   {item.deskripsi}
                 </p>
               </div>
@@ -589,7 +589,7 @@ function PelatihanModal({
             </span>
             <div className="bg-gray-100 rounded-xl flex flex-col items-center justify-center py-6 gap-2">
               <FileImage size={24} className="text-gray-300" />
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 break-all px-2">
                 sertifikat_pelatihan_{item.nim}.pdf
               </span>
               <button className="flex items-center gap-1 text-xs text-[#263F93] font-500 hover:underline">
@@ -637,7 +637,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600"
+      className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
     >
       {options.map((o) => (
         <option key={o}>{o}</option>
@@ -985,39 +985,41 @@ export default function DataAkademik() {
   const tdCls = "px-4 py-3"
 
   return (
-    <div className="relative space-y-5">
+    <div className="relative space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
       {loading && (
         <div className="absolute inset-0 z-50 flex items-start justify-center pt-[20vh] pointer-events-none">
           <Loader2 className="w-10 h-10 text-[#263F93] animate-spin" />
         </div>
       )}
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex items-center justify-between mb-5">
-          <span>{error}</span>
-          <button onClick={fetchData} className="text-sm font-medium hover:underline">Coba Lagi</button>
+        <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5 min-w-0">
+          <span className="text-sm break-words min-w-0">{error}</span>
+          <button onClick={fetchData} className="text-sm font-medium hover:underline shrink-0 self-start sm:self-auto">Coba Lagi</button>
         </div>
       )}
       
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
             Data Akademik &amp; Non-Akademik Mahasiswa
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
             Pantau IPK, nilai mata kuliah, prestasi, organisasi, dan pelatihan
           </p>
         </div>
-        <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
+        <div className="self-start sm:self-auto shrink-0">
+          <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
+        </div>
       </div>
 
       {/* Main tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit min-w-0">
         {(["akademik", "nonakademik"] as const).map((key) => (
           <button
             key={key}
             onClick={() => setMainTab(key)}
-            className={`px-5 py-2 rounded-lg text-sm font-500 transition-all ${
+            className={`flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-500 transition-all whitespace-nowrap ${
               mainTab === key
                 ? "bg-white shadow-sm text-gray-800"
                 : "text-gray-500 hover:text-gray-700"
@@ -1032,12 +1034,12 @@ export default function DataAkademik() {
       {mainTab === "akademik" && (
         <div className="space-y-5">
           {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle size={18} className="text-red-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">
                   IPK di Bawah Standar (3.0)
                 </p>
@@ -1047,11 +1049,11 @@ export default function DataAkademik() {
                 <p className="text-xs text-gray-400">mahasiswa</p>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
                 <BarChart2 size={18} className="text-[#263F93]" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">
                   Rata-rata IPK Keseluruhan
                 </p>
@@ -1061,13 +1063,13 @@ export default function DataAkademik() {
                 <p className="text-xs text-gray-400">dari skala 4.00</p>
               </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-start gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
                 <CalendarDays size={18} className="text-green-600" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Periode Input Aktif</p>
-                <p className="font-display font-700 text-sm text-gray-800 mt-0.5">
+                <p className="font-display font-700 text-sm text-gray-800 mt-0.5 break-words">
                   {periodeAktifRange}
                 </p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-600 bg-green-100 text-green-700">
@@ -1078,9 +1080,9 @@ export default function DataAkademik() {
           </div>
 
           {/* Filter bar */}
-          <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative flex-1 min-w-48">
+          <div className="bg-white rounded-xl px-3 sm:px-4 py-3 shadow-sm border border-gray-100 min-w-0">
+            <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
+              <div className="relative col-span-1 min-[480px]:col-span-2 lg:flex-1 lg:min-w-48 min-w-0">
                 <Search
                   size={14}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -1089,7 +1091,7 @@ export default function DataAkademik() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Cari NIM atau Nama..."
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0"
                 />
               </div>
               <FilterSelect
@@ -1139,9 +1141,9 @@ export default function DataAkademik() {
           </div>
 
           {/* Data table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[980px] text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
                     <th className={thCls}>No</th>
@@ -1239,7 +1241,7 @@ export default function DataAkademik() {
                           )}
                         </td>
                         <td className={tdCls}>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
                             <Link
                               to={`/admin/mahasiswa/${r.id}`}
                               className="text-xs text-[#263F93] hover:underline font-500 whitespace-nowrap"
@@ -1254,11 +1256,11 @@ export default function DataAkademik() {
                 </tbody>
               </table>
             </div>
-            <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-xs text-gray-500">
+            <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs text-gray-500 text-center sm:text-left break-words">
                 Menampilkan {filteredAkademik.length} mahasiswa
               </span>
-              <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors">
+              <button className="flex items-center justify-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
                 <Download size={13} /> Export ke Excel
               </button>
             </div>
@@ -1268,14 +1270,14 @@ export default function DataAkademik() {
 
       {/* ═══ TAB: DATA NON-AKADEMIK ══════════════════════════════════════════ */}
       {mainTab === "nonakademik" && (
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Sub-tabs */}
-          <div className="flex gap-1 bg-gray-50 border border-gray-200 p-1 rounded-xl w-fit">
+          <div className="flex gap-1 bg-gray-50 border border-gray-200 p-1 rounded-xl w-full sm:w-fit min-w-0">
             {(["prestasi", "organisasi", "pelatihan"] as const).map((key) => (
               <button
                 key={key}
                 onClick={() => setNonTab(key)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-500 transition-all ${
+                className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-500 transition-all whitespace-nowrap ${
                   nonTab === key
                     ? "bg-white shadow-sm text-gray-800"
                     : "text-gray-500 hover:text-gray-700"
@@ -1293,9 +1295,9 @@ export default function DataAkademik() {
           {/* ── PRESTASI ─────────────────────────────────────────────────────── */}
           {nonTab === "prestasi" && (
             <div className="space-y-4">
-              <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-                <div className="flex flex-wrap gap-2 items-center">
-                  <div className="relative flex-1 min-w-48">
+              <div className="bg-white rounded-xl px-3 sm:px-4 py-3 shadow-sm border border-gray-100 min-w-0">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
+                  <div className="relative col-span-1 min-[480px]:col-span-2 lg:flex-1 lg:min-w-48 min-w-0">
                     <Search
                       size={14}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -1304,7 +1306,7 @@ export default function DataAkademik() {
                       value={pSearch}
                       onChange={(e) => setPSearch(e.target.value)}
                       placeholder="Cari nama mahasiswa atau prestasi..."
-                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0"
                     />
                   </div>
                   <FilterSelect
@@ -1351,19 +1353,19 @@ export default function DataAkademik() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <Award size={15} className="text-[#263F93]" />
-                    <span className="font-600 text-gray-800 text-sm">
+                    <span className="font-600 text-gray-800 text-sm truncate min-w-0 flex-1">
                       Rekap Prestasi Mahasiswa KIP-K
                     </span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 whitespace-nowrap">
                     <Download size={12} /> Export
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[1080px] text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-100">
                         {[
@@ -1457,7 +1459,7 @@ export default function DataAkademik() {
           {nonTab === "organisasi" && (
             <div className="space-y-4">
               <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
                   <FilterSelect
                     value={oProdi}
                     onChange={setOProdi}
@@ -1497,19 +1499,19 @@ export default function DataAkademik() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <Users size={15} className="text-[#263F93]" />
-                    <span className="font-600 text-gray-800 text-sm">
+                    <span className="font-600 text-gray-800 text-sm truncate min-w-0 flex-1">
                       Rekap Keaktifan Organisasi
                     </span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 whitespace-nowrap">
                     <Download size={12} /> Export
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[860px] text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-100">
                         {[
@@ -1586,12 +1588,12 @@ export default function DataAkademik() {
           {/* ── PELATIHAN ────────────────────────────────────────────────────── */}
           {nonTab === "pelatihan" && (
             <div className="space-y-4">
-              <div className="flex gap-1 bg-gray-50 border border-gray-200 p-1 rounded-xl w-fit">
+              <div className="flex gap-1 bg-gray-50 border border-gray-200 p-1 rounded-xl w-full sm:w-fit min-w-0">
                 {(["akademik", "nonakademik"] as const).map((key) => (
                   <button
                     key={key}
                     onClick={() => setPelatihanTab(key)}
-                    className={`px-4 py-1.5 rounded-lg text-sm font-500 transition-all ${
+                    className={`flex-1 sm:flex-none px-2 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-500 transition-all whitespace-nowrap ${
                       pelatihanTab === key
                         ? "bg-white shadow-sm text-gray-800"
                         : "text-gray-500 hover:text-gray-700"
@@ -1602,7 +1604,7 @@ export default function DataAkademik() {
                 ))}
               </div>
               <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
                   <FilterSelect
                     value={pelProdi}
                     onChange={setPelProdi}
@@ -1642,22 +1644,22 @@ export default function DataAkademik() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <BookOpen size={15} className="text-[#263F93]" />
-                    <span className="font-600 text-gray-800 text-sm">
+                    <span className="font-600 text-gray-800 text-sm truncate min-w-0 flex-1">
                       Rekap Pelatihan{" "}
                       {pelatihanTab === "akademik"
                         ? "Akademik"
                         : "Non-Akademik"}
                     </span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 whitespace-nowrap">
                     <Download size={12} /> Export
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[960px] text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-100">
                         {[

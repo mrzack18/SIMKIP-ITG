@@ -92,41 +92,43 @@ export default function BebasTanggunganList() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">
             Permohonan Surat Keterangan Penyelesaian Studi
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
             Review permohonan penerbitan Surat Keterangan Penyelesaian Studi KIP-K
           </p>
         </div>
-        <TahunAjaranFilter
-          value={tahunAjaran}
-          onChange={(v) => {
-            setTahunAjaran(v);
-            setPage(1);
-          }}
-        />
+        <div className="self-start sm:self-auto shrink-0">
+          <TahunAjaranFilter
+            value={tahunAjaran}
+            onChange={(v) => {
+              setTahunAjaran(v);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       {/* Tabs + Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 min-w-0">
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit min-w-0">
           {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => handleTabChange(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-500 transition-all flex items-center gap-2 ${
+              className={`flex-1 sm:flex-none px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-500 transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                 tab === t ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {TAB_LABELS[t]}
               <span
-                className={`text-xs px-1.5 py-0.5 rounded-full font-600 ${
+                className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full font-600 flex-shrink-0 ${
                   t === "menunggu"
                     ? "bg-yellow-100 text-yellow-700"
                     : t === "diterbitkan"
@@ -141,15 +143,15 @@ export default function BebasTanggunganList() {
         </div>
 
         {/* Search + Prodi + Angkatan */}
-        <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
-          <div className="relative">
+        <form onSubmit={handleSearch} className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap lg:items-center gap-2">
+          <div className="relative col-span-1 min-[480px]:col-span-2 lg:flex-1 lg:min-w-48 min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Cari NIM atau nama..."
-              className="pl-9 pr-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 w-52"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 min-w-0"
             />
           </div>
 
@@ -159,7 +161,7 @@ export default function BebasTanggunganList() {
               setSelectedProdi(e.target.value);
               setPage(1);
             }}
-            className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+            className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 w-full sm:w-auto max-w-full min-w-0 truncate"
           >
             {prodiOptions.map((p) => (
               <option key={p} value={p}>
@@ -174,7 +176,7 @@ export default function BebasTanggunganList() {
               setSelectedAngkatan(e.target.value);
               setPage(1);
             }}
-            className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+            className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 w-full sm:w-auto max-w-full min-w-0 truncate"
           >
             {angkatanOptions.map((a) => (
               <option key={a} value={a}>
@@ -183,28 +185,30 @@ export default function BebasTanggunganList() {
             ))}
           </select>
 
-          <button
-            type="submit"
-            className="px-3 py-2 text-xs font-500 bg-[#263F93] text-white rounded-lg hover:bg-[#1E3275] transition-colors"
-          >
-            Cari
-          </button>
-          {search && (
+          <div className="flex gap-2 col-span-1 min-[480px]:col-span-2 lg:col-span-1">
             <button
-              type="button"
-              onClick={handleSearchClear}
-              className="px-3 py-2 text-xs font-500 border border-[#E2E8F0] text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+              type="submit"
+              className="flex-1 lg:flex-none px-4 lg:px-3 py-2 text-xs font-500 bg-[#263F93] text-white rounded-lg hover:bg-[#1E3275] transition-colors whitespace-nowrap"
             >
-              Reset
+              Cari
             </button>
-          )}
+            {search && (
+              <button
+                type="button"
+                onClick={handleSearchClear}
+                className="flex-1 lg:flex-none px-4 lg:px-3 py-2 text-xs font-500 border border-[#E2E8F0] text-gray-600 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden min-w-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[960px] text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-[#E2E8F0]">
                 {[
@@ -221,7 +225,7 @@ export default function BebasTanggunganList() {
                 ].map((h) => (
                   <th
                     key={h}
-                    className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap"
+                    className={`text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === "Aksi" ? "sticky right-0 bg-gray-50 shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.1)]" : ""}`}
                   >
                     {h}
                   </th>
@@ -288,8 +292,8 @@ export default function BebasTanggunganList() {
                         {r.docsTotal === 0 ? (
                           <span className="text-xs text-gray-400">—</span>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <div className="h-1.5 w-16 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <div className="h-1.5 w-16 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
                               <div
                                 className="h-full rounded-full"
                                 style={{
@@ -317,18 +321,18 @@ export default function BebasTanggunganList() {
                       {/* Status SP */}
                       <td className="px-4 py-3.5">
                         {r.spBersih ? (
-                          <span className="flex items-center gap-1 text-xs text-green-600">
-                            <CheckCircle size={12} /> Bersih
+                          <span className="flex items-center gap-1 text-xs text-green-600 whitespace-nowrap">
+                            <CheckCircle size={12} className="flex-shrink-0" /> Bersih
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-xs text-red-600">
-                            <AlertTriangle size={12} /> Ada Riwayat
+                          <span className="flex items-center gap-1 text-xs text-red-600 whitespace-nowrap">
+                            <AlertTriangle size={12} className="flex-shrink-0" /> Ada Riwayat
                           </span>
                         )}
                       </td>
 
                       {/* Aksi */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 sticky right-0 bg-white shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.1)]">
                         {r.status === "menunggu" ? (
                           <Link
                             to={`/admin/bebas-tanggungan/${r.id}`}
@@ -355,11 +359,11 @@ export default function BebasTanggunganList() {
 
         {/* Pagination */}
         {!loading && !error && totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-[#E2E8F0] flex items-center justify-between">
-            <p className="text-xs text-gray-500">
+          <div className="px-4 py-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-xs text-gray-500 text-center sm:text-left">
               Menampilkan {data.length} dari {total} permohonan
             </p>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-center sm:justify-end gap-1 flex-wrap">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}

@@ -26,7 +26,7 @@ function FilterSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600"
+      className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none text-gray-600 w-full sm:w-auto max-w-full min-w-0 truncate"
     >
       {options.map((o) => (
         <option key={o}>{o}</option>
@@ -62,30 +62,30 @@ const formatDate = (iso: string) => {
 
 // Skeleton loader
 const SkeletonCard = () => (
-  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 animate-pulse">
-    <div className="w-12 h-12 rounded-xl bg-gray-200 flex-shrink-0" />
-    <div className="flex-1 space-y-2">
+  <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3 sm:gap-4 animate-pulse min-w-0">
+    <div className="w-12 h-12 rounded-xl bg-gray-200 flex-shrink-0 hidden min-[420px]:block" />
+    <div className="flex-1 space-y-2 min-w-0">
       <div className="h-4 bg-gray-200 rounded w-2/3" />
       <div className="h-3 bg-gray-100 rounded w-1/2" />
       <div className="h-3 bg-gray-100 rounded w-1/3" />
     </div>
-    <div className="h-8 bg-gray-200 rounded-lg w-20" />
+    <div className="h-8 bg-gray-200 rounded-lg w-16 sm:w-20 flex-shrink-0" />
   </div>
 );
 
 // --- Section header components ---
 function BlueHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-2 px-4 py-3 text-white text-sm font-semibold" style={{ background: "#263F93" }}>
-      {icon}
-      {title}
+    <div className="flex items-center gap-2 px-3 sm:px-4 py-3 text-white text-xs sm:text-sm font-semibold min-w-0" style={{ background: "#263F93" }}>
+      <span className="flex-shrink-0 flex items-center">{icon}</span>
+      <span className="truncate">{title}</span>
     </div>
   );
 }
 
 function GrayHeader({ title }: { title: string }) {
   return (
-    <div className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide" style={{ background: "#F1F5F9", borderBottom: "1px solid #E2E8F0" }}>
+    <div className="px-3 sm:px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide truncate min-w-0" style={{ background: "#F1F5F9", borderBottom: "1px solid #E2E8F0" }}>
       {title}
     </div>
   );
@@ -93,9 +93,9 @@ function GrayHeader({ title }: { title: string }) {
 
 function InfoRow({ label, value, colSpan = 1 }: { label: string; value: React.ReactNode; colSpan?: number }) {
   return (
-    <div className={colSpan === 2 ? "col-span-2" : ""}>
+    <div className={`min-w-0 ${colSpan === 2 ? "col-span-2" : ""}`}>
       <span className="text-gray-400 text-xs">{label}</span>
-      <div className="font-semibold text-gray-800 text-xs mt-0.5">{value}</div>
+      <div className="font-semibold text-gray-800 text-xs mt-0.5 break-words min-w-0">{value}</div>
     </div>
   );
 }
@@ -173,7 +173,7 @@ function MahasiswaSection({ doc }: { doc: DokumenQueueType }) {
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
       <GrayHeader title="Data Mahasiswa & Unggahan" />
-      <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+      <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
         <InfoRow label="Nama Mahasiswa" value={doc.nama} />
         <InfoRow label="Program Studi" value={doc.prodi} />
         <InfoRow label="NIM" value={doc.nim} />
@@ -202,7 +202,7 @@ function PrestasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
       {/* Section 1: Data Prestasi */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <BlueHeader icon={<Trophy size={15} />} title="Data Prestasi" />
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+        <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
           <InfoRow
             label="Nama Prestasi / Penghargaan"
             value={data?.namaPrestasi ?? "—"}
@@ -234,10 +234,10 @@ function PrestasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
                   href={data.linkPenyelenggara}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+                  className="inline-flex items-start gap-1 text-xs font-semibold hover:underline break-all min-w-0"
                   style={{ color: "#263F93" }}
                 >
-                  {data.linkPenyelenggara} <ExternalLink size={11} />
+                  <span className="break-all">{data.linkPenyelenggara}</span> <ExternalLink size={11} className="flex-shrink-0 mt-0.5" />
                 </a>
               ) : (
                 <span className="text-xs text-gray-400">—</span>
@@ -253,7 +253,7 @@ function PrestasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
       {/* Section 3: Bukti Dokumen */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
-        <div className="p-4 flex gap-3 bg-white">
+        <div className="p-3 sm:p-4 flex flex-col min-[420px]:flex-row gap-2 sm:gap-3 bg-white min-w-0">
           <DocPlaceholderCard
             icon={<Trophy size={32} className="text-gray-400" />}
             label="Foto Sertifikat"
@@ -282,7 +282,7 @@ function OrganisasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | n
       {/* Section 1: Data Organisasi */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <BlueHeader icon={<Users size={15} />} title="Data Organisasi" />
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+        <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
           <InfoRow
             label="Nama Organisasi"
             value={data?.nama ?? "—"}
@@ -302,7 +302,7 @@ function OrganisasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | n
       {/* Section 3: Bukti Dokumen */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
-        <div className="p-4 flex gap-3 bg-white">
+        <div className="p-3 sm:p-4 flex flex-col min-[420px]:flex-row gap-2 sm:gap-3 bg-white min-w-0">
           <DocPlaceholderCard
             icon={<FileText size={32} className="text-gray-400" />}
             label="Serti/SK Pengurus"
@@ -333,7 +333,7 @@ function PelatihanPreview({ doc, data }: { doc: DokumenQueueType; data: any | nu
       {/* Section 1: Data Pelatihan */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <BlueHeader icon={<BookOpen size={15} />} title="Data Pelatihan" />
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+        <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
           <InfoRow label="Nama Pelatihan" value={data?.namaPelatihan ?? "—"} colSpan={2} />
           <div>
             <span className="text-gray-400 text-xs">Jenis</span>
@@ -361,7 +361,7 @@ function PelatihanPreview({ doc, data }: { doc: DokumenQueueType; data: any | nu
       {/* Section 3: Bukti Dokumen */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Bukti Dokumen" />
-        <div className="p-4 flex gap-3 bg-white">
+        <div className="p-3 sm:p-4 flex flex-col min-[420px]:flex-row gap-2 sm:gap-3 bg-white min-w-0">
           <DocPlaceholderCard
             icon={<FileText size={32} className="text-gray-400" />}
             label="Sertifikat"
@@ -391,7 +391,7 @@ function EvaluasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
       {/* Section 1: Data Nilai & KHS */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <BlueHeader icon={<ClipboardList size={15} />} title={`Evaluasi Semester ${data?.semester ?? '?'}`} />
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+        <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
           <InfoRow label="IPK" value={data?.ipk ?? "???"} />
           <InfoRow label="IPS" value={data?.ips ?? "???"} />
           <InfoRow label="Tahun Ajaran" value={data?.tahun ?? "???"} colSpan={2} />
@@ -402,7 +402,7 @@ function EvaluasiPreview({ doc, data }: { doc: DokumenQueueType; data: any | nul
       <div className="rounded-xl border overflow-hidden bg-white" style={{ borderColor: "#E2E8F0" }}>
          <div className="bg-gray-50 border-b border-gray-200 px-4 py-2 text-xs font-600 text-gray-700">Daftar Mata Kuliah</div>
          <div className="p-0 overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[420px] text-left text-sm">
                <thead className="bg-gray-50 text-gray-500">
                   <tr>
                      <th className="px-4 py-2 font-500">Kode</th>
@@ -481,7 +481,7 @@ function GenericPreview({ doc, data }: { doc: DokumenQueueType; data: any | null
       {/* Section 1: Informasi Dokumen */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <BlueHeader icon={<FileCheck size={15} />} title="Informasi Dokumen" />
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+        <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
           <InfoRow label="Jenis Dokumen" value={doc.jenis} colSpan={2} />
           <InfoRow label="Tanggal Diunggah" value={formatDate(doc.tanggalUpload)} colSpan={2} />
           {data?.fields?.map((f: any, i: number) => (
@@ -493,7 +493,7 @@ function GenericPreview({ doc, data }: { doc: DokumenQueueType; data: any | null
       {/* Section 2: Data Mahasiswa */}
       <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
         <GrayHeader title="Data Mahasiswa & Unggahan" />
-        <div className="p-4 grid grid-cols-2 gap-3 bg-white">
+        <div className="p-3 sm:p-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 bg-white min-w-0">
           <InfoRow label="Nama Mahasiswa" value={doc.nama} />
           <InfoRow label="Program Studi" value={doc.prodi} />
           <InfoRow label="NIM" value={doc.nim} />
@@ -815,32 +815,34 @@ export default function DokumenQueue() {
     : [];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900 flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 flex items-center gap-2 sm:gap-3 flex-wrap">
             Antrian Validasi Dokumen
             {counts.Menunggu > 0 && (
-              <span className="text-sm px-2.5 py-1 rounded-full font-600" style={{ background: "#F5EDD4", color: "#D4A72C" }}>
+              <span className="text-xs sm:text-sm px-2.5 py-1 rounded-full font-600 whitespace-nowrap" style={{ background: "#F5EDD4", color: "#D4A72C" }}>
                 {counts.Menunggu} Menunggu
               </span>
             )}
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Review dan validasi dokumen yang diunggah mahasiswa KIP-K</p>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Review dan validasi dokumen yang diunggah mahasiswa KIP-K</p>
         </div>
-        <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
+        <div className="self-start sm:self-auto shrink-0">
+          <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit flex-wrap">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit min-w-0 overflow-x-auto">
         {(["Semua", "Menunggu", "Disetujui", "Ditolak"] as Tab[]).map(t => (
           <button key={t} onClick={() => handleTabChange(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-500 transition-all flex items-center gap-2 ${
+            className={`flex-1 sm:flex-none px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-500 transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
               tab === t ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"
             }`}>
             {t}
-            <span className={`text-xs px-1.5 py-0.5 rounded-full font-600 ${
+            <span className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full font-600 flex-shrink-0 ${
               t === "Menunggu" ? "bg-[#F5EDD4] text-[#D4A72C]" :
               t === "Disetujui" ? "bg-green-100 text-green-700" :
               t === "Ditolak" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-600"
@@ -850,12 +852,12 @@ export default function DokumenQueue() {
       </div>
 
       {/* Filter bar */}
-      <div className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative min-w-48 sm:min-w-56 md:flex-1">
+      <div className="bg-white rounded-xl px-3 sm:px-4 py-3 shadow-sm border border-gray-100 min-w-0">
+        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
+          <div className="relative col-span-1 min-[480px]:col-span-2 lg:flex-1 lg:min-w-48 min-w-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={e => handleSearchChange(e.target.value)} placeholder="Cari NIM atau Nama..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700" />
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700 min-w-0" />
           </div>
           <FilterSelect value={prodi} onChange={(v) => { setProdi(v); setCurrentPage(1); }} options={prodiOptions} />
           <FilterSelect value={angkatan} onChange={handleAngkatanChange} options={angkatanOptions} />
@@ -873,30 +875,30 @@ export default function DokumenQueue() {
       {loading ? (
         <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-xl p-16 text-center border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-xl p-8 sm:p-16 text-center border border-gray-100 shadow-sm min-w-0">
           {tab === "Menunggu" ? (
             <>
               <CheckCircle size={40} className="text-green-400 mx-auto mb-3" />
-              <p className="font-display font-700 text-xl text-gray-700">Semua dokumen sudah tervalidasi</p>
-              <p className="text-sm text-gray-400 mt-1">Tidak ada dokumen yang menunggu validasi saat ini.</p>
+              <p className="font-display font-700 text-lg sm:text-xl text-gray-700">Semua dokumen sudah tervalidasi</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Tidak ada dokumen yang menunggu validasi saat ini.</p>
             </>
           ) : tab === "Disetujui" ? (
             <>
               <AlertCircle size={40} className="text-gray-300 mx-auto mb-3" />
-              <p className="font-display font-700 text-xl text-gray-700">Belum ada dokumen yang disetujui</p>
-              <p className="text-sm text-gray-400 mt-1">Belum ada dokumen yang telah mendapat persetujuan.</p>
+              <p className="font-display font-700 text-lg sm:text-xl text-gray-700">Belum ada dokumen yang disetujui</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Belum ada dokumen yang telah mendapat persetujuan.</p>
             </>
           ) : tab === "Ditolak" ? (
             <>
               <XCircle size={40} className="text-gray-300 mx-auto mb-3" />
-              <p className="font-display font-700 text-xl text-gray-700">Tidak ada dokumen yang ditolak</p>
-              <p className="text-sm text-gray-400 mt-1">Tidak ada dokumen yang berstatus ditolak.</p>
+              <p className="font-display font-700 text-lg sm:text-xl text-gray-700">Tidak ada dokumen yang ditolak</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Tidak ada dokumen yang berstatus ditolak.</p>
             </>
           ) : (
             <>
               <AlertCircle size={40} className="text-gray-300 mx-auto mb-3" />
-              <p className="font-display font-700 text-xl text-gray-700">Tidak ada dokumen ditemukan</p>
-              <p className="text-sm text-gray-400 mt-1">Coba ubah filter atau kata kunci pencarian.</p>
+              <p className="font-display font-700 text-lg sm:text-xl text-gray-700">Tidak ada dokumen ditemukan</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Coba ubah filter atau kata kunci pencarian.</p>
             </>
           )}
         </div>
@@ -906,41 +908,41 @@ export default function DokumenQueue() {
             const status = getStatus(d);
             return (
               <div key={d.id}
-                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow group">
+                className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 flex items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow group min-w-0">
                 <div className="hidden sm:flex w-12 h-12 rounded-xl bg-blue-50 items-center justify-center flex-shrink-0">
                   {typeIcon(d.jenis)}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-500 text-gray-800">{d.jenis}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-500">{(d.prodi || "").replace("Teknik ", "T.")}</span>
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="text-sm font-500 text-gray-800 break-words min-w-0">{d.jenis}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-500 whitespace-nowrap shrink-0">{(d.prodi || "").replace("Teknik ", "T.")}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">{d.nama} · {d.nim}</div>
+                  <div className="text-xs text-gray-500 mt-0.5 break-words">{d.nama} · {d.nim}</div>
                   <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                    <Clock size={10} /> Diunggah {relativeTime(d.tanggalUpload)}
+                    <Clock size={10} className="flex-shrink-0" /> <span className="truncate">Diunggah {relativeTime(d.tanggalUpload)}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {status === "Menunggu" && (
-                    <span className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ background: "#F5EDD4", color: "#D4A72C" }}>
+                    <span className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full whitespace-nowrap" style={{ background: "#F5EDD4", color: "#D4A72C" }}>
                       <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#D4A72C" }} /> Menunggu
                     </span>
                   )}
                   {status === "Disetujui" && (
-                    <span className="hidden sm:flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-full whitespace-nowrap">
                       <CheckCircle size={11} /> Disetujui
                     </span>
                   )}
                   {status === "Ditolak" && (
-                    <span className="hidden sm:flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
+                    <span className="hidden sm:flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded-full whitespace-nowrap">
                       <XCircle size={11} /> Ditolak
                     </span>
                   )}
 
                   <button onClick={() => openReview(d)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-500 text-white transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-500 text-white transition-colors whitespace-nowrap ${
                       status === "Menunggu" ? "" : "opacity-90"
                     }`}
                     style={{ background: status === "Menunggu" ? "#263F93" : status === "Disetujui" ? "#059669" : "#DC2626" }}>
@@ -955,9 +957,9 @@ export default function DokumenQueue() {
 
       {/* Pagination */}
       {filtered.length > 0 && (
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Menampilkan {filtered.length > 0 ? `${startItem}–${endItem}` : 0} dari {totalItems} dokumen</span>
-          <div className="flex items-center gap-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-500">
+          <span className="text-center sm:text-left">Menampilkan {filtered.length > 0 ? `${startItem}–${endItem}` : 0} dari {totalItems} dokumen</span>
+          <div className="flex items-center justify-center sm:justify-end gap-1 flex-wrap">
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage <= 1}
@@ -998,15 +1000,15 @@ export default function DokumenQueue() {
       {/* Review / View Modal */}
       {reviewing && (
         <div className="fixed inset-0 bg-black/50 flex items-start justify-end z-50 p-0">
-          <div className="bg-white shadow-2xl w-full max-w-xl h-full flex flex-col overflow-hidden">
+          <div className="bg-white shadow-2xl w-full sm:max-w-xl h-full sm:h-full flex flex-col overflow-hidden min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
-              <div>
-                <h3 className="font-600 text-gray-800 text-sm">{reviewing.jenis}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{reviewing.nama} · {reviewing.nim}</p>
+            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b flex-shrink-0 min-w-0" style={{ borderColor: "#E2E8F0" }}>
+              <div className="min-w-0">
+                <h3 className="font-600 text-gray-800 text-sm break-words">{reviewing.jenis}</h3>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{reviewing.nama} · {reviewing.nim}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">{reviewIdx + 1} / {filtered.length}</span>
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                <span className="text-xs text-gray-400 whitespace-nowrap">{reviewIdx + 1} / {filtered.length}</span>
                 <button onClick={() => navigateReview(-1)} disabled={reviewIdx === 0}
                   className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 disabled:opacity-30">
                   <ChevronLeft size={16} />
@@ -1023,16 +1025,16 @@ export default function DokumenQueue() {
 
             {/* Status banner for already-processed */}
             {currentStatus !== "Menunggu" && (
-              <div className={`flex items-center gap-2 px-5 py-2.5 text-sm font-500 flex-shrink-0 ${
+              <div className={`flex items-start gap-2 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-500 flex-shrink-0 ${
                 currentStatus === "Disetujui" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
               }`}>
-                {currentStatus === "Disetujui" ? <CheckCircle size={15} /> : <XCircle size={15} />}
-                Dokumen ini sudah {currentStatus === "Disetujui" ? "disetujui" : "ditolak"}. Anda masih bisa mengubah keputusan.
+                {currentStatus === "Disetujui" ? <CheckCircle size={15} className="flex-shrink-0 mt-0.5" /> : <XCircle size={15} className="flex-shrink-0 mt-0.5" />}
+                <span className="break-words">Dokumen ini sudah {currentStatus === "Disetujui" ? "disetujui" : "ditolak"}. Anda masih bisa mengubah keputusan.</span>
               </div>
             )}
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-auto p-4 space-y-4">
+            <div className="flex-1 overflow-auto p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
               {/* Document detail by type */}
               {isPrestasi(reviewing.jenis) ? (
                 <PrestasiPreview doc={reviewing} data={previewPrestasi} />
@@ -1058,12 +1060,12 @@ export default function DokumenQueue() {
                   </div>
                   <div className="divide-y" style={{ borderColor: "#FEE2E2" }}>
                     {fullHistory.map((entry, i) => (
-                      <div key={i} className="px-4 py-3 bg-white space-y-1 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-600 text-gray-700">{entry.reviewer}</span>
-                          <span className="text-gray-400">{formatDate(entry.date)}</span>
+                      <div key={i} className="px-4 py-3 bg-white space-y-1 text-xs min-w-0">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="font-600 text-gray-700 truncate">{entry.reviewer}</span>
+                          <span className="text-gray-400 shrink-0 whitespace-nowrap">{formatDate(entry.date)}</span>
                         </div>
-                        <p className="text-gray-600 leading-relaxed">{entry.catatan}</p>
+                        <p className="text-gray-600 leading-relaxed break-words">{entry.catatan}</p>
                       </div>
                     ))}
                   </div>
@@ -1072,7 +1074,7 @@ export default function DokumenQueue() {
             </div>
 
             {/* Action area */}
-            <div className="px-5 py-4 border-t space-y-3 flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t space-y-3 flex-shrink-0" style={{ borderColor: "#E2E8F0" }}>
               {actionError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 flex items-center gap-2">
                   <AlertCircle size={13} className="flex-shrink-0" />

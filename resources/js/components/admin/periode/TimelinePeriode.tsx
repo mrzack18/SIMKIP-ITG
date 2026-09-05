@@ -48,17 +48,17 @@ export default function TimelinePeriode({ items, onActivate, onEdit, onDelete }:
   );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 min-w-0">
       <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">
         Riwayat Periode ({items.length})
       </p>
-      <div className="space-y-2">
+      <div className="space-y-2 min-w-0">
         {sorted.map((item) => {
           const style = getNodeStyle(item);
           return (
             <div
               key={item.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
+              className={`flex flex-wrap items-center gap-2 sm:gap-3 p-3 rounded-xl border transition-all hover:shadow-sm min-w-0 ${
                 item.is_aktif
                   ? "border-green-300 bg-green-50/50"
                   : "border-gray-100 bg-white"
@@ -68,29 +68,29 @@ export default function TimelinePeriode({ items, onActivate, onEdit, onDelete }:
               <div className={`w-3 h-3 rounded-full ${style.dot} ring-4 ${style.ring} flex-shrink-0`} />
 
               {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-600 text-gray-800">
+              <div className="flex-1 min-w-0 basis-40">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <span className="text-sm font-600 text-gray-800 break-words">
                     {item.tahun_akademik} {item.semester}
                   </span>
                   {item.is_aktif && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-600 bg-green-100 text-green-700">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-600 bg-green-100 text-green-700 whitespace-nowrap">
                       ● Aktif
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                  <Calendar size={11} />
-                  {formatTgl(item.tanggal_buka)} → {formatTgl(item.tanggal_tutup)}
+                <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1 min-w-0">
+                  <Calendar size={11} className="flex-shrink-0" />
+                  <span className="truncate">{formatTgl(item.tanggal_buka)} → {formatTgl(item.tanggal_tutup)}</span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
                 {!item.is_aktif && (
                   <button
                     onClick={() => onActivate(item)}
-                    className="px-2.5 py-1 text-xs font-500 text-green-700 hover:bg-green-100 rounded-lg flex items-center gap-1"
+                    className="px-2.5 py-1 text-xs font-500 text-green-700 hover:bg-green-100 rounded-lg flex items-center gap-1 whitespace-nowrap"
                     title="Aktifkan periode ini"
                   >
                     <Power size={11} /> Aktifkan

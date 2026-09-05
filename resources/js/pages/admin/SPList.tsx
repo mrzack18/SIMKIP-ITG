@@ -140,16 +140,16 @@ export default function SPList() {
     : `Menampilkan ${Math.min((currentPage - 1) * 10 + 1, totalItems)}–${Math.min(currentPage * 10, totalItems)} dari ${totalItems}`;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display font-700 text-2xl text-gray-900">Surat Peringatan</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Daftar dan riwayat penerbitan SP mahasiswa KIP-K</p>
+    <div className="space-y-4 sm:space-y-5 w-full max-w-7xl mx-auto min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
+        <div className="min-w-0">
+          <h1 className="font-display font-700 text-xl sm:text-2xl text-gray-900 leading-tight">Surat Peringatan</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Daftar dan riwayat penerbitan SP mahasiswa KIP-K</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
           <TahunAjaranFilter value={tahunAjaran} onChange={v => { setTahunAjaran(v); setCurrentPage(1); }} />
           <Link to="/admin/sp/terbitkan"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white shadow-sm hover:shadow-md transition-shadow"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white shadow-sm hover:shadow-md transition-shadow whitespace-nowrap"
             style={{ background: "#DC2626" }}>
             <Plus size={15} /> Terbitkan SP Baru
           </Link>
@@ -158,67 +158,67 @@ export default function SPList() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
           <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700 break-words min-w-0">{error}</p>
         </div>
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "SP1 Aktif", value: cardCounts.sp1, color: "#F59E0B" },
           { label: "SP2 Aktif", value: cardCounts.sp2, color: "#EF4444" },
           { label: "SP3 (Diberhentikan)", value: cardCounts.sp3, color: "#7F1D1D" },
           { label: "SP Selesai (Dipulihkan)", value: cardCounts.selesai, color: "#059669" },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-xl px-5 py-4 shadow-sm border border-gray-100 flex items-center gap-3">
+          <div key={label} className="bg-white rounded-xl px-4 sm:px-5 py-3.5 sm:py-4 shadow-sm border border-gray-100 flex items-center gap-3 min-w-0">
             <div className="w-3 h-8 rounded-full flex-shrink-0" style={{ background: color }} />
-            <div>
-              <div className="font-display font-700 text-2xl text-gray-900">{value}</div>
-              <div className="text-xs text-gray-500">{label}</div>
+            <div className="min-w-0">
+              <div className="font-display font-700 text-xl sm:text-2xl text-gray-900">{value}</div>
+              <div className="text-xs text-gray-500 break-words leading-tight">{label}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Search + Filter row */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative min-w-48 sm:min-w-56 md:flex-1">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:items-center">
+        <div className="relative col-span-1 min-[480px]:col-span-2 lg:flex-1 lg:min-w-48 min-w-0">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={e => handleSearchChange(e.target.value)} placeholder="Cari NIM atau Nama..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700" />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700 min-w-0" />
         </div>
 
         <select value={spFilter} onChange={e => handleSpFilterChange(e.target.value as SpFilterValue)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700">
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700 w-full sm:w-auto max-w-full min-w-0 truncate">
           {SP_FILTER_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
 
         <select value={selectedProdi} onChange={e => { setSelectedProdi(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700">
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700 w-full sm:w-auto max-w-full min-w-0 truncate">
           {prodiOptions.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
 
         <select value={selectedAngkatan} onChange={e => { setSelectedAngkatan(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700">
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 text-gray-700 w-full sm:w-auto max-w-full min-w-0 truncate">
           {angkatanOptions.map(a => <option key={a} value={a}>{a}</option>)}
         </select>
 
         <button onClick={resetFilters}
-          className="px-3 py-2 text-sm text-[#263F93] hover:bg-[#263F93]/5 rounded-lg transition-colors font-500 border border-[#263F93]/20">
+          className="px-3 py-2 text-sm text-[#263F93] hover:bg-[#263F93]/5 rounded-lg transition-colors font-500 border border-[#263F93]/20 whitespace-nowrap">
           Reset
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[860px] text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 {["NIM", "Nama", "Prodi", "Tingkat SP", "Alasan", "Tgl. Terbit", "Batas Evaluasi", "Status", "Aksi"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  <th key={h} className={`text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === "Aksi" ? "sticky right-0 bg-gray-50 shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.1)]" : ""}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -265,12 +265,12 @@ export default function SPList() {
                       ) : <span className="text-gray-300 text-xs">—</span>}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-500 ${statusStyle[sp.status] || "bg-gray-100 text-gray-600"}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-500 whitespace-nowrap ${statusStyle[sp.status] || "bg-gray-100 text-gray-600"}`}>
                         {sp.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <Link to={`/admin/sp/${sp.id}`} className="text-xs text-[#263F93] hover:underline font-500">Detail</Link>
+                    <td className="px-4 py-3 sticky right-0 bg-white shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.1)]">
+                      <Link to={`/admin/sp/${sp.id}`} className="text-xs text-[#263F93] hover:underline font-500 whitespace-nowrap">Detail</Link>
                     </td>
                   </tr>
                 );
@@ -281,9 +281,9 @@ export default function SPList() {
 
         {/* Pagination */}
         {!loading && list.length > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-white">
-            <p className="text-xs text-gray-500">{pageLabel}</p>
-            <div className="flex items-center gap-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-t border-gray-100 bg-white">
+            <p className="text-xs text-gray-500 text-center sm:text-left break-words">{pageLabel}</p>
+            <div className="flex items-center justify-center sm:justify-end gap-1 flex-wrap">
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage <= 1}

@@ -129,9 +129,9 @@ export default function SPDetail() {
 
   // ── Loading ──
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex items-center gap-3 text-gray-500">
-        <Loader2 size={22} className="animate-spin" />
+    <div className="flex items-center justify-center min-h-[60vh] px-4">
+      <div className="flex items-center gap-3 text-gray-500 text-sm sm:text-base text-center">
+        <Loader2 size={22} className="animate-spin flex-shrink-0" />
         <span>Memuat detail SP...</span>
       </div>
     </div>
@@ -139,11 +139,11 @@ export default function SPDetail() {
 
   // ── Not Found ──
   if (notFound) return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
       <Link to="/admin/sp" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ChevronLeft size={15} /> Surat Peringatan
       </Link>
-      <div className="bg-white rounded-xl border border-[#E2E8F0] p-10 text-center">
+      <div className="bg-white rounded-xl border border-[#E2E8F0] p-6 sm:p-10 text-center min-w-0">
         <AlertTriangle size={32} className="mx-auto text-amber-400 mb-3" />
         <h2 className="font-600 text-gray-800 mb-1">SP Tidak Ditemukan</h2>
         <p className="text-sm text-gray-500">ID tidak valid atau SP sudah dihapus.</p>
@@ -153,13 +153,13 @@ export default function SPDetail() {
 
   // ── Error ──
   if (error || !detail) return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
       <Link to="/admin/sp" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
         <ChevronLeft size={15} /> Surat Peringatan
       </Link>
-      <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 sm:p-8 text-center min-w-0">
         <XCircle size={28} className="mx-auto text-red-400 mb-3" />
-        <p className="text-sm text-red-700">{error ?? "Terjadi kesalahan."}</p>
+        <p className="text-sm text-red-700 break-words">{error ?? "Terjadi kesalahan."}</p>
         <button onClick={fetchDetail} className="mt-3 text-xs text-[#263F93] underline">Coba lagi</button>
       </div>
     </div>
@@ -177,37 +177,37 @@ export default function SPDetail() {
   const isSelesai  = sp.status === "Selesai" || sp.status === "Pemberhentian";
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 min-w-0">
       {/* Breadcrumb and Filter */}
-      <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <Link to="/admin/sp" className="hover:text-gray-700 flex items-center gap-1">
+      <div className="flex items-center justify-between gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <Link to="/admin/sp" className="hover:text-gray-700 flex items-center gap-1 shrink-0">
             <ChevronLeft size={15} /> Surat Peringatan
           </Link>
-          <span>/</span>
-          <span className="text-gray-800 font-500">Detail SP — {sp.nama ?? "—"}</span>
+          <span className="shrink-0">/</span>
+          <span className="text-gray-800 font-500 truncate">Detail SP — {sp.nama ?? "—"}</span>
         </div>
               </div>
 
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-wrap items-start gap-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 min-w-0">
+        <div className="flex flex-wrap items-start gap-4 sm:gap-6 min-w-0">
           {/* SP Level Badge */}
           <div
-            className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 border-2"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 border-2"
             style={{ background: lc.bg, borderColor: lc.border }}
           >
-            <span className="text-xs font-600" style={{ color: lc.text }}>SURAT</span>
-            <span className="font-display font-800 text-2xl leading-none" style={{ color: lc.text }}>
+            <span className="text-[10px] sm:text-xs font-600" style={{ color: lc.text }}>SURAT</span>
+            <span className="font-display font-800 text-xl sm:text-2xl leading-none" style={{ color: lc.text }}>
               {sp.level.replace("SP", "")}
             </span>
-            <span className="text-xs font-600" style={{ color: lc.text }}>SP</span>
+            <span className="text-[10px] sm:text-xs font-600" style={{ color: lc.text }}>SP</span>
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <h2 className="font-display font-700 text-xl text-gray-900">{sp.nama ?? "—"}</h2>
-              <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-600 ${
+          <div className="flex-1 min-w-0 basis-40">
+            <div className="flex items-center gap-2 flex-wrap mb-2 min-w-0">
+              <h2 className="font-display font-700 text-lg sm:text-xl text-gray-900 break-words leading-tight">{sp.nama ?? "—"}</h2>
+              <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-600 whitespace-nowrap ${
                 sp.status === "Aktif"          ? "bg-yellow-100 text-yellow-700" :
                 sp.status === "Masa Tenggang"  ? "bg-orange-100 text-orange-700" :
                 sp.status === "Pemberhentian"  ? "bg-red-100 text-red-700"       : "bg-green-100 text-green-700"
@@ -216,29 +216,29 @@ export default function SPDetail() {
                 {sp.status}
               </span>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500 break-words">
               {sp.nim ?? "—"} · {sp.prodi ?? "—"} · Angkatan {sp.angkatan ?? "—"}
             </p>
             <p className="text-xs text-gray-400 mt-1">Diterbitkan: {formatTanggal(sp.tanggalTerbit)}</p>
           </div>
 
           {sp.batasEvaluasi && sp.batasEvaluasi !== "-" && (
-            <div className="w-full sm:w-auto">
+            <div className="w-full sm:w-auto sm:min-w-52 min-w-0">
               <div className="text-xs text-gray-500 mb-1">
                 Evaluasi hingga: <span className="font-500 text-gray-700">{formatTanggal(sp.batasEvaluasi)}</span>
               </div>
               <div className="flex items-center gap-2 mb-1">
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden min-w-32">
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden min-w-24 sm:min-w-32">
                   <div className="h-full rounded-full transition-all" style={{
                     width: `${progressPct}%`,
                     background: progressPct > 80 ? "#DC2626" : progressPct > 50 ? "#F59E0B" : "#059669",
                   }} />
                 </div>
-                <span className="text-xs text-gray-500">{Math.round(progressPct)}%</span>
+                <span className="text-xs text-gray-500 shrink-0">{Math.round(progressPct)}%</span>
               </div>
               {(sp.sisa ?? 0) > 0 ? (
                 <div className="flex items-center gap-1 text-xs text-orange-600">
-                  <Clock size={11} /> Tersisa {sp.sisa} hari
+                  <Clock size={11} className="flex-shrink-0" /> Tersisa {sp.sisa} hari
                 </div>
               ) : (
                 <div className="text-xs text-red-600 font-600">Masa tenggang habis</div>
@@ -249,53 +249,53 @@ export default function SPDetail() {
       </div>
 
       {/* Details */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 space-y-3 sm:space-y-4 min-w-0">
         <h3 className="font-600 text-gray-800 text-sm border-b border-gray-100 pb-3">Detail Pelanggaran</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm min-w-0">
+          <div className="min-w-0">
             <span className="text-xs text-gray-400 uppercase tracking-wide">Jenis Pelanggaran</span>
             <div className="mt-1">
-              <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-500">
+              <span className="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-500 inline-block">
                 {extra.jenisPelanggaran ?? "—"}
               </span>
             </div>
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="text-xs text-gray-400 uppercase tracking-wide">Diterbitkan Oleh</span>
-            <div className="mt-1 font-500 text-gray-700">{extra.diterbitkanOleh ?? "—"}</div>
+            <div className="mt-1 font-500 text-gray-700 break-words">{extra.diterbitkanOleh ?? "—"}</div>
             <div className="text-xs text-gray-400">{formatTanggal(sp.tanggalTerbit)}</div>
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="text-xs text-gray-400 uppercase tracking-wide">Tahun Ajaran</span>
-            <div className="mt-1 font-500 text-gray-700">{sp.tahunAjaran ?? "—"}</div>
+            <div className="mt-1 font-500 text-gray-700 break-words">{sp.tahunAjaran ?? "—"}</div>
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 min-w-0">
             <span className="text-xs text-gray-400 uppercase tracking-wide">Alasan / Deskripsi</span>
-            <p className="mt-1 text-gray-700 leading-relaxed">{sp.alasan ?? "—"}</p>
+            <p className="mt-1 text-gray-700 leading-relaxed break-words">{sp.alasan ?? "—"}</p>
           </div>
           {extra.catatan && (
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 min-w-0">
               <span className="text-xs text-gray-400 uppercase tracking-wide">Catatan</span>
-              <p className="mt-1 text-gray-700 leading-relaxed">{extra.catatan}</p>
+              <p className="mt-1 text-gray-700 leading-relaxed break-words">{extra.catatan}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* SP History Timeline */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5 min-w-0">
         <h3 className="font-600 text-gray-800 text-sm mb-4">Riwayat Surat Peringatan</h3>
         {history.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-4">Belum ada riwayat SP tercatat.</p>
         ) : (
-          <div className="space-y-0">
+          <div className="space-y-0 min-w-0">
             {history.map((t, i) => {
               const tlc       = levelColor[t.level] ?? levelColor.SP1;
               const isExpanded = expandedTimeline === i;
               const { outcome, text } = spOutcome(t);
               return (
-                <div key={t.id} className="flex gap-4">
-                  <div className="flex flex-col items-center">
+                <div key={t.id} className="flex gap-3 sm:gap-4 min-w-0">
+                  <div className="flex flex-col items-center flex-shrink-0">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-700 border-2 z-10"
                       style={{ background: tlc.bg, borderColor: tlc.border, color: tlc.text }}
@@ -307,22 +307,22 @@ export default function SPDetail() {
                     )}
                   </div>
 
-                  <div className={`flex-1 pb-5 ${i < history.length - 1 ? "" : "pb-0"}`}>
+                  <div className={`flex-1 min-w-0 pb-5 ${i < history.length - 1 ? "" : "pb-0"}`}>
                     <button
                       onClick={() => setExpandedTimeline(isExpanded ? null : i)}
                       className="w-full text-left"
                     >
-                      <div className={`rounded-xl border p-4 hover:shadow-sm transition-shadow cursor-pointer ${
+                      <div className={`rounded-xl border p-3 sm:p-4 hover:shadow-sm transition-shadow cursor-pointer min-w-0 ${
                         outcome === "resolved" ? "bg-green-50 border-green-200" :
                         outcome === "active"   ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200"
                       }`}>
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <div className="flex items-start justify-between gap-2 min-w-0">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1 min-w-0">
                               <span className="text-sm font-600" style={{ color: tlc.text }}>{t.level}</span>
-                              <span className="text-xs text-gray-400">{formatTanggal(t.tanggalTerbit)}</span>
+                              <span className="text-xs text-gray-400 break-words">{formatTanggal(t.tanggalTerbit)}</span>
                             </div>
-                            <p className="text-xs text-gray-600 leading-relaxed">{t.alasan ?? "—"}</p>
+                            <p className="text-xs text-gray-600 leading-relaxed break-words">{t.alasan ?? "—"}</p>
                             <div className={`flex items-center gap-1.5 mt-2 text-xs font-500 ${
                               outcome === "resolved" ? "text-green-600" : outcome === "active" ? "text-orange-600" : "text-red-600"
                             }`}>
@@ -357,32 +357,32 @@ export default function SPDetail() {
 
       {/* Actions */}
       {!isSelesai && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-4 flex flex-wrap items-center gap-3">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 sm:px-5 py-3.5 sm:py-4 grid grid-cols-1 min-[480px]:grid-cols-2 gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setShowMarkDone(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white transition-colors whitespace-nowrap"
             style={{ background: "#059669" }}
           >
-            <CheckCircle size={15} /> Tandai Selesai (Mahasiswa Membaik)
+            <CheckCircle size={15} className="flex-shrink-0" /> Tandai Selesai (Mahasiswa Membaik)
           </button>
           <Link
             to="/admin/sp/terbitkan"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 text-white transition-colors whitespace-nowrap"
             style={{ background: "#DC2626" }}
           >
-            <AlertTriangle size={15} /> Eskalasi ke {sp.level === "SP1" ? "SP2" : "SP3"}
+            <AlertTriangle size={15} className="flex-shrink-0" /> Eskalasi ke {sp.level === "SP1" ? "SP2" : "SP3"}
           </Link>
           <button
             onClick={() => setShowSuratModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-[#263F93] text-[#263F93] hover:bg-blue-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-[#263F93] text-[#263F93] hover:bg-blue-50 transition-colors whitespace-nowrap"
           >
-            <FileText size={15} /> Lihat Surat Resmi
+            <FileText size={15} className="flex-shrink-0" /> Lihat Surat Resmi
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
           >
-            <Printer size={15} /> Cetak Surat Peringatan
+            <Printer size={15} className="flex-shrink-0" /> Cetak Surat Peringatan
           </button>
         </div>
       )}
@@ -398,12 +398,12 @@ export default function SPDetail() {
       {/* ── Mark Done Confirmation Modal ──────────────────────────────── */}
       {showMarkDone && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl min-w-0">
             <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle size={28} className="text-green-500" />
             </div>
-            <h3 className="font-display font-700 text-lg text-gray-900 text-center mb-2">Tandai SP Selesai?</h3>
-            <p className="text-gray-500 text-sm text-center mb-4">
+            <h3 className="font-display font-700 text-base sm:text-lg text-gray-900 text-center mb-2">Tandai SP Selesai?</h3>
+            <p className="text-gray-500 text-sm text-center mb-4 break-words">
               Mahasiswa <strong>{sp.nama}</strong> dinyatakan telah memperbaiki kondisi dan{" "}
               <strong>{sp.level}</strong> akan ditandai sebagai <strong>Selesai</strong>.
             </p>
@@ -414,13 +414,13 @@ export default function SPDetail() {
                 onChange={(e) => setMarkDoneCatatan(e.target.value)}
                 rows={2}
                 placeholder="Tambahkan catatan evaluasi..."
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none resize-none"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none resize-none min-w-0"
               />
             </div>
             {markDoneError && (
-              <p className="text-xs text-red-600 mb-3 text-center">{markDoneError}</p>
+              <p className="text-xs text-red-600 mb-3 text-center break-words">{markDoneError}</p>
             )}
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => { setShowMarkDone(false); setMarkDoneCatatan(""); setMarkDoneError(null); }}
                 disabled={markDoneLoading}
@@ -445,50 +445,50 @@ export default function SPDetail() {
       {/* ── Surat Resmi Modal ─────────────────────────────────────────── */}
       {showSuratModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-              <h3 className="font-600 text-gray-800">Surat Peringatan Resmi</h3>
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col min-w-0">
+            <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
+              <h3 className="font-600 text-sm sm:text-base text-gray-800 truncate">Surat Peringatan Resmi</h3>
               <button
                 onClick={() => setShowSuratModal(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 text-lg leading-none"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 text-lg leading-none flex-shrink-0"
               >✕</button>
             </div>
 
-            <div className="overflow-y-auto flex-1 p-6">
-              <div className="border-2 border-[#263F93] rounded-xl p-1">
-                <div className="border border-[#263F93] rounded-lg p-6">
+            <div className="overflow-y-auto flex-1 p-3 sm:p-6 min-w-0">
+              <div className="border-2 border-[#263F93] rounded-xl p-1 min-w-0">
+                <div className="border border-[#263F93] rounded-lg p-3 sm:p-6 min-w-0">
                   {/* Kop surat */}
-                  <div className="flex items-center gap-4 border-b-2 border-[#263F93] pb-4 mb-6">
-                    <img src={logoItg} alt="Logo ITG" className="h-16 w-16 object-contain flex-shrink-0" />
-                    <div className="flex-1 text-center">
-                      <p className="text-xs font-semibold">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET DAN TEKNOLOGI</p>
-                      <p className="font-bold text-sm uppercase tracking-wide">INSTITUT TEKNOLOGI GARUT</p>
-                      <p className="text-xs text-gray-600">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
-                      <p className="text-xs text-gray-600">Telp. (0262) 2800433 | www.itg.ac.id</p>
+                  <div className="flex items-center gap-2.5 sm:gap-4 border-b-2 border-[#263F93] pb-3 sm:pb-4 mb-4 sm:mb-6 min-w-0">
+                    <img src={logoItg} alt="Logo ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
+                    <div className="flex-1 text-center min-w-0">
+                      <p className="text-[10px] sm:text-xs font-semibold leading-snug">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET DAN TEKNOLOGI</p>
+                      <p className="font-bold text-xs sm:text-sm uppercase tracking-wide leading-snug">INSTITUT TEKNOLOGI GARUT</p>
+                      <p className="text-[10px] sm:text-xs text-gray-600 leading-snug">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
+                      <p className="text-[10px] sm:text-xs text-gray-600 leading-snug">Telp. (0262) 2800433 | www.itg.ac.id</p>
                     </div>
                   </div>
 
                   {/* Metadata grid */}
-                  <div className="grid grid-cols-[120px_8px_1fr] gap-y-1 text-sm mb-6">
-                    <span>Nomor</span><span>:</span><span>{nSurat}</span>
-                    <span>Tanggal</span><span>:</span><span>{formatTanggal(sp.tanggalTerbit)}</span>
-                    <span>Tahun Ajaran</span><span>:</span><span>{sp.tahunAjaran ?? "—"}</span>
+                  <div className="grid grid-cols-[96px_8px_1fr] sm:grid-cols-[120px_8px_1fr] gap-y-1 text-xs sm:text-sm mb-4 sm:mb-6 min-w-0">
+                    <span>Nomor</span><span>:</span><span className="break-words min-w-0">{nSurat}</span>
+                    <span>Tanggal</span><span>:</span><span className="break-words min-w-0">{formatTanggal(sp.tanggalTerbit)}</span>
+                    <span>Tahun Ajaran</span><span>:</span><span className="break-words min-w-0">{sp.tahunAjaran ?? "—"}</span>
                     <span>Perihal</span><span>:</span>
-                    <span className="font-semibold">
+                    <span className="font-semibold break-words min-w-0">
                       Surat Peringatan {sp.level} — {(sp.alasan ?? "").split(" ").slice(0, 6).join(" ")}...
                     </span>
                   </div>
 
                   {/* Kepada */}
-                  <div className="mb-6 text-sm">
+                  <div className="mb-4 sm:mb-6 text-xs sm:text-sm min-w-0">
                     <p>Kepada Yth,</p>
-                    <p className="font-semibold">{sp.nama ?? "—"}</p>
-                    <p>NIM: {sp.nim ?? "—"} | {sp.prodi ?? "—"}</p>
+                    <p className="font-semibold break-words">{sp.nama ?? "—"}</p>
+                    <p className="break-words">NIM: {sp.nim ?? "—"} | {sp.prodi ?? "—"}</p>
                   </div>
 
-                  <div className="text-sm mb-4"><p>Dengan hormat,</p></div>
+                  <div className="text-xs sm:text-sm mb-4"><p>Dengan hormat,</p></div>
 
-                  <div className="text-sm space-y-3 leading-relaxed mb-8">
+                  <div className="text-xs sm:text-sm space-y-3 leading-relaxed mb-6 sm:mb-8 min-w-0">
                     <SPBodyText level={sp.level} alasan={sp.alasan ?? "—"} batasEvaluasi={sp.batasEvaluasi} />
                     <p>
                       Demikian surat peringatan ini kami sampaikan. Besar harapan kami agar Saudara dapat segera
@@ -497,26 +497,26 @@ export default function SPDetail() {
                   </div>
 
                   {/* Signatures */}
-                  <div className="grid grid-cols-2 gap-8 mt-8 text-sm text-center">
-                    <div>
-                      <p>Garut, {formatTanggal(sp.tanggalTerbit)}</p>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-8 mt-6 sm:mt-8 text-[11px] sm:text-sm text-center min-w-0">
+                    <div className="min-w-0">
+                      <p className="break-words">Garut, {formatTanggal(sp.tanggalTerbit)}</p>
                       <p className="font-medium">Pengelola KIP-K</p>
-                      <div className="h-16" />
-                      <p className="font-bold underline">{extra.diterbitkanOleh ?? "—"}</p>
+                      <div className="h-10 sm:h-16" />
+                      <p className="font-bold underline break-words">{extra.diterbitkanOleh ?? "—"}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p>Mengetahui,</p>
                       <p className="font-medium">Wakil Rektor Bidang Kemahasiswaan</p>
-                      <div className="h-16" />
-                      <p className="font-bold underline">{signature?.warek_nama ?? "Dr. Rina Kurniawati, S.E., M.Si."}</p>
-                      <p className="text-xs text-gray-500">NIP. {signature?.warek_nip ?? "198203252008012002"}</p>
+                      <div className="h-10 sm:h-16" />
+                      <p className="font-bold underline break-words">{signature?.warek_nama ?? "Dr. Rina Kurniawati, S.E., M.Si."}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 break-words">NIP. {signature?.warek_nip ?? "198203252008012002"}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
+            <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-t border-gray-100 flex flex-col-reverse min-[420px]:flex-row min-[420px]:justify-end gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={() => setShowSuratModal(false)}
                 className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
@@ -525,7 +525,7 @@ export default function SPDetail() {
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-4 py-2 rounded-lg text-sm text-white flex items-center gap-2"
+                className="px-4 py-2 rounded-lg text-sm text-white flex items-center justify-center gap-2"
                 style={{ background: "#263F93" }}
               >
                 <Printer size={14} /> Cetak
