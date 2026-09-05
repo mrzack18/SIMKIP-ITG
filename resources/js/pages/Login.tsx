@@ -103,8 +103,8 @@ export default function Login() {
       </div>
 
       {/* Right Form Panel */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:p-8 bg-white min-w-0">
+        <div className="w-full max-w-md min-w-0">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <img src={logoItg} alt="ITG" className="w-10 h-10 rounded-xl object-contain bg-[#263F93] p-1" />
@@ -114,15 +114,15 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="font-display font-700 text-gray-900 text-2xl mb-1">Masuk ke SIMKIP-ITG</h2>
-            <p className="text-gray-500 text-sm">Gunakan kredensial yang diberikan oleh Biro Kemahasiswaan</p>
+          <div className="mb-6 sm:mb-8 min-w-0">
+            <h2 className="font-display font-700 text-gray-900 text-xl sm:text-2xl mb-1">Masuk ke SIMKIP-ITG</h2>
+            <p className="text-gray-500 text-xs sm:text-sm break-words">Gunakan kredensial yang diberikan oleh Biro Kemahasiswaan</p>
           </div>
 
           {error && (
-            <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 min-w-0">
               <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-red-600 text-sm">{error}</p>
+              <p className="text-red-600 text-sm break-words min-w-0">{error}</p>
             </div>
           )}
 
