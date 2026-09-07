@@ -10,13 +10,10 @@ class PeriodeAkademikObserver
     /**
      * Single source of truth untuk "periode input nilai yang sedang aktif".
      *
-     * Saat ada record PeriodeAkademik dengan is_aktif=true yang disimpan,
-     * otomatis sinkron ke konfigurasi keys yang dipakai modul lain
-     * (IPKController::checkPeriode, TahunAjaranHelper::calculateSemester).
-     *
-     * Sebelum ada observer ini, sinkron hanya terjadi di endpoint
-     * /konfigurasi/periode/{id}/activate — jadi kalau admin create via
-     * form biasa tanpa klik "Aktifkan", periode aktif tidak ter-sync.
+     * Hanya mengelola keys `periode_input_*`. Keys `tahun_akademik_aktif` /
+     * `semester_aktif` TIDAK disentuh di sini — itu milik eksklusif status
+     * tahun ajaran di "Master Tahun Ajaran" (syncTahunAjaranAktif), supaya
+     * aktivasi periode tidak menimpa semester akademik berjalan.
      */
     public function saved(PeriodeAkademik $periode): void
     {
@@ -26,7 +23,6 @@ class PeriodeAkademikObserver
                 ->where('is_aktif', true)
                 ->update(['is_aktif' => false]);
 
-            // Sync ke konfigurasi keys (sama logikanya dengan activatePeriode())
             Konfigurasi::updateOrCreate(
                 ['key' => 'periode_input_aktif'],
                 ['value' => '1', 'label' => 'Periode Input Aktif', 'tipe' => 'boolean']
@@ -42,14 +38,6 @@ class PeriodeAkademikObserver
             Konfigurasi::updateOrCreate(
                 ['key' => 'periode_input_tahun_ajaran'],
                 ['value' => $periode->tahun_akademik . ' ' . $periode->semester, 'label' => 'Periode Input TA', 'tipe' => 'text']
-            );
-            Konfigurasi::updateOrCreate(
-                ['key' => 'tahun_akademik_aktif'],
-                ['value' => $periode->tahun_akademik, 'label' => 'Tahun Akademik Aktif', 'tipe' => 'text']
-            );
-            Konfigurasi::updateOrCreate(
-                ['key' => 'semester_aktif'],
-                ['value' => $periode->semester, 'label' => 'Semester Aktif', 'tipe' => 'text']
             );
         }
     }
