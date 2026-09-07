@@ -77,10 +77,15 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
         if (!active) return;
         const unique = Array.from(new Set(opts)).sort().reverse();
         setOptions(unique);
-        // Jika nilai saat ini bukan berasal dari tabel (mis. masih fallback bulan),
-        // otomatis pindah ke tahun ajaran terbaru yang tersedia di database.
-        if (unique.length > 0 && !unique.includes(value)) {
-          onChange(unique[0]);
+        if (unique.length === 0) return;
+
+        // Default = tahun ajaran yang ditandai aktif oleh admin (jika valid),
+        // jika tidak ada yang aktif baru fallback ke tahun ajaran terbaru.
+        const aktif = res?.tahun_ajaran_aktif ? toInternalFormat(res.tahun_ajaran_aktif) : null;
+        const preferred = aktif && unique.includes(aktif) ? aktif : unique[0];
+
+        if (!unique.includes(value) || preferred !== value) {
+          onChange(preferred);
         }
       } catch {
         // Gagal memuat -> fallback berbasis bulan biar UI tetap berfungsi.

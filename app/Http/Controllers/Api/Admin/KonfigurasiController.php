@@ -29,8 +29,10 @@ class KonfigurasiController extends Controller
         return response()->json(['success' => true, 'message' => 'Konfigurasi disimpan.']);
     }
 
-    public function getPeriode(): JsonResponse
+public function getPeriode(): JsonResponse
     {
+        $taAktif = TahunAjaran::where('is_aktif', true)->first();
+
         return response()->json([
             'success' => true,
             'aktif'   => Konfigurasi::get('periode_input_aktif', '0') === '1',
@@ -40,6 +42,9 @@ class KonfigurasiController extends Controller
             'tahun_akademik' => Konfigurasi::get('tahun_akademik_aktif'),
             'semester'       => Konfigurasi::get('semester_aktif'),
             'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
+            'tahun_ajaran_aktif' => $taAktif
+                ? "{$taAktif->tahun_akademik} {$taAktif->semester}"
+                : null,
             'nilai_mutu'     => NilaiMutu::all()->keyBy(fn($n) => strtoupper($n->huruf))->map->poin,
         ]);
     }
@@ -163,7 +168,10 @@ class KonfigurasiController extends Controller
                 'nilai_mutu' => NilaiMutu::orderByDesc('poin')->get(),
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
-                'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
+'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
+            'tahun_ajaran_aktif' => optional(TahunAjaran::where('is_aktif', true)->first())
+                ? TahunAjaran::where('is_aktif', true)->first()->tahun_akademik . ' ' . TahunAjaran::where('is_aktif', true)->first()->semester
+                : null,
                 'tahun_ajaran_list'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
                 'prodis' => Prodi::all(),
                 'dokumens' => DokumenJenis::with('fields')->orderBy('urutan')->get(),

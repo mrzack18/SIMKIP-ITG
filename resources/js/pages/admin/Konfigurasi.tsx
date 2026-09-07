@@ -35,6 +35,14 @@ import {
   Settings,
   Loader2,
   Calendar,
+  Thermometer,
+  BookOpen,
+  Timer,
+  FileText,
+  Building2,
+  Table,
+  Scale,
+  ShieldAlert,
 } from "lucide-react"
 
 const Toast = ({ msg, onClose }: { msg: string; onClose: () => void }) => (
@@ -129,6 +137,7 @@ function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: ()
 }
 
 export default function Konfigurasi() {
+  const [activeSection, setActiveSection] = useState("threshold")
   const [ipkMin, setIpkMin] = useState(3.0)
   const [showIpkWarning, setShowIpkWarning] = useState(false)
   const [institusi, setInstitusi] = useState({
@@ -453,11 +462,20 @@ export default function Konfigurasi() {
       showToast("Tersimpan");
   }
 
-
-  
+  const TABS: { key: string; label: string; icon: any }[] = [
+    { key: "threshold",  label: "IPK",          icon: Thermometer },
+    { key: "tahun",      label: "Tahun Ajaran", icon: BookOpen },
+    { key: "periode",    label: "Periode Input",icon: Timer },
+    { key: "prodi",      label: "Prodi",        icon: GraduationCap },
+    { key: "dokumen",    label: "Dokumen",      icon: FileText },
+    { key: "institusi",  label: "Institusi",    icon: Building2 },
+    { key: "nilai",      label: "Nilai Mutu",   icon: Table },
+    { key: "regulasi",   label: "Regulasi",     icon: Scale },
+    { key: "pelanggaran",label: "Pelanggaran",  icon: ShieldAlert },
+  ]
 
   return (
-    <div className="max-w-3xl mx-auto w-full space-y-3 sm:space-y-4 min-w-0">
+    <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
       <div className="min-w-0">
         <h1 className="font-display font-700 text-lg sm:text-xl text-gray-900 leading-tight">
           Konfigurasi Sistem
@@ -467,13 +485,36 @@ export default function Konfigurasi() {
         </p>
       </div>
 
+      {/* Navigasi tab */}
+      <div className="sticky top-14 z-20 bg-[#F1F5F9]/95 backdrop-blur-sm flex gap-1.5 overflow-x-auto pb-1.5 -mx-1 px-1 flex-nowrap pt-1">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const isActive = activeSection === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActiveSection(t.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-600 whitespace-nowrap transition-colors flex-shrink-0 ${
+                isActive
+                  ? "bg-[#263F93] text-white shadow-sm"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              <Icon size={14} className={isActive ? "" : "text-[#263F93]"} />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Section 1: IPK Threshold */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader
-          num={1}
-          title="Ambang Batas IPK (Threshold)"
-          onSave={() => setShowIpkWarning(true)}
-        />
+      {activeSection === "threshold" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader
+            num={1}
+            title="Ambang Batas IPK (Threshold)"
+            onSave={() => setShowIpkWarning(true)}
+          />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="shrink-0">
@@ -531,35 +572,37 @@ export default function Konfigurasi() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Section 2: Master Tahun Ajaran */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
-              2
+      {activeSection === "tahun" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
+                2
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-600 text-gray-800 text-sm">Master Tahun Ajaran</h2>
+                <p className="text-xs text-gray-500 mt-0.5 break-words">
+                  Buat tahun ajaran secara manual mengikuti kalender akademik kampus. Menjadi dasar filter dan periode input nilai.
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h2 className="font-600 text-gray-800 text-sm">Master Tahun Ajaran</h2>
-              <p className="text-xs text-gray-500 mt-0.5 break-words">
-                Buat tahun ajaran secara manual mengikuti kalender akademik kampus. Menjadi dasar filter dan periode input nilai.
-              </p>
-            </div>
+            <button
+              onClick={openAddTahunAjaran}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
+              style={{ background: "#263F93" }}
+            >
+              <Plus size={12} /> Tambah Tahun Ajaran
+            </button>
           </div>
-          <button
-            onClick={openAddTahunAjaran}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
-            style={{ background: "#263F93" }}
-          >
-            <Plus size={12} /> Tambah Tahun Ajaran
-          </button>
-        </div>
-        <div className="p-3 sm:p-4 min-w-0">
-          {tahunAjaranList.length === 0 ? (
-            <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6 text-center">
-              Belum ada tahun ajaran. Klik "Tambah Tahun Ajaran" untuk membuat sesuai kalender akademik kampus.
-            </div>
-          ) : (
+          <div className="p-3 sm:p-4 min-w-0">
+            {tahunAjaranList.length === 0 ? (
+              <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6 text-center">
+                Belum ada tahun ajaran. Klik "Tambah Tahun Ajaran" untuk membuat sesuai kalender akademik kampus.
+              </div>
+            ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
               <table className="w-full min-w-[520px] text-sm">
                 <thead>
@@ -614,29 +657,31 @@ export default function Konfigurasi() {
           )}
         </div>
       </div>
+      )}
 
       {/* Section 3: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
-              3
+      {activeSection === "periode" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
+                3
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-600 text-gray-800 text-sm">Periode Input Nilai KHS</h2>
+                <p className="text-xs text-gray-500 mt-0.5 break-words">
+                  Atur kapan mahasiswa KIP-K dapat mengajukan nilai KHS untuk divalidasi admin
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h2 className="font-600 text-gray-800 text-sm">Periode Input Nilai KHS</h2>
-              <p className="text-xs text-gray-500 mt-0.5 break-words">
-                Atur kapan mahasiswa KIP-K dapat mengajukan nilai KHS untuk divalidasi admin
-              </p>
-            </div>
+            <button
+              onClick={handleAddPeriode}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
+              style={{ background: "#263F93" }}
+            >
+              <Plus size={12} /> Tambah Periode
+            </button>
           </div>
-          <button
-            onClick={handleAddPeriode}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
-            style={{ background: "#263F93" }}
-          >
-            <Plus size={12} /> Tambah Periode
-          </button>
-        </div>
         <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
           <PeriodeAktifCard
             active={periodeList.find(p => p.is_aktif) || null}
@@ -657,6 +702,7 @@ export default function Konfigurasi() {
           />
         </div>
       </div>
+      )}
 
       <PeriodeFormModal
         open={modalOpen}
@@ -744,9 +790,10 @@ export default function Konfigurasi() {
         </div>
       )}
 
-      {/* Section 3: Master Prodi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader num={4} title="Master Data Program Studi" />
+      {/* Section 4: Master Prodi */}
+      {activeSection === "prodi" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader num={4} title="Master Data Program Studi" />
         <div className="p-3 sm:p-4 space-y-3 min-w-0">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[520px] text-sm">
@@ -852,10 +899,12 @@ export default function Konfigurasi() {
           </button>
         </div>
       </div>
+      )}
 
-      {/* Section 4: Dokumen Kewajiban */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader
+      {/* Section 5: Dokumen Kewajiban */}
+      {activeSection === "dokumen" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader
           num={5}
           title="Jenis Dokumen Kewajiban"
           onSave={() => showToast("Konfigurasi dokumen disimpan")}
@@ -933,14 +982,16 @@ export default function Konfigurasi() {
           ))}
         </div>
       </div>
+      )}
 
-      {/* Section 5: Informasi Institusi */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader
-          num={6}
-          title="Informasi Institusi"
-          onSave={() => showToast("Informasi institusi diperbarui")}
-        />
+      {/* Section 6: Informasi Institusi */}
+      {activeSection === "institusi" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader
+            num={6}
+            title="Informasi Institusi"
+            onSave={() => showToast("Informasi institusi diperbarui")}
+          />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div>
             <label className="block text-sm font-500 text-gray-700 mb-1.5">
@@ -978,14 +1029,16 @@ export default function Konfigurasi() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Section 6: Konfigurasi Nilai Mutu */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader
-          num={7}
-          title="Konfigurasi Nilai Mutu"
-          onSave={() => showToast("Konfigurasi nilai mutu berhasil disimpan")}
-        />
+      {/* Section 7: Konfigurasi Nilai Mutu */}
+      {activeSection === "nilai" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader
+            num={7}
+            title="Konfigurasi Nilai Mutu"
+            onSave={() => showToast("Konfigurasi nilai mutu berhasil disimpan")}
+          />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           {/* Deskripsi */}
           <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
@@ -1273,14 +1326,16 @@ export default function Konfigurasi() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Section 7: Regulasi & Aturan */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader
-          num={8}
-          title="Regulasi & Aturan"
-          onSave={() => showToast("Regulasi berhasil disimpan")}
-        />
+      {/* Section 8: Regulasi & Aturan */}
+      {activeSection === "regulasi" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader
+            num={8}
+            title="Regulasi & Aturan"
+            onSave={() => showToast("Regulasi berhasil disimpan")}
+          />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[720px] text-sm">
@@ -1411,14 +1466,16 @@ export default function Konfigurasi() {
           )}
         </div>
       </div>
+      )}
 
-      {/* Section 8: Jenis Pelanggaran */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader
-          num={9}
-          title="Jenis Pelanggaran"
-          onSave={() => showToast("Jenis pelanggaran disimpan")}
-        />
+      {/* Section 9: Jenis Pelanggaran */}
+      {activeSection === "pelanggaran" && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          <SectionHeader
+            num={9}
+            title="Jenis Pelanggaran"
+            onSave={() => showToast("Jenis pelanggaran disimpan")}
+          />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
             <table className="w-full min-w-[640px] text-sm">
@@ -1557,6 +1614,7 @@ export default function Konfigurasi() {
           )}
         </div>
       </div>
+      )}
 
       {/* IPK Warning Modal */}
       {showIpkWarning && (
