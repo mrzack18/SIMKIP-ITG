@@ -189,6 +189,12 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::patch("/pelanggaran/{id}/toggle", [AdminConfig::class, "togglePelanggaran"]);
         Route::get("/pelanggaran",               [AdminConfig::class, "indexPelanggaran"]);
         
+        Route::get("/tahun-ajaran",              [AdminConfig::class, "indexTahunAjaran"]);
+        Route::post("/tahun-ajaran",             [AdminConfig::class, "storeTahunAjaran"]);
+        Route::put("/tahun-ajaran/{id}",         [AdminConfig::class, "updateTahunAjaran"]);
+        Route::delete("/tahun-ajaran/{id}",      [AdminConfig::class, "destroyTahunAjaran"]);
+        Route::patch("/tahun-ajaran/{id}/activate", [AdminConfig::class, "activateTahunAjaran"]);
+        
         Route::get("/periode-akademik",          [AdminConfig::class, "indexPeriode"]);
         Route::post("/periode-akademik",         [AdminConfig::class, "storePeriode"]);
         Route::put("/periode-akademik/{id}",     [AdminConfig::class, "updatePeriode"]);

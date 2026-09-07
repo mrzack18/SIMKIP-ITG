@@ -6,7 +6,13 @@ import {
   updatePeriode,
   deletePeriode,
   activatePeriode,
+  getTahunAjaranList,
+  createTahunAjaran,
+  updateTahunAjaran,
+  deleteTahunAjaran,
+  activateTahunAjaran,
   type PeriodeItem,
+  type TahunAjaranItem,
 } from "@/services/konfigurasiService"
 import {
   PeriodeAktifCard,
@@ -27,6 +33,8 @@ import {
   XCircle,
   Info,
   Settings,
+  Loader2,
+  Calendar,
 } from "lucide-react"
 
 const Toast = ({ msg, onClose }: { msg: string; onClose: () => void }) => (
@@ -137,6 +145,17 @@ export default function Konfigurasi() {
   const [editingPeriode, setEditingPeriode] = useState<PeriodeItem | null>(null)
   const [totalMahasiswaAktif, setTotalMahasiswaAktif] = useState(0)
 
+  // Section 2.5: Tahun Ajaran state
+  const [tahunAjaranList, setTahunAjaranList] = useState<TahunAjaranItem[]>([])
+  const [modalTahunAjaranOpen, setModalTahunAjaranOpen] = useState(false)
+  const [editingTahunAjaran, setEditingTahunAjaran] = useState<TahunAjaranItem | null>(null)
+  const [taForm, setTaForm] = useState<{ tahun_akademik: string; semester: "Ganjil" | "Genap"; is_aktif: boolean }>({
+    tahun_akademik: "",
+    semester: "Ganjil",
+    is_aktif: false,
+  })
+  const [savingTa, setSavingTa] = useState(false)
+
   // Section 3: Prodi state
   const [prodis, setProdis] = useState<any[]>([])
 
@@ -213,6 +232,7 @@ export default function Konfigurasi() {
         setProdis(d.prodis || [])
         setDokumens(d.dokumens || [])
         setTahunAjaranOptions(d.tahun_ajaran_options || [])
+        setTahunAjaranList(d.tahun_ajaran_list || [])
 
         const ipkMinObj = regArr.find((r:any) => r.nama === "IPK Minimum")
         if (ipkMinObj) setIpkMin(parseFloat(ipkMinObj.nilai))
@@ -357,6 +377,72 @@ export default function Konfigurasi() {
     setModalOpen(true);
   };
 
+  // ── Tahun Ajaran handlers ──
+  const openAddTahunAjaran = () => {
+    setEditingTahunAjaran(null);
+    setTaForm({ tahun_akademik: "", semester: "Ganjil", is_aktif: false });
+    setModalTahunAjaranOpen(true);
+  };
+
+  const openEditTahunAjaran = (item: TahunAjaranItem) => {
+    setEditingTahunAjaran(item);
+    setTaForm({ tahun_akademik: item.tahun_akademik, semester: item.semester as "Ganjil" | "Genap", is_aktif: item.is_aktif });
+    setModalTahunAjaranOpen(true);
+  };
+
+  const handleSubmitTahunAjaran = async () => {
+    const ta = taForm.tahun_akademik.trim();
+    if (!ta) { showToast("Tahun akademik wajib diisi (contoh: 2025/2026)"); return; }
+    // Validasi format tahun akademik YYYY/YYYY
+    if (!/^\d{4}\/\d{4}$/.test(ta)) {
+      showToast("Format tahun akademik salah. Gunakan format YYYY/YYYY (contoh: 2025/2026).");
+      return;
+    }
+    setSavingTa(true);
+    try {
+      if (editingTahunAjaran) {
+        await updateTahunAjaran(editingTahunAjaran.id, taForm);
+        showToast(`Tahun ajaran ${ta} ${taForm.semester} diperbarui`);
+      } else {
+        await createTahunAjaran(taForm);
+        showToast(`Tahun ajaran ${ta} ${taForm.semester} ditambahkan`);
+      }
+      setModalTahunAjaranOpen(false);
+      await fetchData();
+    } catch (e: any) {
+      showToast(e?.response?.data?.message ?? e?.message ?? "Gagal menyimpan tahun ajaran");
+    } finally {
+      setSavingTa(false);
+    }
+  };
+
+  const handleActivateTahunAjaran = async (item: TahunAjaranItem) => {
+    if (item.is_aktif) return;
+    if (!window.confirm(`Aktifkan tahun ajaran ${item.tahun_akademik} ${item.semester}?\n\nTahun ajaran ini menjadi dasar default filter dan semester aktif.`)) return;
+    try {
+      await activateTahunAjaran(item.id);
+      showToast(`Tahun ajaran ${item.tahun_akademik} ${item.semester} diaktifkan`);
+      await fetchData();
+    } catch (e: any) {
+      showToast(e?.response?.data?.message ?? "Gagal mengaktifkan tahun ajaran");
+    }
+  };
+
+  const handleDeleteTahunAjaran = async (item: TahunAjaranItem) => {
+    if (item.is_aktif) {
+      showToast("Tidak dapat menghapus tahun ajaran yang aktif. Nonaktifkan dulu.");
+      return;
+    }
+    if (!window.confirm(`Hapus tahun ajaran ${item.tahun_akademik} ${item.semester}?\n\nTindakan ini tidak dapat dibatalkan.`)) return;
+    try {
+      await deleteTahunAjaran(item.id);
+      showToast("Tahun ajaran dihapus");
+      await fetchData();
+    } catch (e: any) {
+      showToast(e?.response?.data?.message ?? "Gagal menghapus tahun ajaran");
+    }
+  };
+
   const handleSavePelanggaran = async (data: any, id: number|null = null) => {
       if(id) {
           await api.put('/konfigurasi/pelanggaran/'+id, data);
@@ -446,12 +532,95 @@ export default function Konfigurasi() {
         </div>
       </div>
 
-      {/* Section 2: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
+      {/* Section 2: Master Tahun Ajaran */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
               2
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-600 text-gray-800 text-sm">Master Tahun Ajaran</h2>
+              <p className="text-xs text-gray-500 mt-0.5 break-words">
+                Buat tahun ajaran secara manual mengikuti kalender akademik kampus. Menjadi dasar filter dan periode input nilai.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={openAddTahunAjaran}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-500 text-white transition-colors w-full sm:w-auto shrink-0 whitespace-nowrap"
+            style={{ background: "#263F93" }}
+          >
+            <Plus size={12} /> Tambah Tahun Ajaran
+          </button>
+        </div>
+        <div className="p-3 sm:p-4 min-w-0">
+          {tahunAjaranList.length === 0 ? (
+            <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-6 text-center">
+              Belum ada tahun ajaran. Klik "Tambah Tahun Ajaran" untuk membuat sesuai kalender akademik kampus.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
+              <table className="w-full min-w-[520px] text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {["Tahun Akademik", "Semester", "Status", "Aksi"].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {tahunAjaranList.map((ta) => (
+                    <tr key={ta.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="px-4 py-3 font-600 text-gray-800 whitespace-nowrap">{ta.tahun_akademik}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-600 ${
+                          ta.semester === "Ganjil"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}>
+                          {ta.semester}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleActivateTahunAjaran(ta)}
+                          className={ta.is_aktif
+                            ? "flex items-center gap-1.5 text-xs text-green-600 font-500"
+                            : "flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-600 font-500"}
+                          title={ta.is_aktif ? "Tahun ajaran aktif" : "Klik untuk mengaktifkan"}
+                        >
+                          {ta.is_aktif ? <ToggleRight size={18} className="text-green-500" /> : <ToggleLeft size={18} />}
+                          {ta.is_aktif ? "Aktif" : "Nonaktif"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEditTahunAjaran(ta)} className="text-xs text-[#263F93] hover:underline font-500">
+                            Edit
+                          </button>
+                          <button onClick={() => handleDeleteTahunAjaran(ta)} className="text-xs text-red-500 hover:underline font-500">
+                            Hapus
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Section 3: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
+              3
             </div>
             <div className="min-w-0">
               <h2 className="font-600 text-gray-800 text-sm">Periode Input Nilai KHS</h2>
@@ -500,9 +669,84 @@ export default function Konfigurasi() {
         onSubmit={handleCreateOrUpdatePeriode}
       />
 
+      {/* Tahun Ajaran Form Modal */}
+      {modalTahunAjaranOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto min-w-0">
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <Calendar size={18} className="text-[#263F93] flex-shrink-0" />
+                <h3 className="font-display font-700 text-xs sm:text-sm text-gray-900">
+                  {editingTahunAjaran ? "Edit Tahun Ajaran" : "Tambah Tahun Ajaran"}
+                </h3>
+              </div>
+              <button onClick={() => setModalTahunAjaranOpen(false)} aria-label="Tutup" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-3 sm:p-4 space-y-4 min-w-0">
+              <div>
+                <label className="block text-xs font-600 text-gray-600 mb-1">Tahun Akademik</label>
+                <input
+                  type="text"
+                  value={taForm.tahun_akademik}
+                  onChange={(e) => setTaForm({ ...taForm, tahun_akademik: e.target.value })}
+                  placeholder="contoh: 2025/2026"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">Gunakan format YYYY/YYYY sesuai kalender akademik kampus.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-600 text-gray-600 mb-1">Semester</label>
+                <select
+                  value={taForm.semester}
+                  onChange={(e) => setTaForm({ ...taForm, semester: e.target.value as "Ganjil" | "Genap" })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                >
+                  <option value="Ganjil">Ganjil</option>
+                  <option value="Genap">Genap</option>
+                </select>
+              </div>
+              <label className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={taForm.is_aktif}
+                  onChange={(e) => setTaForm({ ...taForm, is_aktif: e.target.checked })}
+                  className="mt-0.5"
+                />
+                <div>
+                  <div className="text-xs font-600 text-amber-800">Jadikan tahun ajaran aktif</div>
+                  <div className="text-[11px] text-amber-700 mt-0.5">
+                    Menjadi dasar default filter dan semester aktif. Tahun ajaran aktif lainnya otomatis dinonaktifkan.
+                  </div>
+                </div>
+              </label>
+            </div>
+            <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 px-3 sm:px-4 py-3 border-t bg-gray-50/50">
+              <button
+                onClick={() => setModalTahunAjaranOpen(false)}
+                disabled={savingTa}
+                className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSubmitTahunAjaran}
+                disabled={savingTa}
+                className="flex-1 py-2 rounded-lg text-sm font-500 text-white flex items-center justify-center gap-2 disabled:opacity-60 whitespace-nowrap"
+                style={{ background: "#263F93" }}
+              >
+                {savingTa ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                {editingTahunAjaran ? "Simpan Perubahan" : "Tambah Tahun Ajaran"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Section 3: Master Prodi */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-        <SectionHeader num={3} title="Master Data Program Studi" />
+        <SectionHeader num={4} title="Master Data Program Studi" />
         <div className="p-3 sm:p-4 space-y-3 min-w-0">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[520px] text-sm">
@@ -612,7 +856,7 @@ export default function Konfigurasi() {
       {/* Section 4: Dokumen Kewajiban */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
-          num={4}
+          num={5}
           title="Jenis Dokumen Kewajiban"
           onSave={() => showToast("Konfigurasi dokumen disimpan")}
         />
@@ -693,7 +937,7 @@ export default function Konfigurasi() {
       {/* Section 5: Informasi Institusi */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
-          num={5}
+          num={6}
           title="Informasi Institusi"
           onSave={() => showToast("Informasi institusi diperbarui")}
         />
@@ -738,7 +982,7 @@ export default function Konfigurasi() {
       {/* Section 6: Konfigurasi Nilai Mutu */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
-          num={6}
+          num={7}
           title="Konfigurasi Nilai Mutu"
           onSave={() => showToast("Konfigurasi nilai mutu berhasil disimpan")}
         />
@@ -1033,7 +1277,7 @@ export default function Konfigurasi() {
       {/* Section 7: Regulasi & Aturan */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
-          num={7}
+          num={8}
           title="Regulasi & Aturan"
           onSave={() => showToast("Regulasi berhasil disimpan")}
         />
@@ -1171,7 +1415,7 @@ export default function Konfigurasi() {
       {/* Section 8: Jenis Pelanggaran */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
         <SectionHeader
-          num={8}
+          num={9}
           title="Jenis Pelanggaran"
           onSave={() => showToast("Jenis pelanggaran disimpan")}
         />

@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "lucide-react";
 import { Modal } from "./Modal";
+import { api } from "@/services/api";
 
 interface Props {
   value: string;
@@ -8,6 +9,18 @@ interface Props {
   className?: string;
 }
 
+/** Konversi format backend "2025/2026 Ganjil" -> internal "Tahun 2025/2026-1" */
+function toInternalFormat(ta: string): string {
+  const m = ta.trim().match(/^(\d{4}\/\d{4})\s+(Ganjil|Genap)$/);
+  if (!m) return ta;
+  const num = m[2] === "Ganjil" ? "1" : "2";
+  return `Tahun ${m[1]}-${num}`;
+}
+
+/**
+ * Fallback berbasis bulan (hanya dipakai sebelum data dari tabel tahun_ajarans
+ * selesai dimuat). Sumber kebenaran utama tetap tabel tahun_ajarans.
+ */
 export function getCurrentTahunAjaran(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -50,49 +63,33 @@ export function parseTahunAjaran(val: string): { tahun: string; semester: "Ganji
 
 export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
   const [open, setOpen] = useState(false);
+  const [options, setOptions] = useState<string[]>([]);
 
-  const options = useMemo(() => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth() + 1; // 1-12
-    const currentYear = currentDate.getFullYear();
-
-    // Determine the max academic year strictly based on the current real-world date.
-    // If we are in Jan 2026, the academic year is 2025/2026 Ganjil.
-    // If we are in Feb-Aug 2026, the academic year is 2025/2026 Genap.
-    // If we are in Sep-Dec 2026, the academic year is 2026/2027 Ganjil.
-
-    let maxStartYear = currentYear;
-    let maxSemester = 1; // 1 = Ganjil, 2 = Genap
-
-    if (currentMonth === 1) {
-        maxStartYear = currentYear - 1;
-        maxSemester = 1;
-    } else if (currentMonth >= 2 && currentMonth <= 8) {
-        maxStartYear = currentYear - 1;
-        maxSemester = 2;
-    } else {
-        maxStartYear = currentYear;
-        maxSemester = 1;
-    }
-
-    const startYear = 2022;
-    const opts: string[] = []; 
-
-    for (let y = maxStartYear; y >= startYear; y--) {
-      // If we are on the max year, only push up to the max semester
-      if (y === maxStartYear) {
-          if (maxSemester === 2) {
-              opts.push(`Tahun ${y}/${y + 1}-2`);
-          }
-          opts.push(`Tahun ${y}/${y + 1}-1`);
-      } else {
-          opts.push(`Tahun ${y}/${y + 1}-2`);
-          opts.push(`Tahun ${y}/${y + 1}-1`);
+  // Ambil opsi tahun ajaran dari database (dikelola manual oleh admin di
+  // halaman Konfigurasi -> Master Tahun Ajaran). Tidak lagi berbasis bulan.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res: any = await api.get("/konfigurasi/periode");
+        const raw: string[] = res?.tahun_ajaran_options ?? [];
+        const opts = raw.map(toInternalFormat).filter((o) => o.startsWith("Tahun "));
+        if (!active) return;
+        const unique = Array.from(new Set(opts)).sort().reverse();
+        setOptions(unique);
+        // Jika nilai saat ini bukan berasal dari tabel (mis. masih fallback bulan),
+        // otomatis pindah ke tahun ajaran terbaru yang tersedia di database.
+        if (unique.length > 0 && !unique.includes(value)) {
+          onChange(unique[0]);
+        }
+      } catch {
+        // Gagal memuat -> fallback berbasis bulan biar UI tetap berfungsi.
       }
-    }
-
-    // Deduplicate and sort descending
-    return Array.from(new Set(opts)).sort().reverse();
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const displayLabel = formatTahunAjaran(value);
@@ -112,6 +109,11 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
 
       <Modal open={open} onClose={() => setOpen(false)} title="Filter Tahun Akademik" width="max-w-sm">
         <div className="space-y-2">
+          {options.length === 0 && (
+            <div className="text-xs text-gray-400 px-4 py-3 text-center">
+              Belum ada tahun ajaran yang tersedia.
+            </div>
+          )}
           {options.map((opt) => {
             const label = formatTahunAjaran(opt);
             const isActive = opt === value;

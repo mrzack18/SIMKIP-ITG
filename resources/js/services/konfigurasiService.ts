@@ -78,6 +78,47 @@ export async function getPelanggaranList(): Promise<PelanggaranItem[]> {
   return res.data ?? [];
 }
 
+// ─── Tahun Ajaran CRUD ────────────────────────────────────────────
+
+export interface TahunAjaranItem {
+  id: number;
+  tahun_akademik: string;
+  semester: "Ganjil" | "Genap";
+  is_aktif: boolean;
+}
+
+export async function getTahunAjaranList(): Promise<TahunAjaranItem[]> {
+  const res = await api.get<{ success: boolean; data: TahunAjaranItem[] }>("/konfigurasi/tahun-ajaran");
+  return res.data ?? [];
+}
+
+export async function createTahunAjaran(input: {
+  tahun_akademik: string;
+  semester: "Ganjil" | "Genap";
+  is_aktif?: boolean;
+}): Promise<TahunAjaranItem> {
+  const res = await api.post<{ success: boolean; data: TahunAjaranItem }>("/konfigurasi/tahun-ajaran", input);
+  return res.data;
+}
+
+export async function updateTahunAjaran(id: number, input: {
+  tahun_akademik: string;
+  semester: "Ganjil" | "Genap";
+  is_aktif?: boolean;
+}): Promise<TahunAjaranItem> {
+  const res = await api.put<{ success: boolean; data: TahunAjaranItem }>(`/konfigurasi/tahun-ajaran/${id}`, input);
+  return res.data;
+}
+
+export async function deleteTahunAjaran(id: number): Promise<void> {
+  await api.delete(`/konfigurasi/tahun-ajaran/${id}`);
+}
+
+export async function activateTahunAjaran(id: number): Promise<TahunAjaranItem> {
+  const res = await api.patch<{ success: boolean; data: TahunAjaranItem }>(`/konfigurasi/tahun-ajaran/${id}/activate`);
+  return res.data;
+}
+
 // ─── Periode Akademik CRUD ────────────────────────────────────────────
 
 export interface PeriodeCreateInput {

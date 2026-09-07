@@ -7,6 +7,7 @@ use App\Models\Prodi;
 use App\Models\NilaiMutu;
 use App\Models\JenisPelanggaran;
 use App\Models\PeriodeAkademik;
+use App\Models\TahunAjaran;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -163,6 +164,7 @@ class KonfigurasiController extends Controller
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
                 'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
+                'tahun_ajaran_list'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
                 'prodis' => Prodi::all(),
                 'dokumens' => DokumenJenis::with('fields')->orderBy('urutan')->get(),
             ]
@@ -222,6 +224,142 @@ class KonfigurasiController extends Controller
         ]);
     }
 
+    private function buildTahunAjaranOptions(): array
+    {
+        // Sumber utama: tabel tahun_ajarans (dikelola manual oleh admin mengikuti
+        // kalender akademik kampus). Tidak lagi di-generate otomatis dari bulan.
+        $options = [];
+        // Format opsi: "2025/2026 Ganjil" / "2025/2026 Genap"
+        foreach (TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get() as $ta) {
+            $options[] = "{$ta->tahun_akademik} {$ta->semester}";
+        }
+        // Deduplikasi & pertahankan urutan (terbaru duluan)
+        return array_values(array_unique($options));
+    }
+
+    // --- Master Tahun Ajaran ---
+    public function indexTahunAjaran(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
+        ]);
+    }
+
+    public function storeTahunAjaran(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'tahun_akademik' => 'required|string|max:20',
+            'semester'       => 'required|in:Ganjil,Genap',
+            'is_aktif'       => 'nullable|boolean',
+        ]);
+
+        $exists = TahunAjaran::where('tahun_akademik', $data['tahun_akademik'])
+            ->where('semester', $data['semester'])
+            ->exists();
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => "Tahun ajaran {$data['tahun_akademik']} {$data['semester']} sudah ada.",
+            ], 422);
+        }
+
+        $isAktif = !empty($data['is_aktif']);
+        if ($isAktif) {
+            TahunAjaran::query()->update(['is_aktif' => false]);
+            $this->syncTahunAjaranAktif($data['tahun_akademik'], $data['semester']);
+        }
+
+        $ta = TahunAjaran::create([
+            'tahun_akademik' => $data['tahun_akademik'],
+            'semester'       => $data['semester'],
+            'is_aktif'       => $isAktif,
+        ]);
+
+        return response()->json(['success' => true, 'data' => $ta->fresh()], 201);
+    }
+
+    public function updateTahunAjaran(Request $request, int $id): JsonResponse
+    {
+        $ta = TahunAjaran::findOrFail($id);
+        $data = $request->validate([
+            'tahun_akademik' => 'required|string|max:20',
+            'semester'       => 'required|in:Ganjil,Genap',
+            'is_aktif'       => 'nullable|boolean',
+        ]);
+
+        $dup = TahunAjaran::where('id', '!=', $ta->id)
+            ->where('tahun_akademik', $data['tahun_akademik'])
+            ->where('semester', $data['semester'])
+            ->exists();
+        if ($dup) {
+            return response()->json([
+                'success' => false,
+                'message' => "Tahun ajaran {$data['tahun_akademik']} {$data['semester']} sudah ada.",
+            ], 422);
+        }
+
+        $isAktif = !empty($data['is_aktif']);
+        if ($isAktif && !$ta->is_aktif) {
+            TahunAjaran::where('id', '!=', $ta->id)->update(['is_aktif' => false]);
+            $this->syncTahunAjaranAktif($data['tahun_akademik'], $data['semester']);
+        }
+
+        $ta->update([
+            'tahun_akademik' => $data['tahun_akademik'],
+            'semester'       => $data['semester'],
+            'is_aktif'       => $isAktif,
+        ]);
+
+        return response()->json(['success' => true, 'data' => $ta->fresh()]);
+    }
+
+    public function destroyTahunAjaran(int $id): JsonResponse
+    {
+        $ta = TahunAjaran::findOrFail($id);
+
+        if ($ta->is_aktif) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak dapat menghapus tahun ajaran yang aktif. Nonaktifkan dulu.',
+            ], 422);
+        }
+
+        $dipakaiPeriode = PeriodeAkademik::where('tahun_akademik', $ta->tahun_akademik)
+            ->where('semester', $ta->semester)
+            ->exists();
+        if ($dipakaiPeriode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tahun ajaran sudah dipakai periode input nilai dan tidak dapat dihapus.',
+            ], 422);
+        }
+
+        $ta->delete();
+        return response()->json(['success' => true, 'message' => 'Tahun ajaran dihapus.']);
+    }
+
+    public function activateTahunAjaran(int $id): JsonResponse
+    {
+        $ta = TahunAjaran::findOrFail($id);
+        TahunAjaran::where('id', '!=', $ta->id)->update(['is_aktif' => false]);
+        $ta->update(['is_aktif' => true]);
+        $this->syncTahunAjaranAktif($ta->tahun_akademik, $ta->semester);
+        return response()->json(['success' => true, 'data' => $ta->fresh()]);
+    }
+
+    private function syncTahunAjaranAktif(string $tahunAkademik, string $semester): void
+    {
+        Konfigurasi::updateOrCreate(
+            ['key' => 'tahun_akademik_aktif'],
+            ['value' => $tahunAkademik, 'label' => 'Tahun Akademik Aktif', 'tipe' => 'text']
+        );
+        Konfigurasi::updateOrCreate(
+            ['key' => 'semester_aktif'],
+            ['value' => $semester, 'label' => 'Semester Aktif', 'tipe' => 'text']
+        );
+    }
+
     // --- Master Periode Akademik ---
     public function indexPeriode(): JsonResponse
     {
@@ -231,31 +369,28 @@ class KonfigurasiController extends Controller
         ]);
     }
 
-    private function buildTahunAjaranOptions(): array
-    {
-        // Generate 5 tahun ajaran: 3 sebelum, current, 1 setelah
-        $aktif = Konfigurasi::get('tahun_akademik_aktif', '2025/2026');
-        $options = [];
-        if (preg_match('/^(\d{4})\/(\d{4})$/', $aktif, $m)) {
-            $startYear = (int) $m[1];
-            for ($y = $startYear - 3; $y <= $startYear + 1; $y++) {
-                $y2 = $y + 1;
-                $options[] = "$y/$y2 Ganjil";
-                $options[] = "$y/$y2 Genap";
-            }
-        }
-        return $options;
-    }
-
     public function storePeriode(Request $request): JsonResponse
     {
         $request->validate(['tahun_akademik' => 'required|string', 'semester' => 'required|string', 'tanggal_buka' => 'required|date', 'tanggal_tutup' => 'required|date']);
+
+        // Tahun ajaran harus dibuat manual dulu di "Master Tahun Ajaran"
+        $taAda = TahunAjaran::where('tahun_akademik', $request->tahun_akademik)
+            ->where('semester', $request->semester)
+            ->exists();
+        if (!$taAda) {
+            return response()->json([
+                'success' => false,
+                'message' => "Tahun ajaran {$request->tahun_akademik} {$request->semester} belum dibuat. Buat dulu di Master Tahun Ajaran.",
+            ], 422);
+        }
+
         $p = PeriodeAkademik::updateOrCreate(
             ['tahun_akademik' => $request->tahun_akademik, 'semester' => $request->semester],
             ['tanggal_buka' => $request->tanggal_buka, 'tanggal_tutup' => $request->tanggal_tutup]
         );
         return response()->json(['success' => true, 'data' => $p]);
     }
+
     public function updatePeriode(Request $request, int $id): JsonResponse
     {
         $p = PeriodeAkademik::findOrFail($id);
