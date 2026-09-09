@@ -15,7 +15,8 @@ class Mahasiswa extends Model
         'alasan_nonaktif', 'tanggal_nonaktif',
         'semester_dicabut', 'tanggal_dicabut', 'alasan_dicabut', 'dicabut_oleh',
         'nik', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
-        'alamat', 'nama_ayah', 'nama_ibu', 'tel_ayah', 'tel_ibu'
+        'alamat', 'no_hp',
+        'nama_ayah', 'nama_ibu', 'tel_ayah', 'tel_ibu'
     ];
 
     protected $casts = [

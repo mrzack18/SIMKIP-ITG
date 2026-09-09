@@ -21,6 +21,11 @@ export const MOCK_USERS: Record<string, { user: UserSession; password?: string; 
     password: "warek123",
     realUsername: "warek3",
   },
+  lsipd: {
+    user: { id: "LSP001", nama: "Operator LSIPD ITG", role: "lsipd" },
+    password: "lsipd123",
+    realUsername: "lsipd",
+  },
 };
 
 export const DEMO_PASSWORD = "admin123";
@@ -30,6 +35,7 @@ export const ROLE_LABELS: Record<string, string> = {
   mahasiswa: "Mahasiswa",
   prodi: "Program Studi",
   warek: "Wakil Rektor III",
+  lsipd: "LSIPD",
 };
 
 export const ROLE_PATHS: Record<string, string> = {
@@ -37,4 +43,5 @@ export const ROLE_PATHS: Record<string, string> = {
   mahasiswa: "/mahasiswa",
   prodi: "/prodi",
   warek: "/warek",
+  lsipd: "/lsipd",
 };

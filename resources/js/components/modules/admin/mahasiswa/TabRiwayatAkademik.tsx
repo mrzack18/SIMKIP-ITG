@@ -10,9 +10,10 @@ import {
   ReferenceLine,
   Legend,
 } from "recharts"
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loader2, Download, FileText } from "lucide-react"
+import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loader2, Download, FileText, RefreshCw } from "lucide-react"
 import type { SemesterDetailBE, SemesterDetail, MataKuliah } from "@/types"
 import { BackendNotReady } from "./Shared"
+import * as lsipdService from "@/services/lsipdService"
 
 function SemesterRow({
   detail,
@@ -225,7 +226,44 @@ function CustomLegend() {
   )
 }
 
-export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDetailBE[]; loading: boolean; error?: any }) {
+export function TabRiwayatAkademik({
+  data,
+  loading,
+  error,
+  nim,
+  onSyncSuccess,
+}: {
+  data: SemesterDetailBE[]
+  loading: boolean
+  error?: any
+  nim?: string
+  onSyncSuccess?: () => void | Promise<void>
+}) {
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const handleSync = async () => {
+    if (!nim) return
+    if (!window.confirm(`Tarik data mata kuliah dari Sistem Akademik untuk NIM ${nim}?`)) {
+      return
+    }
+    setIsSyncing(true)
+    try {
+      const result = await lsipdService.syncTranskrip(nim)
+      const ipkText = result.last_ipk !== null ? result.last_ipk.toFixed(2) : "—"
+      window.alert(
+        `Sinkronisasi selesai.\n${result.semester_inserted} semester, ${result.mata_kuliah_inserted} mata kuliah.\nIPK terakhir: ${ipkText}`,
+      )
+      if (onSyncSuccess) {
+        await onSyncSuccess()
+      } else {
+        window.location.reload()
+      }
+    } catch (err: any) {
+      window.alert(`Gagal sinkronisasi: ${err?.message ?? "Unknown error"}`)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -389,9 +427,18 @@ export function TabRiwayatAkademik({ data, loading, error }: { data: SemesterDet
           <h4 className="text-sm font-semibold text-gray-700">
             Riwayat IPK per Semester
           </h4>
-          <button className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors w-full sm:w-auto whitespace-nowrap">
-            <Download size={14} className="flex-shrink-0" />
-            Tarik Data Mata Kuliah dari Sistem Akademik
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={isSyncing || !nim}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-[#263F93]/5 transition-colors w-full sm:w-auto whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isSyncing ? (
+              <RefreshCw size={14} className="flex-shrink-0 animate-spin" />
+            ) : (
+              <Download size={14} className="flex-shrink-0" />
+            )}
+            {isSyncing ? "Menarik data..." : "Tarik Data Mata Kuliah dari Sistem Akademik"}
           </button>
         </div>
         <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">

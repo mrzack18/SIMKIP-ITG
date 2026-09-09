@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'lsipd' => [
+        'base_url'  => env('LSIPD_BASE_URL', 'https://opendata.itg.ac.id/api'),
+        'username'  => env('LSIPD_USERNAME'),
+        'password'  => env('LSIPD_PASSWORD'),
+        'cache_ttl' => (int) env('LSIPD_CACHE_TTL', 7200),
+        'timeout'   => (int) env('LSIPD_TIMEOUT', 30),
+    ],
+
 ];

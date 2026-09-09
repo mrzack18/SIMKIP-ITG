@@ -182,13 +182,13 @@ export default function MahasiswaDetail() {
       .catch(() => { /* fallback */ });
   }, [])
 
-  useEffect(() => {
+  const fetchIpk = () => {
     let active = true
     setLoadingIpk(true)
     setIpkError(null)
     getMahasiswaIpk(mhsId, tahunAjaran)
       .then((data) => { if (active) setIpkData(data) })
-      .catch((err) => { 
+      .catch((err) => {
         if (active) {
           setIpkError(err)
           setIpkData([])
@@ -196,7 +196,9 @@ export default function MahasiswaDetail() {
       })
       .finally(() => { if (active) setLoadingIpk(false) })
     return () => { active = false }
-  }, [mhsId, tahunAjaran])
+  }
+
+  useEffect(fetchIpk, [mhsId, tahunAjaran])
 
   useEffect(() => {
     let active = true
@@ -517,7 +519,7 @@ export default function MahasiswaDetail() {
 
       {/* Tab Content */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 min-w-0 overflow-hidden">
-        {activeTab === 0 && <TabRiwayatAkademik data={ipkData} loading={loadingIpk} error={ipkError} />}
+        {activeTab === 0 && <TabRiwayatAkademik data={ipkData} loading={loadingIpk} error={ipkError} nim={mhs?.nim} onSyncSuccess={() => { fetchIpk() }} />}
         {activeTab === 1 && <TabPrestasi data={prestasiData} loading={loadingPrestasi} error={prestasiError} />}
         {activeTab === 2 && <TabOrganisasi data={organisasiData} loading={loadingOrganisasi} error={organisasiError} />}
         {activeTab === 3 && <TabPelatihan data={pelatihanData} loading={loadingPelatihan} error={pelatihanError} />}

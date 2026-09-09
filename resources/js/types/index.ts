@@ -1,5 +1,5 @@
 // Role types
-export type Role = "admin" | "mahasiswa" | "prodi" | "warek";
+export type Role = "admin" | "mahasiswa" | "prodi" | "warek" | "lsipd";
 
 export interface UserSession {
   id?: string;

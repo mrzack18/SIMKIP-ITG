@@ -119,6 +119,11 @@ export async function activateTahunAjaran(id: number): Promise<TahunAjaranItem> 
   return res.data;
 }
 
+export async function deactivateTahunAjaran(id: number): Promise<TahunAjaranItem> {
+  const res = await api.patch<{ success: boolean; data: TahunAjaranItem }>(`/konfigurasi/tahun-ajaran/${id}/deactivate`);
+  return res.data;
+}
+
 // ─── Periode Akademik CRUD ────────────────────────────────────────────
 
 export interface PeriodeCreateInput {

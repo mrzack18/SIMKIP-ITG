@@ -53,7 +53,7 @@ function resolveLayoutUser(role: string) {
 }
 
 /** Wrapper that reads auth from context and passes resolved user to Layout. */
-function LayoutWrapper({ role }: { role: "admin" | "mahasiswa" | "prodi" | "warek" }) {
+function LayoutWrapper({ role }: { role: "admin" | "mahasiswa" | "prodi" | "warek" | "lsipd" }) {
   const { isLoading, user: authUser } = useAuth();
   // Re-derive from localStorage each time authUser changes so foto updates propagate
   const user = resolveLayoutUser(role);
@@ -130,6 +130,12 @@ export default function App() {
             <Route path="mahasiswa" element={<WarekMahasiswaList />} />
             <Route path="mahasiswa/:id" element={<WarekMahasiswaDetail />} />
             <Route path="profil" element={<Profil role="warek" />} />
+          </Route>
+
+          {/* LSIPD routes */}
+          <Route path="/lsipd" element={<LayoutWrapper role="lsipd" />}>
+            <Route index element={<Navigate to="konfigurasi" replace />} />
+            <Route path="konfigurasi" element={<Konfigurasi />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,7 +4,7 @@ import { ChevronDown, Menu } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { getBadgeCounts } from "@/services/dashboardService";
 
-type Role = "admin" | "mahasiswa" | "prodi" | "warek";
+type Role = "admin" | "mahasiswa" | "prodi" | "warek" | "lsipd";
 
 interface LayoutProps {
   role: Role;
@@ -16,6 +16,7 @@ const roleLabel: Record<Role, string> = {
   mahasiswa: "Mahasiswa",
   prodi: "Program Studi",
   warek: "Wakil Rektor III",
+  lsipd: "LSIPD",
 };
 
 

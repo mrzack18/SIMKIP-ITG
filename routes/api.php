@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\BebasTanggunganController;
 use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\Admin\KonfigurasiController as AdminConfig;
 use App\Http\Controllers\Api\Admin\AuditController as AdminAudit;
+use App\Http\Controllers\Api\Admin\LsipdSyncController as AdminLsipd;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
 
 Route::post("/auth/login", [AuthController::class, "login"])
@@ -56,6 +57,14 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::patch("/notifications/{id}/read",[NotificationController::class, "markRead"]);
 
     Route::get("/konfigurasi/periode", [AdminConfig::class, "getPeriode"]);
+
+    // LSIPD sync (admin only)
+    Route::middleware("role:admin")->prefix("lsipd")->group(function () {
+        Route::get("/status",                       [AdminLsipd::class, "status"]);
+        Route::post("/sync-mahasiswa",              [AdminLsipd::class, "syncAllMahasiswa"]);
+        Route::post("/sync-mahasiswa/{nim}",        [AdminLsipd::class, "syncMahasiswa"]);
+        Route::post("/sync-transkrip/{nim}",        [AdminLsipd::class, "syncTranskrip"]);
+    });
 
     // Unified Resources
     Route::get("/dashboard", [DashboardController::class, "index"]);
@@ -163,7 +172,7 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::get("/laporan/{id}/pdf",      [LaporanController::class, "downloadPdf"]);
 
     // Konfigurasi Admin
-    Route::middleware("role:admin")->prefix("konfigurasi")->group(function () {
+    Route::middleware("role:lsipd")->prefix("konfigurasi")->group(function () {
         Route::get("/",                          [AdminConfig::class, "index"]);
         Route::put("/",                          [AdminConfig::class, "update"]);
         Route::get("/prodi",                     [AdminConfig::class, "indexProdi"]);
@@ -194,6 +203,7 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::put("/tahun-ajaran/{id}",         [AdminConfig::class, "updateTahunAjaran"]);
         Route::delete("/tahun-ajaran/{id}",      [AdminConfig::class, "destroyTahunAjaran"]);
         Route::patch("/tahun-ajaran/{id}/activate", [AdminConfig::class, "activateTahunAjaran"]);
+        Route::patch("/tahun-ajaran/{id}/deactivate", [AdminConfig::class, "deactivateTahunAjaran"]);
         
         Route::get("/periode-akademik",          [AdminConfig::class, "indexPeriode"]);
         Route::post("/periode-akademik",         [AdminConfig::class, "storePeriode"]);

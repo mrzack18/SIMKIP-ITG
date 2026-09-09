@@ -850,6 +850,11 @@ export default function DataAkademik() {
   const [ipkFilter, setIpkFilter] = useState("Semua IPK")
   const [sortAkademik, setSortAkademik] = useState("IPK Tertinggi→Terendah")
 
+  const LIMIT = 10
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const goPage = (p: number) => setPage(Math.min(Math.max(1, p), totalPages))
+
   // Prestasi filters
   const [pSearch, setPSearch] = useState("")
   const [pProdi, setPProdi] = useState("Semua Prodi")
@@ -926,6 +931,23 @@ export default function DataAkademik() {
       if (s.includes("Angkatan")) return b.angkatan - a.angkatan
       return 0
     })
+
+  // Sync totalPages when filters change, reset to page 1
+  useEffect(() => {
+    setTotalPages(Math.max(1, Math.ceil(filteredAkademik.length / LIMIT)))
+    setPage(1)
+  }, [
+    filteredAkademik.length,
+    search,
+    prodiFilter,
+    angkatanFilter,
+    spFilter,
+    kipkFilter,
+    ipkFilter,
+    sortAkademik,
+  ])
+
+  const paginatedAkademik = filteredAkademik.slice((page - 1) * LIMIT, page * LIMIT)
 
   const resetAkademik = () => {
     setSearch("")
@@ -1008,7 +1030,10 @@ export default function DataAkademik() {
             Pantau IPK, nilai mata kuliah, prestasi, organisasi, dan pelatihan
           </p>
         </div>
-        <div className="self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 rounded-lg text-gray-600 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
+            <Download size={13} /> Export ke Excel
+          </button>
           <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
         </div>
       </div>
@@ -1160,7 +1185,7 @@ export default function DataAkademik() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredAkademik.map((r, i) => {
+                  {paginatedAkademik.map((r, i) => {
                     const below = r.ipk < 3.0
                     return (
                       <tr
@@ -1170,7 +1195,7 @@ export default function DataAkademik() {
                         }`}
                       >
                         <td className={`${tdCls} text-gray-400 text-xs`}>
-                          {i + 1}
+                          {(page - 1) * LIMIT + i + 1}
                         </td>
                         <td
                           className={`${tdCls} font-mono text-xs text-gray-600`}
@@ -1257,12 +1282,49 @@ export default function DataAkademik() {
               </table>
             </div>
             <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-xs text-gray-500 text-center sm:text-left break-words">
-                Menampilkan {filteredAkademik.length} mahasiswa
+              <span className="text-xs text-gray-500 text-center sm:text-left">
+                Menampilkan {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, filteredAkademik.length)} dari {filteredAkademik.length} mahasiswa
               </span>
-              <button className="flex items-center justify-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
-                <Download size={13} /> Export ke Excel
-              </button>
+              <div className="flex items-center gap-1 flex-wrap justify-center">
+                <button
+                  onClick={() => goPage(page - 1)}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                >
+                  ←
+                </button>
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .reduce<(number | "...")[]>((acc, curr, i, arr) => {
+                    if (i > 0 && (curr - (arr[i - 1] as number)) > 1) acc.push("...")
+                    acc.push(curr)
+                    return acc
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-gray-400">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => goPage(p as number)}
+                        className={`px-3 py-1.5 text-xs border rounded-lg transition-colors ${
+                          p === page
+                            ? "bg-[#263F93] text-white border-[#263F93]"
+                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ),
+                  )}
+                <button
+                  onClick={() => goPage(page + 1)}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                >
+                  →
+                </button>
+              </div>
             </div>
           </div>
         </div>

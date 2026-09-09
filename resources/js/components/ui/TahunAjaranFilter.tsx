@@ -80,11 +80,17 @@ export function TahunAjaranFilter({ value, onChange, className = "" }: Props) {
         if (unique.length === 0) return;
 
         // Default = tahun ajaran yang ditandai aktif oleh admin (jika valid),
-        // jika tidak ada yang aktif baru fallback ke tahun ajaran terbaru.
+        // jika tidak ada yang aktif, pertahankan pilihan user yang masih valid
+        // (jangan force-reset ke terbaru yang membuat halaman tampak kosong).
         const aktif = res?.tahun_ajaran_aktif ? toInternalFormat(res.tahun_ajaran_aktif) : null;
-        const preferred = aktif && unique.includes(aktif) ? aktif : unique[0];
+        let preferred: string | null = null;
+        if (aktif && unique.includes(aktif)) {
+          preferred = aktif;
+        } else if (!value || !unique.includes(value)) {
+          preferred = unique[0];
+        }
 
-        if (!unique.includes(value) || preferred !== value) {
+        if (preferred && (!unique.includes(value) || preferred !== value)) {
           onChange(preferred);
         }
       } catch {

@@ -32,6 +32,16 @@ class SuperAdminSeeder extends Seeder
             'is_password_changed' => true,
         ]);
 
+        // 2b. LSIPD Operator
+        User::firstOrCreate(['username' => 'lsipd'], [
+            'name' => 'Operator LSIPD ITG',
+            'username' => 'lsipd',
+            'email' => 'lsipd@itg.ac.id',
+            'password' => Hash::make('lsipd123'),
+            'role' => 'lsipd',
+            'is_password_changed' => true,
+        ]);
+
         // 3. Prodi TI
         $prodiTI = Prodi::where('kode', 'TI')->first();
         User::firstOrCreate(['username' => 'prodi_ti'], [

@@ -11,6 +11,7 @@ import {
   updateTahunAjaran,
   deleteTahunAjaran,
   activateTahunAjaran,
+  deactivateTahunAjaran,
   type PeriodeItem,
   type TahunAjaranItem,
 } from "@/services/konfigurasiService"
@@ -437,6 +438,18 @@ export default function Konfigurasi() {
     }
   };
 
+  const handleDeactivateTahunAjaran = async (item: TahunAjaranItem) => {
+    if (!item.is_aktif) return;
+    if (!window.confirm(`Nonaktifkan tahun ajaran ${item.tahun_akademik} ${item.semester}?\n\nTidak akan ada tahun ajaran aktif sampai yang lain diaktifkan.`)) return;
+    try {
+      await deactivateTahunAjaran(item.id);
+      showToast(`Tahun ajaran ${item.tahun_akademik} ${item.semester} dinonaktifkan`);
+      await fetchData();
+    } catch (e: any) {
+      showToast(e?.response?.data?.message ?? "Gagal menonaktifkan tahun ajaran");
+    }
+  };
+
   const handleDeleteTahunAjaran = async (item: TahunAjaranItem) => {
     if (item.is_aktif) {
       showToast("Tidak dapat menghapus tahun ajaran yang aktif. Nonaktifkan dulu.");
@@ -629,11 +642,13 @@ export default function Konfigurasi() {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => handleActivateTahunAjaran(ta)}
+                          onClick={() => ta.is_aktif 
+                            ? handleDeactivateTahunAjaran(ta)
+                            : handleActivateTahunAjaran(ta)}
                           className={ta.is_aktif
                             ? "flex items-center gap-1.5 text-xs text-green-600 font-500"
                             : "flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-600 font-500"}
-                          title={ta.is_aktif ? "Tahun ajaran aktif" : "Klik untuk mengaktifkan"}
+                          title={ta.is_aktif ? "Klik untuk menonaktifkan" : "Klik untuk mengaktifkan"}
                         >
                           {ta.is_aktif ? <ToggleRight size={18} className="text-green-500" /> : <ToggleLeft size={18} />}
                           {ta.is_aktif ? "Aktif" : "Nonaktif"}

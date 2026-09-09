@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
-type Role = "admin" | "mahasiswa" | "prodi" | "warek";
+type Role = "admin" | "mahasiswa" | "prodi" | "warek" | "lsipd";
 
 const adminNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
@@ -17,7 +17,6 @@ const adminNav = [
   { to: "/admin/sp", icon: AlertTriangle, label: "Surat Peringatan" },
   { to: "/admin/bebas-tanggungan", icon: Award, label: "Surat Penyelesaian" },
   { to: "/admin/laporan", icon: BarChart3, label: "Laporan Semester" },
-  { to: "/admin/konfigurasi", icon: Settings, label: "Konfigurasi" },
   { to: "/admin/audit", icon: History, label: "Audit Log" },
 ];
 
@@ -49,11 +48,16 @@ const warekNav = [
   { to: "/warek/profil", icon: User, label: "Profil" },
 ];
 
+const lsipdNav = [
+  { to: "/lsipd/konfigurasi", icon: Settings, label: "Konfigurasi" },
+];
+
 const navMap: Record<Role, typeof adminNav> = {
   admin: adminNav,
   mahasiswa: mahasiswaNav,
   prodi: prodiNav,
   warek: warekNav,
+  lsipd: lsipdNav,
 };
 
 interface BadgeCounts {
@@ -80,6 +84,7 @@ export default function Sidebar({ role, collapsed, onToggle, onLogout, badgeCoun
     mahasiswa: "Mahasiswa",
     prodi: "Program Studi",
     warek: "Warek III",
+    lsipd: "LSIPD",
   };
 
   return (

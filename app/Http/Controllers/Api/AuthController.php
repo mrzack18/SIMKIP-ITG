@@ -37,6 +37,7 @@ class AuthController extends Controller
             'mahasiswa' => '/mahasiswa',
             'prodi'     => '/prodi',
             'warek'     => '/warek',
+            'lsipd'     => '/lsipd',
         ];
 
         return response()->json([

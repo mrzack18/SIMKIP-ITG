@@ -169,8 +169,8 @@ public function getPeriode(): JsonResponse
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
 'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
-            'tahun_ajaran_aktif' => optional(TahunAjaran::where('is_aktif', true)->first())
-                ? TahunAjaran::where('is_aktif', true)->first()->tahun_akademik . ' ' . TahunAjaran::where('is_aktif', true)->first()->semester
+            'tahun_ajaran_aktif' => ($taAktifIndex = TahunAjaran::where('is_aktif', true)->first())
+                ? $taAktifIndex->tahun_akademik . ' ' . $taAktifIndex->semester
                 : null,
                 'tahun_ajaran_list'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
                 'prodis' => Prodi::all(),
@@ -311,6 +311,10 @@ public function getPeriode(): JsonResponse
         if ($isAktif && !$ta->is_aktif) {
             TahunAjaran::where('id', '!=', $ta->id)->update(['is_aktif' => false]);
             $this->syncTahunAjaranAktif($data['tahun_akademik'], $data['semester']);
+        } elseif (!$isAktif && $ta->is_aktif) {
+            // TA aktif dinonaktifkan -> tidak ada lagi TA aktif, reset config
+            // supaya tahun_akademik_aktif / semester_aktif tidak stale.
+            $this->resetTahunAjaranAktif();
         }
 
         $ta->update([
@@ -354,6 +358,29 @@ public function getPeriode(): JsonResponse
         $ta->update(['is_aktif' => true]);
         $this->syncTahunAjaranAktif($ta->tahun_akademik, $ta->semester);
         return response()->json(['success' => true, 'data' => $ta->fresh()]);
+    }
+
+    public function deactivateTahunAjaran(int $id): JsonResponse
+    {
+        $ta = TahunAjaran::findOrFail($id);
+        if (!$ta->is_aktif) {
+            return response()->json(['success' => true, 'data' => $ta->fresh()]);
+        }
+        $ta->update(['is_aktif' => false]);
+        $this->resetTahunAjaranAktif();
+        return response()->json(['success' => true, 'data' => $ta->fresh()]);
+    }
+
+    /**
+     * Hapus status "tahun ajaran aktif" dari konfigurasi. Dipanggil saat TA
+     * aktif dinonaktifkan / "status tahun ajaran" dihapus, supaya key
+     * tahun_akademik_aktif & semester_aktif tidak menunjuk ke TA yang sudah nonaktif.
+     */
+    private function resetTahunAjaranAktif(): void
+    {
+        foreach (['tahun_akademik_aktif', 'semester_aktif'] as $key) {
+            Konfigurasi::where('key', $key)->update(['value' => null]);
+        }
     }
 
     private function syncTahunAjaranAktif(string $tahunAkademik, string $semester): void
