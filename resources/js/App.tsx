@@ -18,6 +18,8 @@ import LaporanList from "./pages/admin/LaporanList";
 import SusunLaporan from "./pages/admin/SusunLaporan";
 import LaporanDetail from "./pages/admin/LaporanDetail";
 import Konfigurasi from "./pages/admin/Konfigurasi";
+import LsipdSync from "./pages/lsipd/LsipdSync";
+import ManajemenAkun from "./pages/lsipd/ManajemenAkun";
 import AuditLog from "./pages/admin/AuditLog";
 import StudentDashboard from "./pages/student/Dashboard";
 import UploadDokumen from "./pages/student/UploadDokumen";
@@ -136,6 +138,8 @@ export default function App() {
           <Route path="/lsipd" element={<LayoutWrapper role="lsipd" />}>
             <Route index element={<Navigate to="konfigurasi" replace />} />
             <Route path="konfigurasi" element={<Konfigurasi />} />
+            <Route path="sync" element={<LsipdSync />} />
+            <Route path="users" element={<ManajemenAkun />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

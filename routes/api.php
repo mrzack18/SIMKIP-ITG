@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\Admin\KonfigurasiController as AdminConfig;
 use App\Http\Controllers\Api\Admin\AuditController as AdminAudit;
 use App\Http\Controllers\Api\Admin\LsipdSyncController as AdminLsipd;
+use App\Http\Controllers\Api\Admin\UserController as AdminUser;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
 
 Route::post("/auth/login", [AuthController::class, "login"])
@@ -58,12 +59,21 @@ Route::middleware("auth:sanctum")->group(function () {
 
     Route::get("/konfigurasi/periode", [AdminConfig::class, "getPeriode"]);
 
-    // LSIPD sync (admin only)
-    Route::middleware("role:admin")->prefix("lsipd")->group(function () {
+    // LSIPD sync (lsipd only)
+    Route::middleware("role:lsipd")->prefix("lsipd")->group(function () {
         Route::get("/status",                       [AdminLsipd::class, "status"]);
         Route::post("/sync-mahasiswa",              [AdminLsipd::class, "syncAllMahasiswa"]);
         Route::post("/sync-mahasiswa/{nim}",        [AdminLsipd::class, "syncMahasiswa"]);
         Route::post("/sync-transkrip/{nim}",        [AdminLsipd::class, "syncTranskrip"]);
+    });
+
+    // User management (lsipd only)
+    Route::middleware("role:lsipd")->prefix("users")->group(function () {
+        Route::get("/",                         [AdminUser::class, "index"]);
+        Route::post("/",                        [AdminUser::class, "store"]);
+        Route::put("/{id}",                    [AdminUser::class, "update"]);
+        Route::patch("/{id}/toggle",            [AdminUser::class, "toggleActive"]);
+        Route::post("/{id}/reset-password",     [AdminUser::class, "resetPassword"]);
     });
 
     // Unified Resources

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, FileCheck, AlertTriangle, Award,
   BarChart3, Settings, History, ChevronLeft, ChevronRight,
   Upload, Folder, Bell, User, LogOut, GraduationCap, BookOpen,
-  FileText, X,
+  FileText, X, RefreshCw,
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
@@ -50,6 +50,8 @@ const warekNav = [
 
 const lsipdNav = [
   { to: "/lsipd/konfigurasi", icon: Settings, label: "Konfigurasi" },
+  { to: "/lsipd/sync",         icon: RefreshCw, label: "Sinkronisasi" },
+  { to: "/lsipd/users",        icon: Users,     label: "Manajemen User" },
 ];
 
 const navMap: Record<Role, typeof adminNav> = {
