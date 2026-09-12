@@ -2,57 +2,52 @@
 
 namespace App\Observers;
 
-use App\Models\PeriodeAkademik;
 use App\Models\Konfigurasi;
+use App\Models\PeriodeAkademik;
 
 class PeriodeAkademikObserver
 {
     /**
-     * Single source of truth untuk "periode input nilai yang sedang aktif".
+     * CATATAN PENTING (perubahan perilaku):
      *
-     * Hanya mengelola keys `periode_input_*`. Keys `tahun_akademik_aktif` /
-     * `semester_aktif` TIDAK disentuh di sini — itu milik eksklusif status
-     * tahun ajaran di "Master Tahun Ajaran" (syncTahunAjaranAktif), supaya
-     * aktivasi periode tidak menimpa semester akademik berjalan.
+     * Dulu observer ini memaksa hanya SATU periode aktif — setiap kali sebuah
+     * periode diaktifkan, semua periode lain dinonaktifkan. Akibatnya mustahil
+     * membuka periode untuk lebih dari satu tahun ajaran sekaligus.
+     *
+     * Sekarang beberapa periode boleh aktif bersamaan: setiap baris punya flag
+     * `is_aktif` sendiri dan tidak saling menonaktifkan. Karena itu tidak ada
+     * lagi penulisan ke key konfigurasi `periode_input_*` — key itu hanya bisa
+     * menyimpan satu nilai, jadi tidak sanggup mewakili banyak periode.
+     *
+     * Sumber kebenaran "periode input" sekarang: tabel `periode_akademiks`,
+     * dibaca lewat App\Helpers\PeriodeInputHelper.
      */
     public function saved(PeriodeAkademik $periode): void
     {
-        if ($periode->is_aktif) {
-            // Nonaktifkan semua periode lain
-            PeriodeAkademik::where('id', '!=', $periode->id)
-                ->where('is_aktif', true)
-                ->update(['is_aktif' => false]);
-
-            Konfigurasi::updateOrCreate(
-                ['key' => 'periode_input_aktif'],
-                ['value' => '1', 'label' => 'Periode Input Aktif', 'tipe' => 'boolean']
-            );
-            Konfigurasi::updateOrCreate(
-                ['key' => 'periode_input_buka'],
-                ['value' => $periode->tanggal_buka->format('Y-m-d'), 'label' => 'Tanggal Buka', 'tipe' => 'date']
-            );
-            Konfigurasi::updateOrCreate(
-                ['key' => 'periode_input_tutup'],
-                ['value' => $periode->tanggal_tutup->format('Y-m-d'), 'label' => 'Tanggal Tutup', 'tipe' => 'date']
-            );
-            Konfigurasi::updateOrCreate(
-                ['key' => 'periode_input_tahun_ajaran'],
-                ['value' => $periode->tahun_akademik . ' ' . $periode->semester, 'label' => 'Periode Input TA', 'tipe' => 'text']
-            );
-        }
+        // Tidak ada aksi: status aktif sepenuhnya ditentukan kolom is_aktif
+        // pada baris periode itu sendiri.
     }
 
     /**
-     * Jika record aktif dihapus, nonaktifkan semua flag periode di konfigurasi
-     * supaya mahasiswa tidak lagi melihat "periode terbuka" tapi tanpa TA valid.
+     * Saat periode terakhir yang aktif dihapus, matikan juga key konfigurasi
+     * lama supaya pembaca versi lama tidak melihat "periode terbuka" tanpa
+     * periode yang valid. Key ini hanya dipertahankan untuk kompatibilitas.
      */
     public function deleted(PeriodeAkademik $periode): void
     {
-        if ($periode->is_aktif) {
-            Konfigurasi::updateOrCreate(
-                ['key' => 'periode_input_aktif'],
-                ['value' => '0', 'label' => 'Periode Input Aktif', 'tipe' => 'boolean']
-            );
+        if (! $periode->is_aktif) {
+            return;
         }
+
+        $masihAdaYangAktif = PeriodeAkademik::where('is_aktif', true)->exists();
+
+        Konfigurasi::updateOrCreate(
+            ['key' => 'periode_input_aktif'],
+            [
+                'value' => $masihAdaYangAktif ? '1' : '0',
+                'label' => 'Periode Input Aktif',
+                'tipe'  => 'boolean',
+            ]
+        );
     }
 }

@@ -75,11 +75,15 @@ function SemesterRow({
                 ? 'bg-green-100 text-green-700'
                 : detail.status === 'Ditolak'
                 ? 'bg-red-100 text-red-700'
+                : detail.status === 'Draft'
+                ? 'bg-gray-100 text-gray-600'
                 : 'bg-yellow-100 text-yellow-700'
             }`}
+            title={detail.status === 'Draft' ? 'Belum final — bisa berasal dari isian mahasiswa yang belum diajukan atau data hasil sinkronisasi akademik (LSIPD)' : undefined}
           >
             {detail.status === 'Disetujui' ? 'Disetujui'
               : detail.status === 'Ditolak' ? 'Ditolak'
+              : detail.status === 'Draft' ? 'Draft'
               : 'Menunggu Validasi'}
           </span>
           {detail.status === 'Ditolak' && detail.catatan_admin && (

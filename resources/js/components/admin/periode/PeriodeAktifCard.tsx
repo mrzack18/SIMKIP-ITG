@@ -1,11 +1,12 @@
-import { Calendar, CheckCircle, Power, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { Calendar, CheckCircle, Power, Edit2, AlertCircle, Layers } from "lucide-react";
 import type { PeriodeItem } from "@/services/konfigurasiService";
 
 interface Props {
-  active: PeriodeItem | null;
+  /** Bisa berisi LEBIH DARI SATU periode — beberapa tahun ajaran boleh dibuka bersamaan. */
+  periodesAktif: PeriodeItem[];
   totalMahasiswaAktif: number;
-  onEdit: () => void;
-  onDeactivate: () => void;
+  onEdit: (item: PeriodeItem) => void;
+  onDeactivate: (item: PeriodeItem) => void;
   onActivateAnother: () => void;
 }
 
@@ -42,13 +43,13 @@ const hitungStatusPeriode = (item: PeriodeItem): { label: string; color: string;
 };
 
 export default function PeriodeAktifCard({
-  active,
+  periodesAktif,
   totalMahasiswaAktif,
   onEdit,
   onDeactivate,
   onActivateAnother,
 }: Props) {
-  if (!active) {
+  if (periodesAktif.length === 0) {
     return (
       <div className="rounded-xl border-2 border-dashed border-gray-200 p-4 sm:p-6 text-center bg-gray-50/50 min-w-0">
         <AlertCircle size={32} className="text-gray-300 mx-auto mb-2" />
@@ -67,8 +68,10 @@ export default function PeriodeAktifCard({
     );
   }
 
-  const sisaHari = hitungSisaHari(active.tanggal_tutup);
-  const statusPeriode = hitungStatusPeriode(active);
+  const banyak = periodesAktif.length > 1;
+  // Sisa hari dihitung dari periode yang paling longgar supaya tidak menyesatkan
+  // saat ada beberapa TA yang dibuka bersamaan.
+  const sisaHari = Math.max(...periodesAktif.map((p) => hitungSisaHari(p.tanggal_tutup)));
 
   return (
     <div className="rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-3 sm:p-4 relative overflow-hidden min-w-0">
@@ -79,68 +82,96 @@ export default function PeriodeAktifCard({
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
               <span className="text-xs font-700 uppercase tracking-wide text-green-700">
-                Periode Aktif
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-600 whitespace-nowrap ${statusPeriode.bg} ${statusPeriode.color}`}>
-                {statusPeriode.label}
+                {banyak ? `Periode Aktif (${periodesAktif.length} Tahun Ajaran)` : "Periode Aktif"}
               </span>
             </div>
-            <div className="text-lg sm:text-xl font-display font-700 text-gray-900 break-words">
-              {active.tahun_akademik} {active.semester}
-            </div>
-          </div>
-          <div className="flex gap-1 shrink-0">
-            <button
-              onClick={onEdit}
-              className="p-2 rounded-lg hover:bg-white/60 text-gray-600"
-              title="Edit tanggal"
-            >
-              <Edit2 size={15} />
-            </button>
-            <button
-              onClick={onDeactivate}
-              className="p-2 rounded-lg hover:bg-red-50 text-red-500"
-              title="Nonaktifkan"
-            >
-              <Power size={15} />
-            </button>
+            <p className="text-xs text-gray-500 break-words">
+              {banyak
+                ? "Beberapa tahun ajaran dibuka bersamaan. Mahasiswa dapat mengisi nilai untuk TA yang periodenya sedang berjalan."
+                : "Mahasiswa dapat mengisi nilai KHS untuk tahun ajaran ini."}
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          <div className="bg-white/70 rounded-lg px-3 py-2 border border-green-100">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-              <Calendar size={12} />
-              <span>Tanggal Buka</span>
-            </div>
-            <div className="text-sm font-600 text-gray-800">{formatTgl(active.tanggal_buka)}</div>
-          </div>
-          <div className="bg-white/70 rounded-lg px-3 py-2 border border-green-100">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-              <Calendar size={12} />
-              <span>Tanggal Tutup</span>
-            </div>
-            <div className="text-sm font-600 text-gray-800">{formatTgl(active.tanggal_tutup)}</div>
-          </div>
+        {/* Daftar periode aktif — satu kartu per TA */}
+        <div className="space-y-2">
+          {periodesAktif.map((p) => {
+            const status = hitungStatusPeriode(p);
+            return (
+              <div
+                key={p.id}
+                className="bg-white/80 rounded-lg border border-green-100 px-3 py-2.5 min-w-0"
+              >
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm sm:text-base font-display font-700 text-gray-900 break-words">
+                        {p.tahun_akademik} {p.semester}
+                      </span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-600 whitespace-nowrap ${status.bg} ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-500">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar size={12} className="flex-shrink-0" />
+                        Buka {formatTgl(p.tanggal_buka)}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Calendar size={12} className="flex-shrink-0" />
+                        Tutup {formatTgl(p.tanggal_tutup)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => onEdit(p)}
+                      className="p-1.5 rounded-lg hover:bg-white/70 text-gray-600"
+                      title={`Edit tanggal ${p.tahun_akademik} ${p.semester}`}
+                      aria-label={`Edit ${p.tahun_akademik} ${p.semester}`}
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => onDeactivate(p)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+                      title={`Nonaktifkan ${p.tahun_akademik} ${p.semester}`}
+                      aria-label={`Nonaktifkan ${p.tahun_akademik} ${p.semester}`}
+                    >
+                      <Power size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Preview dampak */}
         <div className="mt-4 pt-4 border-t border-green-200/60">
-          <p className="text-xs font-600 text-gray-600 mb-2">📊 Preview dampak ke mahasiswa:</p>
+          <p className="text-xs font-600 text-gray-600 mb-2 flex items-center gap-1.5">
+            <Layers size={12} /> Preview dampak ke mahasiswa:
+          </p>
           <ul className="text-xs text-gray-600 space-y-1">
             <li className="flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-green-500" />
-              <span><strong>{totalMahasiswaAktif}</strong> mahasiswa KIP-K aktif dapat mengakses form input IPK</span>
+              <span>
+                <strong>{totalMahasiswaAktif}</strong> mahasiswa KIP-K aktif dapat mengakses form input IPK
+                {banyak ? " untuk TA yang dibuka" : ""}
+              </span>
             </li>
             {sisaHari > 0 ? (
               <li className="flex items-center gap-2">
                 <span className="w-1 h-1 rounded-full bg-amber-500" />
-                <span>Periode ditutup dalam <strong>{sisaHari} hari lagi</strong></span>
+                <span>
+                  {banyak ? "Periode terakhir ditutup" : "Periode ditutup"} dalam{" "}
+                  <strong>{sisaHari} hari lagi</strong>
+                </span>
               </li>
             ) : (
               <li className="flex items-center gap-2">
                 <span className="w-1 h-1 rounded-full bg-red-500" />
-                <span>Periode sudah lewat — harap nonaktifkan atau perpanjang</span>
+                <span>Semua periode aktif sudah lewat — harap nonaktifkan atau perpanjang</span>
               </li>
             )}
           </ul>

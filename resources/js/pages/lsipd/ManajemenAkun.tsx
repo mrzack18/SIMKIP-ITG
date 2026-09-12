@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Loader2,
   XCircle,
+  ArrowUpDown,
 } from "lucide-react";
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import * as userService from "@/services/userService";
@@ -90,6 +91,10 @@ export default function ManajemenAkun() {
   // Filter state
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [angkatanFilter, setAngkatanFilter] = useState("Semua");
+  const [prodiFilter, setProdiFilter] = useState("Semua");
+  const [sort, setSort] = useState<"asc" | "desc">("asc");
+  const [angkatans, setAngkatans] = useState<number[]>([]);
   const [searchDebounce, setSearchDebounce] = useState("");
 
   // Modal state
@@ -123,11 +128,15 @@ export default function ManajemenAkun() {
       const res = await userService.getUsers({
         search: searchDebounce,
         role: roleFilter,
+        angkatan: angkatanFilter !== "Semua" ? angkatanFilter : undefined,
+        prodi: prodiFilter !== "Semua" ? prodiFilter : undefined,
+        sort,
         page,
         per_page: PAGE_SIZE,
       });
       setUsers(res.data);
       setTotal(res.total);
+      setAngkatans(res.filter_options?.angkatans ?? []);
     } catch {
       setUsers([]);
       setTotal(0);
@@ -139,12 +148,12 @@ export default function ManajemenAkun() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, roleFilter, searchDebounce]);
+  }, [page, roleFilter, searchDebounce, angkatanFilter, prodiFilter, sort]);
 
   // Reset page when filter changes
   useEffect(() => {
     setPage(1);
-  }, [searchDebounce, roleFilter]);
+  }, [searchDebounce, roleFilter, angkatanFilter, prodiFilter, sort]);
 
   const openCreate = () => {
     setEditId(null);
@@ -271,9 +280,9 @@ export default function ManajemenAkun() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="relative sm:col-span-2 lg:col-span-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Cari nama atau username..."
@@ -285,14 +294,51 @@ export default function ManajemenAkun() {
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 focus:border-[#263F93] transition-colors bg-white min-w-[180px]"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 focus:border-[#263F93] transition-colors bg-white"
         >
           <option value="all">Semua Role</option>
           {ROLE_OPTIONS.map((r) => (
             <option key={r.value} value={r.value}>{r.label}</option>
           ))}
         </select>
+        <select
+          value={angkatanFilter}
+          onChange={(e) => setAngkatanFilter(e.target.value)}
+          title="Hanya menyaring akun mahasiswa"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 focus:border-[#263F93] transition-colors bg-white text-gray-600"
+        >
+          <option value="Semua">Semua Angkatan</option>
+          {angkatans.map((a) => (
+            <option key={a} value={String(a)}>Angkatan {a}</option>
+          ))}
+        </select>
+        <select
+          value={prodiFilter}
+          onChange={(e) => setProdiFilter(e.target.value)}
+          title="Hanya menyaring akun mahasiswa"
+          className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/30 focus:border-[#263F93] transition-colors bg-white text-gray-600 truncate"
+        >
+          <option value="Semua">Semua Prodi</option>
+          {prodis.map((p) => (
+            <option key={p.id} value={p.nama}>{p.nama}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => setSort((s) => (s === "asc" ? "desc" : "asc"))}
+          title="Ubah urutan nama"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <ArrowUpDown size={14} className="text-gray-400 flex-shrink-0" />
+          Nama {sort === "asc" ? "A–Z" : "Z–A"}
+        </button>
       </div>
+
+      {(angkatanFilter !== "Semua" || prodiFilter !== "Semua") && (
+        <p className="text-xs text-gray-400">
+          Filter angkatan dan prodi hanya menyaring akun mahasiswa; akun Pengelola KIP-K,
+          Program Studi, dan Warek tetap ditampilkan.
+        </p>
+      )}
 
       {/* Toast */}
       {toastMsg && (
@@ -307,7 +353,7 @@ export default function ManajemenAkun() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                {["Nama", "Username", "Email", "Role", "Prodi", "Status", "Aksi"].map((h) => (
+                {["Nama", "Username", "Email", "Role", "Prodi", "Angkatan", "Status", "Aksi"].map((h) => (
                   <th
                     key={h}
                     className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap"
@@ -320,14 +366,14 @@ export default function ManajemenAkun() {
             <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={8} className="py-10 text-center text-gray-400 text-sm">
                     <Loader2 size={18} className="animate-spin mx-auto mb-2" />
                     Memuat...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={8} className="py-10 text-center text-gray-400 text-sm">
                     Tidak ada user ditemukan.
                   </td>
                 </tr>
@@ -348,6 +394,9 @@ export default function ManajemenAkun() {
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{user.prodi_nama ?? "—"}</td>
+                    <td className="py-2.5 px-3 text-gray-500 text-xs whitespace-nowrap">
+                      {user.angkatan ?? "—"}
+                    </td>
                     <td className="py-2.5 px-3">
                       {user.is_active ? (
                         <span className="text-xs text-green-600 font-medium flex items-center gap-1">

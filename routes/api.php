@@ -65,10 +65,18 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::middleware("role:lsipd")->prefix("lsipd")->group(function () {
         Route::get("/status",                       [AdminLsipd::class, "status"]);
         Route::get("/sync-progress",                [AdminLsipd::class, "syncProgress"]);
+        // Daftar mahasiswa untuk tabel di halaman Sinkronisasi (filter + urut nama).
+        Route::get("/mahasiswa",                    [AdminLsipd::class, "indexMahasiswa"]);
+        // Mahasiswa yang ada di LSIPD tapi belum ada di SIMKIP (untuk sync seperlunya).
+        Route::get("/belum-tersinkron",             [AdminLsipd::class, "belumTersinkron"]);
         Route::post("/sync-mahasiswa",              [AdminLsipd::class, "syncAllMahasiswa"]);
+        // Batch: dipakai tabel mahasiswa di halaman Sinkronisasi (satu request, banyak NIM).
+        Route::post("/sync-mahasiswa-batch",        [AdminLsipd::class, "syncMahasiswaBatch"]);
+        Route::post("/sync-transkrip-batch",        [AdminLsipd::class, "syncTranskripBatch"]);
         Route::post("/sync-mahasiswa/{nim}",        [AdminLsipd::class, "syncMahasiswa"]);
         Route::post("/sync-transkrip/{nim}",        [AdminLsipd::class, "syncTranskrip"]);
         Route::post("/delete-all-mahasiswa",        [AdminLsipd::class, "deleteAllMahasiswa"]);
+        Route::delete("/mahasiswa/{nim}",           [AdminLsipd::class, "deleteMahasiswa"]);
     });
 
     // User management (lsipd only)
@@ -213,6 +221,7 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::put("/periode-akademik/{id}",     [AdminConfig::class, "updatePeriode"]);
         Route::delete("/periode-akademik/{id}",  [AdminConfig::class, "destroyPeriode"]);
         Route::patch("/periode-akademik/{id}/activate", [AdminConfig::class, "activatePeriode"]);
+        Route::patch("/periode-akademik/{id}/deactivate", [AdminConfig::class, "deactivatePeriode"]);
     });
 
     // Konfigurasi — khusus lsipd: index mentah, Prodi, Nilai Mutu, Tahun Ajaran.

@@ -116,11 +116,12 @@ class TahunAjaranHelper
             $sem = \App\Models\Konfigurasi::get('semester_aktif');
             if ($thn && $sem) {
                 $tahunAjaran = "$thn $sem";
-            } elseif ($periode = \App\Models\Konfigurasi::get('periode_input_tahun_ajaran')) {
-                // Periode input LSIPD, mis. "2026/2027 Ganjil"
-                $tahunAjaran = $periode;
             } else {
-                // Last resort: turunkan dari bulan kalender berjalan.
+                // Dulu di sini ada fallback ke key konfigurasi
+                // `periode_input_tahun_ajaran`. Key itu ditinggalkan karena hanya
+                // bisa menyimpan SATU periode, sementara sekarang beberapa tahun
+                // ajaran boleh dibuka bersamaan — tidak ada satu TA yang bisa
+                // dianggap "yang berlaku". Jadi langsung pakai kalender berjalan.
                 $month = (int) date('n');
                 $year  = (int) date('Y');
                 if ($month >= 8) {
@@ -145,5 +146,34 @@ class TahunAjaranHelper
         }
 
         return 0;
+    }
+
+    /**
+     * Kebalikan dari calculateSemester(): turunkan tahun ajaran dari angkatan + semester.
+     *
+     * Diperlukan karena API LSIPD tidak menyediakan tahun ajaran sama sekali — field
+     * `tahun_ajaran` pada responsnya justru berisi "Semester 1", "Semester 2", dst
+     * (lihat LsipdSyncService::upsertProgresAkademik()). Satu-satunya sumber yang
+     * tersedia adalah `angkatan`, jadi tahun ajaran harus dihitung.
+     *
+     * Rumusnya cermin dari calculateSemester() di atas, dan sengaja sama persis dengan
+     * getTahunAjaran() di BebasTanggunganTestSeeder supaya bolak-baliknya konsisten:
+     * calculateSemester(angkatan, tahunAjaranDariSemester(angkatan, n)) === n.
+     *
+     * CATATAN: ini mengasumsikan mahasiswa maju dua semester per tahun tanpa cuti atau
+     * mengulang. Tidak ada cara yang lebih akurat selama upstream tidak mengirim TA.
+     *
+     * @return string "2022/2023 Ganjil", atau '' bila angkatan/semester tidak masuk akal.
+     */
+    public static function tahunAjaranDariSemester(int $angkatan, int $semester): string
+    {
+        if ($angkatan <= 0 || $semester <= 0) {
+            return '';
+        }
+
+        $tahunAwal = $angkatan + intdiv($semester - 1, 2);
+        $label     = ($semester % 2 === 1) ? 'Ganjil' : 'Genap';
+
+        return $tahunAwal . '/' . ($tahunAwal + 1) . ' ' . $label;
     }
 }

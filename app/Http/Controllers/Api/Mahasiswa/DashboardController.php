@@ -87,8 +87,13 @@ class DashboardController extends Controller
         $totalOrganisasi = $organisasiQuery->count();
         $totalPelatihan  = $pelatihanQuery->count();
 
-        $periodeAktif = Konfigurasi::get('periode_input_aktif', '0') === '1';
-        $periodeTutup = Konfigurasi::get('periode_input_tutup');
+        // Periode input dari tabel periode_akademiks. Dashboard ini tidak terikat
+        // satu tahun ajaran tertentu, jadi "aktif" berarti ADA periode yang sedang
+        // dibuka, dan batas waktunya diambil yang paling longgar (terakhir) supaya
+        // tidak menyesatkan saat ada beberapa TA yang dibuka bersamaan.
+        $periodesAktif = \App\Helpers\PeriodeInputHelper::semuaAktif();
+        $periodeAktif  = $periodesAktif->isNotEmpty();
+        $periodeTutup  = $periodesAktif->max(fn ($p) => $p->tanggal_tutup);
 
         // Current semester: always based on all records (not filtered), TA filter only affects chart display
         $allIpk = $m->ipkSemestrs;
@@ -159,7 +164,13 @@ class DashboardController extends Controller
             ],
             'periode' => [
                 'aktif'       => $periodeAktif,
-                'batas_waktu' => $periodeTutup,
+                'batas_waktu' => $periodeTutup?->format('Y-m-d'),
+                // Daftar TA yang periodenya sedang dibuka — bisa lebih dari satu.
+                'periodes_aktif' => $periodesAktif->map(fn ($p) => [
+                    'tahun_ajaran' => "{$p->tahun_akademik} {$p->semester}",
+                    'buka'         => $p->tanggal_buka?->format('Y-m-d'),
+                    'tutup'        => $p->tanggal_tutup?->format('Y-m-d'),
+                ])->values(),
             ],
             'bebas_tanggungan' => $bebasTanggungan ? ['status' => $bebasTanggungan->status] : null,
             'ipk_chart' => $ipkList->map(fn($s) => ['semester' => $s->semester, 'ipk' => (float) $s->ipk]),

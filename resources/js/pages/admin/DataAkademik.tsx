@@ -925,13 +925,19 @@ export default function DataAkademik() {
     })
     .sort((a, b) => {
       const s = sortAkademik
-      if (s.includes("Tertinggi")) return b.ipk - a.ipk
-      if (s.includes("Terendah")) return a.ipk - b.ipk
-      if (s === "IPK Naik") return b.delta - a.delta
-      if (s === "IPK Turun") return a.delta - b.delta
-      if (s.includes("Nama")) return a.nama.localeCompare(b.nama)
-      if (s.includes("Angkatan")) return b.angkatan - a.angkatan
-      return 0
+      // Dicocokkan PERSIS, bukan dengan includes(): "IPK Terendah→Tertinggi"
+      // juga mengandung kata "Tertinggi", sehingga pengecekan includes("Tertinggi")
+      // lebih dulu membuat pilihan "Terendah→Tertinggi" ikut terurut menurun —
+      // akibatnya kedua opsi itu memberi hasil yang sama.
+      switch (s) {
+        case "IPK Terendah→Tertinggi": return a.ipk - b.ipk
+        case "IPK Tertinggi→Terendah": return b.ipk - a.ipk
+        case "IPS Naik": return b.delta - a.delta
+        case "IPS Turun": return a.delta - b.delta
+        case "Nama A–Z": return a.nama.localeCompare(b.nama)
+        case "Angkatan Terbaru": return b.angkatan - a.angkatan
+        default: return 0
+      }
     })
 
   // Sync totalPages when filters change, reset to page 1
@@ -1152,8 +1158,8 @@ export default function DataAkademik() {
                 options={[
                   "IPK Tertinggi→Terendah",
                   "IPK Terendah→Tertinggi",
-                  "IPK Naik",
-                  "IPK Turun",
+                  "IPS Naik",
+                  "IPS Turun",
                   "Nama A–Z",
                   "Angkatan Terbaru",
                 ]}
@@ -1180,7 +1186,7 @@ export default function DataAkademik() {
                     <th className={thCls}>Angkatan</th>
                     <th className={thCls}>Semester</th>
                     <th className={thCls}>IPK Terakhir</th>
-                    <th className={thCls}>Progres IPK</th>
+                    <th className={thCls}>Progres IPS</th>
                     <th className={thCls}>Status SP</th>
                     <th className={thCls}>MK Belum Lulus</th>
                     <th className={thCls}>Aksi</th>

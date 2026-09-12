@@ -58,7 +58,8 @@ class KonfigurasiController extends Controller
             // sebagai string KOSONG, bukan '0'. Kalau dibiarkan, pembaca yang
             // membandingkan dengan '0' akan salah menilai flag sebagai aktif.
             // Jadi key flag dinormalkan ke '1'/'0' di sini. Key lain ditulis
-            // apa adanya — periode_input_* punya jalur sendiri lewat observer.
+            // apa adanya. Catatan: periode input TIDAK lagi lewat sini — status
+            // aktifnya ada di kolom is_aktif tabel periode_akademiks.
             if (str_ends_with($key, '_aktif')) {
                 $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
                 $tipe  = 'boolean';
@@ -83,12 +84,32 @@ public function getPeriode(): JsonResponse
     {
         $taAktif = TahunAjaran::where('is_aktif', true)->first();
 
+        // Sumber kebenaran periode input = tabel periode_akademiks, bukan key
+        // konfigurasi global (key itu hanya bisa menyimpan satu periode).
+        // Beberapa tahun ajaran boleh aktif sekaligus.
+        $periodesAktif = \App\Helpers\PeriodeInputHelper::semuaAktif();
+
         return response()->json([
             'success' => true,
-            'aktif'   => Konfigurasi::get('periode_input_aktif', '0') === '1',
-            'buka'    => Konfigurasi::get('periode_input_buka'),
-            'tutup'   => Konfigurasi::get('periode_input_tutup'),
-            'tahun_ajaran' => Konfigurasi::get('periode_input_tahun_ajaran'),
+            // Field lama dipertahankan supaya pemanggil versi lama tetap jalan;
+            // isinya diambil dari periode aktif (bila ada lebih dari satu,
+            // pembaca sebaiknya memakai `periodes_aktif` + `tahun_ajaran`).
+            'aktif'   => $periodesAktif->isNotEmpty(),
+            'buka'    => $periodesAktif->first()?->tanggal_buka?->format('Y-m-d'),
+            'tutup'   => $periodesAktif->first()?->tanggal_tutup?->format('Y-m-d'),
+            'tahun_ajaran' => $periodesAktif->first()
+                ? "{$periodesAktif->first()->tahun_akademik} {$periodesAktif->first()->semester}"
+                : null,
+            // Daftar lengkap periode yang aktif — dipakai halaman mahasiswa untuk
+            // menilai periode mana yang berlaku bagi TA yang dipilih.
+            'periodes_aktif' => $periodesAktif->map(fn ($p) => [
+                'id'             => $p->id,
+                'tahun_ajaran'   => "{$p->tahun_akademik} {$p->semester}",
+                'tahun_akademik' => $p->tahun_akademik,
+                'semester'       => $p->semester,
+                'buka'           => $p->tanggal_buka?->format('Y-m-d'),
+                'tutup'          => $p->tanggal_tutup?->format('Y-m-d'),
+            ])->values(),
             'tahun_akademik' => Konfigurasi::get('tahun_akademik_aktif'),
             'semester'       => Konfigurasi::get('semester_aktif'),
             'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
@@ -226,14 +247,30 @@ public function getPeriode(): JsonResponse
                     'sks_minimum_lulus'      => $konfig['sks_minimum_lulus'] ?? '144',
                     'sks_minimum_lulus_aktif' => ($konfig['sks_minimum_lulus_aktif'] ?? '1') === '1',
                 ],
-                'periode_aktif' => [
-                    'tahun_akademik' => $konfig['tahun_akademik_aktif'] ?? '',
-                    'semester' => $konfig['semester_aktif'] ?? '',
-                    'tahun_ajaran' => $konfig['periode_input_tahun_ajaran'] ?? '',
-                    'buka' => $konfig['periode_input_buka'] ?? '',
-                    'tutup' => $konfig['periode_input_tutup'] ?? '',
-                    'is_aktif' => ($konfig['periode_input_aktif'] ?? '0') === '1',
-                ],
+                // Periode input: sumber kebenarannya tabel periode_akademiks
+                // (lihat `periode_history`), bukan key konfigurasi global. Field
+                // `periode_aktif` di sini dipertahankan untuk pembaca lama dan
+                // diisi dari periode aktif pertama bila ada.
+                'periode_aktif' => (function () {
+                    $aktif = \App\Helpers\PeriodeInputHelper::semuaAktif();
+                    $pertama = $aktif->first();
+                    return [
+                        'tahun_akademik' => $pertama?->tahun_akademik ?? '',
+                        'semester'       => $pertama?->semester ?? '',
+                        'tahun_ajaran'   => $pertama ? "{$pertama->tahun_akademik} {$pertama->semester}" : '',
+                        'buka'           => $pertama?->tanggal_buka?->format('Y-m-d') ?? '',
+                        'tutup'          => $pertama?->tanggal_tutup?->format('Y-m-d') ?? '',
+                        'is_aktif'       => $aktif->isNotEmpty(),
+                        // Bisa lebih dari satu tahun ajaran yang dibuka.
+                        'jumlah_aktif'   => $aktif->count(),
+                        'periodes_aktif' => $aktif->map(fn ($p) => [
+                            'id'           => $p->id,
+                            'tahun_ajaran' => "{$p->tahun_akademik} {$p->semester}",
+                            'buka'         => $p->tanggal_buka?->format('Y-m-d'),
+                            'tutup'        => $p->tanggal_tutup?->format('Y-m-d'),
+                        ])->values(),
+                    ];
+                })(),
                 'nilai_mutu' => NilaiMutu::orderByDesc('poin')->get(),
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
@@ -508,11 +545,25 @@ public function getPeriode(): JsonResponse
         PeriodeAkademik::findOrFail($id)->delete();
         return response()->json(['success' => true]);
     }
+    /**
+     * Aktifkan periode.
+     *
+     * Beberapa periode boleh aktif bersamaan (satu periode = satu tahun ajaran),
+     * jadi aktivasi TIDAK lagi menonaktifkan periode lain. Itu sebabnya tidak ada
+     * penonaktifan otomatis di sini maupun di PeriodeAkademikObserver.
+     */
     public function activatePeriode(int $id): JsonResponse
     {
         $p = PeriodeAkademik::findOrFail($id);
         $p->update(['is_aktif' => true]);
-        // Sync ke konfigurasi keys dilakukan otomatis oleh PeriodeAkademikObserver::saved
+        return response()->json(['success' => true, 'data' => $p->fresh()]);
+    }
+
+    /** Nonaktifkan satu periode tanpa menyentuh periode lain. */
+    public function deactivatePeriode(int $id): JsonResponse
+    {
+        $p = PeriodeAkademik::findOrFail($id);
+        $p->update(['is_aktif' => false]);
         return response()->json(['success' => true, 'data' => $p->fresh()]);
     }
 

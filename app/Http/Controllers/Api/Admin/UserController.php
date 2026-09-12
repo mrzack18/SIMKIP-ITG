@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Mahasiswa;
+use App\Models\Prodi;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,8 +30,52 @@ class UserController extends Controller
             $query->where('role', $request->input('role'));
         }
 
+        // ── Filter atribut MAHASISWA (angkatan & prodi) ──────────────────────────
+        // Angkatan/prodi itu atribut mahasiswa, jadi filter ini HANYA menyaring
+        // baris ber-role mahasiswa. Akun admin/prodi/warek tidak punya angkatan
+        // maupun prodi akademik — kalau ikut tersaring, mereka akan hilang dari
+        // daftar begitu filter dipakai, padahal tidak sedang dicari.
+        $filterMahasiswa = $request->filled('angkatan') && $request->input('angkatan') !== 'Semua';
+        $prodiInput = $request->filled('prodi') && $request->input('prodi') !== 'Semua'
+            ? $request->input('prodi')
+            : null;
+
+        $prodiId = null;
+        if ($prodiInput !== null) {
+            $prodi = Prodi::where('nama', $prodiInput)->orWhere('kode', $prodiInput)->first();
+            // Prodi tidak dikenal -> pakai id yang mustahil ada, supaya hasilnya
+            // kosong untuk mahasiswa, bukan diam-diam mengabaikan filter.
+            $prodiId = $prodi?->id ?? -1;
+        }
+
+        if ($filterMahasiswa || $prodiId !== null) {
+            $query->where(function ($q) use ($filterMahasiswa, $prodiId, $request) {
+                $q->where('role', '!=', 'mahasiswa');
+
+                $q->orWhere(function ($mq) use ($filterMahasiswa, $prodiId, $request) {
+                    $mq->where('role', 'mahasiswa');
+                    // Syarat tambahan hanya berlaku untuk baris mahasiswa, dan
+                    // digabung dengan AND supaya kombinasi filter tetap ketat.
+                    $mq->whereHas('mahasiswa', function ($m) use ($filterMahasiswa, $prodiId, $request) {
+                        if ($filterMahasiswa) {
+                            $m->where('angkatan', $request->input('angkatan'));
+                        }
+                        if ($prodiId !== null) {
+                            $m->where('prodi_id', $prodiId);
+                        }
+                    });
+                });
+            });
+        }
+
+        // ── Sorting ─────────────────────────────────────────────────────────────
+        // 'desc' = Nama Z–A. Selain itu (termasuk tidak dikirim) = Nama A–Z,
+        // yang memang urutan bawaan endpoint ini sejak awal.
+        $sort = $request->input('sort') === 'desc' ? 'desc' : 'asc';
+        $query->orderBy('name', $sort);
+
         $perPage = (int) $request->input('per_page', 10);
-        $users = $query->with('prodi')->orderBy('name')->paginate($perPage);
+        $users = $query->with(['prodi', 'mahasiswa.prodi'])->paginate($perPage);
 
         $data = $users->map(fn ($u) => [
             'id'                 => $u->id,
@@ -38,7 +84,12 @@ class UserController extends Controller
             'email'             => $u->email,
             'role'              => $u->role,
             'prodi_id'          => $u->prodi_id,
-            'prodi_nama'        => $u->prodi?->nama,
+            // Mahasiswa belum tentu punya user->prodi_id; prodi akademiknya ada
+            // di relasi mahasiswa. Pakai itu sebagai cadangan agar kolom Prodi
+            // tidak kosong untuk akun mahasiswa.
+            'prodi_nama'        => $u->prodi?->nama ?? $u->mahasiswa?->prodi?->nama,
+            'angkatan'          => $u->mahasiswa?->angkatan,
+            'nim'               => $u->mahasiswa?->nim,
             'is_active'         => $u->is_active,
             'is_password_changed'=> $u->is_password_changed,
             'created_at'         => $u->created_at->toIso8601String(),
@@ -50,6 +101,15 @@ class UserController extends Controller
             'total'   => $users->total(),
             'current_page' => $users->currentPage(),
             'last_page'   => $users->lastPage(),
+            // Opsi filter angkatan diambil dari data yang ada, supaya dropdown
+            // tidak menawarkan tahun yang tidak berisi mahasiswa.
+            'filter_options' => [
+                'angkatans' => Mahasiswa::query()
+                    ->whereNotNull('angkatan')
+                    ->distinct()
+                    ->orderByDesc('angkatan')
+                    ->pluck('angkatan'),
+            ],
         ]);
     }
 

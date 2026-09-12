@@ -56,6 +56,10 @@ class IPKCalculatorService
     public static function prepareMataKuliah(array $mks): array
     {
         return array_map(function ($mk) {
+            // Alasan wajib diisi mahasiswa saat mengubah Nilai Huruf; simpan null
+            // bila kosong supaya kolom nullable tidak terisi string kosong.
+            $alasan = isset($mk['alasan_perubahan']) ? trim((string) $mk['alasan_perubahan']) : '';
+
             return [
                 'kode'        => $mk['kode'],
                 'nama'        => $mk['nama'],
@@ -63,6 +67,7 @@ class IPKCalculatorService
                 'nilai_huruf' => strtoupper($mk['nilai_huruf']),
                 'nilai_mutu'  => self::nilaiMutu($mk['nilai_huruf']),
                 'lulus'       => self::isLulus($mk['nilai_huruf']),
+                'alasan_perubahan' => $alasan !== '' ? $alasan : null,
             ];
         }, $mks);
     }

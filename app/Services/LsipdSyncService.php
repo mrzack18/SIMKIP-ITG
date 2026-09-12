@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\LsipdException;
+use App\Helpers\TahunAjaranHelper;
 use App\Models\Mahasiswa;
 use App\Models\MataKuliah;
 use App\Models\IpkSemestr;
@@ -336,6 +337,48 @@ class LsipdSyncService
         return $kandidat?->id;
     }
 
+    /**
+     * Tahun ajaran untuk satu semester mahasiswa, diturunkan dari angkatan.
+     *
+     * LSIPD tidak mengirim tahun ajaran: field `tahun_ajaran` pada respons
+     * /kipk/transkrip berisi "Semester 1", "Semester 2", dst, dan tidak ada field
+     * lain yang memuat TA (sudah diperiksa: ringkasan, transkrip, dan daftar
+     * mahasiswa hanya memuat ipk/sks, kode+nama mk, dan biodata + angkatan).
+     * Jadi satu-satunya sumber adalah `angkatan`.
+     *
+     * Bila angkatan tidak diketahui, kembalikan string kosong — lebih baik kosong
+     * daripada menyimpan "Semester 3" yang menyesatkan pembaca kolom ini.
+     */
+    private static function tahunAjaranUntuk(Mahasiswa $mahasiswa, int $semester): string
+    {
+        return TahunAjaranHelper::tahunAjaranDariSemester(
+            (int) $mahasiswa->angkatan,
+            $semester,
+        );
+    }
+
+    /**
+     * Status yang TIDAK boleh ditimpa oleh sync.
+     *
+     * Baris yang sudah punya jejak keputusan manusia — divalidasi/ditolak pengelola,
+     * atau catatan admin — adalah hasil kerja pengelola dan tidak boleh direset sync.
+     * 'Menunggu'/'Diajukan' juga dipertahankan supaya pengajuan mahasiswa yang sedang
+     * mengantre tidak hilang diam-diam dari antrian validasi.
+     *
+     * Sisanya ('Disetujui' sisa impor lama, 'Draft') tetap di-set ke 'Draft' agar
+     * baris lama yang dulu salah berlabel ikut terkoreksi.
+     */
+    private static function statusDikunciManusia(IpkSemestr $ipk): bool
+    {
+        if ($ipk->validated_by !== null || $ipk->validated_at !== null) {
+            return true;
+        }
+        if (! empty($ipk->catatan_admin)) {
+            return true;
+        }
+        return in_array($ipk->status, ['Menunggu', 'Diajukan'], true);
+    }
+
     private static function upsertProgresAkademik(Mahasiswa $mahasiswa, array $data): int
     {
         $progres = $data['progres_akademik'] ?? [];
@@ -347,18 +390,39 @@ class LsipdSyncService
                 continue;
             }
 
-            IpkSemestr::updateOrCreate(
-                [
+            $existing = IpkSemestr::where('mahasiswa_id', $mahasiswa->id)
+                ->where('semester', $semester)
+                ->first();
+
+            $atribut = [
+                // TIDAK memakai $row['tahun_ajaran'] dari LSIPD: field itu berisi
+                // "Semester 1", "Semester 2", dst — bukan tahun ajaran. Upstream
+                // tidak mengirim TA sama sekali, jadi diturunkan dari angkatan.
+                'tahun_ajaran' => self::tahunAjaranUntuk($mahasiswa, $semester),
+                'ips'          => isset($row['ips']) ? (float) $row['ips'] : 0,
+                'ipk'          => isset($row['ipk']) ? (float) $row['ipk'] : 0,
+            ];
+
+            // Status hanya di-set saat baris baru, atau saat baris lama tidak punya
+            // jejak keputusan manusia. Lihat statusDikunciManusia().
+            if (! $existing || ! self::statusDikunciManusia($existing)) {
+                // 'Draft' — BUKAN 'Disetujui'. Data ini diimpor dari akademik, belum
+                // pernah divalidasi Pengelola KIP-K, dan mahasiswa tidak pernah
+                // mengajukannya. Kalau ditulis 'Disetujui', antrian validasi KHS
+                // (DokumenQueue) ikut terisi baris yang tidak diajukan siapa pun.
+                // 'Draft' juga membuat nilainya tetap bisa diperiksa/diperbaiki
+                // mahasiswa lewat halaman Input Nilai Semester.
+                $atribut['status'] = 'Draft';
+            }
+
+            if ($existing) {
+                $existing->update($atribut);
+            } else {
+                IpkSemestr::create($atribut + [
                     'mahasiswa_id' => $mahasiswa->id,
                     'semester'     => $semester,
-                ],
-                [
-                    'tahun_ajaran' => (string) ($row['tahun_ajaran'] ?? ''),
-                    'ips'          => isset($row['ips']) ? (float) $row['ips'] : 0,
-                    'ipk'          => isset($row['ipk']) ? (float) $row['ipk'] : 0,
-                    'status'       => 'Disetujui',
-                ],
-            );
+                ]);
+            }
             $count++;
         }
 
@@ -378,18 +442,31 @@ class LsipdSyncService
                 continue;
             }
 
-            $ipkSemester = IpkSemestr::firstOrCreate(
-                [
+            $ipkSemester = IpkSemestr::where('mahasiswa_id', $mahasiswa->id)
+                ->where('semester', $semester)
+                ->first();
+
+            if ($ipkSemester) {
+                // Jangan timpa status yang sudah ditentukan manusia (lihat
+                // statusDikunciManusia()). Dulu firstOrCreate() dipakai di sini,
+                // sehingga baris yang sudah ada tidak pernah dikoreksi statusnya —
+                // sisa impor lama tetap berlabel 'Disetujui' selamanya.
+                if (! self::statusDikunciManusia($ipkSemester)) {
+                    $ipkSemester->update(['status' => 'Draft']);
+                }
+            } else {
+                $ipkSemester = IpkSemestr::create([
                     'mahasiswa_id' => $mahasiswa->id,
                     'semester'     => $semester,
-                ],
-                [
-                    'tahun_ajaran' => '',
+                    // Sama seperti upsertProgresAkademik(): transkrip juga tidak
+                    // membawa TA, jadi diturunkan dari angkatan. Dulu diisi ''.
+                    'tahun_ajaran' => self::tahunAjaranUntuk($mahasiswa, $semester),
                     'ips'          => 0,
                     'ipk'          => 0,
-                    'status'       => 'Disetujui',
-                ],
-            );
+                    // Bukan 'Disetujui' — lihat penjelasan di upsertProgresAkademik().
+                    'status'       => 'Draft',
+                ]);
+            }
 
             MataKuliah::where('ipk_semester_id', $ipkSemester->id)->delete();
 

@@ -7,6 +7,7 @@ import {
   updatePeriode,
   deletePeriode,
   activatePeriode,
+  deactivatePeriode,
   getTahunAjaranList,
   createTahunAjaran,
   updateTahunAjaran,
@@ -403,26 +404,24 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
   };
 
   const handleActivatePeriode = async (item: PeriodeItem) => {
-    if (!window.confirm(`Aktifkan periode ${item.tahun_akademik} ${item.semester}?\n\nMahasiswa akan langsung bisa input nilai KHS untuk periode ini. Periode lain akan otomatis dinonaktifkan.`)) return;
+    if (!window.confirm(`Aktifkan periode ${item.tahun_akademik} ${item.semester}?\n\nMahasiswa akan bisa input nilai KHS untuk tahun ajaran ini. Periode tahun ajaran lain yang sudah aktif TETAP aktif.`)) return;
     await activatePeriode(item.id);
     showToast(`Periode ${item.tahun_akademik} ${item.semester} diaktifkan`);
     await fetchPeriodeData();
     await fetchData();
   };
 
-  const handleDeactivatePeriode = async () => {
-    const active = periodeList.find(p => p.is_aktif);
-    if (!active) return;
-    if (!window.confirm(`Nonaktifkan periode ${active.tahun_akademik} ${active.semester}?\n\nMahasiswa tidak akan bisa input nilai KHS sampai periode baru diaktifkan.`)) return;
-    // Update dengan is_aktif=false
-    await updatePeriode(active.id, {
-      tahun_akademik: active.tahun_akademik,
-      semester: active.semester as "Ganjil" | "Genap",
-      tanggal_buka: active.tanggal_buka?.substring(0, 10) ?? "",
-      tanggal_tutup: active.tanggal_tutup?.substring(0, 10) ?? "",
-      is_aktif: false,
-    });
-    showToast("Periode dinonaktifkan");
+  /**
+   * Nonaktifkan satu periode saja.
+   *
+   * Dulu fungsi ini mencari "periode aktif" tunggal lalu meng-update-nya. Sekarang
+   * periode yang dinonaktifkan ditentukan dari baris yang diklik, karena bisa ada
+   * beberapa periode aktif sekaligus.
+   */
+  const handleDeactivatePeriode = async (item: PeriodeItem) => {
+    if (!window.confirm(`Nonaktifkan periode ${item.tahun_akademik} ${item.semester}?\n\nMahasiswa tidak akan bisa input nilai KHS untuk tahun ajaran ini. Periode tahun ajaran lain tidak terpengaruh.`)) return;
+    await deactivatePeriode(item.id);
+    showToast(`Periode ${item.tahun_akademik} ${item.semester} dinonaktifkan`);
     await fetchPeriodeData();
     await fetchData();
   };
@@ -796,12 +795,9 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
           </div>
         <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
           <PeriodeAktifCard
-            active={periodeList.find(p => p.is_aktif) || null}
+            periodesAktif={periodeList.filter(p => p.is_aktif)}
             totalMahasiswaAktif={totalMahasiswaAktif}
-            onEdit={() => {
-              const active = periodeList.find(p => p.is_aktif);
-              if (active) handleEditPeriode(active);
-            }}
+            onEdit={handleEditPeriode}
             onDeactivate={handleDeactivatePeriode}
             onActivateAnother={handleAddPeriode}
           />
@@ -809,6 +805,7 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
           <TimelinePeriode
             items={periodeList}
             onActivate={handleActivatePeriode}
+            onDeactivate={handleDeactivatePeriode}
             onEdit={handleEditPeriode}
             onDelete={handleDeletePeriode}
           />

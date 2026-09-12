@@ -181,9 +181,10 @@ export default function PeriodeFormModal({
               className="mt-0.5"
             />
             <div>
-              <div className="text-xs font-600 text-amber-800">Aktifkan periode ini sekarang</div>
+              <div className="text-xs font-600 text-amber-800">Aktifkan periode ini</div>
               <div className="text-[11px] text-amber-700 mt-0.5">
-                Periode lain yang aktif akan otomatis dinonaktifkan. Mahasiswa akan langsung bisa input nilai KHS.
+                Mahasiswa akan bisa input nilai KHS untuk tahun ajaran ini. Periode tahun ajaran
+                lain yang sudah aktif tetap aktif — beberapa periode boleh dibuka bersamaan.
               </div>
             </div>
           </label>

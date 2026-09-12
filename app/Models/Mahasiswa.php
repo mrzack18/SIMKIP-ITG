@@ -107,14 +107,14 @@ class Mahasiswa extends Model
         $query->addSelect([
             'ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
-                ->where('status', 'Disetujui')
+                ->hitungAkademik()
                 ->when($tahunAjaran, $applyIpkFilter)
                 ->orderByDesc('semester')
                 ->limit(1),
 
             'prev_ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
-                ->where('status', 'Disetujui')
+                ->hitungAkademik()
                 ->when($tahunAjaran, $applyIpkFilter)
                 ->orderByDesc('semester')
                 ->skip(1)
@@ -135,7 +135,7 @@ class Mahasiswa extends Model
             'mk_belum_lulus' => \App\Models\MataKuliah::selectRaw('COUNT(*)')
                 ->whereIn('ipk_semester_id', \App\Models\IpkSemestr::select('id')
                     ->whereColumn('mahasiswa_id', 'mahasiswas.id')
-                    ->where('status', 'Disetujui')
+                    ->hitungAkademik()
                     ->when($tahunAjaran, $applyIpkFilter))
                 ->where('lulus', false),
         ])
@@ -170,7 +170,7 @@ class Mahasiswa extends Model
         if (isset($this->attributes['ipk_calc'])) {
             return (float) $this->attributes['ipk_calc'];
         }
-        $last = $this->ipkSemestrs()->where('status', 'Disetujui')->latest('semester')->first();
+        $last = $this->ipkSemestrs()->hitungAkademik()->latest('semester')->first();
         return $last ? (float) $last->ipk : 0.0;
     }
 

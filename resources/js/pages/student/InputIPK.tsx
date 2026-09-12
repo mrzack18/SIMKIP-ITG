@@ -43,6 +43,12 @@ interface MataKuliah {
   nama: string
   sks: number
   nilai: NilaiHuruf
+  /** Ada di database (bukan baris baru yang belum disimpan) */
+  isPersisted?: boolean
+  /** Nilai huruf saat pertama dimuat dari database — patokan deteksi perubahan */
+  originalNilai?: NilaiHuruf
+  /** Alasan wajib diisi mahasiswa bila nilai huruf diubah */
+  alasanPerubahan?: string
 }
 
 interface SemesterRecord {
@@ -68,21 +74,177 @@ interface CarryOver {
 
 interface PeriodeConfig {
   aktif: boolean
-  buka: string
-  tutup: string
+  buka: string | null
+  tutup: string | null
   tahun_akademik: string
   semester: string
-  tahun_ajaran: string
+  tahun_ajaran: string | null
+  /** Semua periode yang sedang dibuka — beberapa tahun ajaran boleh aktif bersamaan. */
+  periodes_aktif?: PeriodeAktif[]
   nilai_mutu?: Record<string, number>
 }
 
+/** Satu periode input yang sedang dibuka (satu tahun ajaran). */
+interface PeriodeAktif {
+  id: number
+  tahun_ajaran: string
+  tahun_akademik: string
+  semester: string
+  buka: string | null
+  tutup: string | null
+}
+
 // ─── Form status machine ──────────────────────────────────────────────────────
+// Catatan: data akademik hasil sync LSIPD berstatus 'Draft', jadi masuk ke state
+// "draft" dan bisa diperiksa/diperbaiki mahasiswa seperti draft biasa.
 type FormStatus = "idle" | "draft" | "diajukan" | "ditolak" | "disetujui"
 
 // ─── Grade helpers ─────────────────────────────────────────────────────────────
 function getLulus(nilai: NilaiHuruf): boolean | null {
   if (!nilai) return null
   return nilai !== "D" && nilai !== "E"
+}
+
+/**
+ * Nilai huruf berubah dari nilai asli di database?
+ * Baris baru (belum tersimpan) tidak dianggap "berubah" karena tidak ada
+ * nilai pembanding — jadi field alasan tidak muncul untuk MK yang baru diinput.
+ */
+function isNilaiChanged(mk: MataKuliah): boolean {
+  if (!mk.isPersisted) return false
+  return mk.nilai !== (mk.originalNilai ?? "")
+}
+
+/** Alasan wajib diisi tapi masih kosong? */
+function isAlasanMissing(mk: MataKuliah): boolean {
+  return isNilaiChanged(mk) && !(mk.alasanPerubahan ?? "").trim()
+}
+
+/** Ubah baris dari API menjadi bentuk form (menyimpan nilai asli sebagai patokan) */
+function syncMkRow(mk: any): MataKuliah {
+  const nilai = (mk.nilaiHuruf || mk.nilai_huruf || "") as NilaiHuruf
+  return {
+    id: mk.id || Math.random(),
+    kode: mk.kode,
+    nama: mk.nama,
+    sks: mk.sks,
+    nilai,
+    isPersisted: true,
+    originalNilai: nilai,
+    alasanPerubahan: mk.alasanPerubahan ?? mk.alasan_perubahan ?? "",
+  }
+}
+
+// ─── Row mata kuliah (dipakai oleh tabel Draft dan tabel Ditolak) ──────────────
+/**
+ * Satu baris MK + (bila perlu) baris tambahan berisi field alasan.
+ *
+ * Kode MK, Nama Mata Kuliah, dan SKS tidak dapat diubah untuk baris yang
+ * datanya sudah tersimpan di database — hanya bisa diketik pada baris baru
+ * yang belum disimpan. Nilai Huruf tetap bisa diubah; bila diubah dari nilai
+ * asli, field "Alasan Perubahan Nilai" (wajib) muncul di bawah baris tersebut.
+ */
+function MkRow({
+  mk,
+  idx,
+  isLocked,
+  inputClass,
+  selectClass,
+  getNilaiMutu,
+  updateRow,
+  deleteRow,
+}: {
+  mk: MataKuliah
+  idx: number
+  isLocked: boolean
+  inputClass: string
+  selectClass: string
+  getNilaiMutu: (nilai: string) => number | null
+  updateRow: (id: number, field: keyof MataKuliah, value: any) => void
+  deleteRow: (id: number) => void
+}) {
+  const mutu = getNilaiMutu(mk.nilai)
+  const lulus = getLulus(mk.nilai)
+  const nilaiChanged = isNilaiChanged(mk)
+  const alasanMissing = isAlasanMissing(mk)
+  // Kode/Nama/SKS hanya bisa diketik pada baris baru yang belum tersimpan
+  const metaLocked = isLocked || !!mk.isPersisted
+
+  return (
+    <>
+      <tr className="hover:bg-gray-50/50">
+        <td className="px-4 py-2.5 text-gray-400 text-xs">{idx + 1}</td>
+        <td className="px-3 py-2">
+          <input type="text" value={mk.kode} onChange={(e) => updateRow(mk.id, "kode", e.target.value)}
+            disabled={metaLocked} title={metaLocked ? "Kode MK tidak dapat diubah" : undefined}
+            placeholder="IF401" className={inputClass} />
+        </td>
+        <td className="px-3 py-2">
+          <input type="text" value={mk.nama} onChange={(e) => updateRow(mk.id, "nama", e.target.value)}
+            disabled={metaLocked} title={metaLocked ? "Nama Mata Kuliah tidak dapat diubah" : undefined}
+            placeholder="Nama mata kuliah" className={inputClass} />
+        </td>
+        <td className="px-3 py-2">
+          <input type="number" min={1} max={6} value={mk.sks}
+            onChange={(e) => updateRow(mk.id, "sks", parseInt(e.target.value) || 1)}
+            disabled={metaLocked} title={metaLocked ? "SKS tidak dapat diubah" : undefined}
+            className={inputClass} />
+        </td>
+        <td className="px-3 py-2">
+          <select value={mk.nilai} onChange={(e) => updateRow(mk.id, "nilai", e.target.value as NilaiHuruf)}
+            disabled={isLocked} className={selectClass}>
+            <option value="">-- Pilih --</option>
+            {["A", "AB", "B", "BC", "C", "D", "E"].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </td>
+        <td className="px-3 py-2">
+          <div className="border border-gray-100 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 text-gray-600 text-center">
+            {mutu !== null ? mutu.toFixed(1) : "—"}
+          </div>
+        </td>
+        <td className="px-3 py-2">
+          {lulus === null ? <span className="text-gray-300 text-xs">—</span>
+           : lulus
+             ? <span className="inline-flex items-center text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-2.5 py-0.5">Lulus</span>
+             : <span className="inline-flex items-center text-xs font-semibold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5">Belum Lulus</span>}
+        </td>
+        <td className="px-3 py-2">
+          <button onClick={() => deleteRow(mk.id)} disabled={isLocked}
+            className="text-gray-300 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed">
+            <Trash2 size={15} />
+          </button>
+        </td>
+      </tr>
+
+      {nilaiChanged && (
+        <tr className="bg-amber-50/40">
+          <td />
+          <td colSpan={7} className="px-3 pb-3 pt-0">
+            <label className="block text-xs font-semibold text-amber-800 mb-1">
+              Alasan Perubahan Nilai <span className="text-red-600">*</span>
+              <span className="font-normal text-amber-700"> — wajib diisi karena Nilai Huruf diubah dari {mk.originalNilai || "—"} menjadi {mk.nilai}</span>
+            </label>
+            <textarea
+              value={mk.alasanPerubahan ?? ""}
+              onChange={(e) => updateRow(mk.id, "alasanPerubahan", e.target.value)}
+              disabled={isLocked}
+              rows={2}
+              maxLength={1000}
+              placeholder="Contoh: nilai diperbaiki setelah perbaikan nilai dari dosen pengampu / hasil banding nilai."
+              className={`w-full rounded-lg px-2.5 py-1.5 text-sm resize-y focus:outline-none focus:ring-2 ${
+                alasanMissing
+                  ? "border border-red-300 bg-red-50/40 focus:ring-red-300/40 focus:border-red-400"
+                  : "border border-gray-200 focus:ring-[#263F93]/30 focus:border-[#263F93]"
+              } ${isLocked ? "bg-gray-50 text-gray-400 cursor-not-allowed" : "bg-white"}`}
+            />
+            {alasanMissing
+              ? <p className="text-[11px] text-red-600 mt-1">Alasan wajib diisi sebelum menyimpan atau mengajukan nilai.</p>
+              : <p className="text-[11px] text-gray-400 mt-1">Alasan ini akan terlihat oleh Pengelola KIP-K saat validasi.</p>}
+          </td>
+        </tr>
+      )}
+    </>
+  )
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -130,43 +292,50 @@ export default function InputIPK() {
     ? calculateSemester(mahasiswaProfile.angkatan, taFilter)
     : targetSemester
 
-  // Periode helpers
+  // ── Periode helpers ─────────────────────────────────────────────────────────
+  // Periode dicari PER TAHUN AJARAN yang dipilih mahasiswa, bukan dari satu
+  // periode global. Dengan begitu beberapa tahun ajaran bisa dibuka bersamaan,
+  // dan mengisi TA yang belum dibuka tetap terkunci.
+  const normalisasiTA = (ta: string) =>
+    ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
+
+  const periodesAktif: PeriodeAktif[] = periode?.periodes_aktif ?? []
+
+  /** Periode aktif yang berlaku untuk TA yang sedang dipilih mahasiswa. */
+  const periodeTerpilih: PeriodeAktif | null = (() => {
+    const ta = normalisasiTA(taFilter)
+    return periodesAktif.find((p) => normalisasiTA(p.tahun_ajaran) === ta) ?? null
+  })()
+
+  /** Ada periode aktif untuk TA ini DAN tanggalnya sedang berjalan. */
   const isPeriodeAktif = () => {
-    if (!periode?.aktif) return false
+    if (!periodeTerpilih) return false
     const now = new Date()
-    if (now < new Date(periode.buka)) return false
-    if (now > new Date(periode.tutup)) return false
-    // TA filter must match configured TA
-    if (periode.tahun_ajaran) {
-      const normalize = (ta: string) => ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
-      if (normalize(taFilter) !== normalize(periode.tahun_ajaran)) return false
-    }
+    if (periodeTerpilih.buka && now < new Date(periodeTerpilih.buka)) return false
+    if (periodeTerpilih.tutup && now > new Date(periodeTerpilih.tutup)) return false
     return true
   }
+
   const isLocked = () => {
     if (isSubmitting) return true
-    if (isTANotMatched()) return true
     // Diajukan / Disetujui selalu locked
     if (["diajukan", "disetujui"].includes(formStatus)) return true
-    // Ditolak — locked hanya jika periode TIDAK aktif
-    if (formStatus === "ditolak" && !isPeriodeAktif()) return true
-    // Idle (belum ada data) — locked jika periode tidak aktif
-    if (formStatus === "idle" && !isPeriodeAktif()) return true
+    // Ditolak / idle — locked jika periode TA ini tidak sedang berjalan
+    if (["ditolak", "idle"].includes(formStatus) && !isPeriodeAktif()) return true
     return false
   }
+
   const isPeriodeClosed = () => {
-    if (!periode?.aktif) return true
-    return new Date() > new Date(periode.tutup)
+    const tutup = periodeTerpilih?.tutup ?? periode?.tutup
+    if (!tutup) return false
+    return new Date() > new Date(tutup)
   }
   const isPeriodeNotStarted = () => {
-    if (!periode?.aktif) return true
-    return new Date() < new Date(periode.buka)
+    const buka = periodeTerpilih?.buka ?? periode?.buka
+    if (!buka) return false
+    return new Date() < new Date(buka)
   }
-  const isTANotMatched = () => {
-    if (!periode?.tahun_ajaran) return false
-    const normalize = (ta: string) => ta.replace(/^Tahun\s+/i, "").replace(/-1$/, " Ganjil").replace(/-2$/, " Genap")
-    return normalize(taFilter) !== normalize(periode.tahun_ajaran)
-  }
+  const isTANotMatched = () => !periodeTerpilih
 
   const fetchData = async () => {
     try {
@@ -203,13 +372,7 @@ export default function InputIPK() {
             setFormStatus("draft")
             setCatatanRevisi(null)
             if (recordForSemester.mataKuliah?.length > 0) {
-              setMkList(recordForSemester.mataKuliah.map((mk: any) => ({
-                id: mk.id || Math.random(),
-                kode: mk.kode,
-                nama: mk.nama,
-                sks: mk.sks,
-                nilai: (mk.nilaiHuruf || mk.nilai_huruf || "") as NilaiHuruf,
-              })))
+              setMkList(recordForSemester.mataKuliah.map(syncMkRow))
             } else {
               setMkList([])
             }
@@ -224,13 +387,7 @@ export default function InputIPK() {
             setFormStatus("ditolak")
             setCatatanRevisi(recordForSemester.catatan_admin)
             if (recordForSemester.mataKuliah?.length > 0) {
-              setMkList(recordForSemester.mataKuliah.map((mk: any) => ({
-                id: mk.id || Math.random(),
-                kode: mk.kode,
-                nama: mk.nama,
-                sks: mk.sks,
-                nilai: (mk.nilaiHuruf || mk.nilai_huruf || "") as NilaiHuruf,
-              })))
+              setMkList(recordForSemester.mataKuliah.map(syncMkRow))
             } else {
               setMkList([])
             }
@@ -287,6 +444,19 @@ export default function InputIPK() {
     if (!isLocked()) setMkList((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
   }
 
+  // ── Validasi alasan perubahan nilai ─────────────────────────────────────────
+  // Setiap baris yang Nilai Huruf-nya diubah dari nilai asli wajib diberi alasan.
+  const validateAlasan = (): boolean => {
+    const missing = mkList.filter(isAlasanMissing)
+    if (missing.length === 0) return true
+    const daftar = missing.map((m) => m.kode || m.nama || "tanpa kode").join(", ")
+    alert(
+      `Alasan perubahan nilai wajib diisi untuk: ${daftar}.\n\n` +
+      `Silakan isi kolom "Alasan Perubahan Nilai" di bawah baris mata kuliah yang nilainya diubah.`
+    )
+    return false
+  }
+
   // Build FormData — uses displayedSemester (computed) NOT targetSemester (state)
   const buildFormData = (): FormData => {
     const fd = new FormData()
@@ -299,6 +469,10 @@ export default function InputIPK() {
       fd.append(`mata_kuliah[${idx}][nama]`, mk.nama)
       fd.append(`mata_kuliah[${idx}][sks]`, String(mk.sks))
       fd.append(`mata_kuliah[${idx}][nilai_huruf]`, mk.nilai)
+      // Alasan hanya dikirim bila nilainya benar-benar diubah
+      if (isNilaiChanged(mk)) {
+        fd.append(`mata_kuliah[${idx}][alasan_perubahan]`, (mk.alasanPerubahan ?? "").trim())
+      }
     })
     return fd
   }
@@ -306,6 +480,7 @@ export default function InputIPK() {
   // Save as Draft
   const handleSaveDraft = async () => {
     if (mkList.length === 0 || totalSKS === 0) return alert("Silakan tambahkan mata kuliah terlebih dahulu.")
+    if (!validateAlasan()) return
     if (!isPeriodeAktif()) return alert("Periode input nilai tidak aktif.")
     setIsSubmitting(true)
     try {
@@ -324,6 +499,7 @@ export default function InputIPK() {
   // Submit for Validation
   const handleAjukan = async () => {
     if (mkList.length === 0 || totalSKS === 0) return alert("Silakan tambahkan mata kuliah terlebih dahulu.")
+    if (!validateAlasan()) return
     if (!isPeriodeAktif()) return alert("Periode input nilai tidak aktif.")
     setIsSubmitting(true)
     try {
@@ -409,28 +585,35 @@ export default function InputIPK() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 sm:px-4 py-3 flex items-start gap-3 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 mt-1" />
           <span className="text-xs sm:text-sm text-amber-700 font-medium break-words min-w-0">
-            Periode input untuk <strong>{normalizeTA(taFilter)}</strong> belum dibuka. Pengelola KIP-K membuka periode untuk <strong>{normalizeTA(periode?.tahun_ajaran || '')}</strong>. Silakan pilih TA yang sesuai.
+            Periode input untuk <strong>{normalizeTA(taFilter)}</strong> belum dibuka.
+            {periodesAktif.length > 0 ? (
+              <> Pengelola KIP-K sedang membuka periode untuk{" "}
+                <strong>{periodesAktif.map((p) => normalizeTA(p.tahun_ajaran)).join(", ")}</strong>.
+                Silakan pilih salah satu TA tersebut.</>
+            ) : (
+              <> Saat ini belum ada periode input yang dibuka.</>
+            )}
           </span>
         </div>
       ) : isPeriodeClosed() ? (
         <div className="bg-gray-100 border border-gray-200 rounded-xl px-3.5 sm:px-4 py-3 flex items-start gap-3 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-gray-400 shrink-0 mt-1" />
           <span className="text-xs sm:text-sm text-gray-600 font-medium break-words min-w-0">
-            Periode input nilai telah ditutup pada {new Date(periode?.tutup || "").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}. Seluruh input terkunci.
+            Periode input nilai untuk <strong>{normalizeTA(taFilter)}</strong> telah ditutup pada {new Date(periodeTerpilih?.tutup || "").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}. Seluruh input terkunci.
           </span>
         </div>
       ) : isPeriodeNotStarted() ? (
         <div className="bg-gray-100 border border-gray-200 rounded-xl px-3.5 sm:px-4 py-3 flex items-start gap-3 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-gray-400 shrink-0 mt-1" />
           <span className="text-xs sm:text-sm text-gray-600 font-medium break-words min-w-0">
-            Periode input nilai belum dibuka. Akan dibuka pada {new Date(periode?.buka || "").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}.
+            Periode input nilai untuk <strong>{normalizeTA(taFilter)}</strong> belum dibuka. Akan dibuka pada {new Date(periodeTerpilih?.buka || "").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}.
           </span>
         </div>
       ) : (
         <div className="bg-[#EDF0F8] border border-[#263F93] rounded-xl px-3.5 sm:px-4 py-3 flex items-start gap-3 min-w-0">
           <div className="w-2.5 h-2.5 rounded-full bg-[#263F93] shrink-0 mt-1" />
           <span className="text-xs sm:text-sm font-semibold text-[#263F93] break-words min-w-0">
-            Periode input aktif untuk <strong>{normalizeTA(taFilter)}</strong> hingga {new Date(periode?.tutup || "").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            Periode input aktif untuk <strong>{normalizeTA(taFilter)}</strong> hingga {new Date(periodeTerpilih?.tutup || "").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
           </span>
         </div>
       )}
@@ -496,7 +679,9 @@ export default function InputIPK() {
               Periode input untuk {normalizeTA(taFilter)} belum dibuka.
             </p>
             <p className="text-gray-400 text-xs mt-1 break-words">
-              Pengelola KIP-K membuka periode untuk {normalizeTA(periode?.tahun_ajaran || '')}. Silakan ubah filter tahun ajaran.
+              {periodesAktif.length > 0
+                ? <>Pengelola KIP-K sedang membuka periode untuk {periodesAktif.map((p) => normalizeTA(p.tahun_ajaran)).join(", ")}. Silakan ubah filter tahun ajaran.</>
+                : <>Saat ini belum ada periode input yang dibuka.</>}
             </p>
           </div>
         )}
@@ -589,52 +774,11 @@ export default function InputIPK() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {mkList.map((mk, idx) => {
-                    const mutu = getNilaiMutu(mk.nilai)
-                    const lulus = getLulus(mk.nilai)
-                    return (
-                      <tr key={mk.id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-2.5 text-gray-400 text-xs">{idx + 1}</td>
-                        <td className="px-3 py-2">
-                          <input type="text" value={mk.kode} onChange={(e) => updateRow(mk.id, "kode", e.target.value)}
-                            disabled={isLocked()} placeholder="IF401" className={inputClass} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <input type="text" value={mk.nama} onChange={(e) => updateRow(mk.id, "nama", e.target.value)}
-                            disabled={isLocked()} placeholder="Nama mata kuliah" className={inputClass} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <input type="number" min={1} max={6} value={mk.sks}
-                            onChange={(e) => updateRow(mk.id, "sks", parseInt(e.target.value) || 1)}
-                            disabled={isLocked()} className={inputClass} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <select value={mk.nilai} onChange={(e) => updateRow(mk.id, "nilai", e.target.value as NilaiHuruf)}
-                            disabled={isLocked()} className={selectClass}>
-                            <option value="">-- Pilih --</option>
-                            {["A", "AB", "B", "BC", "C", "D", "E"].map((n) => <option key={n} value={n}>{n}</option>)}
-                          </select>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="border border-gray-100 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 text-gray-600 text-center">
-                            {mutu !== null ? mutu.toFixed(1) : "—"}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          {lulus === null ? <span className="text-gray-300 text-xs">—</span>
-                           : lulus
-                             ? <span className="inline-flex items-center text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-2.5 py-0.5">Lulus</span>
-                             : <span className="inline-flex items-center text-xs font-semibold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5">Belum Lulus</span>}
-                        </td>
-                        <td className="px-3 py-2">
-                          <button onClick={() => deleteRow(mk.id)} disabled={isLocked()}
-                            className="text-gray-300 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed">
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {mkList.map((mk, idx) => (
+                    <MkRow key={mk.id} mk={mk} idx={idx} isLocked={isLocked()}
+                      inputClass={inputClass} selectClass={selectClass}
+                      getNilaiMutu={getNilaiMutu} updateRow={updateRow} deleteRow={deleteRow} />
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -741,52 +885,11 @@ export default function InputIPK() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {mkList.map((mk, idx) => {
-                    const mutu = getNilaiMutu(mk.nilai)
-                    const lulus = getLulus(mk.nilai)
-                    return (
-                      <tr key={mk.id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-2.5 text-gray-400 text-xs">{idx + 1}</td>
-                        <td className="px-3 py-2">
-                          <input type="text" value={mk.kode} onChange={(e) => updateRow(mk.id, "kode", e.target.value)}
-                            disabled={isLocked()} placeholder="IF401" className={inputClass} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <input type="text" value={mk.nama} onChange={(e) => updateRow(mk.id, "nama", e.target.value)}
-                            disabled={isLocked()} placeholder="Nama mata kuliah" className={inputClass} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <input type="number" min={1} max={6} value={mk.sks}
-                            onChange={(e) => updateRow(mk.id, "sks", parseInt(e.target.value) || 1)}
-                            disabled={isLocked()} className={inputClass} />
-                        </td>
-                        <td className="px-3 py-2">
-                          <select value={mk.nilai} onChange={(e) => updateRow(mk.id, "nilai", e.target.value as NilaiHuruf)}
-                            disabled={isLocked()} className={selectClass}>
-                            <option value="">-- Pilih --</option>
-                            {["A", "AB", "B", "BC", "C", "D", "E"].map((n) => <option key={n} value={n}>{n}</option>)}
-                          </select>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="border border-gray-100 rounded-lg px-2.5 py-1.5 text-sm bg-gray-50 text-gray-600 text-center">
-                            {mutu !== null ? mutu.toFixed(1) : "—"}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          {lulus === null ? <span className="text-gray-300 text-xs">—</span>
-                           : lulus
-                             ? <span className="inline-flex items-center text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-2.5 py-0.5">Lulus</span>
-                             : <span className="inline-flex items-center text-xs font-semibold text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5">Belum Lulus</span>}
-                        </td>
-                        <td className="px-3 py-2">
-                          <button onClick={() => deleteRow(mk.id)} disabled={isLocked()}
-                            className="text-gray-300 hover:text-red-400 transition-colors p-1 disabled:opacity-30 disabled:cursor-not-allowed">
-                            <Trash2 size={15} />
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {mkList.map((mk, idx) => (
+                    <MkRow key={mk.id} mk={mk} idx={idx} isLocked={isLocked()}
+                      inputClass={inputClass} selectClass={selectClass}
+                      getNilaiMutu={getNilaiMutu} updateRow={updateRow} deleteRow={deleteRow} />
+                  ))}
                 </tbody>
               </table>
             </div>

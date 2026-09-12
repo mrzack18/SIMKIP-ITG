@@ -187,3 +187,14 @@ export async function activatePeriode(id: number): Promise<PeriodeItem> {
   const res = await api.patch<{ success: boolean; data: PeriodeItem }>(`/konfigurasi/periode-akademik/${id}/activate`);
   return res.data;
 }
+
+/**
+ * Nonaktifkan satu periode tanpa menyentuh periode lain.
+ *
+ * Periode lain yang sedang aktif TETAP aktif — beberapa tahun ajaran boleh
+ * dibuka bersamaan.
+ */
+export async function deactivatePeriode(id: number): Promise<PeriodeItem> {
+  const res = await api.patch<{ success: boolean; data: PeriodeItem }>(`/konfigurasi/periode-akademik/${id}/deactivate`);
+  return res.data;
+}

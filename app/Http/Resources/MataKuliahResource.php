@@ -21,6 +21,7 @@ class MataKuliahResource extends JsonResource
             'nilaiHuruf' => $this->nilai_huruf,
             'nilaiMutu' => (float) $this->nilai_mutu,
             'lulus' => (bool) $this->lulus,
+            'alasanPerubahan' => $this->alasan_perubahan,
         ];
     }
 }

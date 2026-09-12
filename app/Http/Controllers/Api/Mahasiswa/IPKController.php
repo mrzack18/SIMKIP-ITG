@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Api\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\IpkSemestr;
-use App\Models\Konfigurasi;
 use App\Services\IPKCalculatorService;
+use App\Helpers\PeriodeInputHelper;
 use App\Helpers\TahunAjaranHelper;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,38 +15,17 @@ class IPKController extends Controller
     /**
      * Periode check helper — returns null if OK, or an error message string.
      * $tahunAjaran: the TA filter the student selected in the form.
+     *
+     * Periode dicari dari tabel `periode_akademiks` berdasarkan tahun ajaran
+     * yang dipilih mahasiswa, BUKAN dari satu key konfigurasi global. Dengan
+     * begitu beberapa tahun ajaran bisa punya periode aktif sekaligus, dan
+     * mahasiswa hanya bisa mengisi TA yang periodenya memang dibuka.
      */
     private function checkPeriode(?string $tahunAjaran = null): ?string
     {
-        $aktif = Konfigurasi::get('periode_input_aktif', '0') === '1';
-        $buka  = Carbon::parse(Konfigurasi::get('periode_input_buka', '2000-01-01'));
-        $tutup = Carbon::parse(Konfigurasi::get('periode_input_tutup', '2099-12-31'));
-        $taKonfigurasi = Konfigurasi::get('periode_input_tahun_ajaran'); // e.g. "2025/2026 Ganjil"
-        $now   = Carbon::now();
+        $periode = PeriodeInputHelper::untukTahunAjaran($tahunAjaran);
 
-        if (!$aktif) {
-            return 'Periode input nilai sedang tidak aktif.';
-        }
-
-        // Normalize TA from filter for comparison
-        $normalize = fn(string $ta) => trim(
-            str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $ta)
-        );
-
-        // If student selected a TA filter, validate it matches the configured TA
-        if ($tahunAjaran && $tahunAjaran !== 'Semua' && $taKonfigurasi) {
-            if ($normalize($tahunAjaran) !== $normalize($taKonfigurasi)) {
-                return "Periode input untuk {$tahunAjaran} belum dibuka. Hubungi admin untuk membuka periode.";
-            }
-        }
-
-        if ($now->lt($buka)) {
-            return 'Periode input nilai belum dibuka. Dibuka pada ' . $buka->format('d M Y') . '.';
-        }
-        if ($now->gt($tutup)) {
-            return 'Periode input nilai sudah ditutup pada ' . $tutup->format('d M Y') . '.';
-        }
-        return null;
+        return PeriodeInputHelper::alasanTidakBisa($periode, $tahunAjaran);
     }
 
     public function index(Request $request): JsonResponse
@@ -125,6 +103,7 @@ class IPKController extends Controller
             'mata_kuliah.*.nama'    => 'required|string|max:255',
             'mata_kuliah.*.sks'     => 'required|integer|between:1,6',
             'mata_kuliah.*.nilai_huruf' => 'required|in:A,AB,B,BC,C,D,E',
+            'mata_kuliah.*.alasan_perubahan' => 'nullable|string|max:1000',
         ]);
 
         $m = $request->user()->mahasiswa;
@@ -235,6 +214,19 @@ class IPKController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Nilai sudah diajukan dan sedang menunggu validasi admin.'
+            ], 422);
+        }
+
+        // Wajib ada bukti KHS sebelum diajukan.
+        //
+        // Penting sejak data akademik hasil sync LSIPD berstatus 'Draft': tanpa
+        // penjaga ini, mahasiswa bisa mengajukan nilai hasil sinkronisasi (yang
+        // tidak punya file KHS sama sekali) untuk divalidasi pengelola tanpa bukti
+        // apa pun. Alur normal pun memang upload KHS dulu, baru ajukan.
+        if (empty($existing->file_khs)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unggah file KHS terlebih dahulu sebelum mengajukan nilai untuk divalidasi.'
             ], 422);
         }
 

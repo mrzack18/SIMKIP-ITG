@@ -4,6 +4,7 @@ import type { PeriodeItem } from "@/services/konfigurasiService";
 interface Props {
   items: PeriodeItem[];
   onActivate: (item: PeriodeItem) => void;
+  onDeactivate: (item: PeriodeItem) => void;
   onEdit: (item: PeriodeItem) => void;
   onDelete: (item: PeriodeItem) => void;
 }
@@ -32,7 +33,7 @@ const getNodeStyle = (item: PeriodeItem) => {
   return { dot: "bg-amber-400", ring: "ring-amber-200", text: "text-amber-700", bg: "bg-amber-50" };
 };
 
-export default function TimelinePeriode({ items, onActivate, onEdit, onDelete }: Props) {
+export default function TimelinePeriode({ items, onActivate, onDeactivate, onEdit, onDelete }: Props) {
   if (!items || items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center bg-gray-50/50">
@@ -47,11 +48,21 @@ export default function TimelinePeriode({ items, onActivate, onEdit, onDelete }:
     (a, b) => new Date(b.tanggal_buka).getTime() - new Date(a.tanggal_buka).getTime()
   );
 
+  const jumlahAktif = items.filter((i) => i.is_aktif).length;
+
   return (
     <div className="space-y-2 min-w-0">
-      <p className="text-xs font-600 text-gray-500 uppercase tracking-wide mb-2">
-        Riwayat Periode ({items.length})
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <p className="text-xs font-600 text-gray-500 uppercase tracking-wide">
+          Riwayat Periode ({items.length})
+        </p>
+        {/* Beberapa tahun ajaran boleh dibuka bersamaan */}
+        {jumlahAktif > 0 && (
+          <span className="text-[11px] font-600 text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+            {jumlahAktif} periode aktif
+          </span>
+        )}
+      </div>
       <div className="space-y-2 min-w-0">
         {sorted.map((item) => {
           const style = getNodeStyle(item);
@@ -85,13 +96,21 @@ export default function TimelinePeriode({ items, onActivate, onEdit, onDelete }:
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Actions — toggle per baris, tidak memengaruhi periode lain */}
               <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
-                {!item.is_aktif && (
+                {item.is_aktif ? (
+                  <button
+                    onClick={() => onDeactivate(item)}
+                    className="px-2.5 py-1 text-xs font-500 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-1 whitespace-nowrap"
+                    title="Nonaktifkan periode ini (periode lain tetap aktif)"
+                  >
+                    <Power size={11} /> Nonaktifkan
+                  </button>
+                ) : (
                   <button
                     onClick={() => onActivate(item)}
                     className="px-2.5 py-1 text-xs font-500 text-green-700 hover:bg-green-100 rounded-lg flex items-center gap-1 whitespace-nowrap"
-                    title="Aktifkan periode ini"
+                    title="Aktifkan periode ini (tidak menonaktifkan periode lain)"
                   >
                     <Power size={11} /> Aktifkan
                   </button>

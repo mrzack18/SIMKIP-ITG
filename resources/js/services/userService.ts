@@ -9,6 +9,9 @@ export interface UserRow {
   role: Role;
   prodi_id: number | null;
   prodi_nama: string | null;
+  /** Atribut mahasiswa — null untuk akun non-mahasiswa. */
+  angkatan: number | null;
+  nim: string | null;
   is_active: boolean;
   is_password_changed: boolean;
   created_at: string;
@@ -20,6 +23,7 @@ export interface UsersResponse {
   total: number;
   current_page: number;
   last_page: number;
+  filter_options?: { angkatans: number[] };
 }
 
 export interface CreateUserPayload {
@@ -41,6 +45,11 @@ export interface UpdateUserPayload {
 export function getUsers(params?: {
   search?: string;
   role?: string;
+  /** Filter atribut mahasiswa — hanya menyaring baris ber-role mahasiswa. */
+  angkatan?: string | number;
+  prodi?: string;
+  /** "asc" = Nama A–Z (bawaan), "desc" = Nama Z–A. */
+  sort?: "asc" | "desc";
   page?: number;
   per_page?: number;
 }): Promise<UsersResponse> {
