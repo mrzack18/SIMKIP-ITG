@@ -78,7 +78,6 @@ export default function Layout({ role, user }: LayoutProps) {
         role={role}
         collapsed={collapsed}
         onToggle={() => setCollapsed(!collapsed)}
-        onLogout={handleLogout}
         badgeCounts={badgeCounts}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}

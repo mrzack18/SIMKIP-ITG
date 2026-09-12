@@ -2,8 +2,8 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, FileCheck, AlertTriangle, Award,
   BarChart3, Settings, History, ChevronLeft, ChevronRight,
-  Upload, Folder, Bell, User, LogOut, GraduationCap, BookOpen,
-  FileText, X, RefreshCw,
+  Upload, Folder, Bell, GraduationCap, BookOpen,
+  FileText, X, RefreshCw, ClipboardList,
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
 
@@ -17,7 +17,9 @@ const adminNav = [
   { to: "/admin/sp", icon: AlertTriangle, label: "Surat Peringatan" },
   { to: "/admin/bebas-tanggungan", icon: Award, label: "Surat Penyelesaian" },
   { to: "/admin/laporan", icon: BarChart3, label: "Laporan Semester" },
+  { to: "/admin/reporting", icon: ClipboardList, label: "Reporting" },
   { to: "/admin/audit", icon: History, label: "Audit Log" },
+  { to: "/admin/konfigurasi", icon: Settings, label: "Konfigurasi" },
 ];
 
 const mahasiswaNav = [
@@ -30,22 +32,20 @@ const mahasiswaNav = [
   { to: "/mahasiswa/arsip", icon: Folder, label: "Arsip Digital" },
   { to: "/mahasiswa/sp", icon: Bell, label: "Surat Peringatan" },
   { to: "/mahasiswa/bebas-tanggungan", icon: GraduationCap, label: "Surat Penyelesaian" },
-  { to: "/mahasiswa/profil", icon: User, label: "Profil" },
 ];
 
 const prodiNav = [
   { to: "/prodi", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/prodi/mahasiswa", icon: Users, label: "Daftar Mahasiswa" },
   { to: "/prodi/laporan", icon: FileText, label: "Laporan Semester" },
+  { to: "/prodi/reporting", icon: ClipboardList, label: "Reporting" },
   { to: "/prodi/ekspor", icon: BarChart3, label: "Ekspor Laporan" },
-  { to: "/prodi/profil", icon: User, label: "Profil" },
 ];
 
 const warekNav = [
   { to: "/warek", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/warek/laporan", icon: BarChart3, label: "Laporan" },
   { to: "/warek/mahasiswa", icon: Users, label: "Mahasiswa" },
-  { to: "/warek/profil", icon: User, label: "Profil" },
 ];
 
 const lsipdNav = [
@@ -71,14 +71,13 @@ interface SidebarProps {
   role: Role;
   collapsed: boolean;
   onToggle: () => void;
-  onLogout: () => void;
   badgeCounts?: BadgeCounts;
   mobileOpen?: boolean;
   onClose?: () => void;
   onNavigate?: () => void;
 }
 
-export default function Sidebar({ role, collapsed, onToggle, onLogout, badgeCounts, mobileOpen = false, onClose, onNavigate }: SidebarProps) {
+export default function Sidebar({ role, collapsed, onToggle, badgeCounts, mobileOpen = false, onClose, onNavigate }: SidebarProps) {
   const nav = navMap[role];
 
   const roleLabel: Record<Role, string> = {
@@ -166,17 +165,6 @@ export default function Sidebar({ role, collapsed, onToggle, onLogout, badgeCoun
           );
         })}
       </nav>
-
-      {/* Bottom */}
-      <div className="p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-white/10">
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-white/60 hover:bg-white/10 hover:text-white transition-all duration-150"
-        >
-          <LogOut size={18} className="flex-shrink-0" />
-          <span className={`text-sm ${collapsed ? "lg:hidden" : ""}`}>Keluar</span>
-        </button>
-      </div>
 
       {/* Collapse toggle — desktop only */}
       <button

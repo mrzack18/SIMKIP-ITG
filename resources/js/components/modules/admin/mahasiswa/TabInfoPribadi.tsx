@@ -15,21 +15,21 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (data?.id) {
+    if (data?.nim) {
       setIsLoading(true);
-      getCatatanInternal(data.id, tahunAjaran)
+      getCatatanInternal(data.nim, tahunAjaran)
         .then((res: any) => {
           setCatatanList(res || []);
         })
         .finally(() => setIsLoading(false));
     }
-  }, [data?.id, tahunAjaran]);
+  }, [data?.nim, tahunAjaran]);
 
   const handleSaveCatatan = async () => {
-    if (!data?.id || !deskripsi.trim()) return;
+    if (!data?.nim || !deskripsi.trim()) return;
     setIsSubmitting(true);
     try {
-      await storeCatatanInternal(data.id, {
+      await storeCatatanInternal(data.nim, {
         tahun_ajaran: tahunAjaran,
         kategori,
         deskripsi
@@ -37,7 +37,7 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
       setCatatanModal(false);
       setDeskripsi("");
       // Refresh list
-      const res = await getCatatanInternal(data.id, tahunAjaran);
+      const res = await getCatatanInternal(data.nim, tahunAjaran);
       setCatatanList(res || []);
     } catch (err) {
       console.error(err);

@@ -18,11 +18,13 @@ use App\Http\Controllers\Api\DokumenController;
 use App\Http\Controllers\Api\SPController;
 use App\Http\Controllers\Api\BebasTanggunganController;
 use App\Http\Controllers\Api\LaporanController;
+use App\Http\Controllers\Api\ReportingController;
 use App\Http\Controllers\Api\Admin\KonfigurasiController as AdminConfig;
 use App\Http\Controllers\Api\Admin\AuditController as AdminAudit;
 use App\Http\Controllers\Api\Admin\LsipdSyncController as AdminLsipd;
 use App\Http\Controllers\Api\Admin\UserController as AdminUser;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
+use App\Models\Mahasiswa;
 
 Route::post("/auth/login", [AuthController::class, "login"])
     ->middleware("throttle:5,1");
@@ -62,9 +64,11 @@ Route::middleware("auth:sanctum")->group(function () {
     // LSIPD sync (lsipd only)
     Route::middleware("role:lsipd")->prefix("lsipd")->group(function () {
         Route::get("/status",                       [AdminLsipd::class, "status"]);
+        Route::get("/sync-progress",                [AdminLsipd::class, "syncProgress"]);
         Route::post("/sync-mahasiswa",              [AdminLsipd::class, "syncAllMahasiswa"]);
         Route::post("/sync-mahasiswa/{nim}",        [AdminLsipd::class, "syncMahasiswa"]);
         Route::post("/sync-transkrip/{nim}",        [AdminLsipd::class, "syncTranskrip"]);
+        Route::post("/delete-all-mahasiswa",        [AdminLsipd::class, "deleteAllMahasiswa"]);
     });
 
     // User management (lsipd only)
@@ -86,27 +90,31 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::post("/mahasiswa",                 [MahasiswaController::class, "store"]);
     Route::get("/mahasiswa/check-nim/{nim}",  [MahasiswaController::class, "checkNim"]);
     Route::get("/mahasiswa/filter-options",   [MahasiswaController::class, "filterOptions"]);
-    Route::get("/mahasiswa/{id}",             [MahasiswaController::class, "show"]);
-    Route::get("/mahasiswa/{id}/ipk",         [MahasiswaController::class, "ipk"]);
+    Route::get("/mahasiswa/{nim}",             [MahasiswaController::class, "show"]);
+    Route::get("/mahasiswa/{nim}/ipk",         [MahasiswaController::class, "ipk"]);
 
-    Route::get("/mahasiswa/{id}/dokumen",     [MahasiswaController::class, "dokumen"]);
-    Route::delete("/mahasiswa/{id}",          [MahasiswaController::class, "destroy"]);
-    Route::patch("/mahasiswa/{id}/status",    [MahasiswaController::class, "updateStatus"]);
-    Route::patch("/mahasiswa/{id}/cabut-kipk",[MahasiswaController::class, "cabutKipk"]);
-    Route::get("/mahasiswa/{id}/catatan",     [MahasiswaController::class, "getCatatanInternal"]);
-    Route::post("/mahasiswa/{id}/catatan",    [MahasiswaController::class, "storeCatatanInternal"]);
+    Route::get("/mahasiswa/{nim}/dokumen",     [MahasiswaController::class, "dokumen"]);
+    Route::delete("/mahasiswa/{nim}",          [MahasiswaController::class, "destroy"]);
+    Route::patch("/mahasiswa/{nim}/status",    [MahasiswaController::class, "updateStatus"]);
+    Route::patch("/mahasiswa/{nim}/cabut-kipk",[MahasiswaController::class, "cabutKipk"]);
+    Route::get("/mahasiswa/{nim}/catatan",     [MahasiswaController::class, "getCatatanInternal"]);
+    Route::post("/mahasiswa/{nim}/catatan",    [MahasiswaController::class, "storeCatatanInternal"]);
 
     Route::get("/akademik/rekap-mahasiswa",   [MahasiswaController::class, "rekapAkademik"]);
     Route::get("/akademik/prestasi",          [MahasiswaController::class, "rekapPrestasi"]);
     Route::get("/akademik/organisasi",        [MahasiswaController::class, "rekapOrganisasi"]);
     Route::get("/akademik/pelatihan",         [MahasiswaController::class, "rekapPelatihan"]);
 
-    Route::get("/mahasiswa/{id}/prestasi",    [MahasiswaController::class, "prestasi"]);
-    Route::get("/mahasiswa/{id}/organisasi",  [MahasiswaController::class, "organisasi"]);
-    Route::get("/mahasiswa/{id}/pelatihan",   [MahasiswaController::class, "pelatihan"]);
-    Route::put("/mahasiswa/{id}/prestasi/{itemId}/validate",   [MahasiswaController::class, "validatePrestasi"]);
-    Route::put("/mahasiswa/{id}/organisasi/{itemId}/validate", [MahasiswaController::class, "validateOrganisasi"]);
-    Route::put("/mahasiswa/{id}/pelatihan/{itemId}/validate",  [MahasiswaController::class, "validatePelatihan"]);
+    // Reporting prestasi / organisasi / pelatihan (admin & prodi)
+    Route::get("/reporting/{type}",     [ReportingController::class, "index"]);
+    Route::get("/reporting/{type}/pdf", [ReportingController::class, "pdf"]);
+
+    Route::get("/mahasiswa/{nim}/prestasi",    [MahasiswaController::class, "prestasi"]);
+    Route::get("/mahasiswa/{nim}/organisasi",  [MahasiswaController::class, "organisasi"]);
+    Route::get("/mahasiswa/{nim}/pelatihan",   [MahasiswaController::class, "pelatihan"]);
+    Route::put("/mahasiswa/{nim}/prestasi/{itemId}/validate",   [MahasiswaController::class, "validatePrestasi"]);
+    Route::put("/mahasiswa/{nim}/organisasi/{itemId}/validate", [MahasiswaController::class, "validateOrganisasi"]);
+    Route::put("/mahasiswa/{nim}/pelatihan/{itemId}/validate",  [MahasiswaController::class, "validatePelatihan"]);
     Route::get("/ipk",  [IPKController::class, "index"]);
     Route::post("/ipk", [IPKController::class, "store"]);
     Route::post("/ipk/submit", [IPKController::class, "submit"]);
@@ -158,8 +166,8 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::post("/sp",                     [SPController::class, "store"]);
     Route::get("/sp/{id}",                 [SPController::class, "show"]);
     Route::patch("/sp/{id}/status",        [SPController::class, "updateStatus"]);
-    Route::get("/mahasiswa/{id}/sp",       [SPController::class, "history"]);
-    Route::get("/mahasiswa/{id}/bebas-tanggungan", [MahasiswaController::class, "bebasTanggungan"]);
+    Route::get("/mahasiswa/{nim}/sp",       [SPController::class, "history"]);
+    Route::get("/mahasiswa/{nim}/bebas-tanggungan", [MahasiswaController::class, "bebasTanggungan"]);
 
     Route::get("/bebas-tanggungan",                [BebasTanggunganController::class, "index"]);
     Route::post("/bebas-tanggungan",               [BebasTanggunganController::class, "store"]);
@@ -181,14 +189,12 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::patch("/laporan/{id}/return", [LaporanController::class, "returnLaporan"]);
     Route::get("/laporan/{id}/pdf",      [LaporanController::class, "downloadPdf"]);
 
-    // Konfigurasi Admin
-    Route::middleware("role:lsipd")->prefix("konfigurasi")->group(function () {
-        Route::get("/",                          [AdminConfig::class, "index"]);
+    // Konfigurasi — dipakai bersama admin & lsipd.
+    // admin hanya boleh menulis ambang batas akademik (dijaga di KonfigurasiController::update).
+    Route::middleware("role:lsipd,admin")->prefix("konfigurasi")->group(function () {
+        Route::get("/all",                       [AdminConfig::class, "indexAll"]);
         Route::put("/",                          [AdminConfig::class, "update"]);
-        Route::get("/prodi",                     [AdminConfig::class, "indexProdi"]);
-        Route::post("/prodi",                    [AdminConfig::class, "storeProdi"]);
-        Route::put("/prodi/{id}",                [AdminConfig::class, "updateProdi"]);
-        Route::patch("/prodi/{id}/toggle",       [AdminConfig::class, "toggleProdi"]);
+
         Route::get("/dokumen-jenis",             [AdminConfig::class, "indexDokumenJenis"]);
         Route::post("/dokumen-jenis",            [AdminConfig::class, "storeDokumenJenis"]);
         Route::delete("/dokumen-jenis/{id}",     [AdminConfig::class, "destroyDokumenJenis"]);
@@ -196,30 +202,38 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::post("/dokumen-jenis/{id}/fields", [AdminConfig::class, "storeDokumenJenisField"]);
         Route::delete("/dokumen-jenis-fields/{id}", [AdminConfig::class, "destroyDokumenJenisField"]);
 
-        Route::get("/all",                       [AdminConfig::class, "indexAll"]);
-        
-        Route::post("/nilai-mutu",               [AdminConfig::class, "storeNilaiMutu"]);
-        Route::put("/nilai-mutu/{id}",           [AdminConfig::class, "updateNilaiMutu"]);
-        Route::delete("/nilai-mutu/{id}",        [AdminConfig::class, "destroyNilaiMutu"]);
-        
         Route::post("/pelanggaran",              [AdminConfig::class, "storePelanggaran"]);
         Route::put("/pelanggaran/{id}",          [AdminConfig::class, "updatePelanggaran"]);
         Route::delete("/pelanggaran/{id}",       [AdminConfig::class, "destroyPelanggaran"]);
         Route::patch("/pelanggaran/{id}/toggle", [AdminConfig::class, "togglePelanggaran"]);
         Route::get("/pelanggaran",               [AdminConfig::class, "indexPelanggaran"]);
-        
+
+        Route::get("/periode-akademik",          [AdminConfig::class, "indexPeriode"]);
+        Route::post("/periode-akademik",         [AdminConfig::class, "storePeriode"]);
+        Route::put("/periode-akademik/{id}",     [AdminConfig::class, "updatePeriode"]);
+        Route::delete("/periode-akademik/{id}",  [AdminConfig::class, "destroyPeriode"]);
+        Route::patch("/periode-akademik/{id}/activate", [AdminConfig::class, "activatePeriode"]);
+    });
+
+    // Konfigurasi — khusus lsipd: index mentah, Prodi, Nilai Mutu, Tahun Ajaran.
+    Route::middleware("role:lsipd")->prefix("konfigurasi")->group(function () {
+        Route::get("/",                          [AdminConfig::class, "index"]);
+
+        Route::get("/prodi",                     [AdminConfig::class, "indexProdi"]);
+        Route::post("/prodi",                    [AdminConfig::class, "storeProdi"]);
+        Route::put("/prodi/{id}",                [AdminConfig::class, "updateProdi"]);
+        Route::patch("/prodi/{id}/toggle",       [AdminConfig::class, "toggleProdi"]);
+
+        Route::post("/nilai-mutu",               [AdminConfig::class, "storeNilaiMutu"]);
+        Route::put("/nilai-mutu/{id}",           [AdminConfig::class, "updateNilaiMutu"]);
+        Route::delete("/nilai-mutu/{id}",        [AdminConfig::class, "destroyNilaiMutu"]);
+
         Route::get("/tahun-ajaran",              [AdminConfig::class, "indexTahunAjaran"]);
         Route::post("/tahun-ajaran",             [AdminConfig::class, "storeTahunAjaran"]);
         Route::put("/tahun-ajaran/{id}",         [AdminConfig::class, "updateTahunAjaran"]);
         Route::delete("/tahun-ajaran/{id}",      [AdminConfig::class, "destroyTahunAjaran"]);
         Route::patch("/tahun-ajaran/{id}/activate", [AdminConfig::class, "activateTahunAjaran"]);
         Route::patch("/tahun-ajaran/{id}/deactivate", [AdminConfig::class, "deactivateTahunAjaran"]);
-        
-        Route::get("/periode-akademik",          [AdminConfig::class, "indexPeriode"]);
-        Route::post("/periode-akademik",         [AdminConfig::class, "storePeriode"]);
-        Route::put("/periode-akademik/{id}",     [AdminConfig::class, "updatePeriode"]);
-        Route::delete("/periode-akademik/{id}",  [AdminConfig::class, "destroyPeriode"]);
-        Route::patch("/periode-akademik/{id}/activate", [AdminConfig::class, "activatePeriode"]);
     });
 
     // WAREK-specific endpoints (read-only dashboard & export)
@@ -233,8 +247,8 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::get("/mahasiswa", function (Request $req) {
             return app(ProdiMahasiswa::class)->index($req);
         });
-        Route::get("/mahasiswa/{id}/detail", function (Request $req, $id) {
-            return app(ProdiMahasiswa::class)->detail($req, (int) $id);
+        Route::get("/mahasiswa/{nim}/detail", function (Request $req, $nim) {
+            return app(ProdiMahasiswa::class)->detail($req, (int) Mahasiswa::where('nim', $nim)->firstOrFail()->id);
         });
     });
 

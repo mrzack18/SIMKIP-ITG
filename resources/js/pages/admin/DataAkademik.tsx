@@ -91,14 +91,14 @@ function PrestasiModal({
 }: {
   item: any
   onClose: () => void
-  onValidate: (mId: number, iId: number, status: string, catatan: string) => Promise<void>
+  onValidate: (mId: string, iId: number, status: string, catatan: string) => Promise<void>
 }) {
   const [validating, setValidating] = useState(false)
   
   const handleValidate = async (status: string) => {
     setValidating(true)
     try {
-      await onValidate(item.mahasiswa_id, item.id, status, "")
+      await onValidate(item.nim, item.id, status, "")
       onClose()
     } catch (e) {
       console.error(e)
@@ -301,14 +301,14 @@ function OrganisasiModal({
 }: {
   item: any
   onClose: () => void
-  onValidate: (mId: number, iId: number, status: string, catatan: string) => Promise<void>
+  onValidate: (mId: string, iId: number, status: string, catatan: string) => Promise<void>
 }) {
   const [validating, setValidating] = useState(false)
   
   const handleValidate = async (status: string) => {
     setValidating(true)
     try {
-      await onValidate(item.mahasiswa_id, item.id, status, "")
+      await onValidate(item.nim, item.id, status, "")
       onClose()
     } catch (e) {
       console.error(e)
@@ -456,7 +456,7 @@ function PelatihanModal({
 }: {
   item: any
   onClose: () => void
-  onValidate: (mId: number, iId: number, status: string, catatan: string) => Promise<void>
+  onValidate: (mId: string, iId: number, status: string, catatan: string) => Promise<void>
 }) {
   const [validating, setValidating] = useState(false)
   const isAkademik = item.jenis === "Akademik"
@@ -464,7 +464,7 @@ function PelatihanModal({
   const handleValidate = async (status: string) => {
     setValidating(true)
     try {
-      await onValidate(item.mahasiswa_id, item.id, status, "")
+      await onValidate(item.nim, item.id, status, "")
       onClose()
     } catch (e) {
       console.error(e)
@@ -806,7 +806,7 @@ export default function DataAkademik() {
 
   // ── Validation Handlers ─────────────────────────────────────────────────────
   async function handleValidatePrestasi(
-    mahasiswaId: number,
+    mahasiswaId: string,
     itemId: number,
     status: string,
     catatan: string,
@@ -818,7 +818,7 @@ export default function DataAkademik() {
   }
 
   async function handleValidateOrganisasi(
-    mahasiswaId: number,
+    mahasiswaId: string,
     itemId: number,
     status: string,
     catatan: string,
@@ -830,7 +830,7 @@ export default function DataAkademik() {
   }
 
   async function handleValidatePelatihan(
-    mahasiswaId: number,
+    mahasiswaId: string,
     itemId: number,
     status: string,
     catatan: string,
@@ -1268,7 +1268,7 @@ export default function DataAkademik() {
                         <td className={tdCls}>
                           <div className="flex items-center gap-2 min-w-0">
                             <Link
-                              to={`/admin/mahasiswa/${r.id}`}
+                              to={`/admin/mahasiswa/${r.nim}`}
                               className="text-xs text-[#263F93] hover:underline font-500 whitespace-nowrap"
                             >
                               Lihat Detail

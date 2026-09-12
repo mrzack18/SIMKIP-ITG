@@ -17,6 +17,7 @@ import BebasTanggunganDetail from "./pages/admin/BebasTanggunganDetail";
 import LaporanList from "./pages/admin/LaporanList";
 import SusunLaporan from "./pages/admin/SusunLaporan";
 import LaporanDetail from "./pages/admin/LaporanDetail";
+import Reporting from "./pages/reporting/Reporting";
 import Konfigurasi from "./pages/admin/Konfigurasi";
 import LsipdSync from "./pages/lsipd/LsipdSync";
 import ManajemenAkun from "./pages/lsipd/ManajemenAkun";
@@ -83,7 +84,7 @@ export default function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="mahasiswa" element={<MahasiswaList />} />
             <Route path="mahasiswa/tambah" element={<TambahMahasiswa />} />
-            <Route path="mahasiswa/:id" element={<MahasiswaDetail />} />
+            <Route path="mahasiswa/:nim" element={<MahasiswaDetail />} />
             <Route path="akademik" element={<DataAkademik />} />
             <Route path="dokumen" element={<DokumenQueue />} />
             <Route path="sp" element={<SPList />} />
@@ -94,7 +95,8 @@ export default function App() {
             <Route path="laporan" element={<LaporanList />} />
             <Route path="laporan/baru" element={<SusunLaporan />} />
             <Route path="laporan/:id" element={<LaporanDetail />} />
-            <Route path="konfigurasi" element={<Konfigurasi />} />
+            <Route path="reporting" element={<Reporting />} />
+            <Route path="konfigurasi" element={<Konfigurasi role="admin" />} />
             <Route path="audit" element={<AuditLog />} />
             <Route path="profil" element={<Profil role="admin" />} />
           </Route>
@@ -117,9 +119,10 @@ export default function App() {
           <Route path="/prodi" element={<LayoutWrapper role="prodi" />}>
             <Route index element={<ProdiDashboard />} />
             <Route path="mahasiswa" element={<ProdiMahasiswaList />} />
-            <Route path="mahasiswa/:id" element={<ProdiMahasiswaDetail />} />
+            <Route path="mahasiswa/:nim" element={<ProdiMahasiswaDetail />} />
             <Route path="laporan" element={<ProdiLaporanList />} />
             <Route path="laporan/:id" element={<ProdiLaporanDetail />} />
+            <Route path="reporting" element={<Reporting />} />
             <Route path="ekspor" element={<EksporLaporan />} />
             <Route path="profil" element={<Profil role="prodi" />} />
           </Route>
@@ -130,14 +133,14 @@ export default function App() {
             <Route path="laporan" element={<WarekLaporanList />} />
             <Route path="laporan/:id" element={<WarekLaporanDetail />} />
             <Route path="mahasiswa" element={<WarekMahasiswaList />} />
-            <Route path="mahasiswa/:id" element={<WarekMahasiswaDetail />} />
+            <Route path="mahasiswa/:nim" element={<WarekMahasiswaDetail />} />
             <Route path="profil" element={<Profil role="warek" />} />
           </Route>
 
           {/* LSIPD routes */}
           <Route path="/lsipd" element={<LayoutWrapper role="lsipd" />}>
             <Route index element={<Navigate to="konfigurasi" replace />} />
-            <Route path="konfigurasi" element={<Konfigurasi />} />
+            <Route path="konfigurasi" element={<Konfigurasi role="lsipd" />} />
             <Route path="sync" element={<LsipdSync />} />
             <Route path="users" element={<ManajemenAkun />} />
           </Route>

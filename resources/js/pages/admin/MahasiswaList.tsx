@@ -27,13 +27,11 @@ import {
   type MahasiswaFilter,
 } from "@/services/mahasiswaService";
 import type { Mahasiswa, PaginatedResponse } from "@/types";
-import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran, TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 // ─── SP badges (historical list with status) ─────────────────────────────────────────────────────────────────────────
 function SpBadges({ spList }: { spList?: { level: string; status: string }[] | null }) {
-  if (!spList || spList.length === 0) {
-    return <span className="text-gray-300 text-sm">—</span>;
-  }
+  if (!spList || spList.length === 0) return <Dash />;
   
   // Sort by level ascending
   const sorted = [...spList].sort((a, b) => a.level.localeCompare(b.level));
@@ -52,7 +50,7 @@ function SpBadges({ spList }: { spList?: { level: string; status: string }[] | n
         }
         
         return (
-          <span key={sp.level} className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${bg} ${text}`}>
+          <span key={sp.level} className={`px-2 py-0.5 rounded text-xs font-medium ${bg} ${text}`}>
             {sp.level}
           </span>
         );
@@ -85,6 +83,12 @@ function FilterSelect({
       ))}
     </select>
   );
+}
+
+// ── Penanda nilai kosong ──────────────────────────────────────────────────
+/** Satu bentuk untuk semua nilai kosong, agar ukuran & warnanya seragam. */
+function Dash() {
+  return <span className="text-xs text-gray-400">—</span>;
 }
 
 const LIMIT = 10;
@@ -160,7 +164,7 @@ export default function MahasiswaList() {
   const buildFilter = useCallback((): MahasiswaFilter => {
     const f: MahasiswaFilter = { page, limit: LIMIT };
     if (search)                                        f.search        = search;
-    if (tahunAjaranFilter) f.tahun_ajaran  = tahunAjaranFilter;
+    if (tahunAjaranFilter)                             f.tahun_ajaran  = tahunAjaranFilter;
     if (prodiFilter !== "Semua Prodi")                 f.prodi         = prodiFilter;
     if (angkatanFilter !== "Semua Angkatan")           f.angkatan      = angkatanFilter;
     if (spFilter !== "Semua SP")                       f.spFilter      = spFilter;
@@ -222,7 +226,7 @@ export default function MahasiswaList() {
     setDeleting(true);
     setDeleteError("");
     try {
-      await deleteMahasiswa(deleteModal.id, deleteConfirmNim);
+      await deleteMahasiswa(deleteModal.nim, deleteConfirmNim);
       setDeleteModal(null);
       setDeleteConfirmNim("");
       const res = await getMahasiswaList(buildFilter());
@@ -242,7 +246,7 @@ export default function MahasiswaList() {
     setNonaktifError("");
     try {
       const status = nonaktifModal.status === "Aktif" ? "Nonaktif" : "Aktif";
-      await updateMahasiswaStatus(nonaktifModal.id, {
+      await updateMahasiswaStatus(nonaktifModal.nim, {
         status,
         alasan_status: status === "Nonaktif" ? nonaktifAlasan : undefined,
         catatan_status: status === "Nonaktif" ? nonaktifCatatan : undefined,
@@ -266,7 +270,7 @@ export default function MahasiswaList() {
     setCabutLoading(true);
     setCabutError("");
     try {
-      await cabutKipkMahasiswa(cabutModal.id, {
+      await cabutKipkMahasiswa(cabutModal.nim, {
         alasan_cabut: cabutAlasan,
         catatan_cabut: cabutCatatan,
         konfirmasi_nim: cabutConfirmNim,
@@ -402,7 +406,7 @@ export default function MahasiswaList() {
           <table className="w-full min-w-[1020px] text-sm">
             <thead>
               <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                {["No", "NIM", "Nama", "Program Studi", "Angkatan", "Kategori", "IPK", "Progres IPK", "Semester", "Status", "SP", "Aksi"].map(
+                {["No", "NIM", "Nama", "Program Studi", "Angkatan", "Kategori", "IPK", "Progres IPS", "Semester", "Status", "SP", "Aksi"].map(
                   (h) => (
                     <th
                       key={h}
@@ -417,7 +421,7 @@ export default function MahasiswaList() {
             <tbody className="divide-y divide-[#F8FAFC]">
               {students.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={12} className="px-4 py-10 text-center text-xs text-gray-400">
                     Tidak ada mahasiswa yang sesuai filter.
                   </td>
                 </tr>
@@ -431,30 +435,34 @@ export default function MahasiswaList() {
                       className="hover:bg-[#F8FAFC]/70 transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <td className="px-4 py-3 text-gray-400 text-xs">{globalIdx}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{m.nim}</td>
-                      <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{m.nama}</td>
-                      <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">
-                        {(m.prodi ?? "—")
-                          .replace("Teknik Informatika", "T. Informatika")
-                          .replace("Teknik Industri", "T. Industri")
-                          .replace("Teknik Sipil", "T. Sipil")
-                          .replace("Sistem Informasi", "Sis. Informasi")}
+                      <td className="px-4 py-3 text-xs text-gray-400">{globalIdx}</td>
+                      <td className="px-4 py-3 text-xs font-mono text-gray-600">{m.nim}</td>
+                      <td className="px-4 py-3 text-xs font-medium text-gray-800 whitespace-nowrap">{m.nama}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
+                        {m.prodi ? (
+                          m.prodi
+                            .replace("Teknik Informatika", "T. Informatika")
+                            .replace("Teknik Industri", "T. Industri")
+                            .replace("Teknik Sipil", "T. Sipil")
+                            .replace("Sistem Informasi", "Sis. Informasi")
+                        ) : (
+                          <Dash />
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{m.angkatan}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600">{m.angkatan}</td>
                       <td className="px-4 py-3">
                         {m.kategori === "Reguler" ? (
                           <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Reguler</span>
                         ) : m.kategori === "Aspirasi" ? (
                           <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Aspirasi</span>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <Dash />
                         )}
                       </td>
                       <td className="px-4 py-3">
                         {m.ipk !== null ? (
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${
                               m.ipk >= 3.0
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
@@ -463,7 +471,7 @@ export default function MahasiswaList() {
                             {m.ipk.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <Dash />
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -482,7 +490,7 @@ export default function MahasiswaList() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">{m.semester ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600">{m.semester ?? <Dash />}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -518,7 +526,7 @@ export default function MahasiswaList() {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Link
-                              to={`/admin/mahasiswa/${m.id}`}
+                              to={`/admin/mahasiswa/${m.nim}`}
                               onClick={() => setOpenMenu(null)}
                               className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                             >

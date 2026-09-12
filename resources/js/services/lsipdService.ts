@@ -9,8 +9,29 @@ export interface LsipdStatus {
 export interface LsipdAllResult {
   inserted: number;
   updated: number;
+  unchanged: number;
   skipped: number;
   total: number;
+  transkrip_success: number;
+  transkrip_failed: number;
+}
+
+export interface LsipdSyncProgress {
+  id: string;
+  status: "pending" | "running" | "success" | "failed";
+  phase: "biodata" | "transkrip";
+  total: number;
+  processed: number;
+  percent: number;
+  inserted: number;
+  updated: number;
+  unchanged: number;
+  skipped: number;
+  transkrip_success: number;
+  transkrip_failed: number;
+  message: string | null;
+  started_at: string | null;
+  finished_at: string | null;
 }
 
 export interface LsipdTranskripResult {
@@ -29,6 +50,19 @@ export async function syncAllMahasiswa(): Promise<LsipdAllResult> {
   return res.data;
 }
 
+export async function startSyncAllMahasiswa(): Promise<{ run_id: string }> {
+  const res = await api.post<{ success: boolean; data: { run_id: string } }>("/lsipd/sync-mahasiswa", {});
+  return res.data;
+}
+
+export async function getSyncProgress(runId?: string): Promise<LsipdSyncProgress | null> {
+  const res = await api.get<{ success: boolean; data: LsipdSyncProgress | null }>(
+    "/lsipd/sync-progress",
+    runId ? { run_id: runId } : undefined,
+  );
+  return res.data;
+}
+
 export async function syncMahasiswaByNim(nim: string): Promise<unknown> {
   const res = await api.post<{ success: boolean; data: unknown }>(
     `/lsipd/sync-mahasiswa/${encodeURIComponent(nim)}`,
@@ -39,6 +73,18 @@ export async function syncMahasiswaByNim(nim: string): Promise<unknown> {
 export async function syncTranskrip(nim: string): Promise<LsipdTranskripResult> {
   const res = await api.post<{ success: boolean; data: LsipdTranskripResult }>(
     `/lsipd/sync-transkrip/${encodeURIComponent(nim)}`,
+  );
+  return res.data;
+}
+
+export interface LsipdDeleteAllResult {
+  deleted: number;
+}
+
+export async function deleteAllMahasiswa(konfirmasi: string): Promise<LsipdDeleteAllResult> {
+  const res = await api.post<{ success: boolean; data: LsipdDeleteAllResult }>(
+    "/lsipd/delete-all-mahasiswa",
+    { konfirmasi },
   );
   return res.data;
 }

@@ -1,19 +1,8 @@
 import React, { useState } from "react"
-import {
-  Users,
-  Loader2,
-  FileText,
-  XCircle,
-  Calendar,
-  Download,
-  Image, Eye,
-} from "lucide-react"
-import {
-  getApprovalStatusBadge as statusBadge,
-  ApprovalStatusIcon as StatusIcon,
-} from "@/constants/status"
+import { Users, Loader2, FileText } from "lucide-react"
+import { getApprovalStatusBadge as statusBadge } from "@/constants/status"
 import { BackendNotReady } from "./Shared"
-import { downloadFile } from "@/utils/fileUrl";
+import { OrganisasiDetailModal, fmtMonth } from "./DetailModals"
 
 export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: boolean; error?: any }) {
   const [selectedOrg, setSelectedOrg] = useState<any | null>(null)
@@ -49,13 +38,6 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
         </div>
       </div>
     )
-  }
-
-  const fmtMonth = (ym: string) => {
-    if (!ym) return "—"
-    const [y, m] = ym.split("-")
-    const names = ["Jan","Feb","Mar","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
-    return `${names[parseInt(m) - 1] || ""} ${y}`
   }
 
   return (
@@ -103,115 +85,7 @@ export function TabOrganisasi({ data, loading, error }: { data: any[]; loading: 
       ))}
 
       {selectedOrg && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setSelectedOrg(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">Detail Organisasi</h3>
-              <button
-                onClick={() => setSelectedOrg(null)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
-              >
-                <XCircle size={18} />
-              </button>
-            </div>
-            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-[#263F93]/10 flex items-center justify-center flex-shrink-0">
-                  <Users size={22} className="text-[#263F93]" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-bold text-xs sm:text-sm text-gray-800 leading-snug break-words">{selectedOrg.nama}</h4>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
-                      {selectedOrg.jenis || "Organisasi"}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge(selectedOrg.status)}`}>
-                      <StatusIcon status={selectedOrg.status} /> {selectedOrg.status}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1 break-words">{selectedOrg.jabatan}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5 text-sm min-w-0">
-                <Calendar size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <span className="text-xs text-gray-400 mr-1">Periode:</span>
-                  <span className="font-medium text-gray-700 break-words">
-                    {fmtMonth(selectedOrg.mulai)} → {fmtMonth(selectedOrg.selesai)}
-                  </span>
-                </div>
-              </div>
-              {selectedOrg.deskripsi && (
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400 mb-0.5">Deskripsi</p>
-                  <p className="text-sm text-gray-700 break-words">{selectedOrg.deskripsi}</p>
-                </div>
-              )}
-              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs text-gray-400 mb-1.5">SK Kepengurusan</p>
-                  {selectedOrg.fileSk ? (
-                    <div className="rounded-xl border border-gray-200 overflow-hidden">
-                      {selectedOrg.fileSk.toLowerCase().endsWith(".pdf") ? (
-                        <iframe src={selectedOrg.fileSk} className="w-full h-40 border-0" title="SK Kepengurusan" />
-                      ) : (
-                        <img src={selectedOrg.fileSk} alt="SK Kepengurusan" className="w-full h-40 object-cover" />
-                      )}
-                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
-                        <a href={selectedOrg.fileSk} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
-                          <Eye size={12} /> Pratinjau
-                        </a>
-                        <a href="#" onClick={(e) => { e.preventDefault(); downloadFile("organisasi", selectedOrg.id, "file_sk").catch(err => alert(err?.message || "Gagal mengunduh file")); }} className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
-                          <Download size={12} /> Download
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
-                      <FileText size={22} className="text-gray-300" />
-                      <p className="text-xs text-gray-400">Belum diunggah</p>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
-                  {selectedOrg.fotoKegiatan ? (
-                    <div className="rounded-xl border border-gray-200 overflow-hidden">
-                      <img src={selectedOrg.fotoKegiatan} alt="Foto Kegiatan" className="w-full h-40 object-cover" />
-                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-gray-50">
-                        <a href={selectedOrg.fotoKegiatan} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
-                          <Eye size={12} /> Pratinjau
-                        </a>
-                        <a href="#" onClick={(e) => { e.preventDefault(); downloadFile("organisasi", selectedOrg.id, "foto_kegiatan").catch(err => alert(err?.message || "Gagal mengunduh file")); }} className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors">
-                          <Download size={12} /> Download
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-40 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5">
-                      <Image size={22} className="text-gray-300" />
-                      <p className="text-xs text-gray-400">Belum diunggah</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
-              <button
-                onClick={() => setSelectedOrg(null)}
-                className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
+        <OrganisasiDetailModal item={selectedOrg} onClose={() => setSelectedOrg(null)} />
       )}
     </div>
   )

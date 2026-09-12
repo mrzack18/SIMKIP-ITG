@@ -70,8 +70,10 @@ class IPKController extends Controller
         $allData = $m->ipkSemestrs()->with('mataKuliahs')->orderByDesc('semester')->get();
         $carryOver = IPKCalculatorService::getCarryOver($m->id);
 
-        // Filtered data for display (chart, stats, riwayat)
-        $data = $semesterTujuan
+        // Filtered data for display (chart, stats, riwayat).
+        // semesterTujuan = 0 (mahasiswa belum aktif di TA itu) => kosong,
+        // bukan tampil semua. null (tanpa filter) => tampil semua.
+        $data = !is_null($semesterTujuan)
             ? $allData->filter(fn($r) => $r->semester <= $semesterTujuan)->values()
             : $allData;
 

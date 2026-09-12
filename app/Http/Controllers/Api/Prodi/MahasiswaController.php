@@ -38,7 +38,7 @@ class MahasiswaController extends Controller
             $query->where('kategori', $request->kategori);
         }
         if ($request->status && $request->status !== 'Semua Status') {
-            if ($tahunAjaran && $request->status === 'Aktif') {
+            if ($ta && $request->status === 'Aktif') {
                 // Historically active, skip strict current status filter
             } else {
                 $query->where('status', $request->status);
@@ -80,10 +80,10 @@ class MahasiswaController extends Controller
                 case 'IPK Terendah → Tertinggi': $query->orderBy('ipk_calc'); break;
                 case 'Nama A–Z':           $query->orderBy('nama'); break;
                 case 'Angkatan Terbaru':   $query->orderByDesc('angkatan'); break;
-                default:                   $query->orderBy('nim'); break;
+                default:                   $query->orderByDesc('ipk_calc'); break;
             }
         } else {
-            $query->orderBy('nim');
+            $query->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 10);
@@ -122,7 +122,7 @@ class MahasiswaController extends Controller
         $m = Mahasiswa::with([
             'prodi',
             'user.contactHistories',
-            'ipkSemestrs' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'ipk_semestrs.created_at', $ta)->with('mataKuliahs'),
+            'ipkSemestrs' => fn($q) => $q->with('mataKuliahs'),
             'dokumens' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $ta)->with('jenis'),
             'suratPeringatans' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'surat_peringatans.tanggal_terbit', $ta)->orderByDesc('tanggal_terbit'),
             'prestasis' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'prestasis.tanggal_mulai', $ta),
@@ -132,6 +132,14 @@ class MahasiswaController extends Controller
         ])
             ->where('prodi_id', $prodiId)
             ->findOrFail($id);
+
+        // Filter riwayat semester: batasi ke semester tujuan tahun ajaran
+        // terpilih (tanpa filter => tahun ajaran aktif sekarang; hasil 0 =
+        // kosong) & buang baris kosong (ips = 0).
+        $ipkList = $m->ipkSemestrs;
+        $semesterTujuan = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $ta);
+        $ipkList = $ipkList->filter(fn($s) => (int) $s->semester <= $semesterTujuan)->values();
+        $m->setRelation('ipkSemestrs', $ipkList->filter(fn($s) => (float) $s->ips != 0)->values());
 
 
         // Compute IPK stats

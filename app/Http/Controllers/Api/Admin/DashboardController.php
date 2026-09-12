@@ -78,9 +78,10 @@ class DashboardController extends Controller
             ->select('mahasiswas.id');
         if ($taStartYear) {
             $sem8Base->where('mahasiswas.angkatan', '<=', $taStartYear);
-        }
-        if ($range) {
-            $sem8Base->where('ipk_semestrs.created_at', '<=', $range[1]);
+            // Batas semester (created_at tidak dipakai: seluruh baris hasil sync
+            // LSIPD punya created_at yang sama).
+            $termValue = (str_contains($tahunAjaran ?? '', 'Genap') || str_ends_with($tahunAjaran ?? '', '-2')) ? 2 : 1;
+            $sem8Base->whereRaw('ipk_semestrs.semester <= ((? - mahasiswas.angkatan) * 2) + ?', [$taStartYear, $termValue]);
         }
         $semesterLebih8 = (clone $sem8Base)
             ->groupBy('mahasiswas.id')

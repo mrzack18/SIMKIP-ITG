@@ -17,21 +17,30 @@ const getNextSP = (current: string | null): SPLevel => {
   return "SP3";
 };
 
+/**
+ * Tanggal hari ini (YYYY-MM-DD) menurut zona waktu lokal pengguna (WIB).
+ * Sengaja tidak memakai toISOString() yang selalu UTC — di WIB, pemakaian
+ * toISOString() sebelum pukul 07:00 menghasilkan tanggal kemarin.
+ */
+const todayLocal = (): string => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 export default function TerbitkanSP() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Prefill mahasiswa from URL params (when navigated from detail page)
   useEffect(() => {
-    const mhsId = searchParams.get("mahasiswa_id");
     const mhsNim = searchParams.get("nim");
     const mhsNama = searchParams.get("nama");
     const mhsProdi = searchParams.get("prodi");
     const mhsIpk = searchParams.get("ipk");
 
-    if (mhsId && mhsNim && mhsNama) {
+    if (mhsNim && mhsNama) {
       const prefilled: Mahasiswa = {
-        id: Number(mhsId),
         nim: mhsNim,
         nama: decodeURIComponent(mhsNama),
         prodi: decodeURIComponent(mhsProdi ?? ""),
@@ -45,7 +54,7 @@ export default function TerbitkanSP() {
       setSelected(prefilled);
       setQuery(prefilled.nama);
       // Also fetch SP history for this student
-      getMahasiswaSpHistory(Number(mhsId)).then(history => {
+      getMahasiswaSpHistory(mhsNim).then(history => {
         setStudentSpData(history);
         const used = history.map((sp: any) => sp.level);
         let defaultLevel = "SP1";
@@ -68,7 +77,7 @@ export default function TerbitkanSP() {
   const [jenisP, setJenisP]       = useState("");
   const [jenisPelanggaranOptions, setJenisPelanggaranOptions] = useState<any[]>([]);
   const [deskripsi, setDeskripsi] = useState("");
-  const [tanggalTerbit, setTanggalTerbit] = useState(() => new Date().toISOString().slice(0, 10));
+  const [tanggalTerbit, setTanggalTerbit] = useState(() => todayLocal());
   const [batasEvaluasi, setBatasEvaluasi] = useState("");
   const [catatan, setCatatan]     = useState("");
   const [tahunAjaran, setTahunAjaran] = useState("Semua");
@@ -125,7 +134,7 @@ export default function TerbitkanSP() {
     setSearchResults([]);
     
     try {
-      const history = await getMahasiswaSpHistory(m.id);
+      const history = await getMahasiswaSpHistory(m.nim);
       setStudentSpData(history);
       
       const used = history.map((sp: any) => sp.level);

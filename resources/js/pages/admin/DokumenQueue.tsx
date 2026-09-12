@@ -659,35 +659,35 @@ export default function DokumenQueue() {
       setPreviewIpk(null);
       return;
     }
-    const mhsId = reviewing.mahasiswas_id;
-    if (!mhsId) return;
+    const mhsNim = reviewing.nim;
+    if (!mhsNim) return;
 
     const idPrefix = String(reviewing.id);
     if (idPrefix.startsWith("prestasi_")) {
       const itemId = Number(idPrefix.replace("prestasi_", ""));
-      getMahasiswaPrestasi(mhsId, tahunAjaran)
+      getMahasiswaPrestasi(mhsNim, tahunAjaran)
         .then((list) => setPreviewPrestasi(list.find((p: any) => p.id === itemId) || null));
     } else if (idPrefix.startsWith("organisasi_")) {
       const itemId = Number(idPrefix.replace("organisasi_", ""));
-      getMahasiswaOrganisasi(mhsId, tahunAjaran)
+      getMahasiswaOrganisasi(mhsNim, tahunAjaran)
         .then((list) => setPreviewOrganisasi(list.find((o: any) => o.id === itemId) || null));
     } else if (idPrefix.startsWith("pelatihan_")) {
       const itemId = Number(idPrefix.replace("pelatihan_", ""));
-      getMahasiswaPelatihan(mhsId, tahunAjaran)
+      getMahasiswaPelatihan(mhsNim, tahunAjaran)
         .then((list) => setPreviewPelatihan(list.find((p: any) => p.id === itemId) || null));
         } else if (idPrefix.startsWith("ipk_")) {
       const itemId = Number(idPrefix.replace("ipk_", ""));
-      getMahasiswaIpk(mhsId, tahunAjaran).then(list => {
+      getMahasiswaIpk(mhsNim, tahunAjaran).then(list => {
         setPreviewIpk(list.find((ipk: any) => ipk.id === itemId) || null);
       });
     } else if (idPrefix.startsWith("doc_")) {
       const itemId = Number(idPrefix.replace("doc_", ""));
-      getMahasiswaDokumen(mhsId, tahunAjaran).then(list => {
+      getMahasiswaDokumen(mhsNim, tahunAjaran).then(list => {
         setPreviewGeneric(list.find((d: any) => d.id === itemId) || null);
       });
 
       if (reviewing.jenis === "KHS") {
-        getMahasiswaIpk(mhsId, tahunAjaran).then(list => {
+        getMahasiswaIpk(mhsNim, tahunAjaran).then(list => {
           const semMatch = reviewing.catatan?.match(/Semester\s+(\d+)/i);
           if (semMatch) {
             const sem = Number(semMatch[1]);

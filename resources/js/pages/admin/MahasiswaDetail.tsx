@@ -56,7 +56,7 @@ const TAB_LABELS = [
 ]
 
 export default function MahasiswaDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { nim } = useParams<{ nim: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
   const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
@@ -159,7 +159,7 @@ export default function MahasiswaDetail() {
   const [dokumenError, setDokumenError] = useState<any>(null)
   const [btError, setBtError] = useState<any>(null)
 
-  const mhsId = Number(id)
+  const mhsId = nim
 
   useEffect(() => {
     let active = true

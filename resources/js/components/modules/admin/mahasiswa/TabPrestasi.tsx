@@ -6,19 +6,13 @@ import {
   MapPin,
   AlertTriangle,
   ExternalLink,
-  XCircle,
-  Building2,
-  FileText,
-  Download,
-  Eye,
-  Image,
 } from "lucide-react"
 import {
   getApprovalStatusBadge as statusBadge,
   ApprovalStatusIcon as StatusIcon,
 } from "@/constants/status"
 import { BackendNotReady } from "./Shared"
-import { downloadFile } from "@/utils/fileUrl"
+import { PrestasiDetailModal } from "./DetailModals"
 
 export function TabPrestasi({ data, loading, error }: { data: any[]; loading: boolean; error?: any }) {
   const [subTab, setSubTab] =
@@ -52,12 +46,6 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
   const filtered = data.filter(
     (p) => p.tingkat === subTab && (p.status === "Disetujui" || p.status === "approved"),
   )
-
-  const tingkatBadgeStyle = (tingkat: string) => {
-    if (tingkat === "Internasional") return "bg-purple-100 text-purple-700"
-    if (tingkat === "Nasional") return "bg-blue-100 text-blue-700"
-    return "bg-green-100 text-green-700"
-  }
 
   const fmtDate = (iso: string) => {
     if (!iso) return "—"
@@ -196,215 +184,7 @@ export function TabPrestasi({ data, loading, error }: { data: any[]; loading: bo
       </div>
 
       {modalItem && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setModalItem(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex items-center justify-between gap-2 flex-shrink-0 min-w-0">
-              <h3 className="font-bold text-xs sm:text-sm text-gray-800 truncate">Detail Prestasi</h3>
-              <button
-                onClick={() => setModalItem(null)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 flex-shrink-0"
-              >
-                <XCircle size={18} />
-              </button>
-            </div>
-
-            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto min-w-0">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#263F93]/10">
-                  <Trophy
-                    size={22}
-                    style={{
-                      color: "#D4A72C",
-                      filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
-                    }}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-bold text-xs sm:text-sm text-gray-800 leading-snug break-words">
-                    {modalItem.namaPrestasi || modalItem.nama}
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${tingkatBadgeStyle(modalItem.tingkat)}`}
-                    >
-                      {modalItem.tingkat}
-                    </span>
-                    {modalItem.pencapaian && (
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#F5EDD4] text-[#B8860B] whitespace-nowrap">
-                        {modalItem.pencapaian}
-                      </span>
-                    )}
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 whitespace-nowrap ${statusBadge(modalItem.status)}`}
-                    >
-                      <StatusIcon status={modalItem.status} /> {modalItem.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2.5 text-sm min-w-0">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <Building2 size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <span className="text-xs text-gray-400 mr-1">Penyelenggara:</span>
-                    <span className="font-medium text-gray-700 break-words">{modalItem.penyelenggara}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <Calendar size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <span className="text-xs text-gray-400 mr-1">Tanggal:</span>
-                    <span className="font-medium text-gray-700 break-words">
-                      {fmtDate(modalItem.tanggalMulai)} – {fmtDate(modalItem.tanggalSelesai)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <MapPin size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <span className="text-xs text-gray-400 mr-1">Tempat:</span>
-                    <span className="font-medium text-gray-700 break-words">{modalItem.tempat}</span>
-                  </div>
-                </div>
-              </div>
-
-              {modalItem.deskripsi && (
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400 mb-0.5">Deskripsi</p>
-                  <p className="text-sm text-gray-700 break-words">{modalItem.deskripsi}</p>
-                </div>
-              )}
-
-              {modalItem.linkPenyelenggara && (
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400 mb-0.5">Link Penyelenggara</p>
-                  <a
-                    href={modalItem.linkPenyelenggara}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm flex items-center gap-1.5 hover:underline text-[#263F93] break-all min-w-0"
-                  >
-                    <ExternalLink size={12} className="flex-shrink-0" /> <span className="break-all">{modalItem.linkPenyelenggara}</span>
-                  </a>
-                </div>
-              )}
-
-              {modalItem.catatanAdmin && (
-                <div className="flex items-start gap-2 bg-red-50 px-3 py-2.5 rounded-xl min-w-0">
-                  <AlertTriangle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs sm:text-sm text-red-700 break-words min-w-0">
-                    <span className="font-medium">Catatan Admin:</span> {modalItem.catatanAdmin}
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Sertifikat / Piagam</p>
-                  {modalItem.fileSertifikat ? (
-                    <div className="rounded-xl border border-[#E2E8F0] overflow-hidden">
-                      {modalItem.fileSertifikat.toLowerCase().endsWith(".pdf") ? (
-                        <iframe
-                          src={modalItem.fileSertifikat}
-                          className="w-full h-40 border-0"
-                          title="Sertifikat"
-                        />
-                      ) : (
-                        <img
-                          src={modalItem.fileSertifikat}
-                          alt="Sertifikat"
-                          className="w-full h-40 object-cover"
-                        />
-                      )}
-                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-[#F8FAFC]">
-                        <a
-                          href={modalItem.fileSertifikat}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
-                        >
-                          <Eye size={11} /> Pratinjau
-                        </a>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            downloadFile("prestasi", modalItem.id, "file_sertifikat").catch((err) =>
-                              alert(err?.message || "Gagal mengunduh file")
-                            );
-                          }}
-                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
-                        >
-                          <Download size={11} /> Download
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
-                      <FileText size={22} className="text-gray-300" />
-                      <p className="text-xs text-gray-400">Belum diunggah</p>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1.5">Foto Kegiatan</p>
-                  {modalItem.fileFoto ? (
-                    <div className="rounded-xl border border-[#E2E8F0] overflow-hidden">
-                      <img
-                        src={modalItem.fileFoto}
-                        alt="Foto Kegiatan"
-                        className="w-full h-40 object-cover"
-                      />
-                      <div className="grid grid-cols-2 divide-x divide-gray-200 bg-[#F8FAFC]">
-                        <a
-                          href={modalItem.fileFoto}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
-                        >
-                          <Eye size={11} /> Pratinjau
-                        </a>
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            downloadFile("prestasi", modalItem.id, "file_foto").catch((err) =>
-                              alert(err?.message || "Gagal mengunduh file")
-                            );
-                          }}
-                          className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-[#263F93] hover:bg-gray-100 transition-colors"
-                        >
-                          <Download size={11} /> Download
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-[#F8FAFC] rounded-xl border border-dashed border-[#E2E8F0] flex flex-col items-center justify-center gap-1.5 py-4">
-                      <Image size={22} className="text-gray-300" />
-                      <p className="text-xs text-gray-400">Belum diunggah</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-[#E2E8F0] flex-shrink-0">
-              <button
-                onClick={() => setModalItem(null)}
-                className="w-full px-4 py-2.5 text-sm font-medium border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
+        <PrestasiDetailModal item={modalItem} onClose={() => setModalItem(null)} />
       )}
     </div>
   )

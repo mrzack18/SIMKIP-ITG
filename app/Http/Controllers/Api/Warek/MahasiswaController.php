@@ -38,7 +38,17 @@ class MahasiswaController extends Controller
             $query->where('status', $request->status);
         }
 
-        $query->orderBy('nama');
+        if ($request->sortBy) {
+            switch ($request->sortBy) {
+                case 'IPK Terendah → Tertinggi': $query->orderBy('ipk_calc'); break;
+                case 'Nama A–Z':                 $query->orderBy('nama'); break;
+                case 'Angkatan Terbaru':         $query->orderByDesc('angkatan'); break;
+                case 'IPK Tertinggi → Terendah':
+                default:                         $query->orderByDesc('ipk_calc'); break;
+            }
+        } else {
+            $query->orderByDesc('ipk_calc');
+        }
 
         $limit = (int) ($request->limit ?? 8); // FE uses page size 8
         $page  = (int) ($request->page ?? 1);

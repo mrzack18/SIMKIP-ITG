@@ -112,9 +112,25 @@ class TahunAjaranHelper
     public static function calculateSemester(int $angkatan, ?string $tahunAjaran = null): int
     {
         if (!$tahunAjaran || $tahunAjaran === 'Semua') {
-            $thn = \App\Models\Konfigurasi::get('tahun_akademik_aktif', '2025/2026');
-            $sem = \App\Models\Konfigurasi::get('semester_aktif', 'Genap');
-            $tahunAjaran = "$thn $sem";
+            $thn = \App\Models\Konfigurasi::get('tahun_akademik_aktif');
+            $sem = \App\Models\Konfigurasi::get('semester_aktif');
+            if ($thn && $sem) {
+                $tahunAjaran = "$thn $sem";
+            } elseif ($periode = \App\Models\Konfigurasi::get('periode_input_tahun_ajaran')) {
+                // Periode input LSIPD, mis. "2026/2027 Ganjil"
+                $tahunAjaran = $periode;
+            } else {
+                // Last resort: turunkan dari bulan kalender berjalan.
+                $month = (int) date('n');
+                $year  = (int) date('Y');
+                if ($month >= 8) {
+                    $tahunAjaran = "$year/" . ($year + 1) . ' Ganjil';
+                } elseif ($month >= 2) {
+                    $tahunAjaran = ($year - 1) . "/$year Genap";
+                } else {
+                    $tahunAjaran = ($year - 1) . "/$year Ganjil";
+                }
+            }
         }
         
         if (!$tahunAjaran) return 0;

@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DokumenJenis;
 use App\Models\Konfigurasi;
+use App\Models\Mahasiswa;
 use App\Models\Prodi;
 use App\Models\NilaiMutu;
 use App\Models\JenisPelanggaran;
@@ -18,8 +19,32 @@ class KonfigurasiController extends Controller
         return response()->json(['success' => true, 'data' => Konfigurasi::all()->keyBy('key')]);
     }
 
+    /** Kunci yang boleh ditulis role admin — 5 ambang batas akademik. */
+    private const ADMIN_WRITABLE_KEYS = [
+        'ipk_minimum',
+        'masa_tenggang_sp',
+        'max_semester',
+        'sks_minimum_semester',
+        'sks_minimum_lulus',
+    ];
+
     public function update(Request $request): JsonResponse
     {
+        // lsipd tidak dibatasi. Role lain diperlakukan terbatas (fail-closed),
+        // supaya menambah role baru ke middleware route tidak diam-diam
+        // memberi akses tulis penuh atas konfigurasi global.
+        if (! in_array($request->user()?->role, ['lsipd'], true)) {
+            $terlarang = array_diff(array_keys($request->all()), self::ADMIN_WRITABLE_KEYS);
+
+            if ($terlarang !== []) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin hanya boleh mengubah ambang batas akademik.',
+                    'keys'    => array_values($terlarang),
+                ], 403);
+            }
+        }
+
         foreach ($request->all() as $key => $value) {
             Konfigurasi::updateOrCreate(
                 ['key' => $key],
@@ -155,6 +180,11 @@ public function getPeriode(): JsonResponse
                 ],
                 'aturan_akademik' => [
                     'ipk_minimum' => $konfig['ipk_minimum'] ?? '3.00',
+                    // Ketiga key ini dulu hanya bisa ditulis, tidak pernah dibaca —
+                    // akibatnya tab Regulasi selalu kembali ke konstanta setelah simpan.
+                    'masa_tenggang_sp' => $konfig['masa_tenggang_sp'] ?? '90',
+                    'max_semester' => $konfig['max_semester'] ?? '8',
+                    'sks_minimum_semester' => $konfig['sks_minimum_semester'] ?? '18',
                     'sks_minimum_lulus' => $konfig['sks_minimum_lulus'] ?? '144',
                 ],
                 'periode_aktif' => [
@@ -175,6 +205,8 @@ public function getPeriode(): JsonResponse
                 'tahun_ajaran_list'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
                 'prodis' => Prodi::all(),
                 'dokumens' => DokumenJenis::with('fields')->orderBy('urutan')->get(),
+                // Dipakai tab Periode Input sebagai gambaran dampak periode yang aktif.
+                'mahasiswa_count_aktif' => Mahasiswa::where('status', 'Aktif')->count(),
             ]
         ]);
     }

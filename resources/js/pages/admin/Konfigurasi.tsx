@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "@/services/api"
+import type { Role } from "@/types"
 import {
   getPeriodeList,
   createPeriode,
@@ -137,7 +138,19 @@ function AddFieldInline({ dokumenId, onAdded }: { dokumenId: number; onAdded: ()
   );
 }
 
-export default function Konfigurasi() {
+type TabKey =
+  | "threshold" | "tahun" | "periode" | "prodi" | "dokumen"
+  | "institusi" | "nilai" | "regulasi" | "pelanggaran"
+
+/** Tab yang boleh dilihat role admin — sengaja hanya 5 dari 9. */
+const ADMIN_TAB_KEYS: TabKey[] = ["threshold", "periode", "dokumen", "regulasi", "pelanggaran"]
+
+interface KonfigurasiProps {
+  /** Role pemakai halaman. Menentukan tab yang tampil. Default "lsipd" (9 tab). */
+  role?: Role
+}
+
+export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
   const [activeSection, setActiveSection] = useState("threshold")
   const [ipkMin, setIpkMin] = useState(3.0)
   const [showIpkWarning, setShowIpkWarning] = useState(false)
@@ -200,9 +213,9 @@ export default function Konfigurasi() {
     { id: 3, nama: "Batas Semester Studi", deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K", nilai: "8", tipe: "number", aktif: true },
     { id: 4, nama: "Minimum SKS per Semester", deskripsi: "Jumlah SKS minimum yang harus diambil mahasiswa per semester", nilai: "18", tipe: "number", aktif: true },
   */
-  const [showAddRegulasi, setShowAddRegulasi] = useState(false)
+  // Tidak ada state "tambah regulasi": kelima baris Regulasi adalah key tetap
+  // di tabel konfigurasi (lihat catatan di tab Regulasi).
   const [editRegulasi, setEditRegulasi] = useState<number | null>(null)
-  const [regulasiForm, setRegulasiForm] = useState({ nama: "", deskripsi: "", nilai: "", tipe: "number" as "number" | "text" })
   const [editRegulasiRow, setEditRegulasiRow] = useState<{nama: string, deskripsi: string, nilai: string, tipe: "number" | "text"} | null>(null)
 
   // Section 8 State: Jenis Pelanggaran
@@ -213,11 +226,9 @@ export default function Konfigurasi() {
     try {
       const list = await getPeriodeList();
       setPeriodeList(list);
-      // Hitung mahasiswa KIP-K aktif sebagai preview dampak
-      const mhsRes: any = await api.get("/konfigurasi/all");
-      const stats = mhsRes?.data?.mahasiswa_count_aktif ?? null;
-      if (typeof stats === "number") setTotalMahasiswaAktif(stats);
-    } catch {}
+    } catch (e: any) {
+      console.error("[Konfigurasi] gagal memuat periode:", e?.status, e?.message);
+    }
   }
 
   const fetchData = async () => {
@@ -244,10 +255,15 @@ export default function Konfigurasi() {
         setTahunAjaranOptions(d.tahun_ajaran_options || [])
         setTahunAjaranList(d.tahun_ajaran_list || [])
 
+        // Preview dampak periode aktif, dikirim indexAll() sebagai mahasiswa_count_aktif.
+        if (typeof d.mahasiswa_count_aktif === "number") setTotalMahasiswaAktif(d.mahasiswa_count_aktif)
+
         const ipkMinObj = regArr.find((r:any) => r.nama === "IPK Minimum")
         if (ipkMinObj) setIpkMin(parseFloat(ipkMinObj.nilai))
       }
-    } catch(e) {}
+    } catch (e: any) {
+      console.error("[Konfigurasi] gagal memuat data:", e?.status, e?.message);
+    }
   }
 
   useEffect(() => {
@@ -271,20 +287,37 @@ export default function Konfigurasi() {
   }
 
   
-  const saveRegulasiAll = async () => {
+  /**
+   * Menyimpan kelima ambang batas akademik.
+   *
+   * `rows` eksplisit diperlukan karena setState belum flush saat handler klik
+   * berjalan — pemanggil dari tab Regulasi mengirim baris hasil edit langsung.
+   * `syncIpkWidget` dimatikan oleh pemanggil itu supaya nilai dari widget IPK
+   * tidak menimpa edit baris "IPK Minimum".
+   */
+  const saveRegulasiAll = async (rows = regulasi, syncIpkWidget = true) => {
     const payload: any = {};
-    regulasi.forEach(r => {
+    rows.forEach(r => {
        if(r.nama === 'IPK Minimum') payload.ipk_minimum = r.nilai;
        if(r.nama === 'Masa Tenggang SP') payload.masa_tenggang_sp = r.nilai;
        if(r.nama === 'Batas Semester Studi') payload.max_semester = r.nilai;
        if(r.nama === 'Minimum SKS per Semester') payload.sks_minimum_semester = r.nilai;
        if(r.nama === 'Total SKS Kelulusan') payload.sks_minimum_lulus = r.nilai;
     });
-    payload.ipk_minimum = ipkMin; // from the dedicated UI
-    await api.put('/konfigurasi', payload);
-    fetchData();
-    setShowIpkWarning(false);
-    showToast("Konfigurasi berhasil disimpan");
+    if (syncIpkWidget) payload.ipk_minimum = ipkMin; // from the dedicated UI
+    try {
+      await api.put('/konfigurasi', payload);
+      await fetchData();
+      setShowIpkWarning(false);
+      showToast("Konfigurasi berhasil disimpan");
+      return true;
+    } catch (e: any) {
+      // 403 dari penjaga per-key admin, atau kegagalan jaringan — jangan biarkan
+      // modal IPK menggantung tanpa umpan balik.
+      console.error("[Konfigurasi] gagal menyimpan:", e?.status, e?.message);
+      showToast(e?.message || "Gagal menyimpan konfigurasi");
+      return false;
+    }
   }
 
   const handleProdiSave = async () => {
@@ -313,12 +346,14 @@ export default function Konfigurasi() {
       showToast("Tersimpan");
   }
 
-  const handleTogglePelanggaran = async (id: number, aktif: boolean) => {
-      // Actually we just update aktif
-      const p = jenisPelanggaran.find(x => x.id === id);
-      if(p) {
-          await api.put('/konfigurasi/pelanggaran/'+id, {...p, aktif: !aktif});
-          fetchData();
+  const handleTogglePelanggaran = async (id: number) => {
+      try {
+          // Pakai endpoint toggle khusus supaya tidak menulis ulang seluruh baris.
+          await api.patch('/konfigurasi/pelanggaran/'+id+'/toggle');
+          await fetchData();
+      } catch (e: any) {
+          console.error("[Konfigurasi] gagal mengubah status pelanggaran:", e?.status, e?.message);
+          showToast(e?.message || "Gagal mengubah status pelanggaran");
       }
   }
   // Section 2 handlers (Periode)
@@ -466,16 +501,35 @@ export default function Konfigurasi() {
   };
 
   const handleSavePelanggaran = async (data: any, id: number|null = null) => {
-      if(id) {
-          await api.put('/konfigurasi/pelanggaran/'+id, data);
-      } else {
-          await api.post('/konfigurasi/pelanggaran', data);
+      try {
+          if(id) {
+              await api.put('/konfigurasi/pelanggaran/'+id, data);
+          } else {
+              await api.post('/konfigurasi/pelanggaran', data);
+          }
+          await fetchData();
+          showToast("Tersimpan");
+          return true;
+      } catch (e: any) {
+          // storePelanggaran memvalidasi nama unik → nama duplikat membalas 422.
+          console.error("[Konfigurasi] gagal menyimpan pelanggaran:", e?.status, e?.message);
+          showToast(e?.message || "Gagal menyimpan jenis pelanggaran");
+          return false;
       }
-      fetchData();
-      showToast("Tersimpan");
   }
 
-  const TABS: { key: string; label: string; icon: any }[] = [
+  const handleDeletePelanggaran = async (id: number) => {
+      try {
+          await api.delete('/konfigurasi/pelanggaran/'+id);
+          await fetchData();
+          showToast("Jenis pelanggaran dihapus");
+      } catch (e: any) {
+          console.error("[Konfigurasi] gagal menghapus pelanggaran:", e?.status, e?.message);
+          showToast(e?.message || "Gagal menghapus jenis pelanggaran");
+      }
+  }
+
+  const ALL_TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "threshold",  label: "IPK",          icon: Thermometer },
     { key: "tahun",      label: "Tahun Ajaran", icon: BookOpen },
     { key: "periode",    label: "Periode Input",icon: Timer },
@@ -486,6 +540,22 @@ export default function Konfigurasi() {
     { key: "regulasi",   label: "Regulasi",     icon: Scale },
     { key: "pelanggaran",label: "Pelanggaran",  icon: ShieldAlert },
   ]
+
+  // admin hanya melihat sebagian tab; lsipd melihat semuanya.
+  const allowedKeys: TabKey[] = role === "admin" ? ADMIN_TAB_KEYS : ALL_TABS.map((t) => t.key)
+  const TABS = ALL_TABS.filter((t) => allowedKeys.includes(t.key))
+
+  // Cadangan bila activeSection berada di luar daftar tab role ini — diselesaikan
+  // pada render yang sama, tanpa useEffect, sehingga section milik role lain
+  // tidak pernah sempat tampil.
+  const current: TabKey = allowedKeys.includes(activeSection as TabKey)
+    ? (activeSection as TabKey)
+    : TABS[0].key
+  const show = (key: TabKey) => current === key
+
+  // Nomor section diturunkan dari tab yang SEDANG tampil, supaya penomorannya
+  // selalu urut: admin 1..5, lsipd tetap 1..9 seperti sebelumnya.
+  const sectionNum = (key: TabKey) => TABS.findIndex((t) => t.key === key) + 1
 
   return (
     <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
@@ -502,7 +572,7 @@ export default function Konfigurasi() {
       <div className="sticky top-14 z-20 bg-[#F1F5F9]/95 backdrop-blur-sm flex gap-1.5 overflow-x-auto pb-1.5 -mx-1 px-1 flex-nowrap pt-1">
         {TABS.map((t) => {
           const Icon = t.icon;
-          const isActive = activeSection === t.key;
+          const isActive = current === t.key;
           return (
             <button
               key={t.key}
@@ -521,10 +591,10 @@ export default function Konfigurasi() {
       </div>
 
       {/* Section 1: IPK Threshold */}
-      {activeSection === "threshold" && (
+      {show("threshold") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <SectionHeader
-            num={1}
+            num={sectionNum("threshold")}
             title="Ambang Batas IPK (Threshold)"
             onSave={() => setShowIpkWarning(true)}
           />
@@ -588,12 +658,12 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 2: Master Tahun Ajaran */}
-      {activeSection === "tahun" && (
+      {show("tahun") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
-                2
+                {sectionNum("tahun")}
               </div>
               <div className="min-w-0">
                 <h2 className="font-600 text-gray-800 text-sm">Master Tahun Ajaran</h2>
@@ -675,12 +745,12 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 3: Periode Input Nilai (single source of truth: tabel periode_akademiks) */}
-      {activeSection === "periode" && (
+      {show("periode") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 bg-gray-50/50 min-w-0">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-6 h-6 rounded-full bg-[#263F93] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
-                3
+                {sectionNum("periode")}
               </div>
               <div className="min-w-0">
                 <h2 className="font-600 text-gray-800 text-sm">Periode Input Nilai KHS</h2>
@@ -806,9 +876,9 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 4: Master Prodi */}
-      {activeSection === "prodi" && (
+      {show("prodi") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
-          <SectionHeader num={4} title="Master Data Program Studi" />
+          <SectionHeader num={sectionNum("prodi")} title="Master Data Program Studi" />
         <div className="p-3 sm:p-4 space-y-3 min-w-0">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[520px] text-sm">
@@ -917,10 +987,10 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 5: Dokumen Kewajiban */}
-      {activeSection === "dokumen" && (
+      {show("dokumen") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <SectionHeader
-          num={5}
+          num={sectionNum("dokumen")}
           title="Jenis Dokumen Kewajiban"
           onSave={() => showToast("Konfigurasi dokumen disimpan")}
         />
@@ -1000,10 +1070,10 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 6: Informasi Institusi */}
-      {activeSection === "institusi" && (
+      {show("institusi") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <SectionHeader
-            num={6}
+            num={sectionNum("institusi")}
             title="Informasi Institusi"
             onSave={() => showToast("Informasi institusi diperbarui")}
           />
@@ -1047,10 +1117,10 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 7: Konfigurasi Nilai Mutu */}
-      {activeSection === "nilai" && (
+      {show("nilai") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <SectionHeader
-            num={7}
+            num={sectionNum("nilai")}
             title="Konfigurasi Nilai Mutu"
             onSave={() => showToast("Konfigurasi nilai mutu berhasil disimpan")}
           />
@@ -1344,12 +1414,13 @@ export default function Konfigurasi() {
       )}
 
       {/* Section 8: Regulasi & Aturan */}
-      {activeSection === "regulasi" && (
+      {show("regulasi") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
           <SectionHeader
-            num={8}
+            num={sectionNum("regulasi")}
             title="Regulasi & Aturan"
-            onSave={() => showToast("Regulasi berhasil disimpan")}
+            /* syncIpkWidget=false: simpan persis yang tampil di tabel ini. */
+            onSave={() => saveRegulasiAll(regulasi, false)}
           />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -1412,11 +1483,14 @@ export default function Konfigurasi() {
                     <td className="px-4 py-3 align-top">
                       {editRegulasi === r.id && editRegulasiRow ? (
                         <div className="flex gap-1.5">
-                          <button onClick={() => {
-                            if (editRegulasiRow) {
-                              setRegulasi(prev => prev.map(x => x.id === r.id ? { ...x, ...editRegulasiRow } : x))
-                              showToast(`Aturan berhasil diperbarui`)
-                            }
+                          <button onClick={async () => {
+                            if (!editRegulasiRow) return
+                            // Baris hasil edit dikirim eksplisit: setState belum flush di sini.
+                            // syncIpkWidget=false agar edit baris "IPK Minimum" tidak ditimpa widget IPK.
+                            const next = regulasi.map(x => x.id === r.id ? { ...x, ...editRegulasiRow } : x)
+                            const ok = await saveRegulasiAll(next, false)
+                            if (!ok) return
+                            setRegulasi(next)
                             setEditRegulasi(null)
                             setEditRegulasiRow(null)
                           }} className="px-2.5 py-1 rounded-lg text-xs font-500 text-white bg-[#263F93]">Simpan</button>
@@ -1425,12 +1499,9 @@ export default function Konfigurasi() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <button onClick={() => { setEditRegulasi(r.id); setEditRegulasiRow({ nama: r.nama, deskripsi: r.deskripsi, nilai: r.nilai, tipe: r.tipe as any }) }} className="text-xs text-[#263F93] hover:underline font-500">Edit</button>
-                          <button onClick={() => {
-                            if (window.confirm("Hapus regulasi ini?")) {
-                              setRegulasi(prev => prev.filter(x => x.id !== r.id))
-                              showToast("Regulasi dihapus")
-                            }
-                          }} className="text-xs text-red-500 hover:underline font-500">Hapus</button>
+                          {/* Tidak ada tombol Hapus: kelima baris ini adalah key tetap di tabel
+                              konfigurasi, jadi menghapusnya hanya membuat fetchData() memulihkan
+                              barisnya dari nilai default. */}
                         </div>
                       )}
                     </td>
@@ -1440,56 +1511,21 @@ export default function Konfigurasi() {
             </table>
           </div>
 
-          {showAddRegulasi ? (
-            <div className="bg-gray-50 rounded-xl p-3.5 sm:p-4 border border-gray-200 mt-4 space-y-3 min-w-0">
-              <h3 className="text-sm font-600 text-gray-800 border-b border-gray-200 pb-2">Tambah Regulasi Baru</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
-                <div>
-                  <label className="block text-xs font-500 text-gray-600 mb-1">Nama Aturan</label>
-                  <input type="text" value={regulasiForm.nama} onChange={(e) => setRegulasiForm({ ...regulasiForm, nama: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-500 text-gray-600 mb-1">Tipe Nilai</label>
-                  <div className="flex items-center gap-4 mt-2">
-                    <label className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" checked={regulasiForm.tipe === "number"} onChange={() => setRegulasiForm({ ...regulasiForm, tipe: "number" })} className="text-[#263F93]" /> Angka</label>
-                    <label className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" checked={regulasiForm.tipe === "text"} onChange={() => setRegulasiForm({ ...regulasiForm, tipe: "text" })} className="text-[#263F93]" /> Teks</label>
-                  </div>
-                </div>
-                <div className="sm:col-span-2 min-w-0">
-                  <label className="block text-xs font-500 text-gray-600 mb-1">Deskripsi</label>
-                  <textarea value={regulasiForm.deskripsi} onChange={(e) => setRegulasiForm({ ...regulasiForm, deskripsi: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm min-w-0" rows={2} />
-                </div>
-                <div>
-                  <label className="block text-xs font-500 text-gray-600 mb-1">Nilai/Parameter</label>
-                  <input type={regulasiForm.tipe} value={regulasiForm.nilai} onChange={(e) => setRegulasiForm({ ...regulasiForm, nilai: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                </div>
-              </div>
-              <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 min-[420px]:justify-end pt-2">
-                <button onClick={() => setShowAddRegulasi(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg whitespace-nowrap">Batal</button>
-                <button onClick={() => {
-                  setRegulasi(prev => [...prev, { id: Date.now(), ...regulasiForm, aktif: true }]);
-                  setShowAddRegulasi(false);
-                  setRegulasiForm({ nama: "", deskripsi: "", nilai: "", tipe: "number" });
-                  showToast("Regulasi baru ditambahkan");
-                }} className="px-4 py-2 text-sm text-white font-500 rounded-lg whitespace-nowrap" style={{ background: "#263F93" }}>Simpan</button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setShowAddRegulasi(true)} className="flex items-center gap-2 text-sm text-[#263F93] hover:underline mt-2">
-              <Plus size={14} /> Tambah Regulasi Baru
-            </button>
-          )}
+          {/* Tidak ada "Tambah Regulasi Baru": kelima baris ini key tetap di tabel
+              konfigurasi, jadi menambah baris hanya menciptakan key asing yang
+              ditolak untuk admin (403) dan menjadi key yatim untuk lsipd. */}
         </div>
       </div>
       )}
 
       {/* Section 9: Jenis Pelanggaran */}
-      {activeSection === "pelanggaran" && (
+      {show("pelanggaran") && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-w-0">
+          {/* Tanpa onSave: tiap baris tersimpan sendiri (toggle/edit/tambah/hapus),
+              jadi tombol "Simpan" di header tidak punya apa pun untuk disimpan. */}
           <SectionHeader
-            num={9}
+            num={sectionNum("pelanggaran")}
             title="Jenis Pelanggaran"
-            onSave={() => showToast("Jenis pelanggaran disimpan")}
           />
         <div className="p-3 sm:p-4 space-y-4 min-w-0">
           <div className="overflow-x-auto rounded-xl border border-gray-100 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -1543,18 +1579,17 @@ export default function Konfigurasi() {
                       )}
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <button onClick={() => setJenisPelanggaran(prev => prev.map(x => x.id === p.id ? { ...x, aktif: !x.aktif } : x))}>
+                      <button onClick={() => handleTogglePelanggaran(p.id)}>
                         {p.aktif ? <ToggleRight size={22} className="text-green-500" /> : <ToggleLeft size={22} className="text-gray-400" />}
                       </button>
                     </td>
                     <td className="px-4 py-3 align-top">
                       {editPelanggaran === p.id && editPelanggaranRow ? (
                         <div className="flex gap-1.5">
-                          <button onClick={() => {
-                            if (editPelanggaranRow) {
-                              setJenisPelanggaran(prev => prev.map(x => x.id === p.id ? { ...x, ...editPelanggaranRow } : x))
-                              showToast(`Pelanggaran berhasil diperbarui`)
-                            }
+                          <button onClick={async () => {
+                            if (!editPelanggaranRow) return
+                            const ok = await handleSavePelanggaran(editPelanggaranRow, p.id)
+                            if (!ok) return
                             setEditPelanggaran(null)
                             setEditPelanggaranRow(null)
                           }} className="px-2.5 py-1 rounded-lg text-xs font-500 text-white bg-[#263F93]">Simpan</button>
@@ -1567,8 +1602,7 @@ export default function Konfigurasi() {
                             if ([1, 2, 3].includes(p.id)) {
                               showToast("Jenis pelanggaran bawaan tidak dapat dihapus");
                             } else if (window.confirm("Hapus jenis pelanggaran ini?")) {
-                              setJenisPelanggaran(prev => prev.filter(x => x.id !== p.id))
-                              showToast("Jenis pelanggaran dihapus")
+                              handleDeletePelanggaran(p.id)
                             }
                           }} className="text-xs text-red-500 hover:underline font-500">Hapus</button>
                         </div>
@@ -1614,11 +1648,11 @@ export default function Konfigurasi() {
               </div>
               <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 min-[420px]:justify-end pt-2">
                 <button onClick={() => setShowAddPelanggaran(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg whitespace-nowrap">Batal</button>
-                <button onClick={() => {
-                  setJenisPelanggaran(prev => [...prev, { id: Date.now(), ...pelanggaranForm, aktif: true }]);
+                <button onClick={async () => {
+                  const ok = await handleSavePelanggaran(pelanggaranForm, null);
+                  if (!ok) return;
                   setShowAddPelanggaran(false);
                   setPelanggaranForm({ nama: "", deskripsi: "", eskalasi: "normal" });
-                  showToast("Jenis pelanggaran baru ditambahkan");
                 }} className="px-4 py-2 text-sm text-white font-500 rounded-lg whitespace-nowrap" style={{ background: "#263F93" }}>Simpan</button>
               </div>
             </div>
@@ -1653,7 +1687,7 @@ export default function Konfigurasi() {
                 Batal
               </button>
               <button
-                onClick={saveRegulasiAll}
+                onClick={() => saveRegulasiAll()}
                 className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white"
                 style={{ background: "#D97706" }}
               >

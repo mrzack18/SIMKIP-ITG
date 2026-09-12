@@ -1084,7 +1084,7 @@ const TAB_LABELS = [
 ]
 
 export default function WarekMahasiswaDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { nim } = useParams<{ nim: string }>()
   const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [activeTab, setActiveTab] = useState(0)
 
@@ -1101,7 +1101,7 @@ export default function WarekMahasiswaDetail() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!id) return
+    if (!nim) return
     let cancelled = false
 
     const fetchAll = async () => {
@@ -1109,14 +1109,14 @@ export default function WarekMahasiswaDetail() {
       setError(null)
       try {
         const [showRes, ipkRes, prestasiRes, organisasiRes, pelatihanRes, dokumenRes, spRes, bebasRes] = await Promise.all([
-          api.get<{ data: MahasiswaDetail; progress: any }>(`/mahasiswa/${id}?tahun_ajaran=${tahunAjaran}`),
-          api.get<{ data: SemesterDetail[] }>(`/mahasiswa/${id}/ipk?tahun_ajaran=${tahunAjaran}`),
-          api.get<{ data: any[] }>(`/mahasiswa/${id}/prestasi?tahun_ajaran=${tahunAjaran}`),
-          api.get<{ data: any[] }>(`/mahasiswa/${id}/organisasi?tahun_ajaran=${tahunAjaran}`),
-          api.get<{ data: any[] }>(`/mahasiswa/${id}/pelatihan?tahun_ajaran=${tahunAjaran}`),
-          api.get<{ data: any[] }>(`/mahasiswa/${id}/dokumen?tahun_ajaran=${tahunAjaran}`),
-          api.get<{ data: any[] }>(`/mahasiswa/${id}/sp?tahun_ajaran=${tahunAjaran}`).catch(() => ({ data: [] as any[] })),
-          api.get<{ checklist: { nama: string; terpenuhi: boolean }[] }>(`/mahasiswa/${id}/bebas-tanggungan?tahun_ajaran=${tahunAjaran}`).catch(() => ({ checklist: [] })),
+          api.get<{ data: MahasiswaDetail; progress: any }>(`/mahasiswa/${nim}?tahun_ajaran=${tahunAjaran}`),
+          api.get<{ data: SemesterDetail[] }>(`/mahasiswa/${nim}/ipk?tahun_ajaran=${tahunAjaran}`),
+          api.get<{ data: any[] }>(`/mahasiswa/${nim}/prestasi?tahun_ajaran=${tahunAjaran}`),
+          api.get<{ data: any[] }>(`/mahasiswa/${nim}/organisasi?tahun_ajaran=${tahunAjaran}`),
+          api.get<{ data: any[] }>(`/mahasiswa/${nim}/pelatihan?tahun_ajaran=${tahunAjaran}`),
+          api.get<{ data: any[] }>(`/mahasiswa/${nim}/dokumen?tahun_ajaran=${tahunAjaran}`),
+          api.get<{ data: any[] }>(`/mahasiswa/${nim}/sp?tahun_ajaran=${tahunAjaran}`).catch(() => ({ data: [] as any[] })),
+          api.get<{ checklist: { nama: string; terpenuhi: boolean }[] }>(`/mahasiswa/${nim}/bebas-tanggungan?tahun_ajaran=${tahunAjaran}`).catch(() => ({ checklist: [] })),
         ])
 
         if (cancelled) return
@@ -1145,7 +1145,7 @@ export default function WarekMahasiswaDetail() {
     return () => {
       cancelled = true;
     }
-  }, [id, tahunAjaran])
+  }, [nim, tahunAjaran])
 
   if (loading) {
     return (

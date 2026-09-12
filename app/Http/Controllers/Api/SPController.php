@@ -30,7 +30,8 @@ class SPController extends Controller
         if ($req->user()->role === "admin") return app(AdminSP::class)->updateStatus($req, $id);
         abort(403);
     }
-    public function history(Request $req, $id) {
+    public function history(Request $req, string $nim) {
+        $id = \App\Models\Mahasiswa::where('nim', $nim)->firstOrFail()->id;
         return match($req->user()->role) {
             "admin" => app(AdminSP::class)->history($req, $id),
             "warek", "prodi" => app(AdminSP::class)->history($req, $id),

@@ -46,7 +46,7 @@ export function MahasiswaSummaryCard({
               <p className="text-xs text-gray-400 mt-0.5 font-mono truncate">{mahasiswa.nim}</p>
             </div>
             <Link
-              to={`${baseRoute}/mahasiswa/${mahasiswa.id}`}
+              to={`${baseRoute}/mahasiswa/${mahasiswa.nim}`}
               aria-label={`Detail ${mahasiswa.nama}`}
               className="flex-shrink-0 w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-[#263F93] transition-colors"
             >

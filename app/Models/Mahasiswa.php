@@ -78,24 +78,44 @@ class Mahasiswa extends Model
 
     public function scopeWithDetails($query, $tahunAjaran = null)
     {
+        // Batas semester dihitung dari angkatan mahasiswa + tahun ajaran terpilih.
+        // Filter berbasis created_at tidak dipakai karena seluruh baris hasil sync
+        // LSIPD punya created_at yang sama (waktu sync), sehingga memilih TA lampau
+        // justru mengosongkan IPK/Progres IPS.
+        $startYear = null;
+        $termValue = null;
+        if ($tahunAjaran) {
+            // Normalisasi format internal frontend ("Tahun 2025/2026-1")
+            // menjadi "2025/2026 Ganjil" agar bisa di-parse.
+            $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
+        }
+        if ($tahunAjaran && preg_match('/^(\d{4})\/\d{4}\s+(Ganjil|Genap)$/', $tahunAjaran, $m)) {
+            $startYear = (int) $m[1];
+            $termValue = $m[2] === 'Genap' ? 2 : 1;
+        }
+
+        $applyIpkFilter = function ($q) use ($startYear, $termValue, $tahunAjaran) {
+            if ($startYear !== null) {
+                $q->whereRaw('ipk_semestrs.semester <= ((? - mahasiswas.angkatan) * 2) + ?', [$startYear, $termValue]);
+            } elseif ($tahunAjaran) {
+                // Fallback format tak dikenal: pertahankan filter tanggal lama.
+                $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+                if ($range) $q->where('created_at', '<=', $range[1]);
+            }
+        };
+
         $query->addSelect([
             'ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->where('status', 'Disetujui')
-                ->when($tahunAjaran, function($q) use ($tahunAjaran) {
-                    $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
-                    if ($range) $q->where('created_at', '<=', $range[1]);
-                })
+                ->when($tahunAjaran, $applyIpkFilter)
                 ->orderByDesc('semester')
                 ->limit(1),
 
             'prev_ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->where('status', 'Disetujui')
-                ->when($tahunAjaran, function($q) use ($tahunAjaran) {
-                    $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
-                    if ($range) $q->where('created_at', '<=', $range[1]);
-                })
+                ->when($tahunAjaran, $applyIpkFilter)
                 ->orderByDesc('semester')
                 ->skip(1)
                 ->limit(1),
@@ -116,10 +136,7 @@ class Mahasiswa extends Model
                 ->whereIn('ipk_semester_id', \App\Models\IpkSemestr::select('id')
                     ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                     ->where('status', 'Disetujui')
-                    ->when($tahunAjaran, function($q) use ($tahunAjaran) {
-                        $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
-                        if ($range) $q->where('created_at', '<=', $range[1]);
-                    }))
+                    ->when($tahunAjaran, $applyIpkFilter))
                 ->where('lulus', false),
         ])
         ->with('prodi');

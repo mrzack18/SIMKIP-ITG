@@ -59,6 +59,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Sesi MySQL memakai WIB (offset numerik, tidak butuh tabel tz MySQL).
+            // Wajib sejalan dengan config/app.php supaya kolom TIMESTAMP dibaca
+            // dan ditulis sebagai waktu WIB.
+            'timezone' => env('DB_TIMEZONE', '+07:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -79,6 +83,8 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Sejalan dengan koneksi mysql & config/app.php (WIB).
+            'timezone' => env('DB_TIMEZONE', '+07:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

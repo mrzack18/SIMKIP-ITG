@@ -21,22 +21,28 @@ class LsipdSyncService
      *
      * @return array{inserted:int, updated:int, skipped:int, total:int, prodi_missing:int}
      */
-    public static function syncAllMahasiswa(): array
+    public static function syncAllMahasiswa(?callable $onProgress = null): array
     {
         $items = LsipdClientService::getMahasiswaList();
 
         $stats = [
             'inserted'       => 0,
             'updated'        => 0,
+            'unchanged'      => 0,
             'skipped'        => 0,
             'total'          => count($items),
             'prodi_missing'  => 0,
         ];
 
-        foreach ($items as $item) {
+        $total = count($items);
+
+        foreach ($items as $index => $item) {
             $nim = trim((string) ($item['nim'] ?? ''));
             if ($nim === '') {
                 $stats['skipped']++;
+                if ($onProgress) {
+                    $onProgress($stats, $index + 1, $total);
+                }
                 continue;
             }
 
@@ -55,6 +61,10 @@ class LsipdSyncService
                     'reason' => $e->getMessage(),
                 ]);
                 $stats['skipped']++;
+            }
+
+            if ($onProgress) {
+                $onProgress($stats, $index + 1, $total);
             }
         }
 
@@ -177,7 +187,7 @@ class LsipdSyncService
     }
 
     /**
-     * @return 'inserted'|'updated'|'skipped'
+     * @return 'inserted'|'updated'|'unchanged'|'skipped'
      */
     private static function upsertMahasiswa(array $item): string
     {
@@ -204,7 +214,7 @@ class LsipdSyncService
                 $existing->save();
                 return 'updated';
             }
-            return 'inserted';
+            return 'unchanged';
         }
 
         if (! $prodiId) {

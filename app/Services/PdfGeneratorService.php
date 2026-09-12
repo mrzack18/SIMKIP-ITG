@@ -108,6 +108,38 @@ class PdfGeneratorService
     }
 
     /**
+     * Generate PDF tabel laporan (prestasi / organisasi / pelatihan).
+     *
+     * @param  string  $judul      Judul laporan, tampil sebagai heading.
+     * @param  array   $filters    Ringkasan filter aktif, format ['Label' => 'nilai'].
+     * @param  array   $headers    Header kolom tabel.
+     * @param  array   $rows       Baris tabel, tiap baris array skalar sepanjang $headers.
+     */
+    public static function reportingTable(string $judul, array $filters, array $headers, array $rows): Response
+    {
+        $data = [
+            'judul'      => $judul,
+            'filters'    => $filters,
+            'headers'    => $headers,
+            'rows'       => $rows,
+            'logoPath'   => self::getLogoBase64(),
+            'dicetak_at' => now()->format('d F Y H:i'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.reporting', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOptions([
+                'dpi'                  => 150,
+                'defaultFont'          => 'Times New Roman',
+                'isRemoteEnabled'      => false,
+                'isHtml5ParserEnabled' => true,
+            ]);
+
+        $safeJudul = preg_replace('/[^A-Za-z0-9]+/', '_', $judul);
+        return $pdf->download(trim($safeJudul, '_') . '.pdf');
+    }
+
+    /**
      * Ambil logo ITG sebagai base64 data URI agar DomPDF bisa render tanpa remote
      */
     private static function getLogoBase64(): string

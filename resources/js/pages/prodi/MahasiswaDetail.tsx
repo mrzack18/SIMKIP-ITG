@@ -993,7 +993,7 @@ const TAB_LABELS = [
 ]
 
 export default function MahasiswaDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { nim } = useParams<{ nim: string }>()
   const [tahunAjaran, setTahunAjaran] = useState(getCurrentTahunAjaran())
   const [activeTab, setActiveTab] = useState(0)
   const [data, setData] = useState<DetailResponse | null>(null)
@@ -1004,14 +1004,14 @@ export default function MahasiswaDetail() {
     let active = true
     setLoading(true)
     setError(null)
-    api.get<DetailResponse>(`/prodi/mahasiswa/${id}/detail?tahun_ajaran=${tahunAjaran}`)
+    api.get<DetailResponse>(`/prodi/mahasiswa/${nim}/detail?tahun_ajaran=${tahunAjaran}`)
       .then((res) => { if (active) setData(res) })
       .catch((err) => {
         if (active) setError(err?.message ?? "Gagal memuat data mahasiswa")
       })
       .finally(() => { if (active) setLoading(false); })
     return () => { active = false }
-  }, [id, tahunAjaran])
+  }, [nim, tahunAjaran])
 
   if (loading) {
     return (

@@ -9,6 +9,11 @@ use App\Models\Mahasiswa;
 
 class MahasiswaController extends Controller
 {
+    private function resolveByNim(string $nim): Mahasiswa
+    {
+        return Mahasiswa::where('nim', $nim)->firstOrFail();
+    }
+
     public function index(Request $req) {
         return match($req->user()->role) {
             "admin" => app(AdminMahasiswa::class)->index($req),
@@ -23,7 +28,8 @@ class MahasiswaController extends Controller
         abort(403);
     }
 
-    public function show(Request $req, $id) {
+    public function show(Request $req, string $nim) {
+        $id = $this->resolveByNim($nim)->id;
         return match($req->user()->role) {
             "admin" => app(AdminMahasiswa::class)->show($id),
             "prodi" => app(ProdiMahasiswa::class)->show($req, $id),
@@ -33,8 +39,8 @@ class MahasiswaController extends Controller
         };
     }
 
-    public function destroy(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->destroy($req, $id);
+    public function destroy(Request $req, string $nim) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->destroy($req, $this->resolveByNim($nim)->id);
         abort(403);
     }
 
@@ -43,23 +49,23 @@ class MahasiswaController extends Controller
         abort(403);
     }
 
-    public function updateStatus(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->updateStatus($req, $id);
+    public function updateStatus(Request $req, string $nim) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->updateStatus($req, $this->resolveByNim($nim)->id);
         abort(403);
     }
 
-    public function cabutKipk(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->cabutKipk($req, $id);
+    public function cabutKipk(Request $req, string $nim) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->cabutKipk($req, $this->resolveByNim($nim)->id);
         abort(403);
     }
 
-    public function getCatatanInternal(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->getCatatanInternal($req, $id);
+    public function getCatatanInternal(Request $req, string $nim) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->getCatatanInternal($req, $this->resolveByNim($nim)->id);
         abort(403);
     }
 
-    public function storeCatatanInternal(Request $req, $id) {
-        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->storeCatatanInternal($req, $id);
+    public function storeCatatanInternal(Request $req, string $nim) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->storeCatatanInternal($req, $this->resolveByNim($nim)->id);
         abort(403);
     }
 
@@ -107,10 +113,10 @@ class MahasiswaController extends Controller
         abort(403);
     }
 
-    public function ipk(Request $req, $id) {
+    public function ipk(Request $req, string $nim) {
         if ($req->user()->role === "mahasiswa") abort(403);
 
-        $m = Mahasiswa::findOrFail($id);
+        $m = $this->resolveByNim($nim);
         
         // Prodi authorization check
         if ($req->user()->role === "prodi") {
@@ -119,87 +125,83 @@ class MahasiswaController extends Controller
 
         $data = $m->ipkSemestrs()->with('mataKuliahs')->orderByDesc('semester')->get();
         
-        if ($req->tahun_ajaran && $req->tahun_ajaran !== 'Semua') {
-            $filterRange = \App\Helpers\TahunAjaranHelper::getDateRange($req->tahun_ajaran);
-            if ($filterRange) {
-                $data = $data->filter(function($item) use ($filterRange) {
-                    $itemRange = \App\Helpers\TahunAjaranHelper::getDateRange($item->tahun_ajaran);
-                    if ($itemRange) {
-                        return $itemRange[1] <= $filterRange[1];
-                    }
-                    return true;
-                });
-            }
-        }
+        // Batasi riwayat sampai semester tujuan tahun ajaran terpilih.
+        // Tanpa filter => pakai tahun ajaran aktif sekarang. Hasil 0 (mahasiswa
+        // belum aktif di TA itu) => tampil kosong, bukan semua.
+        $semesterTujuan = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $req->tahun_ajaran);
+        $data = $data->filter(fn($item) => (int) $item->semester <= $semesterTujuan);
+
+        // Sembunyikan baris semester kosong (tidak ada nilai IPS/IPK)
+        $data = $data->filter(fn($item) => (float) $item->ips != 0);
 
         return response()->json([
             'data' => \App\Http\Resources\SemesterDetailResource::collection($data->values())
         ]);
     }
 
-    private function checkAccessAndGetMahasiswa($req, $id) {
+    private function checkAccessAndGetMahasiswa(Request $req, string $nim): Mahasiswa {
         if ($req->user()->role === "mahasiswa") abort(403);
-        $m = Mahasiswa::findOrFail($id);
+        $m = $this->resolveByNim($nim);
         if ($req->user()->role === "prodi" && $m->prodi_id !== $req->user()->prodi_id) abort(403);
         return $m;
     }
 
-    public function prestasi(Request $req, $id) {
-        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+    public function prestasi(Request $req, string $nim) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $nim);
         $q = $m->prestasis()->with('mahasiswa.prodi');
         \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'prestasis.tanggal_mulai', $req->tahun_ajaran);
         return response()->json(['data' => \App\Http\Resources\PrestasiResource::collection($q->latest()->get())]);
     }
 
-    public function organisasi(Request $req, $id) {
-        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+    public function organisasi(Request $req, string $nim) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $nim);
         $q = $m->organisasis()->with('mahasiswa.prodi');
         \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'organisasis.periode_mulai', $req->tahun_ajaran);
         return response()->json(['data' => \App\Http\Resources\OrganisasiResource::collection($q->latest()->get())]);
     }
 
-    public function pelatihan(Request $req, $id) {
-        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+    public function pelatihan(Request $req, string $nim) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $nim);
         $q = $m->pelatihans()->with('mahasiswa.prodi');
         \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'pelatihans.tanggal_mulai', $req->tahun_ajaran);
         return response()->json(['data' => \App\Http\Resources\PelatihanResource::collection($q->latest()->get())]);
     }
 
-    public function dokumen(Request $req, $id) {
-        $m = $this->checkAccessAndGetMahasiswa($req, $id);
+    public function dokumen(Request $req, string $nim) {
+        $m = $this->checkAccessAndGetMahasiswa($req, $nim);
         // Delegate to AdminMahasiswa which should also be updated
-        return app(AdminMahasiswa::class)->dokumen($req, $id);
+        return app(AdminMahasiswa::class)->dokumen($req, $m->id);
     }
 
-    public function validatePrestasi(Request $req, $id, $itemId) {
+    public function validatePrestasi(Request $req, string $nim, $itemId) {
         if ($req->user()->role !== "admin") abort(403);
         $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu Validasi', 'catatan_admin' => 'nullable|string']);
-        $p = \App\Models\Prestasi::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
+        $p = \App\Models\Prestasi::where('id', $itemId)->where('mahasiswa_id', $this->resolveByNim($nim)->id)->firstOrFail();
         $p->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
         return response()->json(['data' => new \App\Http\Resources\PrestasiResource($p)]);
     }
 
-    public function validateOrganisasi(Request $req, $id, $itemId) {
+    public function validateOrganisasi(Request $req, string $nim, $itemId) {
         if ($req->user()->role !== "admin") abort(403);
         $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu', 'catatan_admin' => 'nullable|string']);
-        $o = \App\Models\Organisasi::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
+        $o = \App\Models\Organisasi::where('id', $itemId)->where('mahasiswa_id', $this->resolveByNim($nim)->id)->firstOrFail();
         $o->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
         return response()->json(['data' => new \App\Http\Resources\OrganisasiResource($o)]);
     }
 
-    public function validatePelatihan(Request $req, $id, $itemId) {
+    public function validatePelatihan(Request $req, string $nim, $itemId) {
         if ($req->user()->role !== "admin") abort(403);
         $req->validate(['status' => 'required|in:Disetujui,Ditolak,Menunggu', 'catatan_admin' => 'nullable|string']);
-        $p = \App\Models\Pelatihan::where('id', $itemId)->where('mahasiswa_id', $id)->firstOrFail();
+        $p = \App\Models\Pelatihan::where('id', $itemId)->where('mahasiswa_id', $this->resolveByNim($nim)->id)->firstOrFail();
         $p->update(['status' => $req->status, 'catatan_admin' => $req->catatan_admin, 'validated_by' => $req->user()->id, 'validated_at' => now()]);
         return response()->json(['data' => new \App\Http\Resources\PelatihanResource($p)]);
     }
 
-    public function bebasTanggungan(Request $request, $id)
+    public function bebasTanggungan(Request $request, string $nim)
     {
         if ($request->user()->role === "mahasiswa") abort(403);
 
-        $m = Mahasiswa::with('user', 'prodi')->findOrFail($id);
+        $m = $this->resolveByNim($nim)->load('user', 'prodi');
 
         if ($request->user()->role === "prodi" && $m->prodi_id !== $request->user()->prodi_id) abort(403);
 
@@ -304,12 +306,12 @@ class MahasiswaController extends Controller
         ]);
     }
 
-    private function warekShow($id) {
+    private function warekShow(int $id) {
         $m = Mahasiswa::withDetails()->findOrFail($id);
         return response()->json(['data' => new \App\Http\Resources\MahasiswaResource($m)]);
     }
 
-    private function mahasiswaShow(Request $request, $id) {
+    private function mahasiswaShow(Request $request, int $id) {
         $m = Mahasiswa::withDetails()->findOrFail($id);
         // Pastikan hanya mahasiswa yang bersangkutan (sesuai kontrak)
         if ($m->nim !== $request->user()->username) abort(403, 'Anda tidak berhak melihat data mahasiswa lain.');
