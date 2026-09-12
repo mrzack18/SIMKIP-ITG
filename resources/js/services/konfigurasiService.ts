@@ -22,13 +22,23 @@ export interface InstitusiConfig {
   telp: string;
 }
 
-export interface RegulasiItem {
-  id: number;
-  nama: string;
-  deskripsi: string;
-  nilai: string;
-  tipe: string;
-  aktif: boolean;
+/**
+ * Ambang batas akademik + flag aktif/nonaktifnya, sebagaimana dikirim indexAll().
+ *
+ * Perhatikan asimetrinya: server MENGIRIM flag sebagai boolean, tapi PUT menerima
+ * string '1'/'0'. Lihat saveRegulasiAll() di pages/admin/Konfigurasi.tsx.
+ */
+export interface AturanAkademikData {
+  ipk_minimum: string;
+  ipk_minimum_aktif: boolean;
+  masa_tenggang_sp: string;
+  masa_tenggang_sp_aktif: boolean;
+  max_semester: string;
+  max_semester_aktif: boolean;
+  /** Tidak lagi tampil di tab Regulasi; key-nya dibiarkan ada. */
+  sks_minimum_semester: string;
+  sks_minimum_lulus: string;
+  sks_minimum_lulus_aktif: boolean;
 }
 
 export interface PeriodeItem {
@@ -40,15 +50,32 @@ export interface PeriodeItem {
   is_aktif: boolean;
 }
 
+/**
+ * Bentuk data GET /konfigurasi/all.
+ *
+ * Sebelumnya interface ini menjanjikan `regulasi` yang TIDAK PERNAH dikirim
+ * server, sementara `aturan_akademik` dan `periode_aktif` yang justru ada tidak
+ * tercantum sama sekali — jadi TypeScript tidak bisa menangkap pemakaian yang salah.
+ */
 interface KonfigurasiAllData {
   institusi: InstitusiConfig;
   signature: SignatureConfig;
-  regulasi: RegulasiItem[];
+  aturan_akademik: AturanAkademikData;
+  periode_aktif: {
+    tahun_akademik: string;
+    semester: string;
+    tahun_ajaran: string;
+    /** Tanggal ISO 'YYYY-MM-DD' sebagai string polos, bukan objek. */
+    buka: string;
+    tutup: string;
+    is_aktif: boolean;
+  };
   nilai_mutu: any[];
   jenis_pelanggaran: any[];
   periode_history: PeriodeItem[];
   prodis: any[];
   dokumens: DokumenJenisItem[];
+  mahasiswa_count_aktif: number;
 }
 
 interface KonfigurasiAllResponse {
@@ -57,13 +84,16 @@ interface KonfigurasiAllResponse {
 }
 
 export async function getKonfigurasiAll(): Promise<KonfigurasiAllResponse> {
-  return api.get<KonfigurasiAllResponse>("/admin/konfigurasi/all");
+  // URL-nya TANPA prefix /admin — route-nya api/konfigurasi/all. Sebelumnya
+  // menunjuk /admin/konfigurasi/all yang tidak pernah ada, dan kegagalannya
+  // ditelan catch kosong di tujuh halaman sehingga blok tanda tangan PDF
+  // diam-diam jatuh ke nama bawaan.
+  return api.get<KonfigurasiAllResponse>("/konfigurasi/all");
 }
 
-export async function getDokumenJenisList(): Promise<DokumenJenisItem[]> {
-  const res = await api.get<{ success: boolean; data: DokumenJenisItem[] }>("/admin/konfigurasi/dokumen-jenis");
-  return res.data ?? [];
-}
+// getDokumenJenisList() dihapus: tidak punya pemanggil sama sekali, dan URL-nya
+// salah dengan cara yang sama. Daftar dokumen sudah tersedia lewat
+// getKonfigurasiAll().data.dokumens.
 
 export interface PelanggaranItem {
   id: number;

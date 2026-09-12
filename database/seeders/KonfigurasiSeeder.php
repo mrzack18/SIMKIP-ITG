@@ -13,6 +13,16 @@ class KonfigurasiSeeder extends Seeder
             ['key' => 'ipk_minimum',             'value' => '3.0',                          'label' => 'IPK Minimum KIP-K',          'tipe' => 'number'],
             ['key' => 'max_semester',             'value' => '8',                            'label' => 'Batas Semester Studi',        'tipe' => 'number'],
             ['key' => 'sks_minimum_lulus',        'value' => '144',                          'label' => 'Minimum SKS Kelulusan',       'tipe' => 'number'],
+            ['key' => 'masa_tenggang_sp',         'value' => '90',                           'label' => 'Masa Tenggang SP',            'tipe' => 'number'],
+
+            // Flag toggle "Status" di tab Regulasi. Nilainya '1'/'0' sebagai string —
+            // kolom `value` bertipe text dan menyimpan boolean false sebagai string
+            // kosong, jadi string eksplisit yang aman. Key yang belum ada tetap
+            // dianggap AKTIF oleh App\Helpers\AturanAkademik.
+            ['key' => 'ipk_minimum_aktif',       'value' => '1', 'label' => 'IPK Minimum Aktif',            'tipe' => 'boolean'],
+            ['key' => 'masa_tenggang_sp_aktif',  'value' => '1', 'label' => 'Masa Tenggang SP Aktif',       'tipe' => 'boolean'],
+            ['key' => 'max_semester_aktif',      'value' => '1', 'label' => 'Batas Semester Studi Aktif',   'tipe' => 'boolean'],
+            ['key' => 'sks_minimum_lulus_aktif', 'value' => '1', 'label' => 'Minimum SKS Kelulusan Aktif',  'tipe' => 'boolean'],
             ['key' => 'nama_institusi',           'value' => 'Institut Teknologi Garut',     'label' => 'Nama Institusi',             'tipe' => 'text'],
             ['key' => 'singkatan_institusi',      'value' => 'ITG',                          'label' => 'Singkatan Institusi',        'tipe' => 'text'],
             ['key' => 'alamat_institusi',         'value' => 'Jl. Mayor Syamsu No.1, Garut 44151', 'label' => 'Alamat Institusi',   'tipe' => 'text'],

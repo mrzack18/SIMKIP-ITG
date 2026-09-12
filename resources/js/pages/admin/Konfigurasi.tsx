@@ -145,6 +145,40 @@ type TabKey =
 /** Tab yang boleh dilihat role admin — sengaja hanya 5 dari 9. */
 const ADMIN_TAB_KEYS: TabKey[] = ["threshold", "periode", "dokumen", "regulasi", "pelanggaran"]
 
+/**
+ * Keempat aturan di tab Regulasi. `key` adalah key di tabel `konfigurasi`;
+ * flag aktifnya adalah `${key}_aktif`.
+ *
+ * "Minimum SKS per Semester" sengaja TIDAK ada di sini: key-nya
+ * (`sks_minimum_semester`) tidak dibaca kode mana pun, jadi barisnya hanya akan
+ * menampilkan toggle yang tidak mengendalikan apa-apa. Key-nya dibiarkan di DB.
+ */
+const ATURAN_AKADEMIK: { key: string; nama: string; deskripsi: string; fallback: string }[] = [
+  { key: "ipk_minimum",       nama: "IPK Minimum",           fallback: "3.00", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester" },
+  { key: "masa_tenggang_sp",  nama: "Masa Tenggang SP",      fallback: "90",   deskripsi: "Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan" },
+  { key: "max_semester",      nama: "Batas Semester Studi",  fallback: "8",    deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K" },
+  { key: "sks_minimum_lulus", nama: "Total SKS Kelulusan",   fallback: "144",  deskripsi: "Total minimum SKS untuk kelulusan mahasiswa KIP-K" },
+]
+
+/**
+ * Susun baris Regulasi dari payload indexAll().
+ *
+ * `aktif` dibaca dari `aturan_akademik[`${key}_aktif`]` yang dikirim server
+ * sebagai BOOLEAN. Fallback `?? true` menjaga perilaku bila server belum
+ * diperbarui — key flag yang belum ada memang berarti aturan hidup.
+ */
+function buildRegulasi(d: any) {
+  return ATURAN_AKADEMIK.map((a, i) => ({
+    id: i + 1,
+    key: a.key,
+    nama: a.nama,
+    deskripsi: a.deskripsi,
+    tipe: "number" as const,
+    nilai: d?.aturan_akademik?.[a.key] ?? a.fallback,
+    aktif: d?.aturan_akademik?.[`${a.key}_aktif`] ?? true,
+  }))
+}
+
 interface KonfigurasiProps {
   /** Role pemakai halaman. Menentukan tab yang tampil. Default "lsipd" (9 tab). */
   role?: Role
@@ -206,14 +240,9 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
   } | null>(null)
 
   // Section 7 State: Regulasi & Aturan
+  // Diisi buildRegulasi() saat fetch selesai; bentuknya ditentukan ATURAN_AKADEMIK.
   const [regulasi, setRegulasi] = useState<any[]>([])
-  /* 
-    { id: 1, nama: "IPK Minimum", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester", nilai: "3.00", tipe: "number", aktif: true },
-    { id: 2, nama: "Masa Tenggang SP", deskripsi: "Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan", nilai: "90", tipe: "number", aktif: true },
-    { id: 3, nama: "Batas Semester Studi", deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K", nilai: "8", tipe: "number", aktif: true },
-    { id: 4, nama: "Minimum SKS per Semester", deskripsi: "Jumlah SKS minimum yang harus diambil mahasiswa per semester", nilai: "18", tipe: "number", aktif: true },
-  */
-  // Tidak ada state "tambah regulasi": kelima baris Regulasi adalah key tetap
+  // Tidak ada state "tambah regulasi": keempat baris Regulasi adalah key tetap
   // di tabel konfigurasi (lihat catatan di tab Regulasi).
   const [editRegulasi, setEditRegulasi] = useState<number | null>(null)
   const [editRegulasiRow, setEditRegulasiRow] = useState<{nama: string, deskripsi: string, nilai: string, tipe: "number" | "text"} | null>(null)
@@ -238,15 +267,11 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
         const d = res.data
         setInstitusi(d.institusi)
 
-        // Map aturan_akademik to regulasi array for the UI
-        const regArr = d.regulasi || [
-          { id: 1, nama: "IPK Minimum", deskripsi: "Batas minimum IPK yang harus dicapai mahasiswa KIP-K per semester", nilai: d.aturan_akademik?.ipk_minimum || "3.00", tipe: "number", aktif: true },
-          { id: 2, nama: "Masa Tenggang SP", deskripsi: "Jumlah hari yang diberikan kepada mahasiswa untuk memperbaiki pelanggaran setelah SP diterbitkan", nilai: d.aturan_akademik?.masa_tenggang_sp || "90", tipe: "number", aktif: true },
-          { id: 3, nama: "Batas Semester Studi", deskripsi: "Jumlah semester maksimum yang diperbolehkan untuk penerima KIP-K", nilai: d.aturan_akademik?.max_semester || "8", tipe: "number", aktif: true },
-          { id: 4, nama: "Minimum SKS per Semester", deskripsi: "Jumlah SKS minimum yang harus diambil mahasiswa per semester", nilai: d.aturan_akademik?.sks_minimum_semester || "18", tipe: "number", aktif: true },
-          { id: 5, nama: "Total SKS Kelulusan", deskripsi: "Total minimum SKS untuk kelulusan mahasiswa KIP-K", nilai: d.aturan_akademik?.sks_minimum_lulus || "144", tipe: "number", aktif: true }
-        ];
-        setRegulasi(regArr)
+        // Baris Regulasi disusun dari aturan_akademik — nilai dari key polosnya,
+        // status aktif dari `${key}_aktif`. Bentuknya dijaga satu tempat di
+        // ATURAN_AKADEMIK supaya tabel, simpan, dan state awal tidak bisa
+        // berbeda satu sama lain.
+        setRegulasi(buildRegulasi(d))
 
         setNilaiMutu(d.nilai_mutu || [])
         setJenisPelanggaran(d.jenis_pelanggaran || [])
@@ -288,21 +313,23 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
 
   
   /**
-   * Menyimpan kelima ambang batas akademik.
+   * Menyimpan keempat ambang batas akademik beserta flag aktif/nonaktifnya.
    *
    * `rows` eksplisit diperlukan karena setState belum flush saat handler klik
    * berjalan — pemanggil dari tab Regulasi mengirim baris hasil edit langsung.
    * `syncIpkWidget` dimatikan oleh pemanggil itu supaya nilai dari widget IPK
    * tidak menimpa edit baris "IPK Minimum".
+   *
+   * Flag dikirim sebagai STRING '1'/'0', bukan boolean: kolom `value` bertipe
+   * text dan PDO menyimpan boolean false sebagai string KOSONG, yang tidak bisa
+   * dibedakan dari nilai rusak. Server menormalkan lagi sebagai lapis kedua.
    */
   const saveRegulasiAll = async (rows = regulasi, syncIpkWidget = true) => {
     const payload: any = {};
     rows.forEach(r => {
-       if(r.nama === 'IPK Minimum') payload.ipk_minimum = r.nilai;
-       if(r.nama === 'Masa Tenggang SP') payload.masa_tenggang_sp = r.nilai;
-       if(r.nama === 'Batas Semester Studi') payload.max_semester = r.nilai;
-       if(r.nama === 'Minimum SKS per Semester') payload.sks_minimum_semester = r.nilai;
-       if(r.nama === 'Total SKS Kelulusan') payload.sks_minimum_lulus = r.nilai;
+       if (!r.key) return;
+       payload[r.key] = r.nilai;
+       payload[`${r.key}_aktif`] = r.aktif ? '1' : '0';
     });
     if (syncIpkWidget) payload.ipk_minimum = ipkMin; // from the dedicated UI
     try {
@@ -1476,7 +1503,16 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
                       )}
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <button onClick={() => setRegulasi(prev => prev.map(x => x.id === r.id ? { ...x, aktif: !x.aktif } : x))}>
+                      <button
+                        title={r.aktif ? "Klik untuk menonaktifkan aturan ini" : "Klik untuk mengaktifkan aturan ini"}
+                        onClick={async () => {
+                          // Baris hasil toggle dikirim eksplisit: setState belum flush di sini.
+                          // syncIpkWidget=false agar nilai widget IPK tidak ikut tertulis.
+                          const next = regulasi.map(x => x.id === r.id ? { ...x, aktif: !x.aktif } : x)
+                          const ok = await saveRegulasiAll(next, false)
+                          if (!ok) return
+                          setRegulasi(next)
+                        }}>
                         {r.aktif ? <ToggleRight size={22} className="text-green-500" /> : <ToggleLeft size={22} className="text-gray-400" />}
                       </button>
                     </td>
@@ -1499,7 +1535,7 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
                       ) : (
                         <div className="flex items-center gap-2">
                           <button onClick={() => { setEditRegulasi(r.id); setEditRegulasiRow({ nama: r.nama, deskripsi: r.deskripsi, nilai: r.nilai, tipe: r.tipe as any }) }} className="text-xs text-[#263F93] hover:underline font-500">Edit</button>
-                          {/* Tidak ada tombol Hapus: kelima baris ini adalah key tetap di tabel
+                          {/* Tidak ada tombol Hapus: keempat baris ini adalah key tetap di tabel
                               konfigurasi, jadi menghapusnya hanya membuat fetchData() memulihkan
                               barisnya dari nilai default. */}
                         </div>
@@ -1511,7 +1547,7 @@ export default function Konfigurasi({ role = "lsipd" }: KonfigurasiProps) {
             </table>
           </div>
 
-          {/* Tidak ada "Tambah Regulasi Baru": kelima baris ini key tetap di tabel
+          {/* Tidak ada "Tambah Regulasi Baru": keempat baris ini key tetap di tabel
               konfigurasi, jadi menambah baris hanya menciptakan key asing yang
               ditolak untuk admin (403) dan menjadi key yatim untuk lsipd. */}
         </div>

@@ -7,6 +7,7 @@ use App\Models\SuratPeringatan;
 use App\Models\BebasTanggungan;
 use App\Models\Prodi;
 use App\Models\CatatanInternal;
+use App\Helpers\AturanAkademik;
 use App\Helpers\TahunAjaranHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,7 +73,10 @@ class DashboardController extends Controller
         ]);
 
         // ── Advanced Stats ──────────────────────────────────────────────────────
-        // Semester >8: students with >8 IPK records (up to TA range end)
+        // Semester melewati batas: mahasiswa dengan catatan IPK lebih banyak
+        // daripada ambang Batas Semester Studi (sampai akhir rentang TA).
+        // Ambangnya dari konfigurasi, bukan angka 8 yang dulu hardcode di sini.
+        $maxSemesterAdmin = AturanAkademik::bilanganJikaAktif('max_semester');
         $sem8Base = \Illuminate\Support\Facades\DB::table('ipk_semestrs')
             ->join('mahasiswas', 'ipk_semestrs.mahasiswa_id', '=', 'mahasiswas.id')
             ->select('mahasiswas.id');
@@ -83,10 +87,15 @@ class DashboardController extends Controller
             $termValue = (str_contains($tahunAjaran ?? '', 'Genap') || str_ends_with($tahunAjaran ?? '', '-2')) ? 2 : 1;
             $sem8Base->whereRaw('ipk_semestrs.semester <= ((? - mahasiswas.angkatan) * 2) + ?', [$taStartYear, $termValue]);
         }
-        $semesterLebih8 = (clone $sem8Base)
-            ->groupBy('mahasiswas.id')
-            ->havingRaw('COUNT(ipk_semestrs.id) > 8')
-            ->count();
+        // Saat aturannya dinonaktifkan, angkanya 0 dengan penanda `aktif => false`
+        // supaya frontend bisa memberi label "(aturan dinonaktifkan)" — bukan
+        // menampilkan 0 yang terbaca seolah tidak ada mahasiswa melewati batas.
+        $semesterLebih8 = $maxSemesterAdmin === null
+            ? 0
+            : (clone $sem8Base)
+                ->groupBy('mahasiswas.id')
+                ->havingRaw('COUNT(ipk_semestrs.id) > ?', [$maxSemesterAdmin])
+                ->count();
 
         // SP in this period
         $spPeriodBase = SuratPeringatan::query();
@@ -172,6 +181,9 @@ class DashboardController extends Controller
                 'dokumen_menunggu'         => $dokumenMenunggu,
                 'bebas_tanggungan_pending' => $bebasPending,
                 'semester_lebih_8'         => $semesterLebih8,
+                // false = aturan Batas Semester Studi dinonaktifkan, jadi angka di
+                // atas tidak berarti "tidak ada yang melewati batas".
+                'max_semester_aktif'       => $maxSemesterAdmin !== null,
                 'sp_semester_ini'          => $spSemesterIni,
             ],
             'prodi_sebaran'               => $prodiSebaranData,

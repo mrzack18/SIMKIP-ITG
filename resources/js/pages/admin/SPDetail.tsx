@@ -66,7 +66,8 @@ export default function SPDetail() {
   const [error, setError]             = useState<string | null>(null);
   const [notFound, setNotFound]       = useState(false);
   const [signature, setSignature]     = useState<SignatureConfig | null>(null);
-  const [masaTenggang, setMasaTenggang] = useState<number>(180);
+  // Nilai bawaan 90 mengikuti bawaan konfigurasi; ditimpa dari server saat termuat.
+  const [masaTenggang, setMasaTenggang] = useState<number>(90);
   
 
   const [expandedTimeline, setExpandedTimeline] = useState<number | null>(null);
@@ -101,8 +102,10 @@ export default function SPDetail() {
     getKonfigurasiAll()
       .then((res) => {
         if (res?.data?.signature) setSignature(res.data.signature);
-        const reg = res?.data?.regulasi?.find((r: any) => r.nama === "Masa Tenggang SP");
-        if (reg) setMasaTenggang(Number(reg.nilai));
+        // Dibaca dari aturan_akademik, BUKAN data.regulasi — key `regulasi`
+        // tidak pernah dikirim indexAll(), jadi dulu selalu jatuh ke 180
+        // padahal nilainya 90 dan bilah progresnya jadi separuh.
+        setMasaTenggang(Number(res?.data?.aturan_akademik?.masa_tenggang_sp ?? 90));
       })
       .catch(() => { /* fallback */ });
   }, []);

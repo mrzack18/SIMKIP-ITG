@@ -515,15 +515,23 @@ export default function Dashboard() {
       {/* Bottom quick stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
         <div className="bg-white rounded-xl sm:rounded-2xl border border-[#E2E8F0] shadow-sm p-3 sm:p-4 flex items-start gap-4 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-            <AlertTriangle size={18} className="text-amber-500" />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${stats.max_semester_aktif === false ? "bg-gray-50" : "bg-amber-50"}`}>
+            <AlertTriangle size={18} className={stats.max_semester_aktif === false ? "text-gray-400" : "text-amber-500"} />
           </div>
           <div className="min-w-0">
-            <p className="text-lg sm:text-xl font-bold text-gray-800">{stats.semester_lebih_8}</p>
+            {/* Saat aturannya dinonaktifkan, angka 0 tidak berarti "tidak ada
+                yang melewati batas" — jadi angkanya diganti tanda pisah. */}
+            <p className="text-lg sm:text-xl font-bold text-gray-800">
+              {stats.max_semester_aktif === false ? "—" : stats.semester_lebih_8}
+            </p>
             <p className="text-xs text-gray-500 leading-relaxed mt-0.5 break-words">
-              Mahasiswa Semester &gt;8
+              Melewati Batas Semester Studi
               <br />
-              <span className="text-amber-600">(Melebihi batas studi KIP-K)</span>
+              {stats.max_semester_aktif === false ? (
+                <span className="text-gray-400">(Aturan dinonaktifkan)</span>
+              ) : (
+                <span className="text-amber-600">(Melebihi batas studi KIP-K)</span>
+              )}
             </p>
           </div>
         </div>

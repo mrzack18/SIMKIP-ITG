@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Helpers\AturanAkademik;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,6 +27,12 @@ class SuratPeringatanResource extends JsonResource
             'tanggal' => $this->tanggal_terbit ? $this->tanggal_terbit->translatedFormat('d F Y') : null,
             'sisaHari' => $this->getHistoricalSisaHari($request->tahun_ajaran),
             'tahunAjaran' => $this->getTahunAjaranFromDate($this->tanggal_terbit),
+            // Total masa tenggang yang dipakai sebagai penyebut bilah progres.
+            // Dikirim lewat resource ini karena mahasiswa tidak boleh membaca
+            // /konfigurasi/all (route-nya role:lsipd,admin). Dulu angka 180
+            // ditulis langsung di frontend, padahal bawaannya 90.
+            'masaTenggang' => AturanAkademik::bilangan('masa_tenggang_sp'),
+            'masaTenggangAktif' => AturanAkademik::aktif('masa_tenggang_sp'),
         ];
     }
 

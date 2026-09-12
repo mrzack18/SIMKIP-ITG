@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Mahasiswa;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\AturanAkademik;
 use App\Models\Konfigurasi;
 use App\Models\DokumenJenis;
 use App\Helpers\TahunAjaranHelper;
@@ -45,7 +46,9 @@ class DashboardController extends Controller
         }
         $spAktif = $spQuery->orderByDesc('level')->first();
         
-        $ipkMin      = (float) Konfigurasi::get('ipk_minimum', 3.0);
+        // Null = ambang IPK sedang dinonaktifkan di tab Regulasi.
+        $ipkMin      = AturanAkademik::angkaJikaAktif('ipk_minimum');
+        $maxSemester = AturanAkademik::bilanganJikaAktif('max_semester');
 
         // 2. Dokumen status Time Travel
         $dokumenJenis = DokumenJenis::where('is_wajib', true)->get();
@@ -90,8 +93,9 @@ class DashboardController extends Controller
         // Current semester: always based on all records (not filtered), TA filter only affects chart display
         $allIpk = $m->ipkSemestrs;
         $semesterAktif = $allIpk->count() > 0 ? $allIpk->max('semester') : 0;
-        $currentSemester = $semesterAktif < 8 ? $semesterAktif + 1 : $semesterAktif;
-        if ($currentSemester == 0) $currentSemester = 1;
+        // Catatan: dulu ada $currentSemester yang dihitung di sini dengan angka 8
+        // hardcode, tapi tidak pernah dipakai siapa pun — respons mengirim
+        // $displayedSemester di bawah. Dihapus, bukan diperbaiki.
 
         // Semester displayed in the chart (may be lower if TA filter is applied)
         $displayedSemester = $tahunAjaranLabel
@@ -121,14 +125,27 @@ class DashboardController extends Controller
                 'ipk_terakhir' => $ipkTerakhir,
                 'ipk_delta'    => $ipkPrev !== null ? round($ipkTerakhir - $ipkPrev, 2) : null,
                 'semester'     => $displayedSemester,
+                // null saat aturan IPK Minimum dinonaktifkan — frontend memakai
+                // ini sebagai syarat menggambar garis ambang di grafik, dan
+                // Recharts dengan y={null} perilakunya tidak terdefinisi.
                 'ipk_minimum'  => $ipkMin,
-                'status_ipk'   => $ipkTerakhir >= $ipkMin ? 'Aman' : 'Di Bawah Standar',
+                'ipk_minimum_aktif' => $ipkMin !== null,
+                // Jangan kirim null: tipenya string di dashboardService.ts.
+                'status_ipk'   => $ipkMin === null
+                    ? 'Tidak Dinilai'
+                    : ($ipkTerakhir >= $ipkMin ? 'Aman' : 'Di Bawah Standar'),
+                // Dipakai grafik sebagai penyebut "semester X dari N".
+                'max_semester' => $maxSemester,
                 'sp_aktif'     => $spAktif ? [
                     'level'     => $spAktif->level,
                     'status'   => $spAktif->status,
                     'deskripsi' => $spAktif->deskripsi,
                 ] : null,
             ],
+            // Peringatan bersifat INFORMATIF saja — tidak ada alur yang diblokir
+            // karenanya. Satu array supaya frontend cukup satu loop dan kalimatnya
+            // disusun di satu tempat.
+            'peringatan' => $this->susunPeringatan($m, $maxSemester, $spAktif),
             'dokumen' => [
                 'total_wajib'     => $dokWajib,
                 'total_disetujui' => $dokDisetujui,
@@ -147,5 +164,47 @@ class DashboardController extends Controller
             'bebas_tanggungan' => $bebasTanggungan ? ['status' => $bebasTanggungan->status] : null,
             'ipk_chart' => $ipkList->map(fn($s) => ['semester' => $s->semester, 'ipk' => (float) $s->ipk]),
         ]);
+    }
+
+    /**
+     * Peringatan informatif untuk dashboard mahasiswa.
+     *
+     * Semuanya NON-BLOCKING: tidak satu pun menghalangi mahasiswa mengajukan
+     * atau mengunggah apa pun. Aturan yang dinonaktifkan tidak menghasilkan
+     * peringatan sama sekali — ambangnya null, bukan dibandingkan dengan nilai bawaan.
+     *
+     * @return array<int, array{kode: string, level: string, judul: string, pesan: string}>
+     */
+    private function susunPeringatan($m, ?int $maxSemester, $spAktif): array
+    {
+        $peringatan = [];
+
+        // Batas Semester Studi — semester berjalan melewati ambang.
+        if ($maxSemester !== null) {
+            $semesterBerjalan = $m->semester_aktif;
+            if ($semesterBerjalan > $maxSemester) {
+                $peringatan[] = [
+                    'kode'  => 'max_semester',
+                    'level' => 'peringatan',
+                    'judul' => 'Melewati batas semester studi',
+                    'pesan' => "Semester berjalan Anda yang ke-{$semesterBerjalan} sudah melewati batas "
+                        . "{$maxSemester} semester untuk penerima KIP-K. Segera konsultasikan dengan pengelola.",
+                ];
+            }
+        }
+
+        // Masa Tenggang SP — batas evaluasi terlewat. `sisa_hari` tidak bisa
+        // dipakai di sini karena ia menjepit nilai negatif ke 0.
+        if ($spAktif && $spAktif->lewat_batas) {
+            $peringatan[] = [
+                'kode'  => 'sp_lewat_batas',
+                'level' => 'peringatan',
+                'judul' => 'Batas evaluasi SP terlewat',
+                'pesan' => "Batas evaluasi SP {$spAktif->level} Anda sudah terlewat. "
+                    . 'Segera hubungi pengelola KIP-K.',
+            ];
+        }
+
+        return $peringatan;
     }
 }

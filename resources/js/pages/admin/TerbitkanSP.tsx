@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, AlertTriangle, Search, CheckCircle, X, Info, Loader2, XCircle } from "lucide-react";
 import { getMahasiswaList, getMahasiswaSpHistory } from "@/services/mahasiswaService";
 import { terbitkanSP } from "@/services/spService";
-import { getPelanggaranList } from "@/services/konfigurasiService";
+import { getPelanggaranList, getKonfigurasiAll } from "@/services/konfigurasiService";
 import type { Mahasiswa } from "@/types";
 import {} from "@/components/ui/TahunAjaranFilter";
 
@@ -26,6 +26,21 @@ const todayLocal = (): string => {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+/**
+ * Tambahkan `n` hari ke tanggal 'YYYY-MM-DD', hasilnya 'YYYY-MM-DD'.
+ *
+ * Komponen tanggalnya diurai satu per satu, bukan lewat `new Date(str)` yang
+ * membacanya sebagai UTC — di WIB itu bisa menggeser hasilnya sehari.
+ */
+const addDaysLocal = (dateStr: string, n: number): string => {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const dt = new Date(y, m - 1, d + n);
+  const pad = (x: number) => String(x).padStart(2, "0");
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 };
 
 export default function TerbitkanSP() {
@@ -53,6 +68,7 @@ export default function TerbitkanSP() {
       };
       setSelected(prefilled);
       setQuery(prefilled.nama);
+      setBatasDirty(false); // mahasiswa dari URL = mulai dari awal
       // Also fetch SP history for this student
       getMahasiswaSpHistory(mhsNim).then(history => {
         setStudentSpData(history);
@@ -82,6 +98,18 @@ export default function TerbitkanSP() {
   const [catatan, setCatatan]     = useState("");
   const [tahunAjaran, setTahunAjaran] = useState("Semua");
 
+  // Masa tenggang dari konfigurasi (tab Regulasi), untuk mengisi "Batas Evaluasi".
+  const [masaTenggang, setMasaTenggang] = useState(90);
+  const [masaTenggangAktif, setMasaTenggangAktif] = useState(true);
+  /**
+   * Menyala begitu admin mengetik di kolom Batas Evaluasi.
+   *
+   * Sekali menyala ia TIDAK dimatikan oleh perubahan tanggal terbit — jadi
+   * begitu admin mengisi sendiri, nilainya tidak pernah tertimpa lagi. Yang
+   * meresetnya hanya pergantian mahasiswa.
+   */
+  const [batasDirty, setBatasDirty] = useState(false);
+
   // UI state
   const [showConfirm, setShowConfirm]   = useState(false);
   const [submitting, setSubmitting]     = useState(false);
@@ -105,6 +133,29 @@ export default function TerbitkanSP() {
       });
     return () => { active = false };
   }, []);
+
+  // Ambang masa tenggang. Dihitung di frontend (bukan diisi backend saat
+  // submit) supaya admin bisa MELIHAT dan mengubah nilainya sebelum menyimpan.
+  useEffect(() => {
+    let active = true;
+    getKonfigurasiAll()
+      .then((res) => {
+        if (!active) return;
+        // aturan_akademik, bukan data.regulasi — key `regulasi` tidak pernah dikirim.
+        const n = Number(res?.data?.aturan_akademik?.masa_tenggang_sp);
+        if (Number.isFinite(n) && n > 0) setMasaTenggang(n);
+        setMasaTenggangAktif(res?.data?.aturan_akademik?.masa_tenggang_sp_aktif ?? true);
+      })
+      .catch(() => { /* pakai bawaan 90 */ });
+    return () => { active = false };
+  }, []);
+
+  // Isi otomatis Batas Evaluasi = tanggal terbit + masa tenggang.
+  useEffect(() => {
+    if (batasDirty) return;
+    if (!masaTenggangAktif) { setBatasEvaluasi(""); return; }
+    setBatasEvaluasi(tanggalTerbit ? addDaysLocal(tanggalTerbit, masaTenggang) : "");
+  }, [tanggalTerbit, masaTenggang, masaTenggangAktif, batasDirty]);
 
   const handleQueryChange = (val: string) => {
     setQuery(val);
@@ -132,7 +183,10 @@ export default function TerbitkanSP() {
     setQuery(m.nama);
     setShowDropdown(false);
     setSearchResults([]);
-    
+    // Mahasiswa berganti = batas evaluasi disusun ulang dari awal. Tanpa ini,
+    // tanggal yang diketik untuk mahasiswa sebelumnya ikut terbawa.
+    setBatasDirty(false);
+
     try {
       const history = await getMahasiswaSpHistory(m.nim);
       setStudentSpData(history);
@@ -154,6 +208,11 @@ export default function TerbitkanSP() {
     if (!jenisP)                  e.jenis     = "Pilih jenis pelanggaran.";
     if (deskripsi.length < 20)    e.deskripsi = "Deskripsi minimal 20 karakter.";
     if (!tanggalTerbit)           e.tanggal   = "Tanggal terbit wajib diisi.";
+    // Dicek di sini supaya pesannya Indonesia. Kalau dibiarkan, server menolak
+    // dengan 422 dan pesan Inggris "must be a date after tanggal terbit".
+    if (batasEvaluasi && tanggalTerbit && batasEvaluasi <= tanggalTerbit) {
+      e.batasEvaluasi = "Batas evaluasi harus setelah tanggal terbit.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -408,9 +467,23 @@ export default function TerbitkanSP() {
               {errors.tanggal && <p className="mt-1 text-xs text-red-600">{errors.tanggal}</p>}
             </div>
             <div>
-              <label className="block text-sm font-500 text-gray-700 mb-1.5">Batas Evaluasi <span className="text-gray-400 text-xs">(opsional)</span></label>
-              <input type="date" value={batasEvaluasi} onChange={(e) => setBatasEvaluasi(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20" />
+              <label className="block text-sm font-500 text-gray-700 mb-1.5">
+                Batas Evaluasi{" "}
+                <span className="text-gray-400 text-xs">
+                  {masaTenggangAktif ? `(otomatis: ${masaTenggang} hari)` : "(opsional)"}
+                </span>
+              </label>
+              <input type="date" value={batasEvaluasi}
+                // Menyala permanen begitu disentuh: setelah ini tanggal terbit
+                // boleh berubah tanpa menimpa isian admin.
+                onChange={(e) => { setBatasEvaluasi(e.target.value); setBatasDirty(true); }}
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.batasEvaluasi ? "border-red-300" : "border-gray-200 focus:ring-[#263F93]/20"}`} />
+              {errors.batasEvaluasi && <p className="mt-1 text-xs text-red-600">{errors.batasEvaluasi}</p>}
+              {!masaTenggangAktif && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Pre-fill otomatis dinonaktifkan (aturan Masa Tenggang SP mati) — isi manual bila perlu.
+                </p>
+              )}
             </div>
           </div>
 

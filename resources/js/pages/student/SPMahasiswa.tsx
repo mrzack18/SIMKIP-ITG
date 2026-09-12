@@ -16,6 +16,10 @@ interface SP {
   konsekuensi?: string;
   dasarHukum?: string;
   sisaHari: number;
+  /** Total masa tenggang dari konfigurasi — penyebut bilah progres. */
+  masaTenggang?: number;
+  /** false = aturan Masa Tenggang SP dinonaktifkan; bilah progres disembunyikan. */
+  masaTenggangAktif?: boolean;
   outcome?: string;
   nama?: string;
   nim?: string;
@@ -202,6 +206,7 @@ export default function SPMahasiswa() {
       .catch(() => {});
   }, []);
 
+
   useEffect(() => {
     fetchSP();
   }, [taFilter]);
@@ -274,13 +279,21 @@ export default function SPMahasiswa() {
                   <span className="text-white/80">Sisa masa perbaikan</span>
                   <span className="font-700 whitespace-nowrap">{ACTIVE_SP.sisaHari} hari</span>
                 </div>
-                <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-white/80 rounded-full"
-                    style={{ width: `${(ACTIVE_SP.sisaHari / 180) * 100}%` }}
-                  />
-                </div>
-                <p className="text-[11px] sm:text-xs text-white/50">dari 180 hari masa perbaikan (1 semester)</p>
+                {/* Pembagi dan teks memakai nilai yang SAMA — kalau berbeda,
+                    bilahnya tidak pernah menyentuh 100%. */}
+                {ACTIVE_SP.masaTenggangAktif !== false && (
+                  <>
+                    <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-white/80 rounded-full"
+                        style={{ width: `${(ACTIVE_SP.sisaHari / (ACTIVE_SP.masaTenggang || 90)) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-white/50">
+                      dari {ACTIVE_SP.masaTenggang || 90} hari masa perbaikan
+                    </p>
+                  </>
+                )}
               </div>
 
               <button
@@ -484,7 +497,8 @@ export default function SPMahasiswa() {
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2 min-w-0">
                     <AlertTriangle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-700 break-words">
-                      <span className="font-600">Sisa masa perbaikan:</span> {selectedSP.sisaHari} hari dari 180 hari
+                      <span className="font-600">Sisa masa perbaikan:</span> {selectedSP.sisaHari} hari
+                      {selectedSP.masaTenggangAktif !== false && ` dari ${selectedSP.masaTenggang || 90} hari`}
                     </p>
                   </div>
                 )}

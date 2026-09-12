@@ -2,22 +2,24 @@
 
 namespace App\Services;
 
-use App\Models\Konfigurasi;
+use App\Helpers\AturanAkademik;
 use App\Models\Mahasiswa;
 
 class BebasTanggunganService
 {
     public static function getChecklist(Mahasiswa $mahasiswa): array
     {
-        $ipkMin = (float) Konfigurasi::get('ipk_minimum', 3.0);
-        $sksMin = (int) Konfigurasi::get('sks_minimum_lulus', 144);
+        // Null = aturan itu sedang dinonaktifkan di tab Regulasi, dan pemeriksaannya
+        // harus dilewati — bukan dibandingkan dengan nilai bawaan.
+        $ipkMin = AturanAkademik::angkaJikaAktif('ipk_minimum');
+        $sksMin = AturanAkademik::bilanganJikaAktif('sks_minimum_lulus');
 
         // 1. Dokumen wajib
         $dokumenChecklist = static::cekDokumen($mahasiswa);
 
         // 2. IPK terakhir
         $ipkTerakhir = $mahasiswa->ipk_terakhir;
-        $ipkOk = $ipkTerakhir >= $ipkMin;
+        $ipkOk = $ipkMin === null || $ipkTerakhir >= $ipkMin;
 
         // 3. SP Aktif
         $spAktif = $mahasiswa->suratPeringatans()
@@ -31,7 +33,7 @@ class BebasTanggunganService
             ->flatMap(fn($s) => $s->mataKuliahs)
             ->where('lulus', true)
             ->sum('sks');
-        $sksOk = $sksDitempuh >= $sksMin;
+        $sksOk = $sksMin === null || $sksDitempuh >= $sksMin;
 
         // 5. MK belum lulus
         $mkBelumLulus = $mahasiswa->ipkSemestrs()
@@ -50,20 +52,34 @@ class BebasTanggunganService
                     'terpenuhi' => $allDokumenOk,
                     'keterangan' => $allDokumenOk ? null : 'Ada dokumen yang belum disetujui',
                 ],
+                // Saat aturan mati, angkanya dibuang dari kalimat: menulis
+                // "≥ 3.25" padahal ambang itu tidak diberlakukan adalah
+                // keterangan yang menyesatkan. Jumlah dan urutan baris TIDAK
+                // berubah — ada filter frontend yang bergantung padanya.
                 [
-                    'syarat' => "IPK memenuhi standar (≥ {$ipkMin})",
+                    'syarat' => $ipkMin === null
+                        ? 'IPK memenuhi standar'
+                        : "IPK memenuhi standar (≥ {$ipkMin})",
                     'terpenuhi' => $ipkOk,
-                    'keterangan' => $ipkOk ? null : "IPK terakhir: {$ipkTerakhir}",
+                    'keterangan' => $ipkMin === null
+                        ? 'Ambang batas IPK sedang dinonaktifkan'
+                        : ($ipkOk ? null : "IPK terakhir: {$ipkTerakhir}"),
                 ],
                 [
                     'syarat' => 'Tidak ada SP aktif',
                     'terpenuhi' => ! $spAktif,
                     'keterangan' => $spAktif ? 'Masih memiliki SP aktif' : null,
                 ],
+                // Kata "SKS" wajib tetap ada di `syarat` — admin/BebasTanggunganDetail.tsx
+                // memfilter baris ini dengan `!c.syarat.includes("SKS")`.
                 [
-                    'syarat' => "SKS mencukupi ({$sksMin} SKS)",
+                    'syarat' => $sksMin === null
+                        ? 'SKS mencukupi'
+                        : "SKS mencukupi ({$sksMin} SKS)",
                     'terpenuhi' => $sksOk,
-                    'keterangan' => $sksOk ? null : "SKS lulus: {$sksDitempuh}/{$sksMin}",
+                    'keterangan' => $sksMin === null
+                        ? 'Ambang batas SKS sedang dinonaktifkan'
+                        : ($sksOk ? null : "SKS lulus: {$sksDitempuh}/{$sksMin}"),
                 ],
                 [
                     'syarat' => 'Tidak ada MK belum lulus',
@@ -73,9 +89,15 @@ class BebasTanggunganService
             ],
             'dokumen' => $dokumenChecklist,
             'sks_ditempuh' => $sksDitempuh,
-            'sks_minimum' => $sksMin,
+            // Angka mentah, bukan null: field ini bertipe number di frontend dan
+            // null di sana muncul sebagai NaN. Status aktifnya dikirim terpisah.
+            'sks_minimum' => AturanAkademik::bilangan('sks_minimum_lulus'),
+            'sks_minimum_aktif' => $sksMin !== null,
             'ipk_terakhir' => $ipkTerakhir,
-            'ipk_minimum' => $ipkMin,
+            'ipk_minimum' => AturanAkademik::angka('ipk_minimum'),
+            'ipk_minimum_aktif' => $ipkMin !== null,
+            // Rumus ini tidak berubah: $ipkOk dan $sksOk sudah bernilai true saat
+            // aturannya dinonaktifkan, jadi tidak ada yang terblokir karenanya.
             'can_apply' => $allDokumenOk && $ipkOk && !$spAktif && $sksOk && $mkBelumLulus === 0,
         ];
     }

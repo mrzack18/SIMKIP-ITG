@@ -685,8 +685,10 @@ export default function DataAkademik() {
         if (!active) return;
         if (res?.data) {
           const config = res.data;
-          const bukaStr = config.periode_input_buka?.value;
-          const tutupStr = config.periode_input_tutup?.value;
+          // periode_aktif.buka/.tutup adalah string tanggal polos, BUKAN objek
+          // ber-.value seperti dugaan sebelumnya — jadi rentangnya selalu "—".
+          const bukaStr = config.periode_aktif?.buka;
+          const tutupStr = config.periode_aktif?.tutup;
           if (bukaStr && tutupStr) {
              const buka = new Date(bukaStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
              const tutup = new Date(tutupStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });

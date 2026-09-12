@@ -52,6 +52,9 @@ export default function StudentDashboard() {
   }
 
   const { mahasiswa, akademik, dokumen, kegiatan, periode, ipk_chart } = data;
+  // Peringatan informatif dari server — tidak ada alur yang diblokir karenanya.
+  // `?? []` menjaga halaman tetap render bila server belum mengirim key ini.
+  const peringatan: { kode: string; level: string; judul: string; pesan: string }[] = data.peringatan ?? [];
   const firstName = mahasiswa.nama.split(" ")[0];
   
   // Format current date e.g., Senin, 17 Agustus 2026
@@ -84,6 +87,16 @@ export default function StudentDashboard() {
           </div>
         )}
 
+        {/* Peringatan aturan akademik — informatif, tidak memblokir apa pun */}
+        {peringatan.map((p) => (
+          <div key={p.kode} className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
+            <AlertTriangle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm text-amber-800 flex-1 min-w-0 break-words">
+              <span className="font-600">{p.judul}.</span> {p.pesan}
+            </div>
+          </div>
+        ))}
+
         {/* Rejected doc banners */}
         {rejectedDocs.map((doc, i) => (
           <div key={i} className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-3.5 sm:px-4 py-3 min-w-0">
@@ -113,14 +126,16 @@ export default function StudentDashboard() {
             <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
               <circle cx="32" cy="32" r="26" fill="none" stroke="#F1F5F9" strokeWidth="6" />
               <circle cx="32" cy="32" r="26" fill="none" stroke="#263F93" strokeWidth="6"
-                strokeDasharray={`${(akademik.semester / 8) * 163} 163`} strokeLinecap="round" />
+                strokeDasharray={`${(akademik.semester / (akademik.max_semester || akademik.semester || 1)) * 163} 163`} strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="font-display font-700 text-sm text-[#263F93]">{akademik.semester}</span>
             </div>
           </div>
           <div className="text-xs text-gray-500">Semester Saat Ini</div>
-          <div className="text-xs text-gray-400 mt-0.5">dari 8</div>
+          <div className="text-xs text-gray-400 mt-0.5">
+            {akademik.max_semester ? `dari ${akademik.max_semester}` : "batas semester nonaktif"}
+          </div>
         </div>
 
         <div className="bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-gray-100 text-center min-w-0">
@@ -194,7 +209,12 @@ export default function StudentDashboard() {
                 <XAxis dataKey="semester" tickFormatter={v => `S${v}`} tick={{ fontSize: 10, fill: "#94A3B8" }} minTickGap={4} />
                 <YAxis domain={[2, 4]} width={30} tick={{ fontSize: 10, fill: "#94A3B8" }} />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={((v: number | undefined) => [(v ?? 0).toFixed(2), "IPK"]) as any} />
-                <ReferenceLine y={akademik.ipk_minimum} stroke="#DC2626" strokeDasharray="4 4" />
+                {/* Garis ambang hanya digambar kalau aturannya diberlakukan —
+                    ipk_minimum bernilai null saat dinonaktifkan, dan Recharts
+                    dengan y={null} perilakunya tidak terdefinisi. */}
+                {akademik.ipk_minimum !== null && (
+                  <ReferenceLine y={akademik.ipk_minimum} stroke="#DC2626" strokeDasharray="4 4" />
+                )}
                 <Line type="monotone" dataKey="ipk" stroke="#263F93" strokeWidth={2.5} dot={{ fill: "#263F93", r: 4 }} />
               </LineChart>
             </ResponsiveContainer>

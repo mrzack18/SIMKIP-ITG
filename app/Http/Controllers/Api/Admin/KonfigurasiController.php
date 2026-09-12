@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
+use App\Helpers\AturanAkademik;
 use App\Models\DokumenJenis;
 use App\Models\Konfigurasi;
 use App\Models\Mahasiswa;
@@ -19,13 +20,20 @@ class KonfigurasiController extends Controller
         return response()->json(['success' => true, 'data' => Konfigurasi::all()->keyBy('key')]);
     }
 
-    /** Kunci yang boleh ditulis role admin — 5 ambang batas akademik. */
+    /**
+     * Kunci yang boleh ditulis role admin — 5 ambang batas akademik beserta
+     * 4 flag aktif/nonaktifnya (toggle "Status" di tab Regulasi).
+     */
     private const ADMIN_WRITABLE_KEYS = [
         'ipk_minimum',
+        'ipk_minimum_aktif',
         'masa_tenggang_sp',
+        'masa_tenggang_sp_aktif',
         'max_semester',
+        'max_semester_aktif',
         'sks_minimum_semester',
         'sks_minimum_lulus',
+        'sks_minimum_lulus_aktif',
     ];
 
     public function update(Request $request): JsonResponse
@@ -46,11 +54,28 @@ class KonfigurasiController extends Controller
         }
 
         foreach ($request->all() as $key => $value) {
+            // Kolom `value` bertipe text nullable: PDO menyimpan boolean false
+            // sebagai string KOSONG, bukan '0'. Kalau dibiarkan, pembaca yang
+            // membandingkan dengan '0' akan salah menilai flag sebagai aktif.
+            // Jadi key flag dinormalkan ke '1'/'0' di sini. Key lain ditulis
+            // apa adanya — periode_input_* punya jalur sendiri lewat observer.
+            if (str_ends_with($key, '_aktif')) {
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
+                $tipe  = 'boolean';
+            } else {
+                $tipe = 'text';
+            }
+
             Konfigurasi::updateOrCreate(
                 ['key' => $key],
-                ['value' => $value, 'label' => $key, 'tipe' => 'text']
+                ['value' => $value, 'label' => $key, 'tipe' => $tipe]
             );
         }
+
+        // Ambang batas mungkin ikut berubah di request ini; buang cache
+        // per-request supaya pembacaan setelahnya tidak mengembalikan nilai lama.
+        AturanAkademik::lupakanCache();
+
         return response()->json(['success' => true, 'message' => 'Konfigurasi disimpan.']);
     }
 
@@ -178,14 +203,28 @@ public function getPeriode(): JsonResponse
                     'warek_nama'     => $konfig['warek_nama'] ?? 'Dr. Rina Kurniawati, S.E., M.Si.',
                     'warek_nip'      => $konfig['warek_nip'] ?? '198203252008012002',
                 ],
+                // Ambang batas + flag aktif/nonaktifnya, datar dan bersufiks
+                // supaya simetris 1:1 dengan payload PUT /konfigurasi.
+                //
+                // ASIMETRI YANG DISENGAJA: di sini flag dibaca sebagai BOOLEAN
+                // (ramah frontend), sementara PUT menerima STRING '1'/'0' (aman
+                // untuk kolom text yang menyimpan false sebagai string kosong).
+                // Pemanggil yang mengirim balik nilai dari sini harus mengubahnya
+                // dulu jadi '1'/'0' — lihat saveRegulasiAll() di Konfigurasi.tsx.
                 'aturan_akademik' => [
-                    'ipk_minimum' => $konfig['ipk_minimum'] ?? '3.00',
+                    'ipk_minimum'            => $konfig['ipk_minimum'] ?? '3.00',
+                    'ipk_minimum_aktif'      => ($konfig['ipk_minimum_aktif'] ?? '1') === '1',
                     // Ketiga key ini dulu hanya bisa ditulis, tidak pernah dibaca —
                     // akibatnya tab Regulasi selalu kembali ke konstanta setelah simpan.
-                    'masa_tenggang_sp' => $konfig['masa_tenggang_sp'] ?? '90',
-                    'max_semester' => $konfig['max_semester'] ?? '8',
-                    'sks_minimum_semester' => $konfig['sks_minimum_semester'] ?? '18',
-                    'sks_minimum_lulus' => $konfig['sks_minimum_lulus'] ?? '144',
+                    'masa_tenggang_sp'       => $konfig['masa_tenggang_sp'] ?? '90',
+                    'masa_tenggang_sp_aktif' => ($konfig['masa_tenggang_sp_aktif'] ?? '1') === '1',
+                    'max_semester'           => $konfig['max_semester'] ?? '8',
+                    'max_semester_aktif'     => ($konfig['max_semester_aktif'] ?? '1') === '1',
+                    // Tidak lagi tampil di tab Regulasi (nol konsumen), tapi key-nya
+                    // dibiarkan ada supaya tidak ada pembaca lama yang menerima null.
+                    'sks_minimum_semester'   => $konfig['sks_minimum_semester'] ?? '18',
+                    'sks_minimum_lulus'      => $konfig['sks_minimum_lulus'] ?? '144',
+                    'sks_minimum_lulus_aktif' => ($konfig['sks_minimum_lulus_aktif'] ?? '1') === '1',
                 ],
                 'periode_aktif' => [
                     'tahun_akademik' => $konfig['tahun_akademik_aktif'] ?? '',

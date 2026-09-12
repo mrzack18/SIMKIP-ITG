@@ -8,6 +8,8 @@ export interface DashboardStats {
   dokumen_menunggu: number;
   bebas_tanggungan_pending: number;
   semester_lebih_8: number;
+  /** false = aturan Batas Semester Studi dinonaktifkan; semester_lebih_8 jadi tidak bermakna. */
+  max_semester_aktif?: boolean;
   sp_semester_ini: number;
 }
 
@@ -144,10 +146,16 @@ export interface StudentDashboardResponse {
     ipk_terakhir: number;
     ipk_delta: number | null;
     semester: number;
-    ipk_minimum: number;
+    /** null = aturan IPK Minimum dinonaktifkan; garis ambang grafik tidak digambar. */
+    ipk_minimum: number | null;
+    ipk_minimum_aktif: boolean;
     status_ipk: string;
+    /** null = aturan Batas Semester Studi dinonaktifkan. */
+    max_semester: number | null;
     sp_aktif: { level: string; status: string; deskripsi: string } | null;
   };
+  /** Peringatan informatif; tidak ada alur yang diblokir karenanya. */
+  peringatan?: { kode: string; level: string; judul: string; pesan: string }[];
   dokumen: {
     total_wajib: number;
     total_disetujui: number;
