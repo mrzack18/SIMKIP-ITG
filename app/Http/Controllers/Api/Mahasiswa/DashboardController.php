@@ -36,8 +36,11 @@ class DashboardController extends Controller
         }
 
         $ipkList     = $ipkBase->get()->sortBy('semester')->values();
-        $ipkTerakhir = (float) ($ipkList->last()?->ipk ?? 0);
-        $ipkPrev     = $ipkList->count() > 1 ? (float) $ipkList->slice(-2, 1)->first()?->ipk : null;
+        // Hanya baris yang sudah bernilai. Baris transkrip masa depan (semua
+        // "-"/"T") tidak boleh dianggap IPK 0 / semester terakhir.
+        $ipkBernilai = $ipkList->filter(fn($s) => $s->ipk !== null)->values();
+        $ipkTerakhir = $ipkBernilai->count() > 0 ? (float) $ipkBernilai->last()->ipk : null;
+        $ipkPrev     = $ipkBernilai->count() > 1 ? (float) $ipkBernilai->slice(-2, 1)->first()->ipk : null;
         
         // 1. Surat Peringatan Time Travel
         $spQuery = $m->suratPeringatans()->whereIn('status', ['Aktif', 'Masa Tenggang']);
@@ -95,9 +98,11 @@ class DashboardController extends Controller
         $periodeAktif  = $periodesAktif->isNotEmpty();
         $periodeTutup  = $periodesAktif->max(fn ($p) => $p->tanggal_tutup);
 
-        // Current semester: always based on all records (not filtered), TA filter only affects chart display
-        $allIpk = $m->ipkSemestrs;
-        $semesterAktif = $allIpk->count() > 0 ? $allIpk->max('semester') : 0;
+        // Semester berjalan dihitung dari angkatan + kalender akademik.
+        // Dulu diambil dari max(semester) baris transkrip — keliru karena LSIPD
+        // mengirim seluruh 8 semester sekaligus (semester depan masih "-"/"T"),
+        // sehingga mahasiswa baru tampil sebagai semester 8.
+        $semesterAktif = $m->semester_aktif;
         // Catatan: dulu ada $currentSemester yang dihitung di sini dengan angka 8
         // hardcode, tapi tidak pernah dipakai siapa pun — respons mengirim
         // $displayedSemester di bawah. Dihapus, bukan diperbaiki.
@@ -138,7 +143,9 @@ class DashboardController extends Controller
                 // Jangan kirim null: tipenya string di dashboardService.ts.
                 'status_ipk'   => $ipkMin === null
                     ? 'Tidak Dinilai'
-                    : ($ipkTerakhir >= $ipkMin ? 'Aman' : 'Di Bawah Standar'),
+                    : ($ipkTerakhir === null
+                        ? 'Belum Ada Nilai'
+                        : ($ipkTerakhir >= $ipkMin ? 'Aman' : 'Di Bawah Standar')),
                 // Dipakai grafik sebagai penyebut "semester X dari N".
                 'max_semester' => $maxSemester,
                 'sp_aktif'     => $spAktif ? [
@@ -173,7 +180,12 @@ class DashboardController extends Controller
                 ])->values(),
             ],
             'bebas_tanggungan' => $bebasTanggungan ? ['status' => $bebasTanggungan->status] : null,
-            'ipk_chart' => $ipkList->map(fn($s) => ['semester' => $s->semester, 'ipk' => (float) $s->ipk]),
+            // Hanya semester yang sudah bernilai — semester depan (transkrip
+            // LSIPD masih "-"/"T") tidak digambar sebagai titik 0.
+            'ipk_chart' => $ipkBernilai->map(fn($s) => [
+                'semester' => $s->semester,
+                'ipk' => (float) $s->ipk,
+            ]),
         ]);
     }
 

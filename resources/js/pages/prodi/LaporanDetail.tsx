@@ -145,7 +145,7 @@ export default function ProdiLaporanDetail() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6 min-w-0">
             {[
               { label: "Total Mahasiswa", val: s.totalMahasiswa ?? 0 },
-              { label: "Rata-rata IPK",   val: s.rataIpk != null ? Number(s.rataIpk).toFixed(2) : "0.00" },
+              { label: "Rata-rata IPK",   val: s.rataIpk != null ? Number(s.rataIpk).toFixed(2) : "—" },
               { label: "SP Aktif",        val: s.spAktif ?? 0 },
               { label: "Surat Penyelesaian", val: s.suratPenyelesaian ?? 0 },
             ].map((st) => (
@@ -193,7 +193,7 @@ export default function ProdiLaporanDetail() {
                       <td className="px-3 py-2 font-mono text-gray-500 whitespace-nowrap">{m.nim}</td>
                       <td className="px-3 py-2 text-gray-700 break-words min-w-[120px]">{m.nama}</td>
                       <td className="px-3 py-2 text-gray-500 break-words min-w-[100px]">{m.prodi}</td>
-                      <td className="px-3 py-2 font-700 text-gray-800 whitespace-nowrap">{Number(m.ipk).toFixed(2)}</td>
+                      <td className="px-3 py-2 font-700 text-gray-800 whitespace-nowrap">{m.ipk !== null && m.ipk !== undefined ? Number(m.ipk).toFixed(2) : "—"}</td>
                       <td className="px-3 py-2">
                         <span className={`px-1.5 py-0.5 rounded text-xs font-500 whitespace-nowrap ${(m.status === "Aktif") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{m.status}</span>
                       </td>

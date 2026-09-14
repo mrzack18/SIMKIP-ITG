@@ -35,7 +35,7 @@ import { calculateSemester, normalizeTA } from "@/utils/tahunAjaranHelper";
 // ─── Constants ────────────────────────────────────────────────────────────────
 const THRESHOLD = 3.0
 
-type NilaiHuruf = "A" | "AB" | "B" | "BC" | "C" | "D" | "E" | ""
+type NilaiHuruf = "A" | "AB" | "B" | "BC" | "C" | "D" | "E" | "-" | "T" | ""
 
 interface MataKuliah {
   id: number
@@ -55,8 +55,9 @@ interface SemesterRecord {
   id: number
   semester: number
   tahun: string
-  ips: number
-  ipk: number
+  /** null = semester belum punya nilai. */
+  ips: number | null
+  ipk: number | null
   status: "Draft" | "Diajukan" | "Disetujui" | "Ditolak" | string
   catatan_admin: string | null
   file_khs: string | null
@@ -100,8 +101,13 @@ interface PeriodeAktif {
 type FormStatus = "idle" | "draft" | "diajukan" | "ditolak" | "disetujui"
 
 // ─── Grade helpers ─────────────────────────────────────────────────────────────
+/**
+ * "-" dan "T" dari LSIPD berarti belum dinilai (dosen belum input nilai).
+ * Netral: bukan lulus maupun gagal → null (tampil "—"/Belum Dinilai).
+ */
 function getLulus(nilai: NilaiHuruf): boolean | null {
   if (!nilai) return null
+  if (nilai === "-" || nilai === "T") return null
   return nilai !== "D" && nilai !== "E"
 }
 
@@ -261,10 +267,15 @@ export default function InputIPK() {
 
   const [historyData, setHistoryData] = useState<SemesterRecord[]>([])
   const [carryOverData, setCarryOverData] = useState<CarryOver[]>([])
-  const [statistik, setStatistik] = useState({
-    tertinggi: { ipk: 0, semester: "-" },
-    terendah: { ipk: 0, semester: "-" },
-    rata_rata: 0,
+  const [statistik, setStatistik] = useState<{
+    tertinggi: { ipk: number; semester: number | string } | null
+    terendah: { ipk: number; semester: number | string } | null
+    rata_rata: number | null
+    total_sks_lulus: number
+  }>({
+    tertinggi: null,
+    terendah: null,
+    rata_rata: null,
     total_sks_lulus: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
@@ -532,7 +543,10 @@ export default function InputIPK() {
 
   const ipkChange = (idx: number) => {
     if (idx === 0) return null
-    return historyData[idx].ipk - historyData[idx - 1].ipk
+    const now = historyData[idx].ipk
+    const prev = historyData[idx - 1].ipk
+    if (now === null || prev === null) return null
+    return now - prev
   }
 
   const inputClass = isLocked()
@@ -547,7 +561,7 @@ export default function InputIPK() {
     const isLast = historyData.length > 0 && payload.semester === historyData[historyData.length - 1].semester
     return (
       <circle cx={cx} cy={cy} r={isLast ? 7 : 4}
-        fill={payload.ipk >= THRESHOLD ? "#059669" : "#DC2626"} stroke="white" strokeWidth={2} />
+        fill={(payload.ipk ?? 0) >= THRESHOLD ? "#059669" : "#DC2626"} stroke="white" strokeWidth={2} />
     )
   }
 
@@ -621,9 +635,9 @@ export default function InputIPK() {
       {/* ─── SECTION 2: Stat Cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4 min-w-0">
         {[
-          { icon: <TrendingUp size={18} className="text-green-500" />, label: "IPK Tertinggi", val: Number(statistik.tertinggi.ipk).toFixed(2), sub: `Semester ${statistik.tertinggi.semester}` },
-          { icon: <TrendingDown size={18} className="text-red-400" />, label: "IPK Terendah", val: Number(statistik.terendah.ipk).toFixed(2), sub: `Semester ${statistik.terendah.semester}` },
-          { icon: <Award size={18} style={{ color: "#D4A72C" }} />, label: "IPK Rata-rata", val: Number(statistik.rata_rata).toFixed(2), sub: "Semua semester" },
+          { icon: <TrendingUp size={18} className="text-green-500" />, label: "IPK Tertinggi", val: statistik.tertinggi ? Number(statistik.tertinggi.ipk).toFixed(2) : "—", sub: statistik.tertinggi ? `Semester ${statistik.tertinggi.semester}` : "belum ada nilai" },
+          { icon: <TrendingDown size={18} className="text-red-400" />, label: "IPK Terendah", val: statistik.terendah ? Number(statistik.terendah.ipk).toFixed(2) : "—", sub: statistik.terendah ? `Semester ${statistik.terendah.semester}` : "belum ada nilai" },
+          { icon: <Award size={18} style={{ color: "#D4A72C" }} />, label: "IPK Rata-rata", val: statistik.rata_rata !== null ? Number(statistik.rata_rata).toFixed(2) : "—", sub: "Semua semester" },
         ].map(({ icon, label, val, sub }) => (
           <div key={label} className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 min-w-0">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-2 min-w-0"><span className="shrink-0 flex items-center">{icon}</span><span className="text-[11px] sm:text-xs text-gray-500 truncate">{label}</span></div>
@@ -1079,7 +1093,7 @@ export default function InputIPK() {
                       </td>
                       <td className="px-3 py-3 font-medium text-gray-800">Semester {h.semester}</td>
                       <td className="px-3 py-3 text-gray-500 text-xs">{h.tahun}</td>
-                      <td className="px-3 py-3 font-bold text-[#263F93]">{h.ipk.toFixed(2)}</td>
+                      <td className="px-3 py-3 font-bold text-[#263F93]">{h.ipk !== null ? h.ipk.toFixed(2) : "—"}</td>
                       <td className="px-3 py-3">
                         {change === null ? <span className="text-gray-300 text-xs">—</span>
                           : change > 0 ? <span className="text-green-600 text-xs font-semibold">+{change.toFixed(2)}</span>

@@ -67,6 +67,47 @@ interface SemesterDetail {
   mataKuliah: MataKuliah[]
 }
 
+/** Nilai "-"/"T" dari LSIPD = belum dinilai; netral, tidak ikut hitung IPK/IPS. */
+function isNilaiNetral(mk: MataKuliah): boolean {
+  // Pakai flag dari server bila ada, supaya aturannya satu sumber.
+  if (typeof mk.netral === "boolean") return mk.netral
+  const v = (mk.nilaiHuruf ?? "").toUpperCase()
+  return v === "-" || v === "T"
+}
+
+/**
+ * Label status MK. Server mengirim `status`/`statusKode` (aturan ada di
+ * IPKCalculatorService::statusMk), jadi frontend tidak menduplikasi logikanya.
+ * Fallback disediakan untuk payload lama.
+ */
+function labelStatusMk(mk: MataKuliah): string {
+  if (mk.status) return mk.status
+  const v = (mk.nilaiHuruf ?? "").toUpperCase()
+  if (v === "-") return "MK Belum Diambil"
+  if (v === "T") return "Dosen Belum Menilai"
+  if (v === "D" || v === "E") return "Belum Lulus"
+  if (v === "") return "Belum Dinilai"
+  return "Lulus"
+}
+
+/**
+ * Kelas warna status: "-" (belum diambil) abu netral, "T" (dosen belum menilai)
+ * amber sebagai peringatan, lulus hijau, D/E merah.
+ */
+function warnaStatusMk(mk: MataKuliah): string {
+  switch (mk.statusKode) {
+    case "lulus": return "text-green-700"
+    case "belum_lulus": return "text-red-700"
+    case "belum_dinilai": return "text-amber-700"
+    case "belum_diambil": return "text-gray-500"
+    default: break
+  }
+  const v = (mk.nilaiHuruf ?? "").toUpperCase()
+  if (v === "T") return "text-amber-700"
+  if (v === "-") return "text-gray-500"
+  return mk.lulus ? "text-green-700" : "text-red-700"
+}
+
 interface MkBelumLulus {
   kode: string
   nama: string
@@ -323,9 +364,10 @@ function SemesterRow({
   prev: SemesterDetail | null
 }) {
   const [open, setOpen] = useState(false)
-  const delta = prev ? detail.ipk - prev.ipk : null
-  const totalSks = detail.mataKuliah.reduce((s, mk) => s + mk.sks, 0)
-  const belum = detail.mataKuliah.filter((mk) => !mk.lulus)
+  // Delta hanya bermakna bila kedua semester punya IPK.
+  const delta = prev && detail.ipk !== null && prev.ipk !== null ? detail.ipk - prev.ipk : null
+  const totalSks = detail.mataKuliah.reduce((s, mk) => s + (isNilaiNetral(mk) ? 0 : mk.sks), 0)
+  const belum = detail.mataKuliah.filter((mk) => !mk.lulus && !isNilaiNetral(mk))
 
   return (
     <>
@@ -337,9 +379,9 @@ function SemesterRow({
         <td className="py-3 px-3">
           <span
             className="font-semibold text-sm"
-            style={{ color: detail.ipk >= 3.0 ? "#059669" : "#DC2626" }}
+            style={{ color: detail.ipk === null ? "#94A3B8" : detail.ipk >= 3.0 ? "#059669" : "#DC2626" }}
           >
-            {detail.ipk.toFixed(2)}
+            {detail.ipk !== null ? detail.ipk.toFixed(2) : "—"}
           </span>
         </td>
         <td className="py-3 px-3">
@@ -367,12 +409,14 @@ function SemesterRow({
         <td className="py-3 px-3">
           <span
             className={`text-xs px-2 py-0.5 rounded-full ${
-              detail.ipk >= 3.0
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+              detail.ipk === null
+                ? "bg-gray-100 text-gray-500"
+                : detail.ipk >= 3.0
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
             }`}
           >
-            {detail.ipk >= 3.0 ? "Terverifikasi" : "Perlu Tindakan"}
+            {detail.ipk === null ? "Belum Ada Nilai" : detail.ipk >= 3.0 ? "Terverifikasi" : "Perlu Tindakan"}
           </span>
         </td>
         <td className="py-3 px-3">
@@ -418,26 +462,30 @@ function SemesterRow({
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {detail.mataKuliah.map((mk, idx) => (
-                    <tr key={mk.kode + "-" + idx} className={mk.lulus ? "" : "bg-red-50"}>
+                    <tr key={mk.kode + "-" + idx} className={isNilaiNetral(mk) ? "" : mk.lulus ? "" : "bg-red-50"}>
                       <td className="py-2 pr-2 text-gray-400 text-xs">{idx + 1}</td>
                       <td className="py-2 pr-2 text-gray-600 text-xs font-mono whitespace-nowrap">
                         {mk.kode}
                       </td>
                       <td className="py-2 pr-2 text-gray-800 text-xs sm:text-sm min-w-[140px] break-words">{mk.nama}</td>
                       <td className="py-2 pr-2 text-center text-gray-600 text-xs sm:text-sm">
-                        {mk.sks}
+                        {isNilaiNetral(mk) ? "-" : mk.sks}
                       </td>
                       <td
                         className="py-2 pr-2 text-center font-semibold text-xs sm:text-sm"
-                        style={{ color: mk.lulus ? "#059669" : "#DC2626" }}
+                        style={{ color: isNilaiNetral(mk) ? "#94A3B8" : mk.lulus ? "#059669" : "#DC2626" }}
                       >
                         {mk.nilaiHuruf}
                       </td>
                       <td className="py-2 pr-2 text-center text-gray-600 text-xs sm:text-sm">
-                        {mk.nilaiMutu.toFixed(1)}
+                        {isNilaiNetral(mk) ? "—" : mk.nilaiMutu.toFixed(1)}
                       </td>
                       <td className="py-2 text-center">
-                        {mk.lulus ? (
+                        {isNilaiNetral(mk) ? (
+                          <span className={`text-xs ${warnaStatusMk(mk)} flex items-center justify-center gap-1 whitespace-nowrap`}>
+                            <Clock size={12} className="flex-shrink-0" /> {labelStatusMk(mk)}
+                          </span>
+                        ) : mk.lulus ? (
                           <span className="text-xs text-green-700 flex items-center justify-center gap-1 whitespace-nowrap">
                             <CheckCircle size={12} className="flex-shrink-0" /> Lulus
                           </span>
@@ -456,7 +504,7 @@ function SemesterRow({
                       colSpan={7}
                       className="pt-2 text-xs text-gray-500 font-medium"
                     >
-                      Total SKS: {totalSks} | IPK: {detail.ipk.toFixed(2)}
+                      Total SKS: {totalSks} | IPK: {detail.ipk !== null ? detail.ipk.toFixed(2) : "—"}
                     </td>
                   </tr>
                 </tfoot>

@@ -131,8 +131,9 @@ class MahasiswaController extends Controller
         $semesterTujuan = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $req->tahun_ajaran);
         $data = $data->filter(fn($item) => (int) $item->semester <= $semesterTujuan);
 
-        // Sembunyikan baris semester kosong (tidak ada nilai IPS/IPK)
-        $data = $data->filter(fn($item) => (float) $item->ips != 0);
+        // Sembunyikan baris semester yang belum punya nilai (IPS NULL).
+        // IPS asli 0 (semua nilai E) tetap dianggap ada.
+        $data = $data->filter(fn($item) => $item->ips !== null);
 
         return response()->json([
             'data' => \App\Http\Resources\SemesterDetailResource::collection($data->values())
@@ -282,14 +283,15 @@ class MahasiswaController extends Controller
         }
         if ($request->sortBy) {
             switch ($request->sortBy) {
-                case 'IPK Tertinggi → Terendah': $query->orderByDesc('ipk_calc'); break;
-                case 'IPK Terendah → Tertinggi': $query->orderBy('ipk_calc'); break;
+                case 'IPK Tertinggi → Terendah': $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
+                // Tanpa nilai selalu di bawah, bukan dianggap IPK terendah.
+                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
                 case 'Nama A–Z': $query->orderBy('nama'); break;
                 case 'Angkatan Terbaru': $query->orderByDesc('angkatan'); break;
-                default: $query->orderByDesc('ipk_calc'); break;
+                default: $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
             }
         } else {
-            $query->orderByDesc('ipk_calc');
+            $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 10);

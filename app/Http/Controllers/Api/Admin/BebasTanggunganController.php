@@ -118,7 +118,7 @@ class BebasTanggunganController extends Controller
                 'nama'     => $m->nama,
                 'prodi'    => $m->prodi?->nama,
                 'angkatan' => $m->angkatan,
-                'semester' => $m->ipkSemestrs()->count(),
+                'semester' => $m->semester_aktif,
             ],
             'checklist'         => $checklist['checklist'],
             'dokumen'           => $checklist['dokumen'],

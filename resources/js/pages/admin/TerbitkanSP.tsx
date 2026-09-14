@@ -55,6 +55,11 @@ export default function TerbitkanSP() {
     const mhsIpk = searchParams.get("ipk");
 
     if (mhsNim && mhsNama) {
+      // IPK boleh kosong (mahasiswa belum punya nilai) — jangan dijadikan 0.
+      const ipkParam = mhsIpk !== null && mhsIpk.trim() !== "" && mhsIpk !== "null"
+        && !Number.isNaN(Number(mhsIpk))
+        ? Number(mhsIpk)
+        : null;
       const prefilled: Mahasiswa = {
         nim: mhsNim,
         nama: decodeURIComponent(mhsNama),
@@ -62,7 +67,7 @@ export default function TerbitkanSP() {
         angkatan: 0,
         kategori: "Reguler",
         status: "Aktif",
-        ipk: mhsIpk ? Number(mhsIpk) : 0,
+        ipk: ipkParam,
         semester: 0,
         sp: null,
       };
@@ -430,7 +435,7 @@ export default function TerbitkanSP() {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 bg-orange-50 border border-orange-200 rounded-lg px-3.5 sm:px-4 py-2.5 min-w-0">
               <span className="text-sm text-orange-700">IPK Terakhir Mahasiswa:</span>
               <span className="font-display font-700 text-orange-700">{selected.ipk?.toFixed(2) ?? "—"}</span>
-              {(selected.ipk ?? 0) < 3.0 && <span className="text-xs text-orange-500">(di bawah standar 3.0)</span>}
+              {selected.ipk !== null && selected.ipk < 3.0 && <span className="text-xs text-orange-500">(di bawah standar 3.0)</span>}
             </div>
           )}
 

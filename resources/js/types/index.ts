@@ -23,7 +23,8 @@ export interface Mahasiswa {
   angkatan: number;
   kategori: MahasiswaKategori;
   status: MahasiswaStatus;
-  ipk: number;
+  /** null = belum ada satu pun nilai (mis. mahasiswa baru). */
+  ipk: number | null;
   semester: number;
   sp: string | null;
   spList?: { level: string; status: string }[] | null;
@@ -105,13 +106,26 @@ export interface MataKuliah {
   nilaiHuruf: string;
   nilaiMutu: number;
   lulus: boolean;
+  /**
+   * Label status dari server (IPKCalculatorService::statusMk):
+   * "Lulus" | "Belum Lulus" (D/E) | "Dosen Belum Menilai" (T) |
+   * "MK Belum Diambil" (-) | "Belum Dinilai".
+   *
+   * Dipakai apa adanya supaya aturannya tidak diduplikasi di frontend.
+   */
+  status?: string;
+  /** Versi mesin dari `status`, untuk pewarnaan & ikon. */
+  statusKode?: "lulus" | "belum_lulus" | "belum_dinilai" | "belum_diambil" | "kosong";
+  /** true bila nilai hurufnya "-" atau "T" (tidak dihitung ke IPK/SKS). */
+  netral?: boolean;
 }
 
 export interface SemesterDetail {
   semester: number;
   tahun: string;
-  ips?: number;
-  ipk: number;
+  /** null = semester belum punya nilai. */
+  ips?: number | null;
+  ipk: number | null;
   status?: string;
   catatan_admin?: string | null;
   file_khs?: string | null;

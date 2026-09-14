@@ -110,7 +110,7 @@ export interface ProdiDashboardResponse {
     aspirasi: number;
     sp_aktif: number;
     ipk_di_bawah_standar: number;
-    rata_ipk: number;
+    rata_ipk: number | null;
   };
   prodi: { id: number; nama: string };
   sebaran_angkatan: ChartData[];
@@ -143,7 +143,8 @@ export interface StudentDashboardResponse {
     status: string;
   };
   akademik: {
-    ipk_terakhir: number;
+    /** null = belum ada satu pun nilai (mis. mahasiswa baru). */
+    ipk_terakhir: number | null;
     ipk_delta: number | null;
     semester: number;
     /** null = aturan IPK Minimum dinonaktifkan; garis ambang grafik tidak digambar. */

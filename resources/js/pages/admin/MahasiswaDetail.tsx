@@ -487,7 +487,7 @@ export default function MahasiswaDetail() {
             {mhs.status === "Aktif" && (
               <button
                 onClick={() => {
-                  navigate(`/admin/sp/terbitkan?mahasiswa_id=${mhs.id}&nim=${mhs.nim}&nama=${encodeURIComponent(mhs.nama)}&prodi=${encodeURIComponent(mhs.prodi ?? '')}&ipk=${mhs.ipk}`)
+                  navigate(`/admin/sp/terbitkan?mahasiswa_id=${mhs.id}&nim=${mhs.nim}&nama=${encodeURIComponent(mhs.nama)}&prodi=${encodeURIComponent(mhs.prodi ?? '')}${mhs.ipk !== null ? `&ipk=${mhs.ipk}` : ''}`)
                 }}
                 className="flex flex-1 min-[480px]:flex-none items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-red-400 text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap"
               >

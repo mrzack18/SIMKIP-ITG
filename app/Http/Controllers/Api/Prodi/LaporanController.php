@@ -129,11 +129,17 @@ class LaporanController extends Controller
 
         // Sample mahasiswa (with IPK + SP)
         $sample = (clone $mQuery)
-            ->with(['ipkSemestrs' => fn($q) => $q->orderByDesc('semester')->limit(1), 'suratPeringatans'])
+            ->with([
+                // Hanya baris yang sudah punya nilai; mahasiswa baru tidak
+                // boleh tampil ber-IPK 0.
+                'ipkSemestrs' => fn($q) => $q->sudahAdaNilai()->orderByDesc('semester')->limit(1),
+                'suratPeringatans',
+            ])
             ->limit(20)
             ->get()
             ->map(function ($m) {
-                $ipk = (float) ($m->ipkSemestrs->first()?->ipk ?? 0);
+                $ipkTerakhir = $m->ipkSemestrs->first()?->ipk;
+                $ipk = $ipkTerakhir !== null ? (float) $ipkTerakhir : null;
                 $sp  = $m->suratPeringatans
                     ->whereIn('status', ['Aktif', 'Masa Tenggang'])
                     ->sortByDesc('level')

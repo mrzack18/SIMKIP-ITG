@@ -139,7 +139,7 @@ export default function StudentDashboard() {
         </div>
 
         <div className="bg-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-gray-100 text-center min-w-0">
-          <div className="font-display font-700 text-xl sm:text-2xl text-gray-900 mb-1">{akademik.ipk_terakhir.toFixed(2)}</div>
+          <div className="font-display font-700 text-xl sm:text-2xl text-gray-900 mb-1">{akademik.ipk_terakhir !== null ? akademik.ipk_terakhir.toFixed(2) : "—"}</div>
           {akademik.ipk_delta !== null && (
             <div className={`flex items-center justify-center gap-1 text-xs mb-1 ${akademik.ipk_delta >= 0 ? "text-green-500" : "text-red-500"}`}>
               <TrendingUp size={12} className={akademik.ipk_delta < 0 ? "rotate-180" : ""} /> {akademik.ipk_delta >= 0 ? "+" : ""}{akademik.ipk_delta.toFixed(2)} dari Sem {akademik.semester > 1 ? akademik.semester - 1 : 1}

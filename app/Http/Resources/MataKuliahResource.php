@@ -22,6 +22,12 @@ class MataKuliahResource extends JsonResource
             'nilaiMutu' => (float) $this->nilai_mutu,
             'lulus' => (bool) $this->lulus,
             'alasanPerubahan' => $this->alasan_perubahan,
+            // Label status mengikuti aturan tunggal di IPKCalculatorService:
+            // "Belum Lulus" hanya untuk D/E, sedangkan "-" dan "T" punya makna
+            // sendiri. Dikirim dari server supaya aturannya tidak diduplikasi.
+            'status' => \App\Services\IPKCalculatorService::statusMk((string) $this->nilai_huruf),
+            'statusKode' => \App\Services\IPKCalculatorService::statusMkKode((string) $this->nilai_huruf),
+            'netral' => \App\Services\IPKCalculatorService::isNilaiNetral((string) $this->nilai_huruf),
         ];
     }
 }

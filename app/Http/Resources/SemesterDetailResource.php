@@ -16,15 +16,18 @@ class SemesterDetailResource extends JsonResource
     {
         $mkBelumLulus = 0;
         if ($this->relationLoaded('mataKuliahs')) {
-            $mkBelumLulus = $this->mataKuliahs->where('lulus', false)->count();
+            $mkBelumLulus = $this->mataKuliahs
+                ->where('lulus', false)
+                ->reject(fn($mk) => \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
+                ->count();
         }
 
         return [
             'id'            => $this->id,
             'semester'      => (int) $this->semester,
             'tahun'         => $this->tahun_ajaran,
-            'ips'           => (float) $this->ips,
-            'ipk'           => (float) $this->ipk,
+            'ips'           => $this->ips !== null ? (float) $this->ips : null,
+            'ipk'           => $this->ipk !== null ? (float) $this->ipk : null,
             'status'        => $this->status,
             'catatan_admin' => $this->catatan_admin,
             'mkBelumLulus'  => $mkBelumLulus,

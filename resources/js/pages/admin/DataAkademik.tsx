@@ -888,10 +888,13 @@ export default function DataAkademik() {
   const pelatihanNonAkademikData = pelatihanData.filter((p) => p.jenis === "Non-Akademik")
 
   // Merge data tak perlu karena data sudah digabungkan di backend
-  const belowStd = akademikRows.filter((r) => r.ipk < 3.0).length
-  const avgIPK = akademikRows.length > 0 ? (
-    akademikRows.reduce((s, r) => s + r.ipk, 0) / akademikRows.length
-  ).toFixed(2) : "0.00"
+  // Mahasiswa yang belum punya nilai (angkatan baru) ber-IPK null: jangan
+  // dihitung sebagai IPK 0 / di bawah standar.
+  const rowsDenganIpk = akademikRows.filter((r) => r.ipk !== null && r.ipk !== undefined)
+  const belowStd = rowsDenganIpk.filter((r) => r.ipk < 3.0).length
+  const avgIPK = rowsDenganIpk.length > 0 ? (
+    rowsDenganIpk.reduce((s, r) => s + r.ipk, 0) / rowsDenganIpk.length
+  ).toFixed(2) : "—"
 
   // Filter akademik
   const filteredAkademik = akademikRows
@@ -911,9 +914,12 @@ export default function DataAkademik() {
       const matchIPK =
         ipkFilter === "Semua IPK"
           ? true
-          : ipkFilter.includes("< 3.0")
-            ? r.ipk < 3.0
-            : r.ipk >= 3.0
+          : r.ipk === null || r.ipk === undefined
+            // Belum punya nilai bukan "di bawah standar" maupun "di atas standar".
+            ? false
+            : ipkFilter.includes("< 3.0")
+              ? r.ipk < 3.0
+              : r.ipk >= 3.0
       return (
         matchQ &&
         matchProdi &&
@@ -925,6 +931,15 @@ export default function DataAkademik() {
     })
     .sort((a, b) => {
       const s = sortAkademik
+      // Mahasiswa tanpa nilai selalu di urutan bawah, bukan dianggap IPK
+      // terendah/tertinggi.
+      if (s === "IPK Terendah→Tertinggi" || s === "IPK Tertinggi→Terendah") {
+        const aKosong = a.ipk === null || a.ipk === undefined
+        const bKosong = b.ipk === null || b.ipk === undefined
+        if (aKosong && bKosong) return 0
+        if (aKosong) return 1
+        if (bKosong) return -1
+      }
       // Dicocokkan PERSIS, bukan dengan includes(): "IPK Terendah→Tertinggi"
       // juga mengandung kata "Tertinggi", sehingga pengecekan includes("Tertinggi")
       // lebih dulu membuat pilihan "Terendah→Tertinggi" ikut terurut menurun —
@@ -1194,7 +1209,8 @@ export default function DataAkademik() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginatedAkademik.map((r, i) => {
-                    const below = r.ipk < 3.0
+                    const punyaIpk = r.ipk !== null && r.ipk !== undefined
+                    const below = punyaIpk && r.ipk < 3.0
                     return (
                       <tr
                         key={r.id}
@@ -1225,18 +1241,28 @@ export default function DataAkademik() {
                           Sem {r.sem}
                         </td>
                         <td className={tdCls}>
-                          <span
-                            className={`font-display font-700 text-sm px-2 py-0.5 rounded-lg ${
-                              below
-                                ? "bg-red-100 text-red-700"
-                                : "bg-green-100 text-green-700"
-                            }`}
-                          >
-                            {r.ipk.toFixed(2)}
-                          </span>
+                          {punyaIpk ? (
+                            <span
+                              className={`font-display font-700 text-sm px-2 py-0.5 rounded-lg ${
+                                below
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-green-100 text-green-700"
+                              }`}
+                            >
+                              {r.ipk.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="font-display font-700 text-sm px-2 py-0.5 rounded-lg bg-gray-100 text-gray-500">
+                              —
+                            </span>
+                          )}
                         </td>
                         <td className={tdCls}>
-                          <ProgresIPK delta={r.delta} />
+                          {punyaIpk ? (
+                            <ProgresIPK delta={r.delta} />
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
                         </td>
                         <td className={tdCls}>
                           <div className="flex gap-1 flex-wrap">

@@ -85,10 +85,11 @@ class MahasiswaController extends Controller
         if ($request->sortBy) {
             switch ($request->sortBy) {
                 case 'IPK Tertinggi → Terendah':
-                    $query->orderByDesc('ipk_calc');
+                    $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
                     break;
                 case 'IPK Terendah → Tertinggi':
-                    $query->orderBy('ipk_calc');
+                    // Tanpa nilai selalu di bawah, bukan dianggap IPK terendah.
+                    $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc');
                     break;
                 case 'Nama A–Z':
                     $query->orderBy('nama');
@@ -97,11 +98,11 @@ class MahasiswaController extends Controller
                     $query->orderByDesc('angkatan');
                     break;
                 default:
-                    $query->orderByDesc('ipk_calc');
+                    $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
                     break;
             }
         } else {
-            $query->orderByDesc('ipk_calc');
+            $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 10);

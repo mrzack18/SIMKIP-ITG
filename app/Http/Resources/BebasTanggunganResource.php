@@ -18,7 +18,8 @@ class BebasTanggunganResource extends JsonResource
 
         // Summary fields for the list view — computed from eager-loaded relations
         $m          = $this->mahasiswa;
-        $semester   = $m ? $m->ipkSemestrs->count() : 0;
+        // Semester berjalan dari angkatan, bukan jumlah baris transkrip.
+        $semester   = $m ? $m->semester_aktif : 0;
         $spBersih   = $m ? !$m->suratPeringatans->contains(fn($sp) => in_array($sp->status, ['Aktif', 'Masa Tenggang'])) : true;
 
         // Dokumen progress: approved mandatory docs out of total mandatory document types configured

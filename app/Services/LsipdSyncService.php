@@ -173,9 +173,18 @@ class LsipdSyncService
             $semesterInserted = self::upsertProgresAkademik($mahasiswa, $data);
             $mkInserted = self::upsertTranskripMk($mahasiswa, $data);
 
-            IPKCalculatorService::recalculateAllIPK($mahasiswa->id);
+            // IPS/IPK TIDAK dihitung ulang dari mata kuliah lokal. Nilai dari
+            // `progres_akademik` / ringkasan LSIPD adalah angka resmi akademik;
+            // hitungan ulang dari subset MK lokal (mis. yang masih ber-"Draft")
+            // justru melenceng dari respons LSIPD.
+            //
+            // Tapi angka 0 dari upstream untuk semester tanpa nilai hanyalah
+            // placeholder. Baris tanpa MK bernilai di-null-kan supaya tidak
+            // terbaca sebagai "IPK 0" (mahasiswa baru dianggap < 3.0).
+            IPKCalculatorService::bersihkanNilaiTanpaMK($mahasiswa->id);
 
             $lastIpk = IpkSemestr::where('mahasiswa_id', $mahasiswa->id)
+                ->sudahAdaNilai()
                 ->orderByDesc('semester')
                 ->value('ipk');
 
@@ -399,8 +408,8 @@ class LsipdSyncService
                 // "Semester 1", "Semester 2", dst — bukan tahun ajaran. Upstream
                 // tidak mengirim TA sama sekali, jadi diturunkan dari angkatan.
                 'tahun_ajaran' => self::tahunAjaranUntuk($mahasiswa, $semester),
-                'ips'          => isset($row['ips']) ? (float) $row['ips'] : 0,
-                'ipk'          => isset($row['ipk']) ? (float) $row['ipk'] : 0,
+                'ips'          => isset($row['ips']) ? (float) $row['ips'] : null,
+                'ipk'          => isset($row['ipk']) ? (float) $row['ipk'] : null,
             ];
 
             // Status hanya di-set saat baris baru, atau saat baris lama tidak punya
@@ -428,8 +437,6 @@ class LsipdSyncService
 
         return $count;
     }
-
-    private const NILAI_HURUF_VALID = ['A', 'AB', 'B', 'BC', 'C', 'D', 'E'];
 
     private static function upsertTranskripMk(Mahasiswa $mahasiswa, array $data): int
     {
@@ -461,8 +468,11 @@ class LsipdSyncService
                     // Sama seperti upsertProgresAkademik(): transkrip juga tidak
                     // membawa TA, jadi diturunkan dari angkatan. Dulu diisi ''.
                     'tahun_ajaran' => self::tahunAjaranUntuk($mahasiswa, $semester),
-                    'ips'          => 0,
-                    'ipk'          => 0,
+                    // NULL = belum ada nilai. Bila upstream mengirim ipk/ips,
+                    // upsertProgresAkademik() sudah membuat baris ini lebih dulu
+                    // sehingga cabang create ini tidak dijalankan.
+                    'ips'          => null,
+                    'ipk'          => null,
                     // Bukan 'Disetujui' — lihat penjelasan di upsertProgresAkademik().
                     'status'       => 'Draft',
                 ]);
@@ -472,16 +482,17 @@ class LsipdSyncService
 
             $mapped = [];
             foreach ($mks as $mk) {
-                $huruf = strtoupper((string) ($mk['nlakh'] ?? ''));
-                if (! in_array($huruf, self::NILAI_HURUF_VALID, true)) {
-                    Log::info('LSIPD: nilai_huruf tidak valid, dilewati', [
-                        'nim'         => $mahasiswa->nim,
-                        'semester'    => $semester,
-                        'kdmk'        => $mk['kdmk'] ?? null,
-                        'nlakh'       => $mk['nlakh'] ?? null,
-                    ]);
-                    continue;
+                // Dulu mata kuliah ber-nlakh "-" (belum dinilai) dan "T" (dosen
+                // belum menginput nilai) dilewati, sehingga transkrip lokal tidak
+                // cocok dengan transkrip LSIPD. Sekarang SEMUA baris dipertahankan:
+                // nilai selain A–E disimpan apa adanya agar tampilan app = LSIPD.
+                // Keduanya dibebani nilai_mutu 0 & lulus=false sehingga tidak ikut
+                // dihitung ke IPK/IPS (lihat IPKCalculatorService).
+                $huruf = strtoupper(trim((string) ($mk['nlakh'] ?? '')));
+                if ($huruf === '') {
+                    $huruf = '-';
                 }
+
                 $mapped[] = [
                     'kode'        => strtoupper((string) ($mk['kdmk'] ?? '')),
                     'nama'        => (string) ($mk['nakmk'] ?? ''),

@@ -39,7 +39,8 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithSt
     public function map($m): array
     {
         $ipkSemesters = $m->ipkSemestrs->sortBy('semester')->values();
-        $ipkTerakhir  = (float) ($ipkSemesters->last()?->ipk ?? 0);
+        $ipkTerakhirRow = $ipkSemesters->filter(fn($s) => $s->ipk !== null)->last();
+        $ipkTerakhir   = $ipkTerakhirRow ? (float) $ipkTerakhirRow->ipk : null;
         $spAktif      = $m->suratPeringatans->whereIn('status', ['Aktif', 'Masa Tenggang'])->sortByDesc('level')->first();
         $dokSetujui   = $m->dokumens->where('status', 'Disetujui')->unique('dokumen_jenis_id')->count();
 
@@ -50,8 +51,10 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $m->angkatan,
             $m->kategori,
             $m->status,
-            $ipkSemesters->count(),
-            number_format($ipkTerakhir, 2),
+            // Semester berjalan dari angkatan, bukan jumlah baris transkrip
+            // (LSIPD mengirim seluruh 8 semester sekaligus).
+            $m->semester_aktif,
+            $ipkTerakhir !== null ? number_format($ipkTerakhir, 2) : '-',
             $spAktif?->level ?? '-',
             $dokSetujui,
         ];

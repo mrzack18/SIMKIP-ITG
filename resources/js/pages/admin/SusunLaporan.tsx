@@ -704,8 +704,8 @@ export default function SusunLaporan() {
                             <td className="border border-[#E2E8F0] px-2 py-1.5 break-words min-w-[90px]">{m.prodi.replace("Teknik ", "T.")}</td>
                             <td className="border border-[#E2E8F0] px-2 py-1.5 whitespace-nowrap">{m.angkatan}</td>
                             <td className="border border-[#E2E8F0] px-2 py-1.5 font-bold whitespace-nowrap"
-                              style={{ color: m.ipk >= 3.0 ? "#059669" : "#DC2626" }}>
-                              {m.ipk ?? "—"}
+                              style={{ color: m.ipk === null || m.ipk === undefined ? "#94A3B8" : m.ipk >= 3.0 ? "#059669" : "#DC2626" }}>
+                              {m.ipk !== null && m.ipk !== undefined ? Number(m.ipk).toFixed(2) : "—"}
                             </td>
                             <td className="border border-[#E2E8F0] px-2 py-1.5 whitespace-nowrap">{m.sp || "—"}</td>
                           </tr>

@@ -14,6 +14,32 @@ import { ChevronDown, ChevronUp, CheckCircle, XCircle, AlertTriangle, Clock, Loa
 import type { SemesterDetailBE, SemesterDetail, MataKuliah } from "@/types"
 import { BackendNotReady } from "./Shared"
 
+/**
+ * Tampilan status MK, mengikuti `statusKode` dari server.
+ *
+ * Aturan labelnya ada di IPKCalculatorService::statusMk() — di sini hanya
+ * pemetaan ke warna & ikon. Nilai netral dari LSIPD ("-"/"T") TIDAK dianggap
+ * "Belum Lulus": "-" berarti MK belum diambil, "T" berarti dosen belum menilai.
+ */
+const STATUS_MK: Record<string, { label: string; cls: string; bg: string; icon: "check" | "x" | "clock" }> = {
+  lulus:         { label: "Lulus",              cls: "text-green-700", bg: "",          icon: "check" },
+  belum_lulus:   { label: "Belum Lulus",        cls: "text-red-700",   bg: "bg-red-50", icon: "x" },
+  belum_dinilai: { label: "Dosen Belum Menilai", cls: "text-amber-700", bg: "bg-amber-50", icon: "clock" },
+  belum_diambil: { label: "MK Belum Diambil",   cls: "text-gray-500",  bg: "",          icon: "clock" },
+  kosong:        { label: "Belum Dinilai",      cls: "text-gray-500",  bg: "",          icon: "clock" },
+}
+
+/** Ambil tampilan status; fallback ke `lulus` bila server belum mengirim status. */
+function tampilanStatus(mk: MataKuliah) {
+  const kode = mk.statusKode ?? (mk.lulus ? "lulus" : "belum_lulus")
+  return { kode, ...(STATUS_MK[kode] ?? STATUS_MK.kosong) }
+}
+
+/** Nilai netral ("-"/"T") tidak dihitung sebagai MK gagal. */
+function netral(mk: MataKuliah): boolean {
+  return mk.netral ?? ["-", "T"].includes((mk.nilaiHuruf ?? "").toUpperCase())
+}
+
 function SemesterRow({
   detail,
   prev,
@@ -22,9 +48,11 @@ function SemesterRow({
   prev: SemesterDetail | null
 }) {
   const [open, setOpen] = useState(false)
-  const delta = prev ? detail.ipk - prev.ipk : null
+  // Delta hanya bermakna bila kedua semester punya IPK.
+  const delta = prev && detail.ipk !== null && prev.ipk !== null ? detail.ipk - prev.ipk : null
   const totalSks = detail.mataKuliah.reduce((s, mk) => s + mk.sks, 0)
-  const belum = detail.mataKuliah.filter((mk) => !mk.lulus)
+  // Hanya D/E yang dianggap belum lulus; T dan "-" bukan MK gagal.
+  const belum = detail.mataKuliah.filter((mk) => !mk.lulus && !netral(mk))
 
   return (
     <>
@@ -41,9 +69,9 @@ function SemesterRow({
         <td className="py-3 px-3">
           <span
             className="font-semibold text-sm"
-            style={{ color: detail.ipk >= 3.0 ? "#059669" : "#DC2626" }}
+            style={{ color: detail.ipk === null ? "#94A3B8" : detail.ipk >= 3.0 ? "#059669" : "#DC2626" }}
           >
-            {detail.ipk.toFixed(2)}
+            {detail.ipk !== null ? detail.ipk.toFixed(2) : "—"}
           </span>
         </td>
         <td className="py-3 px-3">
@@ -133,8 +161,10 @@ function SemesterRow({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {detail.mataKuliah.map((mk, idx) => (
-                      <tr key={mk.kode} className={mk.lulus ? "" : "bg-red-50"}>
+                    {detail.mataKuliah.map((mk, idx) => {
+                      const st = tampilanStatus(mk)
+                      return (
+                      <tr key={mk.kode} className={st.bg}>
                         <td className="py-2 pr-2 text-gray-400 text-xs">{idx + 1}</td>
                         <td className="py-2 pr-2 text-gray-600 text-xs font-mono whitespace-nowrap">
                           {mk.kode}
@@ -144,27 +174,24 @@ function SemesterRow({
                           {mk.sks}
                         </td>
                         <td
-                          className="py-2 pr-2 text-center font-semibold text-xs sm:text-sm"
-                          style={{ color: mk.lulus ? "#059669" : "#DC2626" }}
+                          className={`py-2 pr-2 text-center font-semibold text-xs sm:text-sm ${st.cls}`}
                         >
                           {mk.nilaiHuruf}
                         </td>
                         <td className="py-2 pr-2 text-center text-gray-600 text-xs sm:text-sm">
-                          {mk.nilaiMutu.toFixed(1)}
+                          {mk.netral ? "—" : mk.nilaiMutu.toFixed(1)}
                         </td>
                         <td className="py-2 text-center">
-                          {mk.lulus ? (
-                            <span className="text-xs text-green-700 flex items-center justify-center gap-1 whitespace-nowrap">
-                              <CheckCircle size={12} className="flex-shrink-0" /> Lulus
-                            </span>
-                          ) : (
-                            <span className="text-xs text-red-700 flex items-center justify-center gap-1 whitespace-nowrap">
-                              <XCircle size={12} className="flex-shrink-0" /> Belum Lulus
-                            </span>
-                          )}
+                          <span className={`text-xs ${st.cls} flex items-center justify-center gap-1 whitespace-nowrap`}>
+                            {st.icon === "check" && <CheckCircle size={12} className="flex-shrink-0" />}
+                            {st.icon === "x" && <XCircle size={12} className="flex-shrink-0" />}
+                            {st.icon === "clock" && <Clock size={12} className="flex-shrink-0" />}
+                            {st.label}
+                          </span>
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-gray-200">
@@ -172,7 +199,7 @@ function SemesterRow({
                         colSpan={7}
                         className="pt-2 text-xs text-gray-500 font-medium"
                       >
-                        Total SKS: {totalSks} | IPK: {detail.ipk.toFixed(2)}
+                        Total SKS: {totalSks} | IPK: {detail.ipk !== null ? detail.ipk.toFixed(2) : "—"}
                       </td>
                     </tr>
                   </tfoot>
@@ -278,24 +305,36 @@ export function TabRiwayatAkademik({
       nilaiHuruf: mk.nilaiHuruf,
       nilaiMutu: mk.nilaiMutu,
       lulus: mk.lulus,
+      // Diteruskan dari server supaya label status tidak dihitung ulang di sini.
+      status: mk.status,
+      statusKode: mk.statusKode,
+      netral: mk.netral,
     })),
   }))
 
-  const highest = semesterDetails.reduce((a, b) => (a.ipk > b.ipk ? a : b))
-  const lowest = semesterDetails.reduce((a, b) => (a.ipk < b.ipk ? a : b))
-  const avg = semesterDetails.reduce((s, h) => s + h.ipk, 0) / semesterDetails.length
+  // Statistik hanya dari semester yang sudah punya IPK; semester transkrip
+  // masa depan (masih "-"/"T") tidak dihitung sebagai nilai 0.
+  const denganIpk = semesterDetails.filter((s): s is SemesterDetail & { ipk: number } => s.ipk !== null)
+  const highest = denganIpk.length > 0 ? denganIpk.reduce((a, b) => (a.ipk > b.ipk ? a : b)) : null
+  const lowest = denganIpk.length > 0 ? denganIpk.reduce((a, b) => (a.ipk < b.ipk ? a : b)) : null
+  const avg = denganIpk.length > 0
+    ? denganIpk.reduce((s, h) => s + h.ipk, 0) / denganIpk.length
+    : null
 
-  // MK yang belum lulus (semua semester)
+  // MK yang benar-benar belum lulus (D/E). Nilai netral "-" dan "T" dikecualikan:
+  // "-" berarti MK belum diambil, "T" berarti dosen belum menilai — keduanya
+  // bukan mata kuliah gagal yang harus diperbaiki.
   const belumLulus: MataKuliah[] = []
   for (const sd of semesterDetails) {
     for (const mk of sd.mataKuliah) {
-      if (!mk.lulus && !belumLulus.find((b) => b.kode === mk.kode)) {
+      if (!mk.lulus && !netral(mk) && !belumLulus.find((b) => b.kode === mk.kode)) {
         belumLulus.push(mk)
       }
     }
   }
 
-  const chartData = semesterDetails.map((s) => ({
+  // Grafik hanya menggambar semester yang sudah bernilai (bukan 0 palsu).
+  const chartData = denganIpk.map((s) => ({
     semester: s.semester,
     ipk: s.ipk,
     ipkVal: s.ipk,
@@ -307,18 +346,18 @@ export function TabRiwayatAkademik({
         {[
           {
             label: "IPK Tertinggi",
-            value: highest.ipk.toFixed(2),
-            sub: `di Sem ${highest.semester}`,
+            value: highest ? highest.ipk.toFixed(2) : "—",
+            sub: highest ? `di Sem ${highest.semester}` : "belum ada nilai",
           },
           {
             label: "IPK Terendah",
-            value: lowest.ipk.toFixed(2),
-            sub: `di Sem ${lowest.semester}`,
+            value: lowest ? lowest.ipk.toFixed(2) : "—",
+            sub: lowest ? `di Sem ${lowest.semester}` : "belum ada nilai",
           },
           {
             label: "IPK Rata-rata",
-            value: avg.toFixed(2),
-            sub: `dari ${semesterDetails.length} semester`,
+            value: avg !== null ? avg.toFixed(2) : "—",
+            sub: `dari ${denganIpk.length} semester`,
           },
         ].map(({ label, value, sub }) => (
           <div

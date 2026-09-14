@@ -84,8 +84,11 @@ class MahasiswaExport implements
     public function map($mahasiswa): array
     {
         $ipkSemesters = $mahasiswa->ipkSemestrs->sortBy('semester')->values();
-        $ipkTerakhir  = (float) ($ipkSemesters->last()?->ipk ?? 0);
-        $semesterAktif = $ipkSemesters->count();
+        $ipkTerakhirRow = $ipkSemesters->filter(fn($s) => $s->ipk !== null)->last();
+        $ipkTerakhir   = $ipkTerakhirRow ? (float) $ipkTerakhirRow->ipk : null;
+        // Semester berjalan dihitung dari angkatan — jumlah baris transkrip
+        // menyesatkan karena LSIPD mengirim seluruh 8 semester sekaligus.
+        $semesterAktif = $mahasiswa->semester_aktif;
 
         $spAktif = $mahasiswa->suratPeringatans
             ->whereIn('status', ['Aktif', 'Masa Tenggang'])
@@ -99,14 +102,14 @@ class MahasiswaExport implements
             $mahasiswa->kategori,
             $mahasiswa->status,
             $semesterAktif,
-            number_format($ipkTerakhir, 2),
+            $ipkTerakhir !== null ? number_format($ipkTerakhir, 2) : '-',
         ];
 
         // IPK per semester (s1-s8)
         if ($this->filters['sertakan_ipk'] ?? false) {
             for ($sem = 1; $sem <= 8; $sem++) {
                 $entry = $ipkSemesters->firstWhere('semester', $sem);
-                $row[] = $entry ? number_format((float) $entry->ipk, 2) : '-';
+                $row[] = $entry && $entry->ipk !== null ? number_format((float) $entry->ipk, 2) : '-';
             }
         }
 

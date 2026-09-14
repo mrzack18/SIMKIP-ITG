@@ -40,14 +40,15 @@ class MahasiswaController extends Controller
 
         if ($request->sortBy) {
             switch ($request->sortBy) {
-                case 'IPK Terendah → Tertinggi': $query->orderBy('ipk_calc'); break;
+                // Mahasiswa tanpa nilai selalu di urutan bawah.
+                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
                 case 'Nama A–Z':                 $query->orderBy('nama'); break;
                 case 'Angkatan Terbaru':         $query->orderByDesc('angkatan'); break;
                 case 'IPK Tertinggi → Terendah':
-                default:                         $query->orderByDesc('ipk_calc'); break;
+                default:                         $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
             }
         } else {
-            $query->orderByDesc('ipk_calc');
+            $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 8); // FE uses page size 8
@@ -136,7 +137,7 @@ class MahasiswaController extends Controller
                 $m->prodi->nama ?? '-',
                 $m->angkatan,
                 $m->kategori,
-                (float) ($m->ipk_calc ?? 0),
+                $m->ipk_calc !== null ? (float) $m->ipk_calc : '-',
                 \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                 $m->status,
                 $m->sp_calc ?? '-',

@@ -140,8 +140,9 @@ export interface SemesterDetailBE {
   id: number;
   semester: number;
   tahun: string;
-  ipk: number;
-  ips: number;
+  /** null = semester belum punya nilai. */
+  ipk: number | null;
+  ips: number | null;
   status: 'Menunggu' | 'Disetujui' | 'Ditolak';
   catatan_admin?: string | null;
   file_khs?: string | null;

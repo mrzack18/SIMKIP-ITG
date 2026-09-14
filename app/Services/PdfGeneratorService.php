@@ -25,7 +25,8 @@ class PdfGeneratorService
 
         $m         = $bt->mahasiswa;
         $ipkList   = $m->ipkSemestrs->sortBy('semester')->values();
-        $rataIPK   = $ipkList->count() > 0 ? number_format($ipkList->avg('ipk'), 2) : '0.00';
+        $ipkBernilai = $ipkList->filter(fn($s) => $s->ipk !== null);
+        $rataIPK   = $ipkBernilai->count() > 0 ? number_format((float) $ipkBernilai->avg('ipk'), 2) : '-';
 
         // Dokumen yang disetujui
         $dokumens = $m->dokumens
@@ -53,7 +54,8 @@ class PdfGeneratorService
                 'nim'      => $m->nim,
                 'prodi'    => $m->prodi?->nama ?? '-',
                 'angkatan' => $m->angkatan,
-                'semester' => $m->ipkSemestrs->count(),
+                // Semester berjalan dari angkatan, bukan jumlah baris transkrip.
+                'semester' => $m->semester_aktif,
             ],
             'nomor_surat'   => $bt->nomor_surat ?? 'SKPS/KIP-K/ITG/-/-/-',
             'tanggal_terbit'=> $bt->tanggal_terbit?->format('d F Y') ?? now()->format('d F Y'),

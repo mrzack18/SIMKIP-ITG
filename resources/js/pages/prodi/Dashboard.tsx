@@ -99,7 +99,7 @@ export default function ProdiDashboard() {
             </div>
             <p className="text-xs font-medium text-gray-500 leading-tight break-words">Rata-rata IPK</p>
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{Number(data?.stats?.rata_ipk ?? 0).toFixed(2)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#263F93]">{data?.stats?.rata_ipk != null ? Number(data.stats.rata_ipk).toFixed(2) : "—"}</p>
         </div>
       </div>
 

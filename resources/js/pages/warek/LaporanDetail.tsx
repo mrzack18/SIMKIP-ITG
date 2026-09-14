@@ -233,7 +233,7 @@ export default function WarekLaporanDetail() {
                     <td className="px-3 py-2 font-mono text-gray-500 whitespace-nowrap">{m.nim}</td>
                     <td className="px-3 py-2 text-gray-700 break-words min-w-[120px]">{m.nama}</td>
                     <td className="px-3 py-2 text-gray-500 break-words min-w-[100px]">{m.prodi}</td>
-                    <td className="px-3 py-2 font-700 text-gray-800 whitespace-nowrap">{(m.ipk ?? 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 font-700 text-gray-800 whitespace-nowrap">{m.ipk !== null && m.ipk !== undefined ? m.ipk.toFixed(2) : "—"}</td>
                     <td className="px-3 py-2">
                       <span className={`px-1.5 py-0.5 rounded text-xs font-500 whitespace-nowrap ${m.status === "Aktif" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{m.status}</span>
                     </td>

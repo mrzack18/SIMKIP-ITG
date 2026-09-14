@@ -168,7 +168,7 @@ class DashboardController extends Controller
         $mIds = $mQuery->pluck('id')->toArray();
 
         $latestIpks = IpkSemestr::whereIn('mahasiswa_id', $mIds)
-            ->whereNotNull('ipk')
+            ->sudahAdaNilai()
             ->get()
             ->groupBy('mahasiswa_id')
             ->map(fn($rows) => $rows->sortByDesc('semester')->first()?->ipk)
@@ -195,6 +195,7 @@ class DashboardController extends Controller
             ->addSelect([
                 'ipk_calc' => IpkSemestr::select('ipk')
                     ->whereColumn('mahasiswa_id', 'mahasiswas.id')
+                    ->sudahAdaNilai()
                     ->orderByDesc('semester')
                     ->limit(1),
                 'sp_calc' => SuratPeringatan::select('level')
@@ -211,7 +212,7 @@ class DashboardController extends Controller
                 'nim'      => $m->nim,
                 'nama'     => $m->nama,
                 'prodi'    => $this->prodiShortName($m->prodi?->nama ?? ''),
-                'ipk'      => (float) ($m->ipk_calc ?? 0),
+                'ipk'      => $m->ipk_calc !== null ? (float) $m->ipk_calc : null,
                 'status'   => $m->sp_calc ? "SP" : 'Aktif',
                 'kategori' => $m->kategori,
             ]);

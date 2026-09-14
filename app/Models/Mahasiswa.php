@@ -108,6 +108,7 @@ class Mahasiswa extends Model
             'ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->hitungAkademik()
+                ->sudahAdaNilai()
                 ->when($tahunAjaran, $applyIpkFilter)
                 ->orderByDesc('semester')
                 ->limit(1),
@@ -115,6 +116,7 @@ class Mahasiswa extends Model
             'prev_ipk_calc' => \App\Models\IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->hitungAkademik()
+                ->sudahAdaNilai()
                 ->when($tahunAjaran, $applyIpkFilter)
                 ->orderByDesc('semester')
                 ->skip(1)
@@ -137,7 +139,9 @@ class Mahasiswa extends Model
                     ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                     ->hitungAkademik()
                     ->when($tahunAjaran, $applyIpkFilter))
-                ->where('lulus', false),
+                ->where('lulus', false)
+                // Nilai netral "-"/"T" (belum dinilai) bukan MK belum lulus.
+                ->whereNotIn('nilai_huruf', \App\Services\IPKCalculatorService::NILAI_HURUF_NETRAL),
         ])
         ->with('prodi');
 
@@ -164,14 +168,25 @@ class Mahasiswa extends Model
         }
     }
 
-    /** IPK semester terakhir */
-    public function getIpkTerakhirAttribute(): float
+    /**
+     * IPK semester terakhir, atau NULL bila belum ada satu pun nilai.
+     *
+     * Nilai 0 yang tersisa dari data lama tidak dipakai: baris harus punya
+     * MK bernilai (lihat IpkSemestr::scopeSudahAdaNilai()) supaya mahasiswa
+     * baru tidak tampil ber-IPK 0.
+     */
+    public function getIpkTerakhirAttribute(): ?float
     {
-        if (isset($this->attributes['ipk_calc'])) {
-            return (float) $this->attributes['ipk_calc'];
+        if (array_key_exists('ipk_calc', $this->attributes)) {
+            $ipk = $this->attributes['ipk_calc'];
+            return $ipk !== null ? (float) $ipk : null;
         }
-        $last = $this->ipkSemestrs()->hitungAkademik()->latest('semester')->first();
-        return $last ? (float) $last->ipk : 0.0;
+        $last = $this->ipkSemestrs()
+            ->hitungAkademik()
+            ->sudahAdaNilai()
+            ->reorder('semester', 'desc')
+            ->first();
+        return $last ? (float) $last->ipk : null;
     }
 
     public function getSemesterAktifAttribute(): int

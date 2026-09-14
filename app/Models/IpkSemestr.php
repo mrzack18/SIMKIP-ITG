@@ -56,6 +56,22 @@ class IpkSemestr extends Model
         ]);
     }
 
+    /**
+     * Baris yang benar-benar berisi IPK.
+     *
+     * Syaratnya dua: IPK sudah dihitung (tidak NULL — data lama berisi 0
+     * placeholder sampai migrasi 2026_09_16 membersihkannya) DAN mahasiswa
+     * punya minimal satu mata kuliah bernilai A–E di semester itu. Baris
+     * semacam ini tidak boleh dianggap "IPK 0" saat mahasiswa -- terutama
+     * angkatan baru -- belum menempuh/mendapat nilai apa pun.
+     */
+    public function scopeSudahAdaNilai($query)
+    {
+        return $query->whereNotNull('ipk_semestrs.ipk')
+            ->whereHas('mataKuliahs', fn ($q) => $q
+                ->whereNotIn('nilai_huruf', \App\Services\IPKCalculatorService::NILAI_HURUF_NETRAL));
+    }
+
     public function mahasiswa()
     {
         return $this->belongsTo(Mahasiswa::class);

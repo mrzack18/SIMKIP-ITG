@@ -15,7 +15,7 @@ class DataAkademikController extends Controller
     /** List semua IPK mahasiswa (tab IPK di DataAkademik) */
     public function indexIPK(Request $request): JsonResponse
     {
-        $query = Mahasiswa::with(['prodi','ipkSemestrs'])->where('status','Aktif');
+        $query = Mahasiswa::with(['prodi','ipkSemestrs.mataKuliahs'])->where('status','Aktif');
         if ($s = $request->search) {
             $query->where(fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
         }
@@ -30,16 +30,32 @@ class DataAkademikController extends Controller
 
         return response()->json([
             'success'     => true,
-            'data'        => $data->map(fn($m) => [
-                'id'       => $m->id,
-                'nim'      => $m->nim,
-                'nama'     => $m->nama,
-                'prodi'    => $m->prodi?->nama,
-                'angkatan' => $m->angkatan,
-                'semester' => $m->ipkSemestrs->count(),
-                'ipk_terakhir' => (float) ($m->ipkSemestrs->last()?->ipk ?? 0),
-                'ipk_history'  => $m->ipkSemestrs->map(fn($s) => ['semester' => $s->semester, 'ipk' => (float)$s->ipk]),
-            ]),
+            'data'        => $data->map(function($m) {
+                // IPK terakhir hanya dari baris yang benar-benar sudah dinilai:
+                // mahasiswa baru (semua MK "-"/"T") tidak boleh tampil ber-IPK 0.
+                $terakhir = $m->ipkSemestrs
+                    ->filter(fn($s) => $s->ipk !== null && $s->mataKuliahs->contains(
+                        fn($mk) => ! \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf)
+                    ))
+                    ->sortByDesc('semester')
+                    ->first();
+
+                return [
+                    'id'       => $m->id,
+                    'nim'      => $m->nim,
+                    'nama'     => $m->nama,
+                    'prodi'    => $m->prodi?->nama,
+                    'angkatan' => $m->angkatan,
+                    // Semester berjalan dihitung dari angkatan, bukan jumlah baris
+                    // transkrip (LSIPD mengirim seluruh 8 semester sekaligus).
+                    'semester' => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
+                    'ipk_terakhir' => $terakhir ? (float) $terakhir->ipk : null,
+                    'ipk_history'  => $m->ipkSemestrs->map(fn($s) => [
+                        'semester' => $s->semester,
+                        'ipk' => $s->ipk !== null ? (float) $s->ipk : null,
+                    ]),
+                ];
+            }),
             'total' => $total, 'page' => $page, 'limit' => $limit,
             'total_pages' => (int) ceil($total/$limit),
         ]);

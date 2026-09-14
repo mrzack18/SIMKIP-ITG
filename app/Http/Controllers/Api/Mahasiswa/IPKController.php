@@ -55,6 +55,10 @@ class IPKController extends Controller
             ? $allData->filter(fn($r) => $r->semester <= $semesterTujuan)->values()
             : $allData;
 
+        // Baris transkrip masa depan (nilai "-"/"T", IPS & IPK NULL) tidak
+        // ditampilkan dan tidak boleh dianggap semester bernilai 0.
+        $data = $data->filter(fn($r) => $r->ips !== null || $r->ipk !== null)->values();
+
         // Statistik based on filtered data
         $totalLulus = 0;
         foreach ($data as $record) {
@@ -63,19 +67,20 @@ class IPKController extends Controller
             }
         }
 
+        $dataBernilai = $data->filter(fn($r) => $r->ipk !== null);
         $statistik = [
-            'tertinggi' => $data->count() > 0 ? $data->sortByDesc('ipk')->first()->only(['ipk', 'semester']) : ['ipk' => 0, 'semester' => '-'],
-            'terendah'  => $data->count() > 0 ? $data->sortBy('ipk')->first()->only(['ipk', 'semester']) : ['ipk' => 0, 'semester' => '-'],
-            'rata_rata' => $data->count() > 0 ? round($data->avg('ipk'), 2) : 0,
+            'tertinggi' => $dataBernilai->count() > 0 ? $dataBernilai->sortByDesc('ipk')->first()->only(['ipk', 'semester']) : null,
+            'terendah'  => $dataBernilai->count() > 0 ? $dataBernilai->sortBy('ipk')->first()->only(['ipk', 'semester']) : null,
+            'rata_rata' => $dataBernilai->count() > 0 ? round($dataBernilai->avg('ipk'), 2) : null,
             'total_sks_lulus' => $totalLulus,
         ];
 
-        // Semester aktif based on ALL records (not filtered)
-        $allSemesters = $m->ipkSemestrs;
-        $semesterAktif = $allSemesters->count() > 0 ? $allSemesters->max('semester') : 0;
+        // Semester aktif: dari angkatan + kalender akademik, bukan jumlah baris
+        // transkrip (LSIPD mengirim seluruh 8 semester sekaligus).
+        $semesterAktif = $m->semester_aktif;
 
         // displayedSemester: the highest semester in filtered data
-        $displayedSemester = $data->count() > 0 ? $data->max('semester') : 0;
+        $displayedSemester = $data->count() > 0 ? $data->max('semester') : $semesterAktif;
 
         return response()->json([
             'data' => \App\Http\Resources\SemesterDetailResource::collection($data->values()),
@@ -141,7 +146,9 @@ class IPKController extends Controller
                 [
                     'tahun_ajaran' => $request->tahun_ajaran,
                     'ips'          => $ipsCalc,
-                    'ipk'          => 0,
+                    // NULL dulu; recalculateAllIPK() di bawah mengisi nilai
+                    // kumulatif (atau tetap NULL bila belum ada MK bernilai).
+                    'ipk'          => null,
                     'status'       => 'Draft',
                     'catatan_admin'=> null,
                 ]

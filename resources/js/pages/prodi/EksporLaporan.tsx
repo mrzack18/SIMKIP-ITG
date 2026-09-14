@@ -20,7 +20,7 @@ interface PreviewResponse {
   data: PreviewRow[];
   summary: {
     totalMahasiswa: number;
-    rataIpk: number;
+    rataIpk: number | null;
     mahasiswaDenganSp: number;
   };
 }
@@ -207,7 +207,7 @@ export default function EksporLaporan() {
               <div className="grid grid-cols-3 gap-px bg-gray-100 min-w-0">
                 {[
                   { label: "Total Mahasiswa", val: preview?.summary?.totalMahasiswa ?? 0 },
-                  { label: "Rata-rata IPK",   val: Number(preview?.summary?.rataIpk ?? 0).toFixed(2) },
+                  { label: "Rata-rata IPK",   val: preview?.summary?.rataIpk != null ? Number(preview.summary.rataIpk).toFixed(2) : "—" },
                   { label: "Mahasiswa dengan SP", val: preview?.summary?.mahasiswaDenganSp ?? 0 },
                 ].map(s => (
                   <div key={s.label} className="bg-white px-2 sm:px-4 py-2.5 sm:py-3 text-center min-w-0">
@@ -237,7 +237,13 @@ export default function EksporLaporan() {
                           <span className={`px-2 py-0.5 rounded text-xs font-500 whitespace-nowrap ${r.kategori === "Reguler" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>{r.kategori}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`font-700 font-display whitespace-nowrap ${r.ipkTerakhir >= 3.0 ? "text-green-600" : "text-red-500"}`}>{Number(r.ipkTerakhir).toFixed(2)}</span>
+                          <span className={`font-700 font-display whitespace-nowrap ${
+                            r.ipkTerakhir === null || r.ipkTerakhir === undefined
+                              ? "text-gray-400"
+                              : r.ipkTerakhir >= 3.0
+                                ? "text-green-600"
+                                : "text-red-500"
+                          }`}>{r.ipkTerakhir !== null && r.ipkTerakhir !== undefined ? Number(r.ipkTerakhir).toFixed(2) : "—"}</span>
                         </td>
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{r.semester}</td>
                         <td className="px-4 py-3">

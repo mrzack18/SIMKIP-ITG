@@ -74,16 +74,16 @@ class MahasiswaController extends Controller
                 case 'NIM (Z-A)':          $query->orderByDesc('nim'); break;
                 case 'Nama (A-Z)':         $query->orderBy('nama'); break;
                 case 'Nama (Z-A)':         $query->orderByDesc('nama'); break;
-                case 'IPK (Tertinggi)':    $query->orderByDesc('ipk_calc'); break;
-                case 'IPK (Terendah)':     $query->orderBy('ipk_calc'); break;
-                case 'IPK Tertinggi → Terendah': $query->orderByDesc('ipk_calc'); break;
-                case 'IPK Terendah → Tertinggi': $query->orderBy('ipk_calc'); break;
+                case 'IPK (Tertinggi)':    $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
+                case 'IPK (Terendah)':     $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
+                case 'IPK Tertinggi → Terendah': $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
+                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
                 case 'Nama A–Z':           $query->orderBy('nama'); break;
                 case 'Angkatan Terbaru':   $query->orderByDesc('angkatan'); break;
-                default:                   $query->orderByDesc('ipk_calc'); break;
+                default:                   $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
             }
         } else {
-            $query->orderByDesc('ipk_calc');
+            $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 10);
@@ -135,24 +135,29 @@ class MahasiswaController extends Controller
 
         // Filter riwayat semester: batasi ke semester tujuan tahun ajaran
         // terpilih (tanpa filter => tahun ajaran aktif sekarang; hasil 0 =
-        // kosong) & buang baris kosong (ips = 0).
+        // kosong) & buang baris tanpa nilai (ips NULL). Baris dengan IPS asli
+        // 0 (semua nilai E) tetap ditampilkan.
         $ipkList = $m->ipkSemestrs;
         $semesterTujuan = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $ta);
         $ipkList = $ipkList->filter(fn($s) => (int) $s->semester <= $semesterTujuan)->values();
-        $m->setRelation('ipkSemestrs', $ipkList->filter(fn($s) => (float) $s->ips != 0)->values());
+        $m->setRelation('ipkSemestrs', $ipkList->filter(fn($s) => $s->ips !== null)->values());
 
 
         // Compute IPK stats
         $ipkHistory = $m->ipkSemestrs;
-        $ipkValues = $ipkHistory->pluck('ipk')->map(fn($x) => (float) $x);
-        $ipkHighest = $ipkValues->max() ?? 0.0;
-        $ipkLowest  = $ipkValues->min() ?? 0.0;
-        $ipkAvg     = $ipkValues->count() > 0 ? round($ipkValues->avg(), 2) : 0.0;
-        $ipkMaxSem  = $ipkValues->count() > 0 ? (int) $ipkHistory->sortByDesc('ipk')->first()->semester : 0;
-        $ipkMinSem  = $ipkValues->count() > 0 ? (int) $ipkHistory->sortBy('ipk')->first()->semester : 0;
+        $ipkValues = $ipkHistory->pluck('ipk')->filter(fn($x) => $x !== null)->map(fn($x) => (float) $x);
+        $ipkHighest = $ipkValues->count() > 0 ? $ipkValues->max() : null;
+        $ipkLowest  = $ipkValues->count() > 0 ? $ipkValues->min() : null;
+        $ipkAvg     = $ipkValues->count() > 0 ? round($ipkValues->avg(), 2) : null;
+        $ipkMaxSem  = $ipkValues->count() > 0 ? (int) $ipkHistory->sortByDesc('ipk')->first()->semester : null;
+        $ipkMinSem  = $ipkValues->count() > 0 ? (int) $ipkHistory->sortBy('ipk')->first()->semester : null;
+        $ipkTerakhir = ($lastSem = $ipkHistory->sortByDesc('semester')->first()) && $lastSem->ipk !== null
+            ? (float) $lastSem->ipk
+            : null;
 
         // MK yang belum lulus (aggregate status perbaikan: lulus di semester lain atau belum)
         $mkBelumLulus = $ipkHistory->flatMap(fn($s) => $s->mataKuliahs->where('lulus', false))
+            ->filter(fn($mk) => ! \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
             ->groupBy('kode')
             ->map(fn($group) => [
                 'kode' => $group->first()->kode,
@@ -217,7 +222,7 @@ class MahasiswaController extends Controller
         // IPK Chart data
         $ipkChart = $ipkHistory->sortBy('semester')->values()->map(fn($s) => [
             'semester' => (int) $s->semester,
-            'ipk'      => (float) $s->ipk,
+            'ipk'      => $s->ipk !== null ? (float) $s->ipk : null,
         ]);
 
         // Prestasi, Organisasi, Pelatihan already via MahasiswaResource-like map
@@ -286,7 +291,7 @@ class MahasiswaController extends Controller
                 'noHp'            => $m->user?->no_hp,
                 'fotoProfil'      => $m->user?->foto_profil ? url('storage/' . $m->user->foto_profil) : null,
                 'contactHistories'=> $contactHistories,
-                'ipkTerakhir'     => (float) ($m->ipkSemestrs->sortByDesc('semester')->first()?->ipk ?? 0),
+                'ipkTerakhir'     => $ipkTerakhir,
                 'ipkTertinggi'    => $ipkHighest,
                 'ipkTerendah'     => $ipkLowest,
                 'ipkRataRata'     => $ipkAvg,
@@ -297,9 +302,12 @@ class MahasiswaController extends Controller
             'ipk_history' => $ipkHistory->sortBy('semester')->values()->map(fn($s) => [
                 'semester'  => (int) $s->semester,
                 'tahun'     => $s->tahun_ajaran,
-                'ips'       => (float) $s->ips,
-                'ipk'       => (float) $s->ipk,
-                'mkBelumLulus' => $s->mataKuliahs->where('lulus', false)->count(),
+                'ips'       => $s->ips !== null ? (float) $s->ips : null,
+                'ipk'       => $s->ipk !== null ? (float) $s->ipk : null,
+                'mkBelumLulus' => $s->mataKuliahs
+                    ->where('lulus', false)
+                    ->reject(fn($mk) => \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
+                    ->count(),
                 'mataKuliah' => $s->mataKuliahs->map(fn($mk) => [
                     'kode'       => $mk->kode,
                     'nama'       => $mk->nama,
@@ -307,6 +315,11 @@ class MahasiswaController extends Controller
                     'nilaiHuruf' => $mk->nilai_huruf,
                     'nilaiMutu'  => (float) $mk->nilai_mutu,
                     'lulus'      => (bool) $mk->lulus,
+                    // Label status dari aturan tunggal IPKCalculatorService, supaya
+                    // "Belum Lulus" tetap hanya untuk D/E dan "-"/"T" punya label sendiri.
+                    'status'     => \App\Services\IPKCalculatorService::statusMk((string) $mk->nilai_huruf),
+                    'statusKode' => \App\Services\IPKCalculatorService::statusMkKode((string) $mk->nilai_huruf),
+                    'netral'     => \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf),
                 ])->values(),
             ]),
             'ipk_chart'      => $ipkChart,
@@ -356,7 +369,10 @@ class MahasiswaController extends Controller
             'ipk'       => $m->ipk_terakhir,
             'semester'  => $m->semester_aktif,
             'sp'        => $m->sp_aktif ?? '-',
-            'ipk_per_semester' => $m->ipkSemestrs->map(fn($s) => ['sem' => $s->semester, 'ipk' => (float)$s->ipk]),
+            'ipk_per_semester' => $m->ipkSemestrs->map(fn($s) => [
+                'sem' => $s->semester,
+                'ipk' => $s->ipk !== null ? (float) $s->ipk : null,
+            ]),
         ]);
 
         return response()->json(['success' => true, 'data' => $data, 'total' => $data->count()]);
@@ -388,16 +404,17 @@ class MahasiswaController extends Controller
                 'nama'            => $m->nama,
                 'angkatan'        => (int) $m->angkatan,
                 'kategori'        => $m->kategori,
-                'ipkTerakhir'     => (float) $ipk,
+                'ipkTerakhir'     => $ipk !== null ? (float) $ipk : null,
                 'semester'        => (int) $sem,
                 'sp'              => $sp ? (int) filter_var($sp, FILTER_SANITIZE_NUMBER_INT) : 0,
                 'dokumenLengkap'  => "{$diset}/{$jenis}",
             ];
         })->values();
 
+        $ipkRows = $rows->pluck('ipkTerakhir')->filter(fn($v) => $v !== null);
         $summary = [
             'totalMahasiswa'   => $rows->count(),
-            'rataIpk'          => $rows->count() > 0 ? round($rows->avg('ipkTerakhir'), 2) : 0,
+            'rataIpk'          => $ipkRows->count() > 0 ? round($ipkRows->avg(), 2) : null,
             'mahasiswaDenganSp'=> $rows->where('sp', '>', 0)->count(),
         ];
 

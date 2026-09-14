@@ -63,7 +63,9 @@ class BebasTanggunganService
                     'terpenuhi' => $ipkOk,
                     'keterangan' => $ipkMin === null
                         ? 'Ambang batas IPK sedang dinonaktifkan'
-                        : ($ipkOk ? null : "IPK terakhir: {$ipkTerakhir}"),
+                        : ($ipkOk ? null : ($ipkTerakhir === null
+                            ? 'IPK belum ada karena belum ada nilai'
+                            : "IPK terakhir: {$ipkTerakhir}")),
                 ],
                 [
                     'syarat' => 'Tidak ada SP aktif',

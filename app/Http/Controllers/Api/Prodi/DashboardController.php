@@ -23,21 +23,22 @@ class DashboardController extends Controller
             ->whereHas('suratPeringatans', fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']))
             ->count();
 
-        // Hitung mahasiswa dengan IPK terakhir < standar
+        // Hitung mahasiswa dengan IPK terakhir < standar.
+        // Mahasiswa tanpa nilai (mis. angkatan baru) TIDAK dihitung sebagai 0.
         $ipkDibawah = 0;
         $totalIpk   = 0.0;
         $countIpk   = 0;
-        $allMhs = Mahasiswa::where('prodi_id', $prodiId)->where('status', 'Aktif')
-            ->with(['ipkSemestrs' => fn($q) => $q->orderByDesc('semester')->limit(1)])->get();
+        $allMhs = Mahasiswa::withDetails()
+            ->where('prodi_id', $prodiId)->where('status', 'Aktif')->get();
         foreach ($allMhs as $m) {
-            $ipkTerakhir = $m->ipkSemestrs->first()?->ipk;
+            $ipkTerakhir = $m->ipk_terakhir;
             if ($ipkTerakhir !== null) {
-                $totalIpk += (float) $ipkTerakhir;
+                $totalIpk += $ipkTerakhir;
                 $countIpk++;
-                if ((float) $ipkTerakhir < 3.0) $ipkDibawah++;
+                if ($ipkTerakhir < 3.0) $ipkDibawah++;
             }
         }
-        $rataIpk = $countIpk > 0 ? round($totalIpk / $countIpk, 2) : 0.0;
+        $rataIpk = $countIpk > 0 ? round($totalIpk / $countIpk, 2) : null;
 
         // ============ Chart Data ============
 
@@ -71,7 +72,9 @@ class DashboardController extends Controller
         for ($s = 1; $s <= max(1, $maxSem); $s++) {
             $rows = IpkSemestr::whereHas('mahasiswa', fn($q) =>
                 $q->where('prodi_id', $prodiId)->where('status', 'Aktif'))
-                ->where('semester', $s)->get();
+                ->where('semester', $s)
+                ->whereNotNull('ipk')
+                ->get();
             if ($rows->count() > 0) {
                 $trendIpk[] = [
                     'sem' => "Sem {$s}",
@@ -107,10 +110,10 @@ class DashboardController extends Controller
             $maxAngkatan = floor($year - ((7 - $term) / 2));
         }
 
-        $semester7plus = Mahasiswa::where('prodi_id', $prodiId)
+        $semester7plus = Mahasiswa::withDetails()
+            ->where('prodi_id', $prodiId)
             ->where('status', 'Aktif')
             ->where('angkatan', '<=', $maxAngkatan)
-            ->with(['ipkSemestrs' => fn($q) => $q->orderByDesc('semester')->limit(1)])
             ->orderBy('angkatan', 'asc') // Oldest students first
             ->take(5)
             ->get()
@@ -119,7 +122,7 @@ class DashboardController extends Controller
                 'nim'      => $m->nim,
                 'nama'     => $m->nama,
                 'sem'      => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
-                'ipk'      => (float) ($m->ipkSemestrs->first()?->ipk ?? 0),
+                'ipk'      => $m->ipk_terakhir,
             ]);
 
         return response()->json([
