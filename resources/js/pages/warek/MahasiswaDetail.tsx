@@ -1254,7 +1254,7 @@ export default function WarekMahasiswaDetail() {
 
       {/* Breadcrumb */}
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
-        <Link to="../mahasiswa" relative="path"
+        <Link to="/warek/mahasiswa"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors shrink-0">
           <ChevronLeft size={16} /> Data Mahasiswa
         </Link>

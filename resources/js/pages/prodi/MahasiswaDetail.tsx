@@ -1072,7 +1072,7 @@ export default function MahasiswaDetail() {
   if (error || !data) {
     return (
       <div className="space-y-3 sm:space-y-4 w-full max-w-7xl mx-auto min-w-0">
-        <Link to="../mahasiswa" relative="path" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+        <Link to="/prodi/mahasiswa" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
           <ChevronLeft size={16} /> Manajemen Mahasiswa
         </Link>
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-6 text-center text-sm text-red-700 break-words">
@@ -1115,7 +1115,7 @@ export default function MahasiswaDetail() {
       )}
 
       <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 min-w-0">
-        <Link to="../mahasiswa" relative="path"
+        <Link to="/prodi/mahasiswa"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors shrink-0">
           <ChevronLeft size={16} /> Manajemen Mahasiswa
         </Link>

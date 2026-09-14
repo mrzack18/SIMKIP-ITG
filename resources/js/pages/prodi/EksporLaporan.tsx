@@ -1,4 +1,4 @@
-import { getCurrentTahunAjaran } from "@/components/ui/TahunAjaranFilter";
+import { getCurrentTahunAjaran, parseTahunAjaran, TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 import { useEffect, useState } from "react";
 import { Download, FileText, Table } from "lucide-react";
 import { api, API_BASE_URL } from "@/services/api";
@@ -55,6 +55,12 @@ export default function EksporLaporan() {
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value }));
+
+  const handleTahunAjaran = (val: string) => {
+    setTahunAjaran(val);
+    const parsed = parseTahunAjaran(val);
+    if (parsed) setForm(f => ({ ...f, tahunAkademik: parsed.tahun, semester: parsed.semester }));
+  };
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -119,7 +125,7 @@ export default function EksporLaporan() {
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 break-words">Generate dan download laporan mahasiswa KIP-K {prodiNama}</p>
         </div>
         <div className="self-start min-[480px]:self-auto shrink-0">
-          <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+          <TahunAjaranFilter value={tahunAjaran} onChange={handleTahunAjaran} />
         </div>
       </div>
 
