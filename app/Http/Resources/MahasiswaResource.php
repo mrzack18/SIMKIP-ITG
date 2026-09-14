@@ -78,6 +78,12 @@ class MahasiswaResource extends JsonResource
             
             'alasanNonaktif' => $this->status === 'Nonaktif' ? $this->alasan_nonaktif : null,
             'tanggalNonaktif' => $this->status === 'Nonaktif' && $this->tanggal_nonaktif ? $this->tanggal_nonaktif->format('d M Y') : null,
+
+            // Data SK Penetapan KIP-K
+            'nomorSK' => $this->nomor_sk,
+            'tanggalSK' => $this->tanggal_sk ? $this->tanggal_sk->format('d M Y') : null,
+            'tanggalSKRaw' => $this->tanggal_sk ? $this->tanggal_sk->format('Y-m-d') : null,
+            'fileSkUrl' => $this->file_sk ? "/api/files/mahasiswa/{$this->id}/file_sk/preview" : null,
         ];
     }
 

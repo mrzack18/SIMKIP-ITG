@@ -107,6 +107,16 @@ export async function cabutKipkMahasiswa(nim: string, payload: { alasan_cabut: s
   await api.patch(`/mahasiswa/${nim}/cabut-kipk`, payload);
 }
 
+/**
+ * Perbarui Data SK Penetapan KIP-K (nomor, tanggal, dan/atau file).
+ * Memakai POST + `_method=PUT` karena PHP tidak mem-parsing multipart pada PUT.
+ */
+export async function updateMahasiswaSk(nim: string, payload: FormData): Promise<Mahasiswa> {
+  payload.append("_method", "PUT");
+  const res = await api.post<ApiResponse<Mahasiswa>>(`/mahasiswa/${nim}/sk`, payload);
+  return res.data;
+}
+
 export async function getRekapAkademik(tahunAjaran?: string): Promise<{ data: any[] }> {
   const qs = tahunAjaran ? `?tahun_ajaran=${encodeURIComponent(tahunAjaran)}` : '';
   return await api.get(`/akademik/rekap-mahasiswa${qs}`);

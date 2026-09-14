@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\Admin\KonfigurasiController as AdminConfig;
 use App\Http\Controllers\Api\Admin\AuditController as AdminAudit;
 use App\Http\Controllers\Api\Admin\LsipdSyncController as AdminLsipd;
 use App\Http\Controllers\Api\Admin\UserController as AdminUser;
+use App\Http\Controllers\Api\Admin\MahasiswaController as AdminMahasiswa;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
 use App\Models\Mahasiswa;
 
@@ -105,6 +106,7 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::delete("/mahasiswa/{nim}",          [MahasiswaController::class, "destroy"]);
     Route::patch("/mahasiswa/{nim}/status",    [MahasiswaController::class, "updateStatus"]);
     Route::patch("/mahasiswa/{nim}/cabut-kipk",[MahasiswaController::class, "cabutKipk"]);
+    Route::put("/mahasiswa/{nim}/sk",          [MahasiswaController::class, "updateSk"]);
     Route::get("/mahasiswa/{nim}/catatan",     [MahasiswaController::class, "getCatatanInternal"]);
     Route::post("/mahasiswa/{nim}/catatan",    [MahasiswaController::class, "storeCatatanInternal"]);
 
@@ -159,6 +161,11 @@ Route::middleware("auth:sanctum")->group(function () {
     Route::middleware("role:admin")->prefix("admin/dokumen-queue")->group(function () {
         Route::get("/",                        [DokumenController::class, "queue"]);
         Route::put("/{id}/validate",           [DokumenController::class, "validateDokumen"]);
+    });
+
+    // Export daftar mahasiswa (admin)
+    Route::middleware("role:admin")->prefix("admin/mahasiswa")->group(function () {
+        Route::get("/export", [AdminMahasiswa::class, "export"]);
     });
 
     // Admin Badge Counts (sidebar notification badges)

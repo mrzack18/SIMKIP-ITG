@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Dokumen;
 use App\Models\IpkSemestr;
+use App\Models\Mahasiswa;
 use App\Models\Organisasi;
 use App\Models\Pelatihan;
 use App\Models\Prestasi;
@@ -19,6 +20,7 @@ class FileController extends Controller
         'pelatihan'  => ['file_sertifikat' => 'file_sertifikat', 'foto_kegiatan' => 'foto_kegiatan'],
         'dokumen'    => ['path_file' => 'path_file'],
         'ipk'        => ['file_khs' => 'file_khs'],
+        'mahasiswa'  => ['file_sk' => 'file_sk'],
     ];
 
     public function serve(Request $request, string $type, int $id, string $field, string $action = 'inline')
@@ -34,6 +36,7 @@ class FileController extends Controller
             'pelatihan'  => Pelatihan::with('mahasiswa')->findOrFail($id),
             'dokumen'    => Dokumen::with('mahasiswa')->findOrFail($id),
             'ipk'        => IpkSemestr::with('mahasiswa')->findOrFail($id),
+            'mahasiswa'  => Mahasiswa::findOrFail($id),
             default      => abort(404),
         };
 
@@ -60,7 +63,7 @@ class FileController extends Controller
 
     private function authorizeAccess($user, $model): void
     {
-        $mhs = $model->mahasiswa ?? null;
+        $mhs = $model instanceof Mahasiswa ? $model : ($model->mahasiswa ?? null);
 
         $allowed = match ($user->role) {
             'admin', 'warek' => true,

@@ -10,6 +10,10 @@ import {
   UserX,
   UserCheck,
   Loader2,
+  FileText,
+  Pencil,
+  Upload,
+  X,
 } from "lucide-react"
 import {
   getMahasiswaById,
@@ -22,10 +26,11 @@ import {
   getMahasiswaBebasTanggungan,
   updateMahasiswaStatus,
   cabutKipkMahasiswa,
+  updateMahasiswaSk,
   type SemesterDetailBE,
 } from "@/services/mahasiswaService"
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService"
-import type { Mahasiswa, MahasiswaBebasTanggunganResponse } from "@/types"
+import type { Mahasiswa, MahasiswaBebasTanggunganResponse, MahasiswaKategori } from "@/types"
 import { TabInfoPribadi } from "@/components/modules/admin/mahasiswa/TabInfoPribadi"
 import { TabRiwayatAkademik } from "@/components/modules/admin/mahasiswa/TabRiwayatAkademik"
 import { BackendNotReady } from "@/components/modules/admin/mahasiswa/Shared"
@@ -36,6 +41,7 @@ import { TabDokumen } from "@/components/modules/admin/mahasiswa/TabDokumen"
 import { TabSP } from "@/components/modules/admin/mahasiswa/TabSP"
 import { TabSuratPenyelesaian } from "@/components/modules/admin/mahasiswa/TabSuratPenyelesaian"
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter"
+import { downloadFile, previewFile } from "@/utils/fileUrl"
 
 
 
@@ -65,6 +71,15 @@ export default function MahasiswaDetail() {
   const [nonaktifModal, setNonaktifModal] = useState(false)
   const [cabutModal, setCabutModal] = useState(false)
   const [cabutConfirmNim, setCabutConfirmNim] = useState("")
+  const [skModal, setSkModal] = useState(false)
+  const [skNomor, setSkNomor] = useState("")
+  const [skTanggal, setSkTanggal] = useState("")
+  const [skKategori, setSkKategori] = useState<MahasiswaKategori>("Reguler")
+  const [skFile, setSkFile] = useState<File | null>(null)
+  const [skHapusFile, setSkHapusFile] = useState(false)
+  const [skError, setSkError] = useState("")
+  const [skSuccess, setSkSuccess] = useState("")
+  const [isSubmittingSk, setIsSubmittingSk] = useState(false)
 
   const [isSubmittingStatus, setIsSubmittingStatus] = useState(false)
   const [statusError, setStatusError] = useState("")
@@ -128,6 +143,74 @@ export default function MahasiswaDetail() {
     } finally {
       setIsSubmittingCabut(false)
     }
+  }
+
+  const openSkModal = () => {
+    if (!mhs) return
+    setSkNomor(mhs.nomorSK ?? "")
+    setSkTanggal(mhs.tanggalSKRaw ?? "")
+    setSkKategori(mhs.kategori ?? "Reguler")
+    setSkFile(null)
+    setSkHapusFile(false)
+    setSkError("")
+    setSkModal(true)
+  }
+
+  const handleFileSkChange = (file: File | null) => {
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setSkError("Ukuran file tidak boleh lebih dari 5MB.")
+        return
+      }
+      if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type)) {
+        setSkError("Format file harus PDF, JPG, atau PNG.")
+        return
+      }
+      setSkError("")
+      setSkHapusFile(false)
+    }
+    setSkFile(file)
+  }
+
+  const handleUpdateSk = async () => {
+    if (!mhs) return
+    if (!skNomor.trim()) { setSkError("Nomor SK wajib diisi."); return }
+    if (!skTanggal) { setSkError("Tanggal SK wajib diisi."); return }
+
+    setIsSubmittingSk(true)
+    setSkError("")
+    try {
+      const fd = new FormData()
+      fd.append("nomor_sk", skNomor.trim())
+      fd.append("tanggal_sk", skTanggal)
+      fd.append("kategori", skKategori)
+      if (skFile) fd.append("file_sk", skFile)
+      if (skHapusFile) fd.append("hapus_file_sk", "1")
+
+      await updateMahasiswaSk(mhs.nim, fd)
+      const updated = await getMahasiswaById(mhs.nim, tahunAjaran)
+      setMhs(updated)
+      setSkModal(false)
+      setSkSuccess("Data SK Penetapan KIP-K berhasil diperbarui.")
+      window.setTimeout(() => setSkSuccess(""), 4000)
+    } catch (err: any) {
+      const firstValidationError = err?.error?.errors
+        ? Object.values(err.error.errors).flat()[0]
+        : null
+      setSkError(String(firstValidationError ?? err?.message ?? "Gagal memperbarui data SK."))
+    } finally {
+      setIsSubmittingSk(false)
+    }
+  }
+
+  const handlePreviewSk = () => {
+    if (!mhs) return
+    previewFile("mahasiswa", mhs.id, "file_sk").catch((err) => alert(err?.message || "Gagal membuka file"))
+  }
+
+  const handleDownloadSk = () => {
+    if (!mhs) return
+    downloadFile("mahasiswa", mhs.id, "file_sk").catch((err) => alert(err?.message || "Gagal mengunduh file"))
   }
 
   const [mhs, setMhs] = useState<Mahasiswa | null>(null)
@@ -496,6 +579,54 @@ export default function MahasiswaDetail() {
             )}
           </div>
         </div>
+
+        {/* Data SK Penetapan KIP-K */}
+        <div className="mt-4 pt-4 border-t border-[#E2E8F0] min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText size={14} className="text-[#263F93] flex-shrink-0" />
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide truncate">
+                Data SK Penetapan KIP-K
+              </span>
+            </div>
+            <button
+              onClick={openSkModal}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#263F93] border border-[#263F93]/30 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <Pencil size={12} /> Edit
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 min-w-0">
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 min-w-0">
+              <div className="text-xs text-gray-400 mb-0.5">Nomor SK</div>
+              <div className="text-sm font-medium text-gray-800 break-all">{mhs.nomorSK || "—"}</div>
+            </div>
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 min-w-0">
+              <div className="text-xs text-gray-400 mb-0.5">Tanggal SK</div>
+              <div className="text-sm font-medium text-gray-800">{mhs.tanggalSK || "—"}</div>
+            </div>
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 min-w-0">
+              <div className="text-xs text-gray-400 mb-0.5">Kategori Kepesertaan</div>
+              <div className="text-sm font-medium text-gray-800">{mhs.kategori || "—"}</div>
+            </div>
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 py-2 min-w-0">
+              <div className="text-xs text-gray-400 mb-0.5">File SK</div>
+              {mhs.fileSkUrl ? (
+                <div className="flex items-center gap-3">
+                  <button onClick={handlePreviewSk} className="text-xs text-[#263F93] font-medium hover:underline whitespace-nowrap">
+                    Pratinjau
+                  </button>
+                  <button onClick={handleDownloadSk} className="text-xs text-[#263F93] font-medium hover:underline whitespace-nowrap">
+                    Unduh
+                  </button>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-400">Belum diunggah</div>
+              )}
+            </div>
+          </div>
+          {skSuccess && <p className="mt-2 text-xs text-green-600">{skSuccess}</p>}
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -747,6 +878,138 @@ export default function MahasiswaDetail() {
                 onClick={handleCabutKipk}
               >
                 {isSubmittingCabut ? <Loader2 size={16} className="animate-spin" /> : "Cabut Permanen"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Data SK Penetapan KIP-K modal */}
+      {skModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !isSubmittingSk && setSkModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText size={20} className="text-[#263F93]" />
+            </div>
+            <h3 className="font-bold text-gray-900 text-base sm:text-lg text-center mb-2 break-words">
+              Edit Data SK Penetapan KIP-K
+            </h3>
+            <p className="text-gray-500 text-sm text-center mb-4 break-words">
+              Mahasiswa: <strong>{mhs.nama}</strong>
+            </p>
+            <div className="mb-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Nomor SK <span className="text-red-500">*</span>
+                </label>
+                <input
+                  value={skNomor}
+                  onChange={(e) => setSkNomor(e.target.value)}
+                  placeholder="Contoh: SK/KIP/ITG/2026/001"
+                  className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Tanggal SK <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={skTanggal}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setSkTanggal(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#263F93]/20"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Kategori Kepesertaan <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["Reguler", "Aspirasi"] as const).map(kat => (
+                    <label
+                      key={kat}
+                      className={`flex items-center gap-2 px-3 py-2 border-2 rounded-lg cursor-pointer transition-all text-sm ${
+                        skKategori === kat
+                          ? "border-[#263F93] bg-blue-50/50 font-medium text-gray-800"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="sk_kategori"
+                        value={kat}
+                        checked={skKategori === kat}
+                        onChange={() => setSkKategori(kat)}
+                        className="accent-[#263F93] flex-shrink-0"
+                      />
+                      {kat}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Ganti File SK (Opsional)
+                </label>
+                <label className="flex items-center justify-center gap-2 px-3 py-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:bg-gray-50 cursor-pointer min-w-0">
+                  <Upload size={14} className="flex-shrink-0" />
+                  <span className="truncate">{skFile ? skFile.name : "Pilih file PDF/JPG/PNG (maks. 5MB)"}</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => handleFileSkChange(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+                {skFile && (
+                  <button
+                    onClick={() => setSkFile(null)}
+                    className="mt-1.5 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                  >
+                    <X size={11} /> Batalkan file baru
+                  </button>
+                )}
+              </div>
+              {mhs.fileSkUrl && !skFile && (
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={skHapusFile}
+                    onChange={(e) => setSkHapusFile(e.target.checked)}
+                    className="accent-red-600"
+                  />
+                  Hapus file SK yang tersimpan
+                </label>
+              )}
+              {skError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-start gap-2 min-w-0">
+                  <AlertTriangle size={14} className="text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-700 break-words min-w-0">{skError}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col-reverse min-[420px]:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={() => { setSkModal(false); setSkError(""); }}
+                className="flex-1 py-2.5 border border-[#E2E8F0] rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                disabled={isSubmittingSk}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleUpdateSk}
+                disabled={isSubmittingSk}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors flex items-center justify-center"
+                style={{ background: "#263F93" }}
+              >
+                {isSubmittingSk ? <Loader2 size={16} className="animate-spin" /> : "Simpan"}
               </button>
             </div>
           </div>

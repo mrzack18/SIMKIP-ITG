@@ -59,6 +59,11 @@ class MahasiswaController extends Controller
         abort(403);
     }
 
+    public function updateSk(Request $req, string $nim) {
+        if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->updateSk($req, $this->resolveByNim($nim)->id);
+        abort(403);
+    }
+
     public function getCatatanInternal(Request $req, string $nim) {
         if ($req->user()->role === "admin") return app(AdminMahasiswa::class)->getCatatanInternal($req, $this->resolveByNim($nim)->id);
         abort(403);

@@ -13,6 +13,28 @@ export function fileDownloadUrl(type: string, id: number | string, field: string
 }
 
 /**
+ * Buka pratinjau file di tab baru. File diambil lewat API (Bearer token)
+ * karena route file tidak dapat diakses tanpa autentikasi.
+ */
+export async function previewFile(type: string, id: number | string, field: string): Promise<void> {
+  const token = localStorage.getItem("simkip_token");
+
+  const res = await fetch(filePreviewUrl(type, id, field), {
+    headers: token ? { Authorization: `Bearer ${token}`, Accept: "application/json" } : { Accept: "application/json" },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.message ?? `HTTP ${res.status}`);
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+}
+
+/**
  * Trigger a browser download for an authenticated file by resolving it through
  * the API (which attaches the Bearer token) and saving the returned blob.
  */

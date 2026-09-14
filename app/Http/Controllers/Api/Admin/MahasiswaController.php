@@ -12,16 +12,42 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Konfigurasi;
+use App\Services\ExcelExportService;
 
 class MahasiswaController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $query = $this->listQuery($request);
+
+        $limit = (int) ($request->limit ?? 10);
+        $page  = (int) ($request->page ?? 1);
+
+        // Count total for pagination (for having clauses, we need to count manually via get or use a subquery count)
+        $total = $query->count(); // If this fails with having, we may need a workaround
+
+        $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
+
+        return response()->json([
+            'data'        => \App\Http\Resources\MahasiswaResource::collection($data),
+            'total'       => $total,
+            'page'        => $page,
+            'limit'       => $limit,
+            'totalPages'  => (int) ceil($total / $limit),
+        ]);
+    }
+
+    /**
+     * Query dasar list mahasiswa admin (filter, pencarian, sorting).
+     * Dipakai oleh index (berhalaman) dan export (semua baris).
+     */
+    private function listQuery(Request $request)
+    {
         $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
         }
-        $query = Mahasiswa::withDetails($tahunAjaran)->with(['suratPeringatans']);
+        $query = Mahasiswa::withDetails($tahunAjaran)->with(['suratPeringatans', 'prodi']);
 
         if ($request->search) {
             $q = $request->search;
@@ -105,21 +131,36 @@ class MahasiswaController extends Controller
             $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
-        $limit = (int) ($request->limit ?? 10);
-        $page  = (int) ($request->page ?? 1);
-        
-        // Count total for pagination (for having clauses, we need to count manually via get or use a subquery count)
-        $total = $query->count(); // If this fails with having, we may need a workaround
-        
-        $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
+        return $query;
+    }
 
-        return response()->json([
-            'data'        => \App\Http\Resources\MahasiswaResource::collection($data),
-            'total'       => $total,
-            'page'        => $page,
-            'limit'       => $limit,
-            'totalPages'  => (int) ceil($total / $limit),
-        ]);
+    public function export(Request $request)
+    {
+        $format = strtolower($request->format ?? 'xlsx');
+
+        $rows = $this->listQuery($request)->get()->map(function ($m) {
+            $ipk   = $m->ipk_calc !== null ? number_format((float) $m->ipk_calc, 2) : '-';
+            $trend = (float) ($m->trendDelta ?? 0);
+            $trendText = $trend !== 0.0 ? ($trend > 0 ? '+' : '') . number_format($trend, 2) : '-';
+
+            return [
+                $m->nim,
+                $m->nama,
+                $m->prodi->nama ?? '-',
+                $m->angkatan,
+                $m->kategori,
+                $ipk,
+                $trendText,
+                $m->semester_aktif,
+                $m->status,
+                $m->sp_calc ?? '-',
+            ];
+        })->all();
+
+        $headers  = ['NIM', 'Nama', 'Program Studi', 'Angkatan', 'Kategori', 'IPK', 'Progres IPS', 'Semester', 'Status', 'SP'];
+        $filename = 'Mahasiswa_KIP-K_' . now()->format('Ymd_His') . '.' . ($format === 'pdf' ? 'pdf' : 'xlsx');
+
+        return ExcelExportService::exportList($filename, $headers, $rows, $format);
     }
 
     public function checkNim(string $nim): JsonResponse
@@ -249,6 +290,45 @@ class MahasiswaController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Status mahasiswa berhasil diperbarui.', 'data' => new \App\Http\Resources\MahasiswaResource($m)]);
+    }
+
+    public function updateSk(Request $request, int $id): JsonResponse
+    {
+        $m = Mahasiswa::findOrFail($id);
+
+        $validated = $request->validate([
+            'nomor_sk'      => 'required|string|max:100',
+            'tanggal_sk'    => 'required|date|before_or_equal:today',
+            'kategori'      => 'required|in:Reguler,Aspirasi',
+            'file_sk'       => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'hapus_file_sk' => 'nullable|boolean',
+        ]);
+
+        $oldFile = $m->file_sk;
+
+        if ($request->hasFile('file_sk')) {
+            $m->file_sk = $request->file('file_sk')->store("sk_mahasiswa/{$m->nim}", 'public');
+            if ($oldFile) Storage::disk('public')->delete($oldFile);
+        } elseif ($request->boolean('hapus_file_sk') && $oldFile) {
+            Storage::disk('public')->delete($oldFile);
+            $m->file_sk = null;
+        }
+
+        $m->nomor_sk = $validated['nomor_sk'];
+        $m->tanggal_sk = $validated['tanggal_sk'];
+        $m->kategori = $validated['kategori'];
+        $m->save();
+
+        AuditLog::catat('Ubah', "Mengubah data SK Penetapan KIP-K mahasiswa {$m->nama} ({$m->nim})", [
+            'terkait_nim'  => $m->nim,
+            'terkait_nama' => $m->nama,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data SK Penetapan KIP-K berhasil diperbarui.',
+            'data'    => new \App\Http\Resources\MahasiswaResource($m->load('prodi')),
+        ]);
     }
 
     public function cabutKipk(Request $request, int $id): JsonResponse

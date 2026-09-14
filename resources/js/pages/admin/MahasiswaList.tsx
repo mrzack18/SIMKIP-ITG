@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   Plus,
   Search,
-  Download,
   MoreVertical,
   Eye,
   Trash2,
@@ -17,6 +16,8 @@ import {
   UserCheck,
   AlertCircle,
   Loader2,
+  Table,
+  FileText,
 } from "lucide-react";
 import {
   getMahasiswaList,
@@ -26,6 +27,7 @@ import {
   cabutKipkMahasiswa,
   type MahasiswaFilter,
 } from "@/services/mahasiswaService";
+import { API_BASE_URL } from "@/services/api";
 import type { Mahasiswa, PaginatedResponse } from "@/types";
 import { getCurrentTahunAjaran, TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
@@ -120,6 +122,8 @@ export default function MahasiswaList() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState("");
+  const [exporting,   setExporting]   = useState<"xlsx" | "pdf" | null>(null);
+  const [exportError, setExportError] = useState("");
 
   // Action menu & delete modal
   const [openMenu,         setOpenMenu]         = useState<number | null>(null);
@@ -221,6 +225,56 @@ export default function MahasiswaList() {
     setPage(Math.min(Math.max(1, p), totalPages));
   }
 
+  async function handleExport(format: "xlsx" | "pdf") {
+    setExporting(format);
+    setExportError("");
+    try {
+      const params = new URLSearchParams();
+      if (search)                              params.set("search", search);
+      if (tahunAjaranFilter)                   params.set("tahun_ajaran", tahunAjaranFilter);
+      if (prodiFilter !== "Semua Prodi")       params.set("prodi", prodiFilter);
+      if (angkatanFilter !== "Semua Angkatan") params.set("angkatan", angkatanFilter);
+      if (spFilter !== "Semua SP")             params.set("spFilter", spFilter);
+      if (statusFilter !== "Semua Status")     params.set("status", statusFilter);
+      if (kipFilter !== "Semua Kategori")      params.set("kipFilter", kipFilter);
+      if (ipkFilter !== "Semua IPK")           params.set("ipkFilter", ipkFilter);
+      if (sortBy !== "IPK Tertinggi → Terendah") params.set("sortBy", sortBy);
+      params.set("format", format);
+
+      const token = localStorage.getItem("simkip_token");
+      const res = await fetch(`${API_BASE_URL}/admin/mahasiswa/export?${params.toString()}`, {
+        headers: token
+          ? { Authorization: `Bearer ${token}`, "X-Requested-With": "XMLHttpRequest" }
+          : { "X-Requested-With": "XMLHttpRequest" },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message ?? "Gagal mengunduh data.");
+      }
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const ext = format === "pdf" ? "pdf" : "xlsx";
+      const filename = match
+        ? match[1]
+        : `Mahasiswa_KIP-K_${new Date().toISOString().slice(0, 10)}.${ext}`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setExportError(err?.message ?? "Gagal mengunduh data.");
+    } finally {
+      setExporting(null);
+    }
+  }
+
   async function handleDelete() {
     if (!deleteModal || deleteConfirmNim !== deleteModal.nim) return;
     setDeleting(true);
@@ -298,13 +352,24 @@ export default function MahasiswaList() {
           <h1 className="font-bold text-lg sm:text-xl text-gray-900 leading-tight">Manajemen Mahasiswa</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{total} mahasiswa KIP-K terdaftar</p>
         </div>
-        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:flex-wrap gap-2 w-full sm:w-auto">
           <TahunAjaranFilter
             value={tahunAjaranFilter}
             onChange={(v) => { setTahunAjaranFilter(v); setPage(1); }}
           />
-          <button className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <Download size={15} /> Import Massal
+          <button
+            onClick={() => handleExport("xlsx")}
+            disabled={exporting !== null}
+            className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting === "xlsx" ? <Loader2 size={15} className="animate-spin" /> : <Table size={15} />} Export Excel
+          </button>
+          <button
+            onClick={() => handleExport("pdf")}
+            disabled={exporting !== null}
+            className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting === "pdf" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />} Export PDF
           </button>
           <Link
             to="/admin/mahasiswa/tambah"
@@ -316,10 +381,10 @@ export default function MahasiswaList() {
         </div>
       </div>
 
-      {error && (
+      {(error || exportError) && (
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
           <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700 break-words min-w-0">{error}</p>
+          <p className="text-sm text-red-700 break-words min-w-0">{error || exportError}</p>
         </div>
       )}
 

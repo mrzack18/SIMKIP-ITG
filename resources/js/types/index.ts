@@ -36,6 +36,11 @@ export interface Mahasiswa {
   dicabutOleh?: string | null;
   alasanNonaktif?: string | null;
   tanggalNonaktif?: string | null;
+  // Data SK Penetapan KIP-K
+  nomorSK?: string | null;
+  tanggalSK?: string | null;
+  tanggalSKRaw?: string | null;
+  fileSkUrl?: string | null;
   email?: string | null;
   noHp?: string | null;
   fotoProfil?: string | null;

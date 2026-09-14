@@ -23,6 +23,29 @@ class ExcelExportService
         );
     }
     /**
+     * Export a generic list to Excel (.xlsx) or PDF (via dompdf).
+     */
+    public static function exportList(string $filename, array $headers, array $rows, string $format = 'xlsx'): BinaryFileResponse
+    {
+        $export = new \App\Exports\GenericArrayExport($headers, $rows);
+
+        if (strtolower($format) === 'pdf') {
+            return Excel::download(
+                $export,
+                $filename,
+                \Maatwebsite\Excel\Excel::DOMPDF,
+                ['Content-Type' => 'application/pdf']
+            );
+        }
+
+        return Excel::download(
+            $export,
+            $filename,
+            \Maatwebsite\Excel\Excel::XLSX,
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
+    }
+    /**
      * Export data mahasiswa untuk halaman Ekspor Laporan (Prodi)
      * Format sesuai form filter di EksporLaporan.tsx
      */
