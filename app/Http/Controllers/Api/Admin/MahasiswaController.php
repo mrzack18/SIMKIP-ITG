@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Konfigurasi;
 use App\Services\ExcelExportService;
+use App\Services\PdfGeneratorService;
 
 class MahasiswaController extends Controller
 {
@@ -161,6 +162,23 @@ class MahasiswaController extends Controller
         $filename = 'Mahasiswa_KIP-K_' . now()->format('Ymd_His') . '.' . ($format === 'pdf' ? 'pdf' : 'xlsx');
 
         return ExcelExportService::exportList($filename, $headers, $rows, $format);
+    }
+
+    /**
+     * Export laporan profil lengkap satu mahasiswa (xlsx multi-sheet / pdf).
+     */
+    public function exportProfil(Request $request, string $nim)
+    {
+        $m = Mahasiswa::withDetails()->with([
+            'prodi', 'ipkSemestrs', 'prestasis', 'organisasis', 'pelatihans',
+            'dokumens.jenis', 'suratPeringatans',
+        ])->where('nim', $nim)->firstOrFail();
+
+        if (strtolower($request->format ?? 'xlsx') === 'pdf') {
+            return PdfGeneratorService::profilMahasiswa($m);
+        }
+
+        return ExcelExportService::exportProfilMahasiswa($m);
     }
 
     public function checkNim(string $nim): JsonResponse
@@ -571,5 +589,135 @@ class MahasiswaController extends Controller
             ];
         });
         return response()->json(['success' => true, 'data' => $pelatihans]);
+    }
+
+    /**
+     * Export rekap Data Akademik & Non-Akademik (xlsx multi-sheet / pdf).
+     * scope: all | ipk | prestasi | organisasi | pelatihan
+     */
+    public function exportRekap(Request $request)
+    {
+        $scope  = strtolower((string) ($request->scope ?? 'all'));
+        $format = strtolower((string) ($request->format ?? 'xlsx')) === 'pdf' ? 'pdf' : 'xlsx';
+
+        $definitions = $this->rekapSheetDefinitions($request);
+        $selected    = ($scope === 'all' || !isset($definitions[$scope])) ? array_keys($definitions) : [$scope];
+
+        $sheets = [];
+        foreach ($selected as $key) {
+            $def = $definitions[$key];
+            $sheets[] = [
+                'title'   => $def['title'],
+                'headers' => $def['headers'],
+                'rows'    => array_map($def['map'], $def['data']),
+            ];
+        }
+
+        $labelTahun = $request->tahun_ajaran
+            ? trim(str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $request->tahun_ajaran))
+            : 'Semua';
+
+        if ($scope !== 'all' && isset($definitions[$scope])) {
+            $filename = 'Rekap_' . $definitions[$scope]['slug'] . '_KIP-K_' . $labelTahun;
+        } else {
+            $filename = 'Data_Akademik_KIP-K_' . $labelTahun;
+        }
+        $filename = trim(preg_replace('/[^0-9A-Za-z]+/', '-', $filename), '-') . '.' . $format;
+
+        if ($format === 'pdf' && count($sheets) > 1) {
+            return PdfGeneratorService::laporanDataAkademik($sheets, $labelTahun);
+        }
+
+        return ExcelExportService::exportRekapAkademik($filename, $sheets, $format);
+    }
+
+    /**
+     * Definisi sheet rekap akademik & non-akademik (judul, header, data, mapper baris).
+     */
+    private function rekapSheetDefinitions(Request $request): array
+    {
+        $formatDelta = fn($v) => $v === null
+            ? '-'
+            : (($v > 0 ? '+' : '') . number_format((float) $v, 2));
+
+        return [
+            'ipk' => [
+                'title'   => 'Rekap IPK',
+                'slug'    => 'IPK',
+                'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'IPK', 'Progres IPK', 'Semester', 'SP', 'MK Belum Lulus'],
+                'data'    => $this->rekapAkademik($request)->getData(true)['data'],
+                'map'     => fn($r) => [
+                    $r['nim'],
+                    $r['nama'],
+                    $r['prodi'],
+                    $r['angkatan'],
+                    $r['kipkLabel'],
+                    $r['ipk'] !== null ? number_format((float) $r['ipk'], 2) : '-',
+                    $formatDelta($r['delta'] ?? null),
+                    $r['semester'],
+                    $r['sp'] ?? '-',
+                    $r['mkBelumLulus'] ?? '-',
+                ],
+            ],
+            'prestasi' => [
+                'title'   => 'Rekap Prestasi',
+                'slug'    => 'Prestasi',
+                'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'Nama Prestasi', 'Tingkat', 'Pencapaian', 'Penyelenggara', 'Tanggal Mulai', 'Tanggal Selesai', 'Tempat', 'Status'],
+                'data'    => $this->rekapPrestasi($request)->getData(true)['data'],
+                'map'     => fn($r) => [
+                    $r['nim'],
+                    $r['nama'],
+                    $r['prodi'],
+                    $r['angkatan'],
+                    $r['kipk'],
+                    $r['namaPrestasi'],
+                    $r['tingkat'] ?? '-',
+                    $r['pencapaian'] ?? '-',
+                    $r['penyelenggara'] ?? '-',
+                    $r['tanggalMulai'] ?? '-',
+                    $r['tanggalSelesai'] ?? '-',
+                    $r['tempat'] ?? '-',
+                    $r['status'] ?? '-',
+                ],
+            ],
+            'organisasi' => [
+                'title'   => 'Rekap Keaktifan Organisasi',
+                'slug'    => 'Organisasi',
+                'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'Organisasi', 'Jabatan', 'Periode Mulai', 'Periode Selesai', 'Status'],
+                'data'    => $this->rekapOrganisasi($request)->getData(true)['data'],
+                'map'     => fn($r) => [
+                    $r['nim'],
+                    $r['nama'],
+                    $r['prodi'],
+                    $r['angkatan'],
+                    $r['kipk'],
+                    $r['organisasi'],
+                    $r['jabatan'] ?? '-',
+                    $r['periodeMulai'] ?? '-',
+                    $r['periodeSelesai'] ?? '-',
+                    $r['status'] ?? '-',
+                ],
+            ],
+            'pelatihan' => [
+                'title'   => 'Rekap Pelatihan',
+                'slug'    => 'Pelatihan',
+                'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'Nama Pelatihan', 'Jenis', 'Penyelenggara', 'Tanggal Mulai', 'Tanggal Selesai', 'Tempat', 'Status'],
+                'data'    => $this->rekapPelatihan($request)->getData(true)['data'],
+                'map'     => fn($r) => [
+                    $r['nim'],
+                    $r['nama'],
+                    $r['prodi'],
+                    $r['angkatan'],
+                    $r['kipk'],
+                    $r['namaPelatihan'],
+                    $r['jenis'] ?? '-',
+                    $r['penyelenggara'] ?? '-',
+                    $r['tanggalMulai'] ?? '-',
+                    $r['tanggalSelesai'] ?? '-',
+                    $r['tempat'] ?? '-',
+                    $r['status'] ?? '-',
+                ],
+            ],
+        ];
     }
 }

@@ -41,6 +41,7 @@ import {
   Award,
   Download,
   Info,
+  MessageCircle,
 } from "lucide-react"
 import logoItg from "@/imports/logo_itg.jpg"
 import { api } from "@/services/api"
@@ -1025,22 +1026,36 @@ function TabInfoPribadi({ mhs }: { mhs: MahasiswaDetail }) {
                 />
                 <div className="flex items-center justify-between gap-2 p-3 bg-white border border-[#E2E8F0] rounded-xl min-w-0">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-800 break-all">
-                      {c.nomor}
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <div className="text-sm font-medium text-gray-800 break-all">
+                        {c.nomor}
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 ${
+                          c.aktif
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        {c.aktif ? "Aktif" : "Tidak Aktif"}
+                      </span>
                     </div>
                     <div className="text-xs text-gray-400 mt-0.5 break-words">
                       {c.sem}
                     </div>
                   </div>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 ${
-                      c.aktif
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {c.aktif ? "Aktif" : "Tidak Aktif"}
-                  </span>
+                  {c.aktif && (
+                    <a
+                      href={`https://wa.me/${(c.nomor ?? "").replace(/[^0-9]/g, "").replace(/^0/, "62")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Chat WhatsApp"
+                      className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#25D366] hover:bg-[#1DA851] border border-[#25D366] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0"
+                    >
+                      <MessageCircle size={16} className="text-white flex-shrink-0" />
+                      <span className="text-white">Chat WhatsApp</span>
+                    </a>
+                  )}
                 </div>
               </div>
             ))}

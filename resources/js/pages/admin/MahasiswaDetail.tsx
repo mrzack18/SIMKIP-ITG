@@ -11,6 +11,7 @@ import {
   UserCheck,
   Loader2,
   FileText,
+  Table,
   Pencil,
   Upload,
   X,
@@ -30,6 +31,7 @@ import {
   type SemesterDetailBE,
 } from "@/services/mahasiswaService"
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService"
+import { API_BASE_URL } from "@/services/api"
 import type { Mahasiswa, MahasiswaBebasTanggunganResponse, MahasiswaKategori } from "@/types"
 import { TabInfoPribadi } from "@/components/modules/admin/mahasiswa/TabInfoPribadi"
 import { TabRiwayatAkademik } from "@/components/modules/admin/mahasiswa/TabRiwayatAkademik"
@@ -80,6 +82,8 @@ export default function MahasiswaDetail() {
   const [skError, setSkError] = useState("")
   const [skSuccess, setSkSuccess] = useState("")
   const [isSubmittingSk, setIsSubmittingSk] = useState(false)
+  const [exportingProfil, setExportingProfil] = useState<"xlsx" | "pdf" | null>(null)
+  const [exportProfilError, setExportProfilError] = useState("")
 
   const [isSubmittingStatus, setIsSubmittingStatus] = useState(false)
   const [statusError, setStatusError] = useState("")
@@ -211,6 +215,43 @@ export default function MahasiswaDetail() {
   const handleDownloadSk = () => {
     if (!mhs) return
     downloadFile("mahasiswa", mhs.id, "file_sk").catch((err) => alert(err?.message || "Gagal mengunduh file"))
+  }
+
+  const handleExportProfil = async (format: "xlsx" | "pdf") => {
+    if (!mhs) return
+    setExportingProfil(format)
+    setExportProfilError("")
+    try {
+      const token = localStorage.getItem("simkip_token")
+      const res = await fetch(`${API_BASE_URL}/admin/mahasiswa/${mhs.nim}/export?format=${format}`, {
+        headers: token
+          ? { Authorization: `Bearer ${token}`, "X-Requested-With": "XMLHttpRequest" }
+          : { "X-Requested-With": "XMLHttpRequest" },
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body?.message ?? "Gagal mengunduh laporan.")
+      }
+
+      const blob = await res.blob()
+      const disposition = res.headers.get("Content-Disposition") || ""
+      const match = disposition.match(/filename="?([^";]+)"?/i)
+      const ext = format === "pdf" ? "pdf" : "xlsx"
+      const filename = match ? match[1] : `Profil_KIP-K_${mhs.nim}.${ext}`
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      setExportProfilError(err?.message ?? "Gagal mengunduh laporan.")
+    } finally {
+      setExportingProfil(null)
+    }
   }
 
   const [mhs, setMhs] = useState<Mahasiswa | null>(null)
@@ -420,10 +461,33 @@ export default function MahasiswaDetail() {
         >
           <ChevronLeft size={16} /> Manajemen Mahasiswa
         </Link>
-        <div className="self-start min-[480px]:self-auto min-w-0">
+        <div className="self-start min-[480px]:self-auto flex flex-wrap items-center gap-2 min-w-0">
           <TahunAjaranFilter value={tahunAjaran} onChange={setTahunAjaran} />
+          <button
+            onClick={() => handleExportProfil("xlsx")}
+            disabled={exportingProfil !== null}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exportingProfil === "xlsx" ? <Loader2 size={16} className="animate-spin text-[#263F93]" /> : <Table size={16} className="text-[#263F93] flex-shrink-0" />}
+            <span className="text-[#263F93]">Export Excel</span>
+          </button>
+          <button
+            onClick={() => handleExportProfil("pdf")}
+            disabled={exportingProfil !== null}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exportingProfil === "pdf" ? <Loader2 size={16} className="animate-spin text-[#263F93]" /> : <FileText size={16} className="text-[#263F93] flex-shrink-0" />}
+            <span className="text-[#263F93]">Export PDF</span>
+          </button>
         </div>
       </div>
+
+      {exportProfilError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2 min-w-0">
+          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700 break-words min-w-0">{exportProfilError}</p>
+        </div>
+      )}
 
       {/* Status Banner */}
       {mhs.status === "Nonaktif" && (

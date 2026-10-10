@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BebasTanggungan;
 use App\Models\Konfigurasi;
 use App\Models\Laporan;
+use App\Models\Mahasiswa;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 
@@ -82,6 +83,36 @@ class PdfGeneratorService
     }
 
     /**
+     * Generate PDF Laporan Profil lengkap satu mahasiswa KIP-K.
+     */
+    public static function profilMahasiswa(Mahasiswa $m): Response
+    {
+        $data = [
+            'mahasiswa'   => $m,
+            'ipkList'     => $m->ipkSemestrs->sortBy('semester')->values(),
+            'prestasis'   => $m->prestasis,
+            'organisasis' => $m->organisasis,
+            'pelatihans'  => $m->pelatihans,
+            'dokumens'    => $m->dokumens,
+            'spList'      => $m->suratPeringatans,
+            'logoPath'    => self::getLogoBase64(),
+            'dicetak_at'  => now()->format('d F Y H:i'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.profil_mahasiswa', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'dpi'                  => 150,
+                'defaultFont'          => 'Times New Roman',
+                'isRemoteEnabled'      => false,
+                'isHtml5ParserEnabled' => true,
+            ]);
+
+        $safeNama = preg_replace('/[^A-Za-z0-9]+/', '_', $m->nama);
+        return $pdf->download("Profil_KIP-K_{$m->nim}_{$safeNama}.pdf");
+    }
+
+    /**
      * Generate PDF Laporan untuk Admin
      */
     public static function laporanKipK(int $laporanId): Response
@@ -139,6 +170,35 @@ class PdfGeneratorService
 
         $safeJudul = preg_replace('/[^A-Za-z0-9]+/', '_', $judul);
         return $pdf->download(trim($safeJudul, '_') . '.pdf');
+    }
+
+    /**
+     * Generate PDF laporan Data Akademik & Non-Akademik (multi-section).
+     *
+     * @param  array   $sections  tiap item: ['title' => string, 'headers' => array, 'rows' => array]
+     * @param  string  $tahunAjaran  label tahun ajaran terpilih
+     */
+    public static function laporanDataAkademik(array $sections, string $tahunAjaran): Response
+    {
+        $data = [
+            'sections'    => $sections,
+            'tahunAjaran' => $tahunAjaran ?: 'Semua',
+            'logoPath'    => self::getLogoBase64(),
+            'dicetak_at'  => now()->format('d F Y H:i'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.laporan_data_akademik', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOptions([
+                'dpi'                  => 150,
+                'defaultFont'          => 'Times New Roman',
+                'isRemoteEnabled'      => false,
+                'isHtml5ParserEnabled' => true,
+            ]);
+
+        $safeTahun = preg_replace('/[^0-9A-Za-z]+/', '-', $tahunAjaran ?: 'Semua');
+
+        return $pdf->download('Data_Akademik_KIP-K_' . trim($safeTahun, '-') . '.pdf');
     }
 
     /**

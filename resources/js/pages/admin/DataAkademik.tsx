@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import {
   Search,
   Download,
+  Table,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -33,6 +34,7 @@ import {
 import { getKonfigurasiAll } from "@/services/konfigurasiService"
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter"
 import { downloadFile } from "@/utils/fileUrl"
+import { API_BASE_URL } from "@/services/api"
 
 const kipkOptions = ["Semua Kategori", "KIP-K Reguler", "KIP-K Aspirasi"]
 
@@ -665,6 +667,10 @@ export default function DataAkademik() {
   const [organisasiData, setOrganisasiData] = useState<any[]>([])
   const [pelatihanData, setPelatihanData] = useState<any[]>([])
 
+  // ── Export State ─────────────────────────────────────────────────────────────
+  const [exporting, setExporting] = useState<{ scope: string; format: "xlsx" | "pdf" } | null>(null)
+  const [exportError, setExportError] = useState("")
+
   // Filter options loaded from BE
   const [prodiOptions, setProdiOptions] = useState<string[]>(["Semua Prodi"])
   const [angkatanOptions, setAngkatanOptions] = useState<string[]>(["Semua Angkatan"])
@@ -1025,6 +1031,46 @@ export default function DataAkademik() {
       (pelStatus === "Semua Status" || p.status === pelStatus),
   )
 
+  const handleExport = async (
+    scope: "all" | "prestasi" | "organisasi" | "pelatihan",
+    format: "xlsx" | "pdf",
+  ) => {
+    setExporting({ scope, format })
+    setExportError("")
+    try {
+      const token = localStorage.getItem("simkip_token")
+      const params = new URLSearchParams({ scope, format })
+      if (tahunAjaran) params.set("tahun_ajaran", tahunAjaran)
+      const res = await fetch(`${API_BASE_URL}/admin/mahasiswa/rekap-export?${params.toString()}`, {
+        headers: token
+          ? { Authorization: `Bearer ${token}`, "X-Requested-With": "XMLHttpRequest" }
+          : { "X-Requested-With": "XMLHttpRequest" },
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body?.message ?? "Gagal mengunduh data.")
+      }
+
+      const blob = await res.blob()
+      const disposition = res.headers.get("Content-Disposition") || ""
+      const match = disposition.match(/filename="?([^";]+)"?/i)
+      const filename = match ? match[1] : `Data_Akademik_KIP-K.${format}`
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      setExportError(err?.message ?? "Gagal mengunduh data.")
+    } finally {
+      setExporting(null)
+    }
+  }
+
   const thCls =
     "text-left px-4 py-3 text-xs font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap"
   const tdCls = "px-4 py-3"
@@ -1042,6 +1088,12 @@ export default function DataAkademik() {
           <button onClick={fetchData} className="text-sm font-medium hover:underline shrink-0 self-start sm:self-auto">Coba Lagi</button>
         </div>
       )}
+      {exportError && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 flex items-start gap-2 min-w-0">
+          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <span className="text-sm break-words min-w-0">{exportError}</span>
+        </div>
+      )}
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 min-w-0">
@@ -1053,9 +1105,30 @@ export default function DataAkademik() {
             Pantau IPK, nilai mata kuliah, prestasi, organisasi, dan pelatihan
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 rounded-lg text-gray-600 bg-white hover:bg-gray-50 transition-colors whitespace-nowrap">
-            <Download size={13} /> Export ke Excel
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => handleExport("all", "xlsx")}
+            disabled={exporting !== null}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting?.scope === "all" && exporting?.format === "xlsx" ? (
+              <Loader2 size={16} className="animate-spin text-[#263F93]" />
+            ) : (
+              <Table size={16} className="text-[#263F93] flex-shrink-0" />
+            )}
+            <span className="text-[#263F93]">Export Excel</span>
+          </button>
+          <button
+            onClick={() => handleExport("all", "pdf")}
+            disabled={exporting !== null}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting?.scope === "all" && exporting?.format === "pdf" ? (
+              <Loader2 size={16} className="animate-spin text-[#263F93]" />
+            ) : (
+              <FileText size={16} className="text-[#263F93] flex-shrink-0" />
+            )}
+            <span className="text-[#263F93]">Export PDF</span>
           </button>
           <TahunAjaranFilter value={tahunAjaran} onChange={(v) => { setTahunAjaran(v); }} />
         </div>
@@ -1448,7 +1521,7 @@ export default function DataAkademik() {
                   </button>
                 </div>
               </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <Award size={15} className="text-[#263F93]" />
@@ -1456,9 +1529,32 @@ export default function DataAkademik() {
                       Rekap Prestasi Mahasiswa KIP-K
                     </span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 whitespace-nowrap">
-                    <Download size={12} /> Export
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleExport("prestasi", "xlsx")}
+                      disabled={exporting !== null}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting?.scope === "prestasi" && exporting?.format === "xlsx" ? (
+                        <Loader2 size={12} className="animate-spin text-[#263F93]" />
+                      ) : (
+                        <Table size={12} className="text-[#263F93] flex-shrink-0" />
+                      )}
+                      <span className="text-[#263F93]">Export Excel</span>
+                    </button>
+                    <button
+                      onClick={() => handleExport("prestasi", "pdf")}
+                      disabled={exporting !== null}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting?.scope === "prestasi" && exporting?.format === "pdf" ? (
+                        <Loader2 size={12} className="animate-spin text-[#263F93]" />
+                      ) : (
+                        <FileText size={12} className="text-[#263F93] flex-shrink-0" />
+                      )}
+                      <span className="text-[#263F93]">Export PDF</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1080px] text-sm">
@@ -1594,7 +1690,7 @@ export default function DataAkademik() {
                   </button>
                 </div>
               </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <Users size={15} className="text-[#263F93]" />
@@ -1602,9 +1698,32 @@ export default function DataAkademik() {
                       Rekap Keaktifan Organisasi
                     </span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 whitespace-nowrap">
-                    <Download size={12} /> Export
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleExport("organisasi", "xlsx")}
+                      disabled={exporting !== null}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting?.scope === "organisasi" && exporting?.format === "xlsx" ? (
+                        <Loader2 size={12} className="animate-spin text-[#263F93]" />
+                      ) : (
+                        <Table size={12} className="text-[#263F93] flex-shrink-0" />
+                      )}
+                      <span className="text-[#263F93]">Export Excel</span>
+                    </button>
+                    <button
+                      onClick={() => handleExport("organisasi", "pdf")}
+                      disabled={exporting !== null}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting?.scope === "organisasi" && exporting?.format === "pdf" ? (
+                        <Loader2 size={12} className="animate-spin text-[#263F93]" />
+                      ) : (
+                        <FileText size={12} className="text-[#263F93] flex-shrink-0" />
+                      )}
+                      <span className="text-[#263F93]">Export PDF</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[860px] text-sm">
@@ -1739,7 +1858,7 @@ export default function DataAkademik() {
                   </button>
                 </div>
               </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <BookOpen size={15} className="text-[#263F93]" />
@@ -1750,9 +1869,32 @@ export default function DataAkademik() {
                         : "Non-Akademik"}
                     </span>
                   </div>
-                  <button className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 whitespace-nowrap">
-                    <Download size={12} /> Export
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleExport("pelatihan", "xlsx")}
+                      disabled={exporting !== null}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting?.scope === "pelatihan" && exporting?.format === "xlsx" ? (
+                        <Loader2 size={12} className="animate-spin text-[#263F93]" />
+                      ) : (
+                        <Table size={12} className="text-[#263F93] flex-shrink-0" />
+                      )}
+                      <span className="text-[#263F93]">Export Excel</span>
+                    </button>
+                    <button
+                      onClick={() => handleExport("pelatihan", "pdf")}
+                      disabled={exporting !== null}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {exporting?.scope === "pelatihan" && exporting?.format === "pdf" ? (
+                        <Loader2 size={12} className="animate-spin text-[#263F93]" />
+                      ) : (
+                        <FileText size={12} className="text-[#263F93] flex-shrink-0" />
+                      )}
+                      <span className="text-[#263F93]">Export PDF</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[960px] text-sm">

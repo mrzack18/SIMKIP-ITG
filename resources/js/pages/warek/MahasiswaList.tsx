@@ -306,9 +306,10 @@ export default function WarekMahasiswaList() {
           <a
             href={`${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/warek/mahasiswa/export?tahun_ajaran=${tahunAjaranFilter}`}
             target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap"
           >
-            <Download size={15} /> Export Excel
+            <Download size={16} className="text-[#263F93] flex-shrink-0" />
+            <span className="text-[#263F93]">Export Excel</span>
           </a>
         </div>
       </div>

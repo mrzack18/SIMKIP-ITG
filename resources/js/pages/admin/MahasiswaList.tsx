@@ -353,24 +353,6 @@ export default function MahasiswaList() {
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{total} mahasiswa KIP-K terdaftar</p>
         </div>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:flex-wrap gap-2 w-full sm:w-auto">
-          <TahunAjaranFilter
-            value={tahunAjaranFilter}
-            onChange={(v) => { setTahunAjaranFilter(v); setPage(1); }}
-          />
-          <button
-            onClick={() => handleExport("xlsx")}
-            disabled={exporting !== null}
-            className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {exporting === "xlsx" ? <Loader2 size={15} className="animate-spin" /> : <Table size={15} />} Export Excel
-          </button>
-          <button
-            onClick={() => handleExport("pdf")}
-            disabled={exporting !== null}
-            className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {exporting === "pdf" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />} Export PDF
-          </button>
           <Link
             to="/admin/mahasiswa/tambah"
             className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors whitespace-nowrap"
@@ -378,6 +360,26 @@ export default function MahasiswaList() {
           >
             <Plus size={15} /> Tambah Mahasiswa
           </Link>
+          <button
+            onClick={() => handleExport("xlsx")}
+            disabled={exporting !== null}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting === "xlsx" ? <Loader2 size={16} className="animate-spin text-[#263F93]" /> : <Table size={16} className="text-[#263F93] flex-shrink-0" />}
+            <span className="text-[#263F93]">Export Excel</span>
+          </button>
+          <button
+            onClick={() => handleExport("pdf")}
+            disabled={exporting !== null}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white border border-[#E2E8F0] hover:bg-gray-50 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting === "pdf" ? <Loader2 size={16} className="animate-spin text-[#263F93]" /> : <FileText size={16} className="text-[#263F93] flex-shrink-0" />}
+            <span className="text-[#263F93]">Export PDF</span>
+          </button>
+          <TahunAjaranFilter
+            value={tahunAjaranFilter}
+            onChange={(v) => { setTahunAjaranFilter(v); setPage(1); }}
+          />
         </div>
       </div>
 

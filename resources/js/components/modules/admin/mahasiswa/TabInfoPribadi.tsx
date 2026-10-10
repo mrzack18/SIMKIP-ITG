@@ -1,4 +1,4 @@
-import { User, GraduationCap, Phone, Clock, Users, XCircle } from "lucide-react"
+import { User, GraduationCap, Phone, Clock, Users, XCircle, MessageCircle } from "lucide-react"
 import { useState, useEffect } from "react"
 import { getCatatanInternal, storeCatatanInternal } from "@/services/mahasiswaService"
 import { formatTahunAjaran } from "@/components/ui/TahunAjaranFilter"
@@ -151,12 +151,24 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
                     </div>
                     <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
                       <div className="min-w-0">
-                        <p className="text-sm font-500 text-gray-700 break-all">{data.noHp}</p>
+                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                          <p className="text-sm font-500 text-gray-700 break-all">{data.noHp}</p>
+                          <span className="text-xs font-500 px-2 py-0.5 rounded-full bg-green-100 text-green-700 whitespace-nowrap shrink-0">Aktif</span>
+                        </div>
                         <p className="text-xs text-gray-400 flex items-center gap-1">
                           <Clock size={10} className="flex-shrink-0" /> Saat Ini
                         </p>
                       </div>
-                      <span className="text-xs font-500 px-2 py-0.5 rounded-full bg-green-100 text-green-700 whitespace-nowrap shrink-0">Aktif</span>
+                      <a
+                        href={`https://wa.me/${data.noHp.replace(/[^0-9]/g, "").replace(/^0/, "62")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Chat WhatsApp"
+                        className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-[#25D366] hover:bg-[#1DA851] border border-[#25D366] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors whitespace-nowrap shrink-0"
+                      >
+                        <MessageCircle size={16} className="text-white flex-shrink-0" />
+                        <span className="text-white">Chat WhatsApp</span>
+                      </a>
                     </div>
                   </div>
                 )}
@@ -216,15 +228,14 @@ export function TabInfoPribadi({ data, tahunAjaran }: { data: Mahasiswa | null, 
         </div>
 
             {/* Catatan internal */}
-      <div className="min-w-0">
+      <div className="md:col-span-2 min-w-0">
         <div className="flex flex-col min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between gap-2 mb-3">
           <label className="block text-sm font-semibold text-gray-700">
             Catatan Internal
           </label>
           <button
             onClick={() => setCatatanModal(true)}
-            className="px-3 py-1.5 text-xs font-medium text-white rounded-lg flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity w-full min-[420px]:w-auto whitespace-nowrap"
-            style={{ background: "#263F93" }}
+            className="inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-[#263F93] hover:bg-[#1E3278] border border-[#263F93] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-colors w-full min-[420px]:w-auto whitespace-nowrap"
           >
             + Tambah Catatan/Kendala
           </button>

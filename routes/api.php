@@ -166,6 +166,8 @@ Route::middleware("auth:sanctum")->group(function () {
     // Export daftar mahasiswa (admin)
     Route::middleware("role:admin")->prefix("admin/mahasiswa")->group(function () {
         Route::get("/export", [AdminMahasiswa::class, "export"]);
+        Route::get("/rekap-export", [AdminMahasiswa::class, "exportRekap"]);
+        Route::get("/{nim}/export", [AdminMahasiswa::class, "exportProfil"]);
     });
 
     // Admin Badge Counts (sidebar notification badges)

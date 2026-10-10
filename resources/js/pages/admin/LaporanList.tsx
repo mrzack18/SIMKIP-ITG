@@ -207,7 +207,6 @@ export default function LaporanList() {
           </p>
         </div>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
-          <TahunAjaranFilter value={tahunFilter} onChange={handleTahunChange} />
           <Link
             to={(() => {
               const params = new URLSearchParams();
@@ -224,6 +223,7 @@ export default function LaporanList() {
           >
             <Plus size={15} /> Susun Laporan Baru
           </Link>
+          <TahunAjaranFilter value={tahunFilter} onChange={handleTahunChange} />
         </div>
       </div>
 

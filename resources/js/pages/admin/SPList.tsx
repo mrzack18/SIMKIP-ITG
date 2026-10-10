@@ -147,12 +147,12 @@ export default function SPList() {
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">Daftar dan riwayat penerbitan SP mahasiswa KIP-K</p>
         </div>
         <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center gap-2 w-full sm:w-auto shrink-0">
-          <TahunAjaranFilter value={tahunAjaran} onChange={v => { setTahunAjaran(v); setCurrentPage(1); }} />
           <Link to="/admin/sp/terbitkan"
             className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white shadow-sm hover:shadow-md transition-shadow whitespace-nowrap"
             style={{ background: "#DC2626" }}>
             <Plus size={15} /> Terbitkan SP Baru
           </Link>
+          <TahunAjaranFilter value={tahunAjaran} onChange={v => { setTahunAjaran(v); setCurrentPage(1); }} />
         </div>
       </div>
 
