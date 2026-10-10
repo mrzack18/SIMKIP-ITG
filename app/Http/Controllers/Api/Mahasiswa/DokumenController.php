@@ -2,31 +2,35 @@
 
 namespace App\Http\Controllers\Api\Mahasiswa;
 
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\DokumenJenisResource;
+use App\Http\Resources\DokumenResource;
 use App\Models\Dokumen;
 use App\Models\DokumenJenis;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DokumenController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa;
-        
+
         $jenis = DokumenJenis::with(['fields', 'dokumens' => function ($q) use ($m, $request) {
             $q->where('mahasiswa_id', $m->id);
             if ($request->tahun_ajaran) {
-                \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'created_at', $request->tahun_ajaran);
+                TahunAjaranHelper::applyDateMaxFilter($q, 'created_at', $request->tahun_ajaran);
             }
             $q->latest();
         }])->orderBy('urutan')->get();
 
         return response()->json([
             'success' => true,
-            'data'    => \App\Http\Resources\DokumenJenisResource::collection($jenis),
+            'data' => DokumenJenisResource::collection($jenis),
         ]);
     }
 
@@ -34,8 +38,8 @@ class DokumenController extends Controller
     {
         $request->validate([
             'dokumen_jenis_id' => 'required|exists:dokumen_jenis,id',
-            'file'             => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'metadata'         => 'nullable|string',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'metadata' => 'nullable|string',
         ]);
 
         $m = $request->user()->mahasiswa;
@@ -52,16 +56,16 @@ class DokumenController extends Controller
 
         $filePath = $request->file('file')->store("dokumen/{$m->nim}/{$jenis->nama}", 'public');
         $namaFile = $request->file('file')->getClientOriginalName();
-        $ukuran   = $request->file('file')->getSize();
+        $ukuran = $request->file('file')->getSize();
 
         // Check if previously rejected doc exists and delete it
         $existing = Dokumen::where('mahasiswa_id', $m->id)
             ->where('dokumen_jenis_id', $request->dokumen_jenis_id)
             ->first();
-        
+
         if ($existing) {
             if ($existing->status === 'Ditolak') {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing->path_file);
+                Storage::disk('public')->delete($existing->path_file);
                 $existing->delete();
             } else {
                 return response()->json(['success' => false, 'message' => 'Dokumen sudah diunggah.'], 422);
@@ -69,13 +73,13 @@ class DokumenController extends Controller
         }
 
         $dok = Dokumen::create([
-            'mahasiswa_id'     => $m->id,
+            'mahasiswa_id' => $m->id,
             'dokumen_jenis_id' => $request->dokumen_jenis_id,
-            'nama_file'        => $namaFile,
-            'path_file'        => $filePath,
-            'ukuran'           => $ukuran,
-            'status'           => 'Menunggu',
-            'metadata'         => $metadataArray,
+            'nama_file' => $namaFile,
+            'path_file' => $filePath,
+            'ukuran' => $ukuran,
+            'status' => 'Menunggu',
+            'metadata' => $metadataArray,
         ]);
 
         if (is_array($metadataArray)) {
@@ -83,7 +87,7 @@ class DokumenController extends Controller
                 if (is_numeric($fieldId)) {
                     $dok->fieldValues()->create([
                         'dokumen_jenis_field_id' => $fieldId,
-                        'value' => is_array($value) ? json_encode($value) : $value
+                        'value' => is_array($value) ? json_encode($value) : $value,
                     ]);
                 }
             }
@@ -100,19 +104,19 @@ class DokumenController extends Controller
             );
         });
 
-        return response()->json(['success' => true, 'data' => new \App\Http\Resources\DokumenResource($dok)], 201);
+        return response()->json(['success' => true, 'data' => new DokumenResource($dok)], 201);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $m   = $request->user()->mahasiswa;
+        $m = $request->user()->mahasiswa;
         $dok = Dokumen::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
 
         if ($dok->status !== 'Ditolak') {
             return response()->json(['success' => false, 'message' => 'Hanya dokumen yang ditolak dapat dihapus.'], 422);
         }
 
-        \Illuminate\Support\Facades\Storage::disk('public')->delete($dok->path_file);
+        Storage::disk('public')->delete($dok->path_file);
         $dok->delete();
 
         return response()->json(['success' => true, 'message' => 'Dokumen dihapus.']);
@@ -120,23 +124,25 @@ class DokumenController extends Controller
 
     public function arsip(Request $request): JsonResponse
     {
-        $m     = $request->user()->mahasiswa;
+        $m = $request->user()->mahasiswa;
         $query = $m->dokumens()->with('jenis');
 
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
+        }
         if ($request->jenis) {
-            $query->whereHas('jenis', fn($q) => $q->where('nama', $request->jenis));
+            $query->whereHas('jenis', fn ($q) => $q->where('nama', $request->jenis));
         }
 
         return response()->json([
             'success' => true,
-            'data'    => $query->latest()->get()->map(fn($d) => [
-                'id'             => $d->id,
-                'jenis'          => $d->jenis->nama,
-                'nama_file'      => $d->nama_file,
-                'status'         => $d->status,
+            'data' => $query->latest()->get()->map(fn ($d) => [
+                'id' => $d->id,
+                'jenis' => $d->jenis->nama,
+                'nama_file' => $d->nama_file,
+                'status' => $d->status,
                 'tanggal_upload' => $d->created_at->format('d M Y'),
-                'file_url'       => asset('storage/' . $d->path_file),
+                'file_url' => asset('storage/'.$d->path_file),
             ]),
         ]);
     }

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\Warek;
 
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MahasiswaResource;
 use App\Models\Mahasiswa;
 use App\Models\Prodi;
 use App\Services\ExcelExportService;
@@ -22,11 +24,13 @@ class MahasiswaController extends Controller
 
         if ($request->search) {
             $q = $request->search;
-            $query->where(fn($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
+            $query->where(fn ($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
         }
         if ($request->prodi && $request->prodi !== 'Semua') {
             $prodi = Prodi::where('nama', $request->prodi)->orWhere('kode', $request->prodi)->first();
-            if ($prodi) $query->where('prodi_id', $prodi->id);
+            if ($prodi) {
+                $query->where('prodi_id', $prodi->id);
+            }
         }
         if ($request->angkatan && $request->angkatan !== 'Semua') {
             $query->where('angkatan', $request->angkatan);
@@ -41,27 +45,31 @@ class MahasiswaController extends Controller
         if ($request->sortBy) {
             switch ($request->sortBy) {
                 // Mahasiswa tanpa nilai selalu di urutan bawah.
-                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
-                case 'Nama A–Z':                 $query->orderBy('nama'); break;
-                case 'Angkatan Terbaru':         $query->orderByDesc('angkatan'); break;
+                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc');
+                    break;
+                case 'Nama A–Z':                 $query->orderBy('nama');
+                    break;
+                case 'Angkatan Terbaru':         $query->orderByDesc('angkatan');
+                    break;
                 case 'IPK Tertinggi → Terendah':
-                default:                         $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
+                default:                         $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
+                    break;
             }
         } else {
             $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 8); // FE uses page size 8
-        $page  = (int) ($request->page ?? 1);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
-        $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
+        $data = $query->skip(($page - 1) * $limit)->take($limit)->get();
 
         return response()->json([
-            'data'        => \App\Http\Resources\MahasiswaResource::collection($data),
-            'total'       => $total,
-            'page'        => $page,
-            'limit'       => $limit,
-            'totalPages'  => (int) ceil($total / max($limit, 1)),
+            'data' => MahasiswaResource::collection($data),
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'totalPages' => (int) ceil($total / max($limit, 1)),
         ]);
     }
 
@@ -72,14 +80,14 @@ class MahasiswaController extends Controller
             ->findOrFail($id);
 
         // Hitung total semester (asumsi 8 semester untuk S1)
-        $semesterNum = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan);
+        $semesterNum = TahunAjaranHelper::calculateSemester((int) $m->angkatan);
 
         return response()->json([
-            'data'       => new \App\Http\Resources\MahasiswaResource($m),
-            'progress'   => [
+            'data' => new MahasiswaResource($m),
+            'progress' => [
                 'semesterAktif' => $semesterNum,
                 'totalSemester' => 8,
-                'progressPct'   => $semesterNum > 0 ? round(($semesterNum / 8) * 100) : 0,
+                'progressPct' => $semesterNum > 0 ? round(($semesterNum / 8) * 100) : 0,
             ],
         ]);
     }
@@ -97,8 +105,8 @@ class MahasiswaController extends Controller
             ->pluck('angkatan');
 
         return response()->json([
-            'success'   => true,
-            'prodis'    => $prodis,
+            'success' => true,
+            'prodis' => $prodis,
             'angkatans' => $angkatans,
         ]);
     }
@@ -114,11 +122,13 @@ class MahasiswaController extends Controller
 
         if ($request->search) {
             $q = $request->search;
-            $query->where(fn($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
+            $query->where(fn ($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
         }
         if ($request->prodi && $request->prodi !== 'Semua') {
             $prodi = Prodi::where('nama', $request->prodi)->orWhere('kode', $request->prodi)->first();
-            if ($prodi) $query->where('prodi_id', $prodi->id);
+            if ($prodi) {
+                $query->where('prodi_id', $prodi->id);
+            }
         }
         if ($request->angkatan && $request->angkatan !== 'Semua') {
             $query->where('angkatan', $request->angkatan);
@@ -138,14 +148,14 @@ class MahasiswaController extends Controller
                 $m->angkatan,
                 $m->kategori,
                 $m->ipk_calc !== null ? (float) $m->ipk_calc : '-',
-                \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
+                TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                 $m->status,
                 $m->sp_calc ?? '-',
             ];
         })->toArray();
 
         $headers = ['NIM', 'Nama', 'Program Studi', 'Angkatan', 'Kategori', 'IPK', 'Semester', 'Status', 'SP'];
-        $filename = 'Mahasiswa_KIP-K_' . date('Ymd_His') . '.xlsx';
+        $filename = 'Mahasiswa_KIP-K_'.date('Ymd_His').'.xlsx';
 
         return ExcelExportService::stream($filename, $headers, $rows);
     }

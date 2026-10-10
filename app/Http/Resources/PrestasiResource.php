@@ -12,11 +12,11 @@ class PrestasiResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'nim' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->nim),
-            'nama' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->nama),
-            'prodi' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->prodi->nama ?? ''),
-            'angkatan' => $this->whenLoaded('mahasiswa', fn() => (int) $this->mahasiswa->angkatan),
-            'kipk' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->kategori),
+            'nim' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->nim),
+            'nama' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->nama),
+            'prodi' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->prodi->nama ?? ''),
+            'angkatan' => $this->whenLoaded('mahasiswa', fn () => (int) $this->mahasiswa->angkatan),
+            'kipk' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->kategori),
             'namaPrestasi' => $this->nama_prestasi,
             'tingkat' => $this->tingkat,
             'pencapaian' => $this->pencapaian,
@@ -36,16 +36,18 @@ class PrestasiResource extends JsonResource
 
     private function getTahunAjaranFromTanggalMulai($date): ?string
     {
-        if (!$date) return null;
+        if (! $date) {
+            return null;
+        }
         $month = (int) $date->format('m');
         $year = (int) $date->format('Y');
 
         if ($month >= 2 && $month <= 8) {
-            return ($year - 1) . '/' . $year . ' Genap';
+            return ($year - 1).'/'.$year.' Genap';
         } elseif ($month == 1) {
-            return ($year - 1) . '/' . $year . ' Ganjil';
+            return ($year - 1).'/'.$year.' Ganjil';
         } else {
-            return $year . '/' . ($year + 1) . ' Ganjil';
+            return $year.'/'.($year + 1).' Ganjil';
         }
     }
 }

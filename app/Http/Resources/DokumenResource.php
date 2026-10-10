@@ -13,7 +13,7 @@ class DokumenResource extends JsonResource
         return [
             'id' => $this->id,
             'dokumenJenisId' => $this->dokumen_jenis_id,
-            'nama' => $this->whenLoaded('jenis', fn() => $this->jenis->nama),
+            'nama' => $this->whenLoaded('jenis', fn () => $this->jenis->nama),
             'status' => $this->status,
             'tanggal' => $this->created_at->format('d M Y'),
             'catatan' => $this->catatan_admin,

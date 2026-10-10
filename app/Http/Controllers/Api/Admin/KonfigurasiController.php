@@ -1,14 +1,18 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
-use App\Http\Controllers\Controller;
+
 use App\Helpers\AturanAkademik;
+use App\Helpers\PeriodeInputHelper;
+use App\Http\Controllers\Controller;
 use App\Models\DokumenJenis;
+use App\Models\DokumenJenisField;
+use App\Models\JenisPelanggaran;
 use App\Models\Konfigurasi;
 use App\Models\Mahasiswa;
-use App\Models\Prodi;
 use App\Models\NilaiMutu;
-use App\Models\JenisPelanggaran;
 use App\Models\PeriodeAkademik;
+use App\Models\Prodi;
 use App\Models\TahunAjaran;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,7 +52,7 @@ class KonfigurasiController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Admin hanya boleh mengubah ambang batas akademik.',
-                    'keys'    => array_values($terlarang),
+                    'keys' => array_values($terlarang),
                 ], 403);
             }
         }
@@ -62,7 +66,7 @@ class KonfigurasiController extends Controller
             // aktifnya ada di kolom is_aktif tabel periode_akademiks.
             if (str_ends_with($key, '_aktif')) {
                 $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
-                $tipe  = 'boolean';
+                $tipe = 'boolean';
             } else {
                 $tipe = 'text';
             }
@@ -80,43 +84,43 @@ class KonfigurasiController extends Controller
         return response()->json(['success' => true, 'message' => 'Konfigurasi disimpan.']);
     }
 
-public function getPeriode(): JsonResponse
+    public function getPeriode(): JsonResponse
     {
         $taAktif = TahunAjaran::where('is_aktif', true)->first();
 
         // Sumber kebenaran periode input = tabel periode_akademiks, bukan key
         // konfigurasi global (key itu hanya bisa menyimpan satu periode).
         // Beberapa tahun ajaran boleh aktif sekaligus.
-        $periodesAktif = \App\Helpers\PeriodeInputHelper::semuaAktif();
+        $periodesAktif = PeriodeInputHelper::semuaAktif();
 
         return response()->json([
             'success' => true,
             // Field lama dipertahankan supaya pemanggil versi lama tetap jalan;
             // isinya diambil dari periode aktif (bila ada lebih dari satu,
             // pembaca sebaiknya memakai `periodes_aktif` + `tahun_ajaran`).
-            'aktif'   => $periodesAktif->isNotEmpty(),
-            'buka'    => $periodesAktif->first()?->tanggal_buka?->format('Y-m-d'),
-            'tutup'   => $periodesAktif->first()?->tanggal_tutup?->format('Y-m-d'),
+            'aktif' => $periodesAktif->isNotEmpty(),
+            'buka' => $periodesAktif->first()?->tanggal_buka?->format('Y-m-d'),
+            'tutup' => $periodesAktif->first()?->tanggal_tutup?->format('Y-m-d'),
             'tahun_ajaran' => $periodesAktif->first()
                 ? "{$periodesAktif->first()->tahun_akademik} {$periodesAktif->first()->semester}"
                 : null,
             // Daftar lengkap periode yang aktif — dipakai halaman mahasiswa untuk
             // menilai periode mana yang berlaku bagi TA yang dipilih.
             'periodes_aktif' => $periodesAktif->map(fn ($p) => [
-                'id'             => $p->id,
-                'tahun_ajaran'   => "{$p->tahun_akademik} {$p->semester}",
+                'id' => $p->id,
+                'tahun_ajaran' => "{$p->tahun_akademik} {$p->semester}",
                 'tahun_akademik' => $p->tahun_akademik,
-                'semester'       => $p->semester,
-                'buka'           => $p->tanggal_buka?->format('Y-m-d'),
-                'tutup'          => $p->tanggal_tutup?->format('Y-m-d'),
+                'semester' => $p->semester,
+                'buka' => $p->tanggal_buka?->format('Y-m-d'),
+                'tutup' => $p->tanggal_tutup?->format('Y-m-d'),
             ])->values(),
             'tahun_akademik' => Konfigurasi::get('tahun_akademik_aktif'),
-            'semester'       => Konfigurasi::get('semester_aktif'),
+            'semester' => Konfigurasi::get('semester_aktif'),
             'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
             'tahun_ajaran_aktif' => $taAktif
                 ? "{$taAktif->tahun_akademik} {$taAktif->semester}"
                 : null,
-            'nilai_mutu'     => NilaiMutu::all()->keyBy(fn($n) => strtoupper($n->huruf))->map->poin,
+            'nilai_mutu' => NilaiMutu::all()->keyBy(fn ($n) => strtoupper($n->huruf))->map->poin,
         ]);
     }
 
@@ -130,6 +134,7 @@ public function getPeriode(): JsonResponse
     {
         $request->validate(['kode' => 'required|unique:prodis,kode', 'nama' => 'required|string']);
         $p = Prodi::create(['kode' => strtoupper($request->kode), 'nama' => $request->nama]);
+
         return response()->json(['success' => true, 'data' => $p], 201);
     }
 
@@ -137,6 +142,7 @@ public function getPeriode(): JsonResponse
     {
         $p = Prodi::findOrFail($id);
         $p->update($request->only(['nama']));
+
         return response()->json(['success' => true, 'data' => $p]);
     }
 
@@ -144,6 +150,7 @@ public function getPeriode(): JsonResponse
     {
         $p = Prodi::findOrFail($id);
         $p->update(['is_aktif' => ! $p->is_aktif]);
+
         return response()->json(['success' => true, 'is_aktif' => $p->is_aktif]);
     }
 
@@ -168,19 +175,22 @@ public function getPeriode(): JsonResponse
             'is_wajib' => true,
             'urutan' => $max + 1,
         ]);
+
         return response()->json(['success' => true, 'data' => $d], 201);
     }
 
     public function destroyDokumenJenis(int $id): JsonResponse
     {
         DokumenJenis::findOrFail($id)->delete();
+
         return response()->json(['success' => true, 'message' => 'Jenis dokumen dihapus.']);
     }
 
     public function toggleDokumenJenis(int $id): JsonResponse
     {
         $d = DokumenJenis::findOrFail($id);
-        $d->update(['is_wajib' => !$d->is_wajib]);
+        $d->update(['is_wajib' => ! $d->is_wajib]);
+
         return response()->json(['success' => true]);
     }
 
@@ -190,7 +200,7 @@ public function getPeriode(): JsonResponse
             'label' => 'required|string',
             'tipe' => 'required|in:text,number,date,url,dropdown,checkbox',
             'opsi' => 'nullable|array',
-            'is_required' => 'boolean'
+            'is_required' => 'boolean',
         ]);
 
         $dok = DokumenJenis::findOrFail($id);
@@ -201,7 +211,8 @@ public function getPeriode(): JsonResponse
 
     public function destroyDokumenJenisField(int $id): JsonResponse
     {
-        \App\Models\DokumenJenisField::findOrFail($id)->delete();
+        DokumenJenisField::findOrFail($id)->delete();
+
         return response()->json(['success' => true]);
     }
 
@@ -209,6 +220,7 @@ public function getPeriode(): JsonResponse
     public function indexAll(): JsonResponse
     {
         $konfig = Konfigurasi::all()->keyBy('key')->map->value;
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -220,9 +232,9 @@ public function getPeriode(): JsonResponse
                 ],
                 'signature' => [
                     'pengelola_nama' => $konfig['pengelola_nama'] ?? 'Encep Jianul Hayat, S.T., M.T.',
-                    'pengelola_nip'  => $konfig['pengelola_nip'] ?? '197804202006041001',
-                    'warek_nama'     => $konfig['warek_nama'] ?? 'Dr. Rina Kurniawati, S.E., M.Si.',
-                    'warek_nip'      => $konfig['warek_nip'] ?? '198203252008012002',
+                    'pengelola_nip' => $konfig['pengelola_nip'] ?? '197804202006041001',
+                    'warek_nama' => $konfig['warek_nama'] ?? 'Dr. Rina Kurniawati, S.E., M.Si.',
+                    'warek_nip' => $konfig['warek_nip'] ?? '198203252008012002',
                 ],
                 // Ambang batas + flag aktif/nonaktifnya, datar dan bersufiks
                 // supaya simetris 1:1 dengan payload PUT /konfigurasi.
@@ -233,18 +245,18 @@ public function getPeriode(): JsonResponse
                 // Pemanggil yang mengirim balik nilai dari sini harus mengubahnya
                 // dulu jadi '1'/'0' — lihat saveRegulasiAll() di Konfigurasi.tsx.
                 'aturan_akademik' => [
-                    'ipk_minimum'            => $konfig['ipk_minimum'] ?? '3.00',
-                    'ipk_minimum_aktif'      => ($konfig['ipk_minimum_aktif'] ?? '1') === '1',
+                    'ipk_minimum' => $konfig['ipk_minimum'] ?? '3.00',
+                    'ipk_minimum_aktif' => ($konfig['ipk_minimum_aktif'] ?? '1') === '1',
                     // Ketiga key ini dulu hanya bisa ditulis, tidak pernah dibaca —
                     // akibatnya tab Regulasi selalu kembali ke konstanta setelah simpan.
-                    'masa_tenggang_sp'       => $konfig['masa_tenggang_sp'] ?? '90',
+                    'masa_tenggang_sp' => $konfig['masa_tenggang_sp'] ?? '90',
                     'masa_tenggang_sp_aktif' => ($konfig['masa_tenggang_sp_aktif'] ?? '1') === '1',
-                    'max_semester'           => $konfig['max_semester'] ?? '8',
-                    'max_semester_aktif'     => ($konfig['max_semester_aktif'] ?? '1') === '1',
+                    'max_semester' => $konfig['max_semester'] ?? '8',
+                    'max_semester_aktif' => ($konfig['max_semester_aktif'] ?? '1') === '1',
                     // Tidak lagi tampil di tab Regulasi (nol konsumen), tapi key-nya
                     // dibiarkan ada supaya tidak ada pembaca lama yang menerima null.
-                    'sks_minimum_semester'   => $konfig['sks_minimum_semester'] ?? '18',
-                    'sks_minimum_lulus'      => $konfig['sks_minimum_lulus'] ?? '144',
+                    'sks_minimum_semester' => $konfig['sks_minimum_semester'] ?? '18',
+                    'sks_minimum_lulus' => $konfig['sks_minimum_lulus'] ?? '144',
                     'sks_minimum_lulus_aktif' => ($konfig['sks_minimum_lulus_aktif'] ?? '1') === '1',
                 ],
                 // Periode input: sumber kebenarannya tabel periode_akademiks
@@ -252,38 +264,39 @@ public function getPeriode(): JsonResponse
                 // `periode_aktif` di sini dipertahankan untuk pembaca lama dan
                 // diisi dari periode aktif pertama bila ada.
                 'periode_aktif' => (function () {
-                    $aktif = \App\Helpers\PeriodeInputHelper::semuaAktif();
+                    $aktif = PeriodeInputHelper::semuaAktif();
                     $pertama = $aktif->first();
+
                     return [
                         'tahun_akademik' => $pertama?->tahun_akademik ?? '',
-                        'semester'       => $pertama?->semester ?? '',
-                        'tahun_ajaran'   => $pertama ? "{$pertama->tahun_akademik} {$pertama->semester}" : '',
-                        'buka'           => $pertama?->tanggal_buka?->format('Y-m-d') ?? '',
-                        'tutup'          => $pertama?->tanggal_tutup?->format('Y-m-d') ?? '',
-                        'is_aktif'       => $aktif->isNotEmpty(),
+                        'semester' => $pertama?->semester ?? '',
+                        'tahun_ajaran' => $pertama ? "{$pertama->tahun_akademik} {$pertama->semester}" : '',
+                        'buka' => $pertama?->tanggal_buka?->format('Y-m-d') ?? '',
+                        'tutup' => $pertama?->tanggal_tutup?->format('Y-m-d') ?? '',
+                        'is_aktif' => $aktif->isNotEmpty(),
                         // Bisa lebih dari satu tahun ajaran yang dibuka.
-                        'jumlah_aktif'   => $aktif->count(),
+                        'jumlah_aktif' => $aktif->count(),
                         'periodes_aktif' => $aktif->map(fn ($p) => [
-                            'id'           => $p->id,
+                            'id' => $p->id,
                             'tahun_ajaran' => "{$p->tahun_akademik} {$p->semester}",
-                            'buka'         => $p->tanggal_buka?->format('Y-m-d'),
-                            'tutup'        => $p->tanggal_tutup?->format('Y-m-d'),
+                            'buka' => $p->tanggal_buka?->format('Y-m-d'),
+                            'tutup' => $p->tanggal_tutup?->format('Y-m-d'),
                         ])->values(),
                     ];
                 })(),
                 'nilai_mutu' => NilaiMutu::orderByDesc('poin')->get(),
                 'jenis_pelanggaran' => JenisPelanggaran::all(),
                 'periode_history' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
-'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
-            'tahun_ajaran_aktif' => ($taAktifIndex = TahunAjaran::where('is_aktif', true)->first())
-                ? $taAktifIndex->tahun_akademik . ' ' . $taAktifIndex->semester
-                : null,
-                'tahun_ajaran_list'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
+                'tahun_ajaran_options' => $this->buildTahunAjaranOptions(),
+                'tahun_ajaran_aktif' => ($taAktifIndex = TahunAjaran::where('is_aktif', true)->first())
+                    ? $taAktifIndex->tahun_akademik.' '.$taAktifIndex->semester
+                    : null,
+                'tahun_ajaran_list' => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
                 'prodis' => Prodi::all(),
                 'dokumens' => DokumenJenis::with('fields')->orderBy('urutan')->get(),
                 // Dipakai tab Periode Input sebagai gambaran dampak periode yang aktif.
                 'mahasiswa_count_aktif' => Mahasiswa::where('status', 'Aktif')->count(),
-            ]
+            ],
         ]);
     }
 
@@ -292,17 +305,22 @@ public function getPeriode(): JsonResponse
     {
         $request->validate(['min' => 'required|numeric', 'max' => 'required|numeric', 'huruf' => 'required|string', 'poin' => 'required|numeric', 'lulus' => 'required|boolean']);
         $n = NilaiMutu::create($request->all());
+
         return response()->json(['success' => true, 'data' => $n]);
     }
+
     public function updateNilaiMutu(Request $request, int $id): JsonResponse
     {
         $n = NilaiMutu::findOrFail($id);
         $n->update($request->all());
+
         return response()->json(['success' => true, 'data' => $n]);
     }
+
     public function destroyNilaiMutu(int $id): JsonResponse
     {
         NilaiMutu::findOrFail($id)->delete();
+
         return response()->json(['success' => true]);
     }
 
@@ -311,24 +329,30 @@ public function getPeriode(): JsonResponse
     {
         $request->validate(['nama' => 'required|string|unique:jenis_pelanggarans,nama', 'eskalasi' => 'required|string']);
         $j = JenisPelanggaran::create($request->all());
+
         return response()->json(['success' => true, 'data' => $j]);
     }
+
     public function updatePelanggaran(Request $request, int $id): JsonResponse
     {
         $j = JenisPelanggaran::findOrFail($id);
         $j->update($request->all());
+
         return response()->json(['success' => true, 'data' => $j]);
     }
+
     public function destroyPelanggaran(int $id): JsonResponse
     {
         JenisPelanggaran::findOrFail($id)->delete();
+
         return response()->json(['success' => true]);
     }
 
     public function togglePelanggaran(int $id): JsonResponse
     {
         $j = JenisPelanggaran::findOrFail($id);
-        $j->update(['aktif' => !$j->aktif]);
+        $j->update(['aktif' => ! $j->aktif]);
+
         return response()->json(['success' => true, 'data' => $j]);
     }
 
@@ -349,6 +373,7 @@ public function getPeriode(): JsonResponse
         foreach (TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get() as $ta) {
             $options[] = "{$ta->tahun_akademik} {$ta->semester}";
         }
+
         // Deduplikasi & pertahankan urutan (terbaru duluan)
         return array_values(array_unique($options));
     }
@@ -358,7 +383,7 @@ public function getPeriode(): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'data'    => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
+            'data' => TahunAjaran::orderByDesc('tahun_akademik')->orderByDesc('semester')->get(),
         ]);
     }
 
@@ -366,8 +391,8 @@ public function getPeriode(): JsonResponse
     {
         $data = $request->validate([
             'tahun_akademik' => 'required|string|max:20',
-            'semester'       => 'required|in:Ganjil,Genap',
-            'is_aktif'       => 'nullable|boolean',
+            'semester' => 'required|in:Ganjil,Genap',
+            'is_aktif' => 'nullable|boolean',
         ]);
 
         $exists = TahunAjaran::where('tahun_akademik', $data['tahun_akademik'])
@@ -380,7 +405,7 @@ public function getPeriode(): JsonResponse
             ], 422);
         }
 
-        $isAktif = !empty($data['is_aktif']);
+        $isAktif = ! empty($data['is_aktif']);
         if ($isAktif) {
             TahunAjaran::query()->update(['is_aktif' => false]);
             $this->syncTahunAjaranAktif($data['tahun_akademik'], $data['semester']);
@@ -388,8 +413,8 @@ public function getPeriode(): JsonResponse
 
         $ta = TahunAjaran::create([
             'tahun_akademik' => $data['tahun_akademik'],
-            'semester'       => $data['semester'],
-            'is_aktif'       => $isAktif,
+            'semester' => $data['semester'],
+            'is_aktif' => $isAktif,
         ]);
 
         return response()->json(['success' => true, 'data' => $ta->fresh()], 201);
@@ -400,8 +425,8 @@ public function getPeriode(): JsonResponse
         $ta = TahunAjaran::findOrFail($id);
         $data = $request->validate([
             'tahun_akademik' => 'required|string|max:20',
-            'semester'       => 'required|in:Ganjil,Genap',
-            'is_aktif'       => 'nullable|boolean',
+            'semester' => 'required|in:Ganjil,Genap',
+            'is_aktif' => 'nullable|boolean',
         ]);
 
         $dup = TahunAjaran::where('id', '!=', $ta->id)
@@ -415,11 +440,11 @@ public function getPeriode(): JsonResponse
             ], 422);
         }
 
-        $isAktif = !empty($data['is_aktif']);
-        if ($isAktif && !$ta->is_aktif) {
+        $isAktif = ! empty($data['is_aktif']);
+        if ($isAktif && ! $ta->is_aktif) {
             TahunAjaran::where('id', '!=', $ta->id)->update(['is_aktif' => false]);
             $this->syncTahunAjaranAktif($data['tahun_akademik'], $data['semester']);
-        } elseif (!$isAktif && $ta->is_aktif) {
+        } elseif (! $isAktif && $ta->is_aktif) {
             // TA aktif dinonaktifkan -> tidak ada lagi TA aktif, reset config
             // supaya tahun_akademik_aktif / semester_aktif tidak stale.
             $this->resetTahunAjaranAktif();
@@ -427,8 +452,8 @@ public function getPeriode(): JsonResponse
 
         $ta->update([
             'tahun_akademik' => $data['tahun_akademik'],
-            'semester'       => $data['semester'],
-            'is_aktif'       => $isAktif,
+            'semester' => $data['semester'],
+            'is_aktif' => $isAktif,
         ]);
 
         return response()->json(['success' => true, 'data' => $ta->fresh()]);
@@ -456,6 +481,7 @@ public function getPeriode(): JsonResponse
         }
 
         $ta->delete();
+
         return response()->json(['success' => true, 'message' => 'Tahun ajaran dihapus.']);
     }
 
@@ -465,17 +491,19 @@ public function getPeriode(): JsonResponse
         TahunAjaran::where('id', '!=', $ta->id)->update(['is_aktif' => false]);
         $ta->update(['is_aktif' => true]);
         $this->syncTahunAjaranAktif($ta->tahun_akademik, $ta->semester);
+
         return response()->json(['success' => true, 'data' => $ta->fresh()]);
     }
 
     public function deactivateTahunAjaran(int $id): JsonResponse
     {
         $ta = TahunAjaran::findOrFail($id);
-        if (!$ta->is_aktif) {
+        if (! $ta->is_aktif) {
             return response()->json(['success' => true, 'data' => $ta->fresh()]);
         }
         $ta->update(['is_aktif' => false]);
         $this->resetTahunAjaranAktif();
+
         return response()->json(['success' => true, 'data' => $ta->fresh()]);
     }
 
@@ -508,7 +536,7 @@ public function getPeriode(): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'data'    => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
+            'data' => PeriodeAkademik::orderByDesc('tanggal_buka')->get(),
         ]);
     }
 
@@ -520,7 +548,7 @@ public function getPeriode(): JsonResponse
         $taAda = TahunAjaran::where('tahun_akademik', $request->tahun_akademik)
             ->where('semester', $request->semester)
             ->exists();
-        if (!$taAda) {
+        if (! $taAda) {
             return response()->json([
                 'success' => false,
                 'message' => "Tahun ajaran {$request->tahun_akademik} {$request->semester} belum dibuat. Buat dulu di Master Tahun Ajaran.",
@@ -531,6 +559,7 @@ public function getPeriode(): JsonResponse
             ['tahun_akademik' => $request->tahun_akademik, 'semester' => $request->semester],
             ['tanggal_buka' => $request->tanggal_buka, 'tanggal_tutup' => $request->tanggal_tutup]
         );
+
         return response()->json(['success' => true, 'data' => $p]);
     }
 
@@ -538,13 +567,17 @@ public function getPeriode(): JsonResponse
     {
         $p = PeriodeAkademik::findOrFail($id);
         $p->update($request->all());
+
         return response()->json(['success' => true, 'data' => $p]);
     }
+
     public function destroyPeriode(int $id): JsonResponse
     {
         PeriodeAkademik::findOrFail($id)->delete();
+
         return response()->json(['success' => true]);
     }
+
     /**
      * Aktifkan periode.
      *
@@ -556,6 +589,7 @@ public function getPeriode(): JsonResponse
     {
         $p = PeriodeAkademik::findOrFail($id);
         $p->update(['is_aktif' => true]);
+
         return response()->json(['success' => true, 'data' => $p->fresh()]);
     }
 
@@ -564,6 +598,7 @@ public function getPeriode(): JsonResponse
     {
         $p = PeriodeAkademik::findOrFail($id);
         $p->update(['is_aktif' => false]);
+
         return response()->json(['success' => true, 'data' => $p->fresh()]);
     }
 
@@ -576,6 +611,7 @@ public function getPeriode(): JsonResponse
             ['key' => 'logo_institusi'],
             ['value' => '/storage/'.$path, 'label' => 'logo_institusi', 'tipe' => 'text']
         );
+
         return response()->json(['success' => true, 'url' => '/storage/'.$path]);
     }
 }

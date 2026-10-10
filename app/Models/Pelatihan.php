@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Pelatihan extends Model
 {
@@ -32,6 +32,13 @@ class Pelatihan extends Model
         'validated_at' => 'datetime',
     ];
 
-    public function mahasiswa() { return $this->belongsTo(Mahasiswa::class); }
-    public function validatedBy() { return $this->belongsTo(User::class, 'validated_by'); }
+    public function mahasiswa()
+    {
+        return $this->belongsTo(Mahasiswa::class);
+    }
+
+    public function validatedBy()
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
 }

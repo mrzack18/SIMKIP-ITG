@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\Api\Mahasiswa;
 
-use App\Http\Controllers\Controller;
-use App\Models\IpkSemestr;
-use App\Services\IPKCalculatorService;
 use App\Helpers\PeriodeInputHelper;
 use App\Helpers\TahunAjaranHelper;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\SemesterDetailResource;
+use App\Models\IpkSemestr;
+use App\Services\IPKCalculatorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class IPKController extends Controller
 {
@@ -31,7 +33,9 @@ class IPKController extends Controller
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa;
-        if (!$m) return response()->json(['data' => []]);
+        if (! $m) {
+            return response()->json(['data' => []]);
+        }
 
         // ── TA filtering ────────────────────────────────────────────────
         $tahunAjaran = $request->tahun_ajaran;
@@ -51,26 +55,28 @@ class IPKController extends Controller
         // Filtered data for display (chart, stats, riwayat).
         // semesterTujuan = 0 (mahasiswa belum aktif di TA itu) => kosong,
         // bukan tampil semua. null (tanpa filter) => tampil semua.
-        $data = !is_null($semesterTujuan)
-            ? $allData->filter(fn($r) => $r->semester <= $semesterTujuan)->values()
+        $data = ! is_null($semesterTujuan)
+            ? $allData->filter(fn ($r) => $r->semester <= $semesterTujuan)->values()
             : $allData;
 
         // Baris transkrip masa depan (nilai "-"/"T", IPS & IPK NULL) tidak
         // ditampilkan dan tidak boleh dianggap semester bernilai 0.
-        $data = $data->filter(fn($r) => $r->ips !== null || $r->ipk !== null)->values();
+        $data = $data->filter(fn ($r) => $r->ips !== null || $r->ipk !== null)->values();
 
         // Statistik based on filtered data
         $totalLulus = 0;
         foreach ($data as $record) {
             foreach ($record->mataKuliahs as $mk) {
-                if ($mk->lulus) $totalLulus += $mk->sks;
+                if ($mk->lulus) {
+                    $totalLulus += $mk->sks;
+                }
             }
         }
 
-        $dataBernilai = $data->filter(fn($r) => $r->ipk !== null);
+        $dataBernilai = $data->filter(fn ($r) => $r->ipk !== null);
         $statistik = [
             'tertinggi' => $dataBernilai->count() > 0 ? $dataBernilai->sortByDesc('ipk')->first()->only(['ipk', 'semester']) : null,
-            'terendah'  => $dataBernilai->count() > 0 ? $dataBernilai->sortBy('ipk')->first()->only(['ipk', 'semester']) : null,
+            'terendah' => $dataBernilai->count() > 0 ? $dataBernilai->sortBy('ipk')->first()->only(['ipk', 'semester']) : null,
             'rata_rata' => $dataBernilai->count() > 0 ? round($dataBernilai->avg('ipk'), 2) : null,
             'total_sks_lulus' => $totalLulus,
         ];
@@ -83,7 +89,7 @@ class IPKController extends Controller
         $displayedSemester = $data->count() > 0 ? $data->max('semester') : $semesterAktif;
 
         return response()->json([
-            'data' => \App\Http\Resources\SemesterDetailResource::collection($data->values()),
+            'data' => SemesterDetailResource::collection($data->values()),
             'carry_over' => $carryOver,
             'statistik' => $statistik,
             'tahun_ajaran_filter' => $tahunAjaran,
@@ -100,13 +106,13 @@ class IPKController extends Controller
         }
 
         $request->validate([
-            'semester'               => 'required|integer|min:1|max:14',
-            'tahun_ajaran'           => 'required|string|max:30',
-            'file_khs'              => 'nullable|file|mimes:pdf,jpg,jpeg|max:5120',
-            'mata_kuliah'            => 'required|array|min:1',
-            'mata_kuliah.*.kode'    => 'required|string|max:20',
-            'mata_kuliah.*.nama'    => 'required|string|max:255',
-            'mata_kuliah.*.sks'     => 'required|integer|between:1,6',
+            'semester' => 'required|integer|min:1|max:14',
+            'tahun_ajaran' => 'required|string|max:30',
+            'file_khs' => 'nullable|file|mimes:pdf,jpg,jpeg|max:5120',
+            'mata_kuliah' => 'required|array|min:1',
+            'mata_kuliah.*.kode' => 'required|string|max:20',
+            'mata_kuliah.*.nama' => 'required|string|max:255',
+            'mata_kuliah.*.sks' => 'required|integer|between:1,6',
             'mata_kuliah.*.nilai_huruf' => 'required|in:A,AB,B,BC,C,D,E',
             'mata_kuliah.*.alasan_perubahan' => 'nullable|string|max:1000',
         ]);
@@ -121,22 +127,22 @@ class IPKController extends Controller
         if ($existing && $existing->status === 'Disetujui') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai semester sudah disetujui dan tidak dapat diubah.'
+                'message' => 'Nilai semester sudah disetujui dan tidak dapat diubah.',
             ], 422);
         }
 
         if ($existing && $existing->status === 'Menunggu') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai sedang menunggu validasi admin. Tidak dapat mengubah sampai ditolak.'
+                'message' => 'Nilai sedang menunggu validasi admin. Tidak dapat mengubah sampai ditolak.',
             ], 422);
         }
 
-        $mks     = IPKCalculatorService::prepareMataKuliah($request->mata_kuliah);
+        $mks = IPKCalculatorService::prepareMataKuliah($request->mata_kuliah);
         $ipsCalc = IPKCalculatorService::hitungIPS($mks);
 
         try {
-            \Illuminate\Support\Facades\DB::beginTransaction();
+            DB::beginTransaction();
 
             // Upsert IpkSemestr — simpan sebagai Draft agar admin tidak melihat
             // sampai mahasiswa klik "Ajukan" (submit).
@@ -145,12 +151,12 @@ class IPKController extends Controller
                 ['mahasiswa_id' => $m->id, 'semester' => $request->semester],
                 [
                     'tahun_ajaran' => $request->tahun_ajaran,
-                    'ips'          => $ipsCalc,
+                    'ips' => $ipsCalc,
                     // NULL dulu; recalculateAllIPK() di bawah mengisi nilai
                     // kumulatif (atau tetap NULL bila belum ada MK bernilai).
-                    'ipk'          => null,
-                    'status'       => 'Draft',
-                    'catatan_admin'=> null,
+                    'ipk' => null,
+                    'status' => 'Draft',
+                    'catatan_admin' => null,
                 ]
             );
 
@@ -170,12 +176,13 @@ class IPKController extends Controller
                 $ipkSem->update(['file_khs' => $filePath]);
             }
 
-            \Illuminate\Support\Facades\DB::commit();
+            DB::commit();
 
             return response()->json(['success' => true, 'data' => $ipkSem->load('mataKuliahs')], 201);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Gagal menyimpan data KHS: ' . $e->getMessage()], 500);
+            DB::rollBack();
+
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan data KHS: '.$e->getMessage()], 500);
         }
     }
 
@@ -203,24 +210,24 @@ class IPKController extends Controller
             ->where('semester', $request->semester)
             ->first();
 
-        if (!$existing) {
+        if (! $existing) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data nilai semester belum diisi. Silakan input nilai terlebih dahulu.'
+                'message' => 'Data nilai semester belum diisi. Silakan input nilai terlebih dahulu.',
             ], 422);
         }
 
         if ($existing->status === 'Disetujui') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai semester sudah disetujui dan tidak dapat diubah.'
+                'message' => 'Nilai semester sudah disetujui dan tidak dapat diubah.',
             ], 422);
         }
 
         if ($existing->status === 'Menunggu') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai sudah diajukan dan sedang menunggu validasi admin.'
+                'message' => 'Nilai sudah diajukan dan sedang menunggu validasi admin.',
             ], 422);
         }
 
@@ -233,7 +240,7 @@ class IPKController extends Controller
         if (empty($existing->file_khs)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unggah file KHS terlebih dahulu sebelum mengajukan nilai untuk divalidasi.'
+                'message' => 'Unggah file KHS terlebih dahulu sebelum mengajukan nilai untuk divalidasi.',
             ], 422);
         }
 

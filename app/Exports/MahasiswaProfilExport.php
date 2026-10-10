@@ -6,7 +6,7 @@ use App\Models\Mahasiswa;
 use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class MahasiswaProfilExport implements WithMultipleSheets, Export
+class MahasiswaProfilExport implements Export, WithMultipleSheets
 {
     protected Mahasiswa $mahasiswa;
 
@@ -19,13 +19,13 @@ class MahasiswaProfilExport implements WithMultipleSheets, Export
     {
         $m = $this->mahasiswa;
 
-        $ipkRows = $m->ipkSemestrs->sortBy('semester')->values()->map(fn($s) => [
-            'Semester ' . $s->semester,
+        $ipkRows = $m->ipkSemestrs->sortBy('semester')->values()->map(fn ($s) => [
+            'Semester '.$s->semester,
             $s->ipk !== null ? number_format((float) $s->ipk, 2) : '-',
             $s->status ?? '-',
         ])->all();
 
-        $prestasiRows = $m->prestasis->values()->map(fn($p) => [
+        $prestasiRows = $m->prestasis->values()->map(fn ($p) => [
             $p->nama_prestasi,
             $p->tingkat ?? '-',
             $p->pencapaian ?? '-',
@@ -34,15 +34,15 @@ class MahasiswaProfilExport implements WithMultipleSheets, Export
             $p->status ?? '-',
         ])->all();
 
-        $organisasiRows = $m->organisasis->values()->map(fn($o) => [
+        $organisasiRows = $m->organisasis->values()->map(fn ($o) => [
             $o->nama,
             $o->jenis ?? '-',
             $o->jabatan ?? '-',
-            ($o->periode_mulai?->format('d M Y') ?? '-') . ' s.d. ' . ($o->periode_selesai?->format('d M Y') ?? '-'),
+            ($o->periode_mulai?->format('d M Y') ?? '-').' s.d. '.($o->periode_selesai?->format('d M Y') ?? '-'),
             $o->status ?? '-',
         ])->all();
 
-        $pelatihanRows = $m->pelatihans->values()->map(fn($p) => [
+        $pelatihanRows = $m->pelatihans->values()->map(fn ($p) => [
             $p->nama,
             $p->jenis ?? '-',
             $p->penyelenggara ?? '-',
@@ -50,12 +50,12 @@ class MahasiswaProfilExport implements WithMultipleSheets, Export
             $p->status ?? '-',
         ])->all();
 
-        $dokumenRows = $m->dokumens->values()->map(fn($d) => [
+        $dokumenRows = $m->dokumens->values()->map(fn ($d) => [
             $d->jenis->nama ?? '-',
             $d->status ?? '-',
         ])->all();
 
-        $spRows = $m->suratPeringatans->values()->map(fn($s) => [
+        $spRows = $m->suratPeringatans->values()->map(fn ($s) => [
             $s->level,
             $s->jenis_pelanggaran ?? '-',
             $s->tanggal_terbit?->format('d M Y') ?? '-',
@@ -91,19 +91,19 @@ class MahasiswaProfilExport implements WithMultipleSheets, Export
         ];
 
         $optional = [
-            'NIK'            => $m->nik,
-            'NISN'           => $m->nisn,
-            'Tempat Lahir'   => $m->tempat_lahir,
-            'Tanggal Lahir'  => $m->tanggal_lahir?->format('d M Y'),
-            'Jenis Kelamin'  => $m->jenis_kelamin,
-            'No. HP'         => $m->no_hp,
-            'Alamat'         => $m->alamat,
-            'Nama Ayah'      => $m->nama_ayah,
-            'Nama Ibu'       => $m->nama_ibu,
+            'NIK' => $m->nik,
+            'NISN' => $m->nisn,
+            'Tempat Lahir' => $m->tempat_lahir,
+            'Tanggal Lahir' => $m->tanggal_lahir?->format('d M Y'),
+            'Jenis Kelamin' => $m->jenis_kelamin,
+            'No. HP' => $m->no_hp,
+            'Alamat' => $m->alamat,
+            'Nama Ayah' => $m->nama_ayah,
+            'Nama Ibu' => $m->nama_ibu,
         ];
 
         foreach ($optional as $label => $value) {
-            if (!empty($value)) {
+            if (! empty($value)) {
                 $rows[] = [$label, $value];
             }
         }

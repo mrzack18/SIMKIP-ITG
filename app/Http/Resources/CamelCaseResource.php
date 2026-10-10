@@ -15,7 +15,7 @@ class CamelCaseResource extends JsonResource
 
     protected function camelCaseKeys($array)
     {
-        if (!is_array($array)) {
+        if (! is_array($array)) {
             return $array;
         }
 
@@ -28,6 +28,7 @@ class CamelCaseResource extends JsonResource
                 $result[$camelKey] = $value;
             }
         }
+
         return $result;
     }
 }

@@ -1,25 +1,32 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
-use App\Http\Controllers\Controller;
-use App\Models\Mahasiswa;
-use App\Models\Dokumen;
-use App\Models\SuratPeringatan;
-use App\Models\BebasTanggungan;
-use App\Models\Prodi;
-use App\Models\CatatanInternal;
+
 use App\Helpers\AturanAkademik;
 use App\Helpers\TahunAjaranHelper;
+use App\Http\Controllers\Controller;
+use App\Models\BebasTanggungan;
+use App\Models\CatatanInternal;
+use App\Models\Dokumen;
+use App\Models\IpkSemestr;
+use App\Models\Mahasiswa;
+use App\Models\Organisasi;
+use App\Models\Pelatihan;
+use App\Models\Prestasi;
+use App\Models\Prodi;
+use App\Models\SuratPeringatan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $tahunAjaran = $request->tahun_ajaran;
-        $range       = TahunAjaranHelper::getDateRange($tahunAjaran);
+        $range = TahunAjaranHelper::getDateRange($tahunAjaran);
         $taStartYear = $range
-            ? (int) preg_replace('/\/\d+.*/', '', str_replace(['Tahun ','-1','-2'], ['','',''], $tahunAjaran))
+            ? (int) preg_replace('/\/\d+.*/', '', str_replace(['Tahun ', '-1', '-2'], ['', '', ''], $tahunAjaran))
             : null;
 
         // ── Stats: student counts ───────────────────────────────────────────────
@@ -29,19 +36,19 @@ class DashboardController extends Controller
             $baseMhs->where('angkatan', '<=', $taStartYear);
         }
         $totalAktif = (clone $baseMhs)->where('status', 'Aktif')->count();
-        $reguler    = (clone $baseMhs)->where('status', 'Aktif')->where('kategori', 'Reguler')->count();
-        $aspirasi   = (clone $baseMhs)->where('status', 'Aktif')->where('kategori', 'Aspirasi')->count();
-        $dicabut    = (clone $baseMhs)->where('status', 'Dicabut')->count();
+        $reguler = (clone $baseMhs)->where('status', 'Aktif')->where('kategori', 'Reguler')->count();
+        $aspirasi = (clone $baseMhs)->where('status', 'Aktif')->where('kategori', 'Aspirasi')->count();
+        $dicabut = (clone $baseMhs)->where('status', 'Dicabut')->count();
 
         // ── Pending counts: filtered by TA date range ─────────────────────────
         $baseDok = Dokumen::query();
-        $baseBt  = BebasTanggungan::query();
+        $baseBt = BebasTanggungan::query();
         if ($range) {
             $baseDok->whereBetween('created_at', [$range[0], $range[1]]);
             $baseBt->whereBetween('created_at', [$range[0], $range[1]]);
         }
         $dokumenMenunggu = (clone $baseDok)->where('status', 'Menunggu')->count();
-        $bebasPending    = (clone $baseBt)->where('status', 'Menunggu')->count();
+        $bebasPending = (clone $baseBt)->where('status', 'Menunggu')->count();
 
         // ── SP Aktif (issued within TA range) ─────────────────────────────────
         $spAktifBase = SuratPeringatan::with(['mahasiswa.prodi'])
@@ -49,13 +56,13 @@ class DashboardController extends Controller
         if ($range) {
             $spAktifBase->whereBetween('tanggal_terbit', [$range[0], $range[1]]);
         }
-        $spAktif = $spAktifBase->latest()->take(5)->get()->map(fn($sp) => [
-            'id'    => $sp->id,
-            'nim'   => $sp->mahasiswa->nim,
-            'nama'  => $sp->mahasiswa->nama,
+        $spAktif = $spAktifBase->latest()->take(5)->get()->map(fn ($sp) => [
+            'id' => $sp->id,
+            'nim' => $sp->mahasiswa->nim,
+            'nama' => $sp->mahasiswa->nama,
             'prodi' => $sp->mahasiswa->prodi->nama ?? '-',
-            'sp'    => $sp->level,
-            'sisa'  => $sp->sisa_hari,
+            'sp' => $sp->level,
+            'sisa' => $sp->sisa_hari,
         ]);
 
         // ── Dokumen Queue (uploaded within TA range) ────────────────────────────
@@ -63,13 +70,13 @@ class DashboardController extends Controller
         if ($range) {
             $dqBase->whereBetween('created_at', [$range[0], $range[1]]);
         }
-        $dokumenQueue = $dqBase->latest()->take(5)->get()->map(fn($d) => [
-            'id'             => $d->id,
-            'nim'            => $d->mahasiswa->nim,
-            'nama'           => $d->mahasiswa->nama,
-            'jenis'          => $d->jenis->nama,
+        $dokumenQueue = $dqBase->latest()->take(5)->get()->map(fn ($d) => [
+            'id' => $d->id,
+            'nim' => $d->mahasiswa->nim,
+            'nama' => $d->mahasiswa->nama,
+            'jenis' => $d->jenis->nama,
             'tanggal_upload' => $d->created_at->format('d M Y'),
-            'status'         => $d->status,
+            'status' => $d->status,
         ]);
 
         // ── Advanced Stats ──────────────────────────────────────────────────────
@@ -77,7 +84,7 @@ class DashboardController extends Controller
         // daripada ambang Batas Semester Studi (sampai akhir rentang TA).
         // Ambangnya dari konfigurasi, bukan angka 8 yang dulu hardcode di sini.
         $maxSemesterAdmin = AturanAkademik::bilanganJikaAktif('max_semester');
-        $sem8Base = \Illuminate\Support\Facades\DB::table('ipk_semestrs')
+        $sem8Base = DB::table('ipk_semestrs')
             ->join('mahasiswas', 'ipk_semestrs.mahasiswa_id', '=', 'mahasiswas.id')
             ->select('mahasiswas.id');
         if ($taStartYear) {
@@ -115,29 +122,29 @@ class DashboardController extends Controller
         $angkatans = $mahasiswaSemua->pluck('angkatan')->filter()->unique()->sort();
 
         // 1. Prodi Sebaran
-        $prodiSebaranData = $prodis->map(fn($prodi) => [
-            'name'     => $prodi->nama,
-            'Reguler'  => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('status', 'Aktif')->where('kategori', 'Reguler')->count(),
+        $prodiSebaranData = $prodis->map(fn ($prodi) => [
+            'name' => $prodi->nama,
+            'Reguler' => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('status', 'Aktif')->where('kategori', 'Reguler')->count(),
             'Aspirasi' => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('status', 'Aktif')->where('kategori', 'Aspirasi')->count(),
-            'Dicabut'  => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('status', 'Dicabut')->count(),
+            'Dicabut' => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('status', 'Dicabut')->count(),
         ])->values();
 
         // 2. Angkatan Sebaran
-        $angkatanSebaranData = $angkatans->map(fn($angkatan) => [
-            'name'     => (string) $angkatan,
-            'Reguler'  => $mahasiswaSemua->where('angkatan', $angkatan)->where('status', 'Aktif')->where('kategori', 'Reguler')->count(),
+        $angkatanSebaranData = $angkatans->map(fn ($angkatan) => [
+            'name' => (string) $angkatan,
+            'Reguler' => $mahasiswaSemua->where('angkatan', $angkatan)->where('status', 'Aktif')->where('kategori', 'Reguler')->count(),
             'Aspirasi' => $mahasiswaSemua->where('angkatan', $angkatan)->where('status', 'Aktif')->where('kategori', 'Aspirasi')->count(),
-            'Dicabut'  => $mahasiswaSemua->where('angkatan', $angkatan)->where('status', 'Dicabut')->count(),
+            'Dicabut' => $mahasiswaSemua->where('angkatan', $angkatan)->where('status', 'Dicabut')->count(),
         ])->values();
 
         // 3. Sebaran per Prodi per Angkatan
         $sebaranPerProdiAngkatan = ['Semua' => $prodiSebaranData];
         foreach ($angkatans as $angkatan) {
-            $sebaranPerProdiAngkatan[(string)$angkatan] = $prodis->map(fn($prodi) => [
-                'name'     => $prodi->nama,
-                'Reguler'  => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('angkatan', $angkatan)->where('status', 'Aktif')->where('kategori', 'Reguler')->count(),
+            $sebaranPerProdiAngkatan[(string) $angkatan] = $prodis->map(fn ($prodi) => [
+                'name' => $prodi->nama,
+                'Reguler' => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('angkatan', $angkatan)->where('status', 'Aktif')->where('kategori', 'Reguler')->count(),
                 'Aspirasi' => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('angkatan', $angkatan)->where('status', 'Aktif')->where('kategori', 'Aspirasi')->count(),
-                'Dicabut'  => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('angkatan', $angkatan)->where('status', 'Dicabut')->count(),
+                'Dicabut' => $mahasiswaSemua->where('prodi_id', $prodi->id)->where('angkatan', $angkatan)->where('status', 'Dicabut')->count(),
             ])->values();
         }
 
@@ -156,13 +163,13 @@ class DashboardController extends Controller
 
         $kategoriColors = [
             'Finansial' => '#263F93',
-            'Akademik'  => '#D4A72C',
+            'Akademik' => '#D4A72C',
             'Fasilitas' => '#4F46E5',
-            'Lainnya'   => '#94A3B8',
+            'Lainnya' => '#94A3B8',
         ];
         $kendalaCategories = collect(['Finansial', 'Akademik', 'Fasilitas', 'Lainnya'])
-            ->map(fn($kat) => [
-                'name'  => $kat,
+            ->map(fn ($kat) => [
+                'name' => $kat,
                 'value' => $kategoriCounts[$kat] ?? 0,
                 'color' => $kategoriColors[$kat] ?? '#94A3B8',
             ])
@@ -174,46 +181,46 @@ class DashboardController extends Controller
         return response()->json([
             'success' => true,
             'stats' => [
-                'total_aktif'              => $totalAktif,
-                'reguler'                  => $reguler,
-                'aspirasi'                 => $aspirasi,
-                'mahasiswa_dicabut'        => $dicabut,
-                'dokumen_menunggu'         => $dokumenMenunggu,
+                'total_aktif' => $totalAktif,
+                'reguler' => $reguler,
+                'aspirasi' => $aspirasi,
+                'mahasiswa_dicabut' => $dicabut,
+                'dokumen_menunggu' => $dokumenMenunggu,
                 'bebas_tanggungan_pending' => $bebasPending,
-                'semester_lebih_8'         => $semesterLebih8,
+                'semester_lebih_8' => $semesterLebih8,
                 // false = aturan Batas Semester Studi dinonaktifkan, jadi angka di
                 // atas tidak berarti "tidak ada yang melewati batas".
-                'max_semester_aktif'       => $maxSemesterAdmin !== null,
-                'sp_semester_ini'          => $spSemesterIni,
+                'max_semester_aktif' => $maxSemesterAdmin !== null,
+                'sp_semester_ini' => $spSemesterIni,
             ],
-            'prodi_sebaran'               => $prodiSebaranData,
-            'angkatan_sebaran'           => $angkatanSebaranData,
-            'sebaran_per_prodi_angkatan'  => $sebaranPerProdiAngkatan,
-            'sp_aktif'                   => $spAktif,
-            'dokumen_queue'              => $dokumenQueue,
+            'prodi_sebaran' => $prodiSebaranData,
+            'angkatan_sebaran' => $angkatanSebaranData,
+            'sebaran_per_prodi_angkatan' => $sebaranPerProdiAngkatan,
+            'sp_aktif' => $spAktif,
+            'dokumen_queue' => $dokumenQueue,
             'kendala' => [
-                'total'       => $kendalaTotal,
-                'categories'  => $kendalaCategories,
-                'dominant'    => $dominant['name'] ?? null,
-                'dominant_pct'=> $kendalaTotal > 0 ? round(($dominant['value'] ?? 0) / $kendalaTotal * 100) : 0,
+                'total' => $kendalaTotal,
+                'categories' => $kendalaCategories,
+                'dominant' => $dominant['name'] ?? null,
+                'dominant_pct' => $kendalaTotal > 0 ? round(($dominant['value'] ?? 0) / $kendalaTotal * 100) : 0,
             ],
         ]);
     }
 
     public function badgeCounts(): JsonResponse
     {
-        $dokumenCount    = \App\Models\Dokumen::where('status', 'Menunggu')->count();
-        $prestasiCount   = \App\Models\Prestasi::whereIn('status', ['Menunggu', 'Menunggu Validasi'])->count();
-        $organisasiCount = \App\Models\Organisasi::where('status', 'Menunggu')->count();
-        $pelatihanCount  = \App\Models\Pelatihan::where('status', 'Menunggu')->count();
-        $ipkCount       = \App\Models\IpkSemestr::where('status', 'Menunggu')->count();
+        $dokumenCount = Dokumen::where('status', 'Menunggu')->count();
+        $prestasiCount = Prestasi::whereIn('status', ['Menunggu', 'Menunggu Validasi'])->count();
+        $organisasiCount = Organisasi::where('status', 'Menunggu')->count();
+        $pelatihanCount = Pelatihan::where('status', 'Menunggu')->count();
+        $ipkCount = IpkSemestr::where('status', 'Menunggu')->count();
         $dokumenQueueMenunggu = $dokumenCount + $prestasiCount + $organisasiCount + $pelatihanCount + $ipkCount;
-        $bebasMenunggu   = \App\Models\BebasTanggungan::whereIn('status', ['Menunggu', 'Diproses'])->count();
+        $bebasMenunggu = BebasTanggungan::whereIn('status', ['Menunggu', 'Diproses'])->count();
 
         return response()->json([
             'success' => true,
-            'dokumen_queue_menunggu'   => $dokumenQueueMenunggu,
-            'bebas_tanggungan_menunggu'=> $bebasMenunggu,
+            'dokumen_queue_menunggu' => $dokumenQueueMenunggu,
+            'bebas_tanggungan_menunggu' => $bebasMenunggu,
         ]);
     }
 }

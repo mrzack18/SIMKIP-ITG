@@ -478,7 +478,7 @@ export default function SPDetail() {
                     <span>Tahun Ajaran</span><span>:</span><span className="break-words min-w-0">{sp.tahunAjaran ?? "—"}</span>
                     <span>Perihal</span><span>:</span>
                     <span className="font-semibold break-words min-w-0">
-                      Surat Peringatan {sp.level} — {(sp.alasan ?? "").split(" ").slice(0, 6).join(" ")}...
+                      Surat Peringatan {sp.level.replace("SP", "")} — {(sp.alasan ?? "").split(" ").slice(0, 6).join(" ")}...
                     </span>
                   </div>
 
@@ -492,6 +492,17 @@ export default function SPDetail() {
                   <div className="text-xs sm:text-sm mb-4"><p>Dengan hormat,</p></div>
 
                   <div className="text-xs sm:text-sm space-y-3 leading-relaxed mb-6 sm:mb-8 min-w-0">
+                    <p>
+                      Berdasarkan evaluasi dan ketentuan yang berlaku, dengan ini diberikan <strong>Surat Peringatan {sp.level?.replace('SP','')}</strong> kepada:
+                    </p>
+                    <div className="ml-4 space-y-1">
+                      <p>Nama : <strong>{sp.nama ?? "—"}</strong></p>
+                      <p>NIM : <strong>{sp.nim ?? "—"}</strong></p>
+                      <p>Program Studi : <strong>{sp.prodi ?? "—"}</strong></p>
+                    </div>
+                    <p>
+                      Atas pelanggaran: <strong>{sp.alasan ?? "—"}</strong>.
+                    </p>
                     <SPBodyText level={sp.level} alasan={sp.alasan ?? "—"} batasEvaluasi={sp.batasEvaluasi} />
                     <p>
                       Demikian surat peringatan ini kami sampaikan. Besar harapan kami agar Saudara dapat segera
@@ -499,20 +510,14 @@ export default function SPDetail() {
                     </p>
                   </div>
 
-                  {/* Signatures */}
-                  <div className="grid grid-cols-2 gap-3 sm:gap-8 mt-6 sm:mt-8 text-[11px] sm:text-sm text-center min-w-0">
-                    <div className="min-w-0">
-                      <p className="break-words">Garut, {formatTanggal(sp.tanggalTerbit)}</p>
-                      <p className="font-medium">Pengelola KIP-K</p>
+                  {/* Signatures - 1 penandatangan sesuai template */}
+                  <div className="flex justify-end mt-6 sm:mt-8 text-[11px] sm:text-sm min-w-0">
+                    <div className="min-w-0 text-center">
+                      <p className="break-words">{(sp as any).tempat ?? "Garut"}, {formatTanggal(sp.tanggalTerbit)}</p>
+                      <p className="font-medium">{(sp as any).penandatanganJabatan || "Biro Kemahasiswaan dan Ketenaga kerjaan Hubungan Masyarakat"}</p>
                       <div className="h-10 sm:h-16" />
-                      <p className="font-bold underline break-words">{extra.diterbitkanOleh ?? "—"}</p>
-                    </div>
-                    <div className="min-w-0">
-                      <p>Mengetahui,</p>
-                      <p className="font-medium">Wakil Rektor Bidang Kemahasiswaan</p>
-                      <div className="h-10 sm:h-16" />
-                      <p className="font-bold underline break-words">{signature?.warek_nama ?? "Dr. Rina Kurniawati, S.E., M.Si."}</p>
-                      <p className="text-[10px] sm:text-xs text-gray-500 break-words">NIP. {signature?.warek_nip ?? "198203252008012002"}</p>
+                      <p className="font-bold underline break-words">{(sp as any).penandatanganNama || extra.diterbitkanOleh || "Encep Jianul Hayat S.T, M.T"}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 break-words">NIDN. {(sp as any).penandatanganNidn || "0420067402"}</p>
                     </div>
                   </div>
                 </div>

@@ -2,24 +2,23 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Mahasiswa;
-use App\Models\Prodi;
-use App\Models\IpkSemestr;
-use App\Models\MataKuliah;
+use App\Models\CatatanInternal;
 use App\Models\Dokumen;
 use App\Models\DokumenJenis;
-use App\Models\SuratPeringatan;
-use App\Models\Prestasi;
+use App\Models\IpkSemestr;
+use App\Models\Mahasiswa;
+use App\Models\MataKuliah;
 use App\Models\Organisasi;
 use App\Models\Pelatihan;
-use App\Models\BebasTanggungan;
-use App\Models\BebasTanggunganHistory;
-use App\Models\CatatanInternal;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Prestasi;
+use App\Models\Prodi;
+use App\Models\SuratPeringatan;
+use App\Models\User;
 use Carbon\Carbon;
 use Faker\Factory as Faker;
+use Faker\Generator;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class MahasiswaBatchSeeder extends Seeder
 {
@@ -43,7 +42,7 @@ class MahasiswaBatchSeeder extends Seeder
         '2026' => ['semesters' => 1,  'ipk_max' => 1], // S1:2026/2027 Ganjil (belum ada IPK validasi)
     ];
 
-    /** @var \Faker\Generator */
+    /** @var Generator */
     private $faker;
 
     public function run(): void
@@ -70,13 +69,17 @@ class MahasiswaBatchSeeder extends Seeder
             foreach (self::PRODIS as $prodiKey => $prodiInfo) {
                 $kodeProdi = $prodiInfo['kode'];
 
-                if (!isset($counter[$ta])) $counter[$ta] = [];
-                if (!isset($counter[$ta][$prodiKey])) $counter[$ta][$prodiKey] = 0;
+                if (! isset($counter[$ta])) {
+                    $counter[$ta] = [];
+                }
+                if (! isset($counter[$ta][$prodiKey])) {
+                    $counter[$ta][$prodiKey] = 0;
+                }
 
                 for ($m = 1; $m <= 3; $m++) {
                     $counter[$ta][$prodiKey]++;
                     $seq = $counter[$ta][$prodiKey];
-                    $nim = $ta . $kodeProdi . str_pad($seq, 3, '0', STR_PAD_LEFT);
+                    $nim = $ta.$kodeProdi.str_pad($seq, 3, '0', STR_PAD_LEFT);
 
                     // Student archetype/differentiator
                     $archetype = $this->pickArchetype($ta, $prodiKey, $m);
@@ -137,13 +140,14 @@ class MahasiswaBatchSeeder extends Seeder
         ];
 
         $idx = ($m - 1) % count($archetypes);
+
         return $archetypes[$idx];
     }
 
     private function buildStudent(string $nim, string $ta, string $prodiKey, Prodi $prodi, array $archetype, array $cohort, ?User $admin): array
     {
         $nama = $this->generateNama($nim, $ta, $prodiKey, $archetype);
-        $email = strtolower($nim) . '@student.itg.ac.id';
+        $email = strtolower($nim).'@student.itg.ac.id';
 
         // Determine semester count based on angkatan and student status
         $semCount = $cohort['semesters'];
@@ -154,7 +158,7 @@ class MahasiswaBatchSeeder extends Seeder
             $semCount = max(1, $semCount - 2); // Fewer semesters recorded
         }
 
-        $tahunAjaranMulai = (int)$ta;
+        $tahunAjaranMulai = (int) $ta;
         $semesters = $this->buildSemesters($ta, $semCount, $archetype, $prodiKey);
 
         $allIps = collect($semesters)->pluck('ipk')->toArray();
@@ -207,22 +211,22 @@ class MahasiswaBatchSeeder extends Seeder
         $this->buildDocuments($mhs, $ta, $archetype);
 
         // Create SP if needed
-        if (!empty($archetype['sp'])) {
+        if (! empty($archetype['sp'])) {
             $this->buildSp($mhs, $archetype, $admin, $ta);
         }
 
         // Create organisasi
-        if (!empty($archetype['org'])) {
+        if (! empty($archetype['org'])) {
             $this->buildOrganisasi($mhs, $ta, $archetype, $prodiKey);
         }
 
         // Create prestasi
-        if (!empty($archetype['prestasi'])) {
+        if (! empty($archetype['prestasi'])) {
             $this->buildPrestasi($mhs, $ta, $archetype);
         }
 
         // Create pelatihan
-        if (!empty($archetype['pelatihan'])) {
+        if (! empty($archetype['pelatihan'])) {
             $this->buildPelatihan($mhs, $ta);
         }
 
@@ -235,12 +239,12 @@ class MahasiswaBatchSeeder extends Seeder
     private function buildSemesters(string $ta, int $count, array $archetype, string $prodiKey): array
     {
         $semesters = [];
-        $taInt = (int)$ta;
+        $taInt = (int) $ta;
 
         $patterns = [
             'excellent' => [3.70, 3.80, 3.85, 3.88, 3.90, 3.92, 3.94, 3.95],
-            'good'      => [3.20, 3.30, 3.35, 3.40, 3.45, 3.50, 3.52, 3.55],
-            'moderate'  => [2.90, 3.00, 3.10, 3.15, 3.20, 3.25, 3.28, 3.30],
+            'good' => [3.20, 3.30, 3.35, 3.40, 3.45, 3.50, 3.52, 3.55],
+            'moderate' => [2.90, 3.00, 3.10, 3.15, 3.20, 3.25, 3.28, 3.30],
             'drop_then_recover' => [3.40, 3.50, 2.80, 3.20, 3.35, 3.45, 3.50, 3.55],
             'declining' => [3.50, 3.40, 3.20, 3.00, 2.85, 2.70, 2.60, 2.50],
         ];
@@ -301,7 +305,7 @@ class MahasiswaBatchSeeder extends Seeder
             $nilaiHuruf = $this->ipkToHuruf($semData['ipk']);
             MataKuliah::create([
                 'ipk_semester_id' => $ipkRec->id,
-                'kode' => $prodi->kode . ($semData['sem'] * 10 + $this->faker->numberBetween(1, 9)),
+                'kode' => $prodi->kode.($semData['sem'] * 10 + $this->faker->numberBetween(1, 9)),
                 'nama' => $mkNama,
                 'sks' => $this->faker->randomElement([2, 3, 4]),
                 'nilai_huruf' => $nilaiHuruf,
@@ -329,7 +333,7 @@ class MahasiswaBatchSeeder extends Seeder
 
     private function buildDocuments(Mahasiswa $mhs, string $ta, array $archetype): void
     {
-        $tahunInt = (int)$ta;
+        $tahunInt = (int) $ta;
         $jenisPakta = DokumenJenis::where('nama', 'Pakta Integritas')->first();
         $jenisPkkmb = DokumenJenis::where('nama', 'PKKMB')->first();
         $jenisBelaNegara = DokumenJenis::where('nama', 'Bela Negara')->first();
@@ -344,7 +348,9 @@ class MahasiswaBatchSeeder extends Seeder
         ];
 
         foreach ($dokumenWajib as $dok) {
-            if (!$dok['jenis']) continue;
+            if (! $dok['jenis']) {
+                continue;
+            }
             Dokumen::updateOrCreate(
                 [
                     'mahasiswa_id' => $mhs->id,
@@ -361,7 +367,7 @@ class MahasiswaBatchSeeder extends Seeder
         }
 
         // Sertifikasi: hanya untuk archetype excellent
-        if (!empty($archetype['dokumen_lengkap']) && $archetype['label'] === 'excellent' && $jenisSertifikasi) {
+        if (! empty($archetype['dokumen_lengkap']) && $archetype['label'] === 'excellent' && $jenisSertifikasi) {
             Dokumen::updateOrCreate(
                 [
                     'mahasiswa_id' => $mhs->id,
@@ -369,7 +375,7 @@ class MahasiswaBatchSeeder extends Seeder
                 ],
                 [
                     'nama_file' => "Sertifikat_Kompetensi_{$mhs->nim}.pdf",
-                    'path_file' => "dokumen/dummy_sertifikasi.pdf",
+                    'path_file' => 'dokumen/dummy_sertifikasi.pdf',
                     'status' => 'Disetujui',
                     'created_at' => Carbon::create($tahunInt + 3, 5, 10),
                     'updated_at' => Carbon::create($tahunInt + 3, 5, 15),
@@ -380,17 +386,17 @@ class MahasiswaBatchSeeder extends Seeder
 
     private function buildSp(Mahasiswa $mhs, array $archetype, ?User $admin, string $ta): void
     {
-        $taInt = (int)$ta;
+        $taInt = (int) $ta;
         $level = $archetype['sp_level'] ?? 'SP1';
         $status = $archetype['sp_status'] ?? 'Selesai';
-        $alasan = $archetype['sp_alasan'] ?? "IPK turun di bawah standar minimum pada semester berjalan.";
+        $alasan = $archetype['sp_alasan'] ?? 'IPK turun di bawah standar minimum pada semester berjalan.';
 
         $tanggalTerbit = Carbon::create($taInt + 2, 2, 20);
         $batasEvaluasi = Carbon::create($taInt + 2, 8, 20);
         // Generate globally unique nomor_surat (include mhs.id to avoid duplicate across students)
         $existingSp = SuratPeringatan::where('mahasiswa_id', $mhs->id)->where('level', $level)->first();
         $nomorSurat = $existingSp?->nomor_surat
-            ?? "{$mhs->id}/{$level}/SIMKIP/" . ($taInt + 2);
+            ?? "{$mhs->id}/{$level}/SIMKIP/".($taInt + 2);
 
         SuratPeringatan::updateOrCreate(
             [
@@ -412,10 +418,10 @@ class MahasiswaBatchSeeder extends Seeder
         );
 
         // SP2 escalation for some
-        if (!empty($archetype['sp_level']) && $archetype['sp_level'] === 'SP2') {
+        if (! empty($archetype['sp_level']) && $archetype['sp_level'] === 'SP2') {
             $existingSp2 = SuratPeringatan::where('mahasiswa_id', $mhs->id)->where('level', 'SP2')->first();
             $nomorSurat2 = $existingSp2?->nomor_surat
-                ?? "{$mhs->id}/SP2/SIMKIP/" . ($taInt + 3);
+                ?? "{$mhs->id}/SP2/SIMKIP/".($taInt + 3);
             SuratPeringatan::updateOrCreate(
                 [
                     'mahasiswa_id' => $mhs->id,
@@ -439,7 +445,7 @@ class MahasiswaBatchSeeder extends Seeder
 
     private function buildOrganisasi(Mahasiswa $mhs, string $ta, array $archetype, string $prodiKey): void
     {
-        $taInt = (int)$ta;
+        $taInt = (int) $ta;
         $role = $archetype['org_role'] ?? 'Anggota';
         $isActive = $archetype['org_active'] ?? false;
 
@@ -481,7 +487,7 @@ class MahasiswaBatchSeeder extends Seeder
 
     private function buildPrestasi(Mahasiswa $mhs, string $ta, array $archetype): void
     {
-        $taInt = (int)$ta;
+        $taInt = (int) $ta;
 
         $prestasis = [
             ['nama' => 'Juara 1 Lomba Web Design Nasional', 'tingkat' => 'Nasional', 'pencapaian' => 'Juara 1', 'penyelenggara' => 'Kemendikbudristek', 'tempat' => 'Jakarta'],
@@ -515,7 +521,7 @@ class MahasiswaBatchSeeder extends Seeder
 
     private function buildPelatihan(Mahasiswa $mhs, string $ta): void
     {
-        $taInt = (int)$ta;
+        $taInt = (int) $ta;
 
         $pelatihans = [
             ['nama' => 'Bootcamp Fullstack Laravel & React', 'jenis' => 'Akademik', 'penyelenggara' => 'BuildWithAngga', 'tempat' => 'Online', 'durasi' => 1],
@@ -550,7 +556,9 @@ class MahasiswaBatchSeeder extends Seeder
     private function buildCatatanInternal(Mahasiswa $mhs, string $ta, array $archetype): void
     {
         // Only struggling & mixed archetypes generate kendala records
-        if ($archetype['label'] === 'excellent') return;
+        if ($archetype['label'] === 'excellent') {
+            return;
+        }
 
         $taInt = (int) $ta;
 
@@ -594,10 +602,10 @@ class MahasiswaBatchSeeder extends Seeder
 
         // Weighted category selection: Finansial gets more weight
         $weightedCategories = [];
-        foreach (['Finansial','Finansial','Finansial','Finansial','Finansial',
-                   'Akademik','Akademik','Akademik',
-                   'Fasilitas','Fasilitas',
-                   'Lainnya'] as $kat) {
+        foreach (['Finansial', 'Finansial', 'Finansial', 'Finansial', 'Finansial',
+            'Akademik', 'Akademik', 'Akademik',
+            'Fasilitas', 'Fasilitas',
+            'Lainnya'] as $kat) {
             $weightedCategories[] = $kat;
         }
 
@@ -605,7 +613,9 @@ class MahasiswaBatchSeeder extends Seeder
         for ($i = 0; $i < $recordCount; $i++) {
             // Pick a unique category
             $available = array_diff($weightedCategories, $usedCategories);
-            if (empty($available)) break;
+            if (empty($available)) {
+                break;
+            }
             $kat = $this->randomEl($available);
             $usedCategories[] = $kat;
 
@@ -613,15 +623,15 @@ class MahasiswaBatchSeeder extends Seeder
             $deskripsi = $this->randomEl($descriptions);
 
             // tahun ajaran when the issue was recorded
-            $taOpt1 = "{$taInt}/" . ($taInt+1) . " Ganjil";
-            $taOpt2 = "{$taInt}/" . ($taInt+1) . " Genap";
-            $taOpt3 = ($taInt+1) . '/' . ($taInt+2) . ' Ganjil';
+            $taOpt1 = "{$taInt}/".($taInt + 1).' Ganjil';
+            $taOpt2 = "{$taInt}/".($taInt + 1).' Genap';
+            $taOpt3 = ($taInt + 1).'/'.($taInt + 2).' Ganjil';
             $tahunAjaran = $this->faker->randomElement([$taOpt1, $taOpt1, $taOpt2, $taOpt3]);
 
             CatatanInternal::updateOrCreate(
                 [
                     'mahasiswa_id' => $mhs->id,
-                    'kategori'     => $kat,
+                    'kategori' => $kat,
                     'tahun_ajaran' => $tahunAjaran,
                 ],
                 [
@@ -646,29 +656,46 @@ class MahasiswaBatchSeeder extends Seeder
 
         // Vary name length based on archetype
         if ($archetype['label'] === 'excellent') {
-            return $first . ' ' . $last;
+            return $first.' '.$last;
         }
 
         $sufix = $this->faker->randomElement(['', '', $this->faker->randomElement(['S.Kom', 'S.T.', 'S.Ars'])]);
-        return trim($first . ' ' . $last . ' ' . $sufix);
+
+        return trim($first.' '.$last.' '.$sufix);
     }
 
     private function calcIpk(array $ipsList): float
     {
-        if (empty($ipsList)) return 0.00;
+        if (empty($ipsList)) {
+            return 0.00;
+        }
         $total = array_sum($ipsList);
         $count = count($ipsList);
+
         return round($total / $count, 2);
     }
 
     private function ipkToHuruf(float $ipk): string
     {
-        if ($ipk >= 3.75) return 'A';
-        if ($ipk >= 3.50) return 'AB';
-        if ($ipk >= 3.25) return 'B';
-        if ($ipk >= 3.00) return 'BC';
-        if ($ipk >= 2.50) return 'C';
-        if ($ipk >= 2.00) return 'D';
+        if ($ipk >= 3.75) {
+            return 'A';
+        }
+        if ($ipk >= 3.50) {
+            return 'AB';
+        }
+        if ($ipk >= 3.25) {
+            return 'B';
+        }
+        if ($ipk >= 3.00) {
+            return 'BC';
+        }
+        if ($ipk >= 2.50) {
+            return 'C';
+        }
+        if ($ipk >= 2.00) {
+            return 'D';
+        }
+
         return 'E';
     }
 
@@ -677,6 +704,7 @@ class MahasiswaBatchSeeder extends Seeder
         $ganjil = $taInt + floor(($sem - 1) / 2);
         $genap = $taInt + floor(($sem - 1) / 2) + 1;
         $label = ($sem % 2 === 1) ? 'Ganjil' : 'Genap';
+
         return "{$ganjil}/{$genap} {$label}";
     }
 
@@ -684,6 +712,7 @@ class MahasiswaBatchSeeder extends Seeder
     {
         $year = $taInt + floor(($sem - 1) / 2);
         $month = ($sem % 2 === 1) ? 2 : 8; // Feb for ganjil, Aug for genap
+
         return Carbon::create($year, $month, 10);
     }
 

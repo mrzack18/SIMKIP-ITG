@@ -28,9 +28,9 @@ class PeriodeInputHelper
     /**
      * Periode yang sedang aktif untuk satu tahun ajaran.
      *
-     * @param string|null $tahunAjaran Format apa pun yang dipakai filter frontend
-     *                                 ("Tahun 2025/2026-1") maupun format internal
-     *                                 ("2025/2026 Ganjil"). null / "Semua" = tanpa filter.
+     * @param  string|null  $tahunAjaran  Format apa pun yang dipakai filter frontend
+     *                                    ("Tahun 2025/2026-1") maupun format internal
+     *                                    ("2025/2026 Ganjil"). null / "Semua" = tanpa filter.
      */
     public static function untukTahunAjaran(?string $tahunAjaran): ?PeriodeAkademik
     {
@@ -67,7 +67,7 @@ class PeriodeInputHelper
     public static function alasanTidakBisa(?PeriodeAkademik $periode, ?string $tahunAjaran, ?Carbon $now = null): ?string
     {
         $now = $now ?: Carbon::now();
-        $ta  = ($tahunAjaran === null || $tahunAjaran === 'Semua')
+        $ta = ($tahunAjaran === null || $tahunAjaran === 'Semua')
             ? ''
             : self::normalisasi($tahunAjaran);
 
@@ -79,12 +79,12 @@ class PeriodeInputHelper
 
         if ($now->lt($periode->tanggal_buka)) {
             return 'Periode input nilai belum dibuka. Dibuka pada '
-                . $periode->tanggal_buka->format('d M Y') . '.';
+                .$periode->tanggal_buka->format('d M Y').'.';
         }
 
         if ($now->gt($periode->tanggal_tutup)) {
             return 'Periode input nilai sudah ditutup pada '
-                . $periode->tanggal_tutup->format('d M Y') . '.';
+                .$periode->tanggal_tutup->format('d M Y').'.';
         }
 
         return null;

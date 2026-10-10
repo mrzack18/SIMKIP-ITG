@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\IPKCalculatorService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ return new class extends Migration
             $table->decimal('ipk', 3, 2)->nullable()->default(null)->change();
         });
 
-        \App\Services\IPKCalculatorService::bersihkanNilaiTanpaMK();
+        IPKCalculatorService::bersihkanNilaiTanpaMK();
     }
 
     public function down(): void

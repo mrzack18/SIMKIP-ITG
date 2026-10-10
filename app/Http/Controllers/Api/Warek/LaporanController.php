@@ -9,6 +9,7 @@ use App\Models\Laporan;
 use App\Models\LaporanReview;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\PdfGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,15 +21,15 @@ class LaporanController extends Controller
             ->whereIn('status', ['Diajukan', 'Disetujui', 'Dikembalikan']);
 
         if ($s = $request->search) {
-            $query->where(fn($q) => $q->where('judul', 'like', "%$s%")->orWhere('nomor_surat', 'like', "%$s%"));
+            $query->where(fn ($q) => $q->where('judul', 'like', "%$s%")->orWhere('nomor_surat', 'like', "%$s%"));
         }
         if ($request->status && $request->status !== 'Semua') {
             // Map FE-facing status to BE status
             $beStatus = match ($request->status) {
-                'Menunggu'    => 'Diajukan',
-                'Disetujui'   => 'Disetujui',
-                'Dikembalikan'=> 'Dikembalikan',
-                default       => $request->status,
+                'Menunggu' => 'Diajukan',
+                'Disetujui' => 'Disetujui',
+                'Dikembalikan' => 'Dikembalikan',
+                default => $request->status,
             };
             $query->where('status', $beStatus);
         }
@@ -36,37 +37,38 @@ class LaporanController extends Controller
         if ($request->tahun_ajaran && $request->tahun_ajaran !== 'Semua') {
             $ta = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $request->tahun_ajaran);
             if (preg_match('/^(\d{4})\/(\d{4})\s+(Ganjil|Genap)$/', $ta, $matches)) {
-                $query->where('tahun_akademik', $matches[1] . '/' . $matches[2])
-                      ->where('semester', $matches[3]);
+                $query->where('tahun_akademik', $matches[1].'/'.$matches[2])
+                    ->where('semester', $matches[3]);
             }
         }
 
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
-        $data  = $query->latest()->skip(($page - 1) * $limit)->take($limit)->get();
+        $data = $query->latest()->skip(($page - 1) * $limit)->take($limit)->get();
 
         // Map data with FE-facing labels & summary
         $items = $data->map(function ($l) {
             $resource = (new LaporanResource($l))->resolve();
-            $stats = \App\Http\Controllers\Api\Warek\DashboardController::quickStatisticsFor($l);
+            $stats = DashboardController::quickStatisticsFor($l);
+
             return array_merge($resource, [
-                'status'      => $this->mapStatusForFE($l->status),
-                'summary'     => $this->buildSummary($stats),
-                'periode'     => $l->periode,
-                'tanggal'     => $l->tanggal_laporan?->format('d F Y'),
-                'approvedDate'=> $l->latestReview?->reviewed_at?->format('d F Y'),
+                'status' => $this->mapStatusForFE($l->status),
+                'summary' => $this->buildSummary($stats),
+                'periode' => $l->periode,
+                'tanggal' => $l->tanggal_laporan?->format('d F Y'),
+                'approvedDate' => $l->latestReview?->reviewed_at?->format('d F Y'),
             ]);
         });
 
         return response()->json([
-            'success'      => true,
-            'data'         => $items,
-            'total'        => $total,
-            'page'         => $page,
-            'limit'        => $limit,
-            'total_pages'  => (int) ceil($total / $limit),
-            'totalPages'   => (int) ceil($total / $limit),
+            'success' => true,
+            'data' => $items,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'total_pages' => (int) ceil($total / $limit),
+            'totalPages' => (int) ceil($total / $limit),
         ]);
     }
 
@@ -75,7 +77,7 @@ class LaporanController extends Controller
         $l = Laporan::with(['dibuatOleh', 'reviews.warek'])->findOrFail($id);
 
         // Compute statistics (reuses dashboard logic)
-        $stats = \App\Http\Controllers\Api\Warek\DashboardController::quickStatisticsFor($l);
+        $stats = DashboardController::quickStatisticsFor($l);
 
         $resource = (new LaporanResource($l))->resolve();
         $resource['status'] = $this->mapStatusForFE($l->status);
@@ -84,8 +86,8 @@ class LaporanController extends Controller
         $resource['approvedDate'] = $l->latestReview?->reviewed_at?->format('d F Y');
 
         return response()->json([
-            'success'    => true,
-            'data'       => $resource,
+            'success' => true,
+            'data' => $resource,
             'statistics' => $stats,
         ]);
     }
@@ -101,9 +103,9 @@ class LaporanController extends Controller
         $l->update(['status' => 'Disetujui']);
 
         LaporanReview::create([
-            'laporan_id'  => $l->id,
-            'warek_id'    => auth()->id(),
-            'aksi'        => 'Disetujui',
+            'laporan_id' => $l->id,
+            'warek_id' => auth()->id(),
+            'aksi' => 'Disetujui',
             'reviewed_at' => now(),
         ]);
 
@@ -111,10 +113,10 @@ class LaporanController extends Controller
         User::where('role', 'admin')->each(function ($u) use ($l) {
             Notification::kirim(
                 $u->id,
-                "Laporan Disetujui",
+                'Laporan Disetujui',
                 "Laporan \"{$l->judul}\" telah disetujui oleh Warek.",
                 'success',
-                '/admin/laporan/' . $l->id
+                '/admin/laporan/'.$l->id
             );
         });
 
@@ -136,20 +138,20 @@ class LaporanController extends Controller
         $l->update(['status' => 'Dikembalikan', 'submitted_at' => null]);
 
         LaporanReview::create([
-            'laporan_id'  => $l->id,
-            'warek_id'    => auth()->id(),
-            'aksi'        => 'Dikembalikan',
-            'catatan'     => $request->catatan,
+            'laporan_id' => $l->id,
+            'warek_id' => auth()->id(),
+            'aksi' => 'Dikembalikan',
+            'catatan' => $request->catatan,
             'reviewed_at' => now(),
         ]);
 
         User::where('role', 'admin')->each(function ($u) use ($l, $request) {
             Notification::kirim(
                 $u->id,
-                "Laporan Dikembalikan",
+                'Laporan Dikembalikan',
                 "Laporan \"{$l->judul}\" dikembalikan oleh Warek. Catatan: {$request->catatan}",
                 'warning',
-                '/admin/laporan/' . $l->id
+                '/admin/laporan/'.$l->id
             );
         });
 
@@ -164,7 +166,8 @@ class LaporanController extends Controller
         if ($l->status !== 'Disetujui' && $l->status !== 'Diajukan') {
             return response()->json(['success' => false, 'message' => 'Laporan belum diajukan.'], 403);
         }
-        return \App\Services\PdfGeneratorService::laporanKipK($id);
+
+        return PdfGeneratorService::laporanKipK($id);
     }
 
     /**
@@ -174,25 +177,25 @@ class LaporanController extends Controller
     private function mapStatusForFE(string $status): string
     {
         return match ($status) {
-            'Diajukan'     => 'Menunggu',
-            'Disetujui'    => 'Disetujui',
+            'Diajukan' => 'Menunggu',
+            'Disetujui' => 'Disetujui',
             'Dikembalikan' => 'Dikembalikan',
-            'Ditolak'      => 'Ditolak',
-            'Draft'        => 'Draft',
-            default        => $status,
+            'Ditolak' => 'Ditolak',
+            'Draft' => 'Draft',
+            default => $status,
         };
     }
 
     private function buildSummary(array $stats): string
     {
         $totalMhs = $stats['totalMahasiswa'];
-        $avgIpk   = $stats['rataIpk'];
-        $spAktif  = $stats['spAktif'];
+        $avgIpk = $stats['rataIpk'];
+        $spAktif = $stats['spAktif'];
 
         $parts = [];
         $parts[] = "{$totalMhs} mahasiswa";
         if ($avgIpk !== null) {
-            $parts[] = 'rata-rata IPK ' . number_format($avgIpk, 2);
+            $parts[] = 'rata-rata IPK '.number_format($avgIpk, 2);
         }
         $parts[] = "{$spAktif} SP aktif";
 

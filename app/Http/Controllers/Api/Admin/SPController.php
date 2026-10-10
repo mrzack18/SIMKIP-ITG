@@ -1,7 +1,12 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
+
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SuratPeringatanResource;
 use App\Models\AuditLog;
+use App\Models\JenisPelanggaran;
 use App\Models\Mahasiswa;
 use App\Models\Notification;
 use App\Models\SuratPeringatan;
@@ -14,24 +19,32 @@ class SPController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = SuratPeringatan::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($query, 'surat_peringatans.tanggal_terbit', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($query, 'surat_peringatans.tanggal_terbit', $request->tahun_ajaran);
 
         if ($s = $request->search) {
-            $query->whereHas('mahasiswa', fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
+            $query->whereHas('mahasiswa', fn ($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
         }
-        if ($request->level && $request->level !== 'Semua') $query->where('level', $request->level);
-        if ($request->prodi && $request->prodi !== 'Semua') $query->whereHas('mahasiswa.prodi', fn($q) => $q->where('nama', $request->prodi));
-        if ($request->angkatan && $request->angkatan !== 'Semua') $query->whereHas('mahasiswa', fn($q) => $q->where('angkatan', $request->angkatan));
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
+        if ($request->level && $request->level !== 'Semua') {
+            $query->where('level', $request->level);
+        }
+        if ($request->prodi && $request->prodi !== 'Semua') {
+            $query->whereHas('mahasiswa.prodi', fn ($q) => $q->where('nama', $request->prodi));
+        }
+        if ($request->angkatan && $request->angkatan !== 'Semua') {
+            $query->whereHas('mahasiswa', fn ($q) => $q->where('angkatan', $request->angkatan));
+        }
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
+        }
 
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
-        $data  = $query->latest()->skip(($page-1)*$limit)->take($limit)->get();
+        $data = $query->latest()->skip(($page - 1) * $limit)->take($limit)->get();
 
         return response()->json([
-            'success'     => true,
-            'data'        => \App\Http\Resources\SuratPeringatanResource::collection($data),
+            'success' => true,
+            'data' => SuratPeringatanResource::collection($data),
             'total' => $total, 'page' => $page, 'limit' => $limit,
             'totalPages' => (int) ceil($total / max($limit, 1)),
             'total_pages' => (int) ceil($total / max($limit, 1)),
@@ -41,29 +54,35 @@ class SPController extends Controller
     public function history(Request $request, int $id): JsonResponse
     {
         $q = SuratPeringatan::with(['mahasiswa.prodi'])->where('mahasiswa_id', $id);
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'surat_peringatans.tanggal_terbit', $request->tahun_ajaran);
-        
+        TahunAjaranHelper::applyDateMaxFilter($q, 'surat_peringatans.tanggal_terbit', $request->tahun_ajaran);
+
         // Ensure active SPs are at the top, followed by historical ones
         $q->orderByRaw("FIELD(status, 'Aktif', 'Masa Tenggang', 'Pemberhentian', 'Selesai') ASC")
-          ->latest('tanggal_terbit');
+            ->latest('tanggal_terbit');
 
         $data = $q->get();
+
         return response()->json([
             'success' => true,
-            'data'    => \App\Http\Resources\SuratPeringatanResource::collection($data),
+            'data' => SuratPeringatanResource::collection($data),
         ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'mahasiswa_id'      => 'required|exists:mahasiswas,id',
-            'level'             => 'required|in:SP1,SP2,SP3',
+            'mahasiswa_id' => 'required|exists:mahasiswas,id',
+            'level' => 'required|in:SP1,SP2,SP3',
             'jenis_pelanggaran' => 'required|exists:jenis_pelanggarans,nama',
-            'deskripsi'         => 'required|string|min:10',
-            'tanggal_terbit'    => 'required|date',
-            'batas_evaluasi'    => 'nullable|date|after:tanggal_terbit',
-            'catatan'           => 'nullable|string',
+            'deskripsi' => 'required|string|min:10',
+            'tanggal_terbit' => 'required|date',
+            'batas_evaluasi' => 'nullable|date|after:tanggal_terbit',
+            'catatan' => 'nullable|string',
+            'nomor_surat' => 'nullable|string|max:100|unique:surat_peringatans,nomor_surat',
+            'tempat' => 'nullable|string|max:255',
+            'penandatangan_nama' => 'nullable|string|max:255',
+            'penandatangan_nidn' => 'nullable|string|max:50',
+            'penandatangan_jabatan' => 'nullable|string|max:255',
         ]);
 
         $mahasiswa = Mahasiswa::findOrFail($request->mahasiswa_id);
@@ -73,26 +92,32 @@ class SPController extends Controller
             return response()->json(['success' => false, 'message' => $error], 422);
         }
 
-        $jp = \App\Models\JenisPelanggaran::where('nama', $request->jenis_pelanggaran)->first();
+        $jp = JenisPelanggaran::where('nama', $request->jenis_pelanggaran)->first();
         $level = ($jp && $jp->eskalasi === 'langsung_sp3') ? 'SP3' : $request->level;
 
         $sp = SuratPeringatan::create([
-            'mahasiswa_id'      => $request->mahasiswa_id,
-            'level'             => $level,
+            'mahasiswa_id' => $request->mahasiswa_id,
+            'level' => $level,
             'jenis_pelanggaran' => $request->jenis_pelanggaran,
-            'deskripsi'         => $request->deskripsi,
-            'tanggal_terbit'    => $request->tanggal_terbit,
-            'batas_evaluasi'    => $request->batas_evaluasi,
-            'status'            => $level === 'SP3' ? 'Pemberhentian' : 'Aktif',
-            'diterbitkan_oleh'  => auth()->id(),
-            'catatan'           => $request->catatan,
+            'deskripsi' => $request->deskripsi,
+            'tanggal_terbit' => $request->tanggal_terbit,
+            'batas_evaluasi' => $request->batas_evaluasi,
+            'status' => $level === 'SP3' ? 'Pemberhentian' : 'Aktif',
+            'diterbitkan_oleh' => auth()->id(),
+            'catatan' => $request->catatan,
+            'tempat' => $request->tempat ?? 'Garut',
+            'penandatangan_nama' => $request->penandatangan_nama,
+            'penandatangan_nidn' => $request->penandatangan_nidn,
+            'penandatangan_jabatan' => $request->penandatangan_jabatan,
+            'nomor_surat' => $request->nomor_surat,
         ]);
 
-        $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
-        $monthRoman = $romans[(int)now()->format('n')];
-        $nomorSurat = str_pad($sp->id, 3, '0', STR_PAD_LEFT) . '/SP/KIP-K/ITG/' . $monthRoman . '/' . now()->year;
-        
-        $sp->update(['nomor_surat' => $nomorSurat]);
+        if (empty($sp->nomor_surat)) {
+            $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+            $monthRoman = $romans[(int) now()->format('n')];
+            $nomorSurat = str_pad($sp->id, 3, '0', STR_PAD_LEFT).'/SP/KIP-K/ITG/'.$monthRoman.'/'.now()->year;
+            $sp->update(['nomor_surat' => $nomorSurat]);
+        }
 
         if ($level === 'SP3') {
             SPValidationService::handleSP3($mahasiswa);
@@ -101,7 +126,7 @@ class SPController extends Controller
         Notification::kirim(
             $mahasiswa->user_id,
             "Surat Peringatan {$level} Diterbitkan",
-            "Anda mendapatkan {$level} atas pelanggaran: {$request->jenis_pelanggaran}. Batas evaluasi: " . date('d M Y', strtotime($request->batas_evaluasi)),
+            "Anda mendapatkan {$level} atas pelanggaran: {$request->jenis_pelanggaran}. Batas evaluasi: ".date('d M Y', strtotime($request->batas_evaluasi)),
             'warning',
             '/mahasiswa/sp'
         );
@@ -125,22 +150,22 @@ class SPController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => (new \App\Http\Resources\SuratPeringatanResource($sp))->resolve(),
-            'extra'   => [
+            'data' => (new SuratPeringatanResource($sp))->resolve(),
+            'extra' => [
                 'jenisPelanggaran' => $sp->jenis_pelanggaran,
-                'catatan'          => $sp->catatan,
-                'diterbitkanOleh'  => $sp->diterbitkanOleh?->name,
-                'mahasiswaId'      => $sp->mahasiswa_id,
-                'kategori'         => $sp->mahasiswa?->kategori,
+                'catatan' => $sp->catatan,
+                'diterbitkanOleh' => $sp->diterbitkanOleh?->name,
+                'mahasiswaId' => $sp->mahasiswa_id,
+                'kategori' => $sp->mahasiswa?->kategori,
             ],
-            'history' => \App\Http\Resources\SuratPeringatanResource::collection($history)->resolve(),
+            'history' => SuratPeringatanResource::collection($history)->resolve(),
         ]);
     }
 
     public function updateStatus(Request $request, int $id): JsonResponse
     {
         $request->validate([
-            'status'  => 'required|in:Aktif,Masa Tenggang,Selesai',
+            'status' => 'required|in:Aktif,Masa Tenggang,Selesai',
             'catatan' => 'nullable|string',
         ]);
 

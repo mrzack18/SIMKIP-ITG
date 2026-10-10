@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class SuratPeringatan extends Model
 {
@@ -12,7 +12,8 @@ class SuratPeringatan extends Model
     protected $fillable = [
         'mahasiswa_id', 'level', 'jenis_pelanggaran', 'deskripsi',
         'tanggal_terbit', 'batas_evaluasi', 'status', 'diterbitkan_oleh', 'catatan',
-        'nomor_surat',
+        'nomor_surat', 'tempat', 'penandatangan_nama', 'penandatangan_nidn',
+        'penandatangan_jabatan',
     ];
 
     protected $casts = [
@@ -32,7 +33,10 @@ class SuratPeringatan extends Model
 
     public function getSisaHariAttribute(): int
     {
-        if (!$this->batas_evaluasi) return 0;
+        if (! $this->batas_evaluasi) {
+            return 0;
+        }
+
         return (int) max(0, now()->diffInDays($this->batas_evaluasi, false));
     }
 
@@ -45,7 +49,10 @@ class SuratPeringatan extends Model
      */
     public function getLewatBatasAttribute(): bool
     {
-        if (! $this->batas_evaluasi) return false;
+        if (! $this->batas_evaluasi) {
+            return false;
+        }
+
         return now()->greaterThan($this->batas_evaluasi);
     }
 }

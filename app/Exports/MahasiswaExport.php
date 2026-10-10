@@ -4,36 +4,33 @@ namespace App\Exports;
 
 use App\Models\DokumenJenis;
 use App\Models\Mahasiswa;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class MahasiswaExport implements
-    FromCollection,
-    WithHeadings,
-    WithMapping,
-    WithStyles,
-    ShouldAutoSize,
-    WithTitle
+class MahasiswaExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected array $filters;
+
     protected array $columns;
+
     protected int $prodiId;
+
     protected string $prodiNama;
 
     public function __construct(int $prodiId, string $prodiNama, array $filters)
     {
-        $this->prodiId   = $prodiId;
+        $this->prodiId = $prodiId;
         $this->prodiNama = $prodiNama;
-        $this->filters   = $filters;
+        $this->filters = $filters;
 
         // Kolom yang selalu ada
         $this->columns = ['NIM', 'Nama Mahasiswa', 'Angkatan', 'Kategori', 'Status', 'Semester', 'IPK Terakhir'];
@@ -57,7 +54,7 @@ class MahasiswaExport implements
         }
     }
 
-    public function collection(): \Illuminate\Support\Collection
+    public function collection(): Collection
     {
         $query = Mahasiswa::with([
             'prodi',
@@ -84,8 +81,8 @@ class MahasiswaExport implements
     public function map($mahasiswa): array
     {
         $ipkSemesters = $mahasiswa->ipkSemestrs->sortBy('semester')->values();
-        $ipkTerakhirRow = $ipkSemesters->filter(fn($s) => $s->ipk !== null)->last();
-        $ipkTerakhir   = $ipkTerakhirRow ? (float) $ipkTerakhirRow->ipk : null;
+        $ipkTerakhirRow = $ipkSemesters->filter(fn ($s) => $s->ipk !== null)->last();
+        $ipkTerakhir = $ipkTerakhirRow ? (float) $ipkTerakhirRow->ipk : null;
         // Semester berjalan dihitung dari angkatan — jumlah baris transkrip
         // menyesatkan karena LSIPD mengirim seluruh 8 semester sekaligus.
         $semesterAktif = $mahasiswa->semester_aktif;
@@ -123,7 +120,9 @@ class MahasiswaExport implements
                     ->where('status', 'Disetujui')
                     ->first();
                 $row[] = $dok ? 'Disetujui' : '-';
-                if ($dok) $disetujui++;
+                if ($dok) {
+                    $disetujui++;
+                }
             }
             $row[] = "{$disetujui}/{$jenisList->count()}";
         }
@@ -178,9 +177,10 @@ class MahasiswaExport implements
         $col = '';
         while ($index > 0) {
             $index--;
-            $col = chr(65 + ($index % 26)) . $col;
+            $col = chr(65 + ($index % 26)).$col;
             $index = intdiv($index, 26);
         }
+
         return $col;
     }
 }

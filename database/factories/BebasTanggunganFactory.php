@@ -14,7 +14,7 @@ class BebasTanggunganFactory extends Factory
     public function definition(): array
     {
         $status = $this->faker->randomElement(['Menunggu', 'Diproses', 'Disetujui', 'Ditolak']);
-        
+
         return [
             'mahasiswa_id' => Mahasiswa::factory(),
             'tanggal_ajukan' => $this->faker->date(),
@@ -22,7 +22,7 @@ class BebasTanggunganFactory extends Factory
             'catatan_admin' => $status === 'Ditolak' ? 'Terdapat tunggakan administrasi.' : null,
             'reviewed_by' => in_array($status, ['Disetujui', 'Ditolak']) ? User::factory() : null,
             'reviewed_at' => in_array($status, ['Disetujui', 'Ditolak']) ? now() : null,
-            'nomor_surat' => $status === 'Disetujui' ? 'SK-BT/' . $this->faker->numerify('###') : null,
+            'nomor_surat' => $status === 'Disetujui' ? 'SK-BT/'.$this->faker->numerify('###') : null,
             'tanggal_terbit' => $status === 'Disetujui' ? $this->faker->date() : null,
         ];
     }

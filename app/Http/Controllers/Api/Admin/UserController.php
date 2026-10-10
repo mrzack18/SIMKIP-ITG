@@ -10,7 +10,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -22,7 +21,7 @@ class UserController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%");
+                    ->orWhere('username', 'like', "%{$search}%");
             });
         }
 
@@ -78,29 +77,29 @@ class UserController extends Controller
         $users = $query->with(['prodi', 'mahasiswa.prodi'])->paginate($perPage);
 
         $data = $users->map(fn ($u) => [
-            'id'                 => $u->id,
-            'name'               => $u->name,
-            'username'           => $u->username,
-            'email'             => $u->email,
-            'role'              => $u->role,
-            'prodi_id'          => $u->prodi_id,
+            'id' => $u->id,
+            'name' => $u->name,
+            'username' => $u->username,
+            'email' => $u->email,
+            'role' => $u->role,
+            'prodi_id' => $u->prodi_id,
             // Mahasiswa belum tentu punya user->prodi_id; prodi akademiknya ada
             // di relasi mahasiswa. Pakai itu sebagai cadangan agar kolom Prodi
             // tidak kosong untuk akun mahasiswa.
-            'prodi_nama'        => $u->prodi?->nama ?? $u->mahasiswa?->prodi?->nama,
-            'angkatan'          => $u->mahasiswa?->angkatan,
-            'nim'               => $u->mahasiswa?->nim,
-            'is_active'         => $u->is_active,
-            'is_password_changed'=> $u->is_password_changed,
-            'created_at'         => $u->created_at->toIso8601String(),
+            'prodi_nama' => $u->prodi?->nama ?? $u->mahasiswa?->prodi?->nama,
+            'angkatan' => $u->mahasiswa?->angkatan,
+            'nim' => $u->mahasiswa?->nim,
+            'is_active' => $u->is_active,
+            'is_password_changed' => $u->is_password_changed,
+            'created_at' => $u->created_at->toIso8601String(),
         ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $data,
-            'total'   => $users->total(),
+            'data' => $data,
+            'total' => $users->total(),
             'current_page' => $users->currentPage(),
-            'last_page'   => $users->lastPage(),
+            'last_page' => $users->lastPage(),
             // Opsi filter angkatan diambil dari data yang ada, supaya dropdown
             // tidak menawarkan tahun yang tidak berisi mahasiswa.
             'filter_options' => [
@@ -116,10 +115,10 @@ class UserController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'username' => 'required|string|max:50|unique:users,username',
-            'email'    => 'nullable|email|max:255|unique:users,email',
-            'role'     => 'required|in:admin,mahasiswa,prodi,warek',
+            'email' => 'nullable|email|max:255|unique:users,email',
+            'role' => 'required|in:admin,mahasiswa,prodi,warek',
             'prodi_id' => 'nullable|exists:prodis,id',
         ]);
 
@@ -127,23 +126,23 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $tempPassword = 'kipk' . $request->input('username') . '2026';
+        $tempPassword = 'kipk'.$request->input('username').'2026';
 
         $user = User::create([
-            'name'               => $request->input('name'),
-            'username'           => $request->input('username'),
-            'email'             => $request->input('email'),
-            'password'           => Hash::make($tempPassword),
-            'role'               => $request->input('role'),
-            'prodi_id'           => $request->input('role') === 'prodi' ? $request->input('prodi_id') : null,
+            'name' => $request->input('name'),
+            'username' => $request->input('username'),
+            'email' => $request->input('email'),
+            'password' => Hash::make($tempPassword),
+            'role' => $request->input('role'),
+            'prodi_id' => $request->input('role') === 'prodi' ? $request->input('prodi_id') : null,
             'is_password_changed' => false,
-            'is_active'          => true,
+            'is_active' => true,
         ]);
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'User berhasil dibuat. Password sementara: ' . $tempPassword,
-            'data'     => $user,
+            'success' => true,
+            'message' => 'User berhasil dibuat. Password sementara: '.$tempPassword,
+            'data' => $user,
             'password' => $tempPassword,
         ], 201);
     }
@@ -156,10 +155,10 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name'     => 'sometimes|string|max:255',
-            'username' => 'sometimes|string|max:50|unique:users,username,' . $id,
-            'email'    => 'nullable|email|max:255|unique:users,email,' . $id,
-            'role'     => 'sometimes|in:admin,mahasiswa,prodi,warek',
+            'name' => 'sometimes|string|max:255',
+            'username' => 'sometimes|string|max:50|unique:users,username,'.$id,
+            'email' => 'nullable|email|max:255|unique:users,email,'.$id,
+            'role' => 'sometimes|in:admin,mahasiswa,prodi,warek',
             'prodi_id' => 'nullable|exists:prodis,id',
         ]);
 
@@ -202,15 +201,15 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => 'User tidak ditemukan.'], 404);
         }
 
-        $newPassword = 'kipk' . $user->username . '2026';
+        $newPassword = 'kipk'.$user->username.'2026';
         $user->update([
-            'password'           => Hash::make($newPassword),
+            'password' => Hash::make($newPassword),
             'is_password_changed' => false,
         ]);
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'Password berhasil direset.',
+            'success' => true,
+            'message' => 'Password berhasil direset.',
             'password' => $newPassword,
         ]);
     }

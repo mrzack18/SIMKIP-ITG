@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Prestasi;
 use App\Models\Mahasiswa;
+use App\Models\Prestasi;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -15,7 +15,7 @@ class PrestasiFactory extends Factory
     {
         $status = $this->faker->randomElement(['Menunggu Validasi', 'Disetujui', 'Ditolak']);
         $tingkat = $this->faker->randomElement(['Internasional', 'Nasional', 'Wilayah']);
-        
+
         return [
             'mahasiswa_id' => Mahasiswa::factory(),
             'nama_prestasi' => $this->faker->sentence(3),
@@ -27,8 +27,8 @@ class PrestasiFactory extends Factory
             'tempat' => $this->faker->city(),
             'deskripsi' => $this->faker->paragraph(),
             'link_penyelenggara' => $this->faker->url(),
-            'file_sertifikat' => 'sertifikat_' . $this->faker->word() . '.pdf',
-            'file_foto' => 'foto_' . $this->faker->word() . '.jpg',
+            'file_sertifikat' => 'sertifikat_'.$this->faker->word().'.pdf',
+            'file_foto' => 'foto_'.$this->faker->word().'.jpg',
             'status' => $status,
             'catatan_admin' => $status === 'Ditolak' ? 'Dokumen tidak lengkap atau buram' : null,
             'validated_by' => $status !== 'Menunggu Validasi' ? User::factory() : null,

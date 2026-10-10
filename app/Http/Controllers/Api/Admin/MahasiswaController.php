@@ -1,19 +1,27 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
+
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MahasiswaResource;
 use App\Models\AuditLog;
+use App\Models\CatatanInternal;
+use App\Models\Dokumen;
+use App\Models\Konfigurasi;
 use App\Models\Mahasiswa;
-use App\Models\Notification;
+use App\Models\Organisasi;
+use App\Models\Pelatihan;
+use App\Models\Prestasi;
 use App\Models\Prodi;
 use App\Models\User;
+use App\Services\ExcelExportService;
+use App\Services\PdfGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Konfigurasi;
-use App\Services\ExcelExportService;
-use App\Services\PdfGeneratorService;
 
 class MahasiswaController extends Controller
 {
@@ -22,19 +30,19 @@ class MahasiswaController extends Controller
         $query = $this->listQuery($request);
 
         $limit = (int) ($request->limit ?? 10);
-        $page  = (int) ($request->page ?? 1);
+        $page = (int) ($request->page ?? 1);
 
         // Count total for pagination (for having clauses, we need to count manually via get or use a subquery count)
         $total = $query->count(); // If this fails with having, we may need a workaround
 
-        $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
+        $data = $query->skip(($page - 1) * $limit)->take($limit)->get();
 
         return response()->json([
-            'data'        => \App\Http\Resources\MahasiswaResource::collection($data),
-            'total'       => $total,
-            'page'        => $page,
-            'limit'       => $limit,
-            'totalPages'  => (int) ceil($total / $limit),
+            'data' => MahasiswaResource::collection($data),
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'totalPages' => (int) ceil($total / $limit),
         ]);
     }
 
@@ -52,11 +60,13 @@ class MahasiswaController extends Controller
 
         if ($request->search) {
             $q = $request->search;
-            $query->where(fn($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
+            $query->where(fn ($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
         }
         if ($request->prodi && $request->prodi !== 'Semua') {
             $prodi = Prodi::where('nama', $request->prodi)->orWhere('kode', $request->prodi)->first();
-            if ($prodi) $query->where('prodi_id', $prodi->id);
+            if ($prodi) {
+                $query->where('prodi_id', $prodi->id);
+            }
         }
         if ($request->angkatan && $request->angkatan !== 'Semua') {
             $query->where('angkatan', $request->angkatan);
@@ -92,9 +102,9 @@ class MahasiswaController extends Controller
         // Apply SP Filter
         if ($request->spFilter && $request->spFilter !== 'Semua') {
             if ($request->spFilter === 'Tanpa SP') {
-                $query->whereDoesntHave('suratPeringatans', fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']));
+                $query->whereDoesntHave('suratPeringatans', fn ($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']));
             } else {
-                $query->whereHas('suratPeringatans', fn($q) => $q->where('level', $request->spFilter)->whereIn('status', ['Aktif', 'Masa Tenggang']));
+                $query->whereHas('suratPeringatans', fn ($q) => $q->where('level', $request->spFilter)->whereIn('status', ['Aktif', 'Masa Tenggang']));
             }
         }
 
@@ -103,7 +113,7 @@ class MahasiswaController extends Controller
         if ($request->ipkFilter && $request->ipkFilter !== 'Semua') {
             if ($request->ipkFilter === 'Di Bawah Standar (< 3.0)') {
                 $query->having('ipk_calc', '<', 3.0);
-            } else if ($request->ipkFilter === 'Di Atas Standar (≥ 3.0)') {
+            } elseif ($request->ipkFilter === 'Di Atas Standar (≥ 3.0)') {
                 $query->having('ipk_calc', '>=', 3.0);
             }
         }
@@ -140,9 +150,9 @@ class MahasiswaController extends Controller
         $format = strtolower($request->format ?? 'xlsx');
 
         $rows = $this->listQuery($request)->get()->map(function ($m) {
-            $ipk   = $m->ipk_calc !== null ? number_format((float) $m->ipk_calc, 2) : '-';
+            $ipk = $m->ipk_calc !== null ? number_format((float) $m->ipk_calc, 2) : '-';
             $trend = (float) ($m->trendDelta ?? 0);
-            $trendText = $trend !== 0.0 ? ($trend > 0 ? '+' : '') . number_format($trend, 2) : '-';
+            $trendText = $trend !== 0.0 ? ($trend > 0 ? '+' : '').number_format($trend, 2) : '-';
 
             return [
                 $m->nim,
@@ -158,8 +168,8 @@ class MahasiswaController extends Controller
             ];
         })->all();
 
-        $headers  = ['NIM', 'Nama', 'Program Studi', 'Angkatan', 'Kategori', 'IPK', 'Progres IPS', 'Semester', 'Status', 'SP'];
-        $filename = 'Mahasiswa_KIP-K_' . now()->format('Ymd_His') . '.' . ($format === 'pdf' ? 'pdf' : 'xlsx');
+        $headers = ['NIM', 'Nama', 'Program Studi', 'Angkatan', 'Kategori', 'IPK', 'Progres IPS', 'Semester', 'Status', 'SP'];
+        $filename = 'Mahasiswa_KIP-K_'.now()->format('Ymd_His').'.'.($format === 'pdf' ? 'pdf' : 'xlsx');
 
         return ExcelExportService::exportList($filename, $headers, $rows, $format);
     }
@@ -184,20 +194,21 @@ class MahasiswaController extends Controller
     public function checkNim(string $nim): JsonResponse
     {
         $m = Mahasiswa::where('nim', $nim)->first();
+
         return response()->json(['exists' => (bool) $m, 'nama' => $m?->nama]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'nomor_sk'   => 'required|string|max:100',
+            'nomor_sk' => 'required|string|max:100',
             'tanggal_sk' => 'required|date|before_or_equal:today',
-            'file_sk'    => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'nim'        => 'required|string|max:20|unique:mahasiswas,nim',
-            'nama'       => 'required|string|max:255',
-            'prodi_id'   => 'required|exists:prodis,id',
-            'angkatan'   => 'required|integer|between:2015,2030',
-            'kategori'   => 'required|in:Reguler,Aspirasi',
+            'file_sk' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'nim' => 'required|string|max:20|unique:mahasiswas,nim',
+            'nama' => 'required|string|max:255',
+            'prodi_id' => 'required|exists:prodis,id',
+            'angkatan' => 'required|integer|between:2015,2030',
+            'kategori' => 'required|in:Reguler,Aspirasi',
         ]);
 
         DB::beginTransaction();
@@ -207,43 +218,44 @@ class MahasiswaController extends Controller
                 $filePath = $request->file('file_sk')->store("sk_mahasiswa/{$request->nim}", 'public');
             }
 
-            $password = 'kip' . $request->nim . '2026';
+            $password = 'kip'.$request->nim.'2026';
             $user = User::create([
-                'name'     => $request->nama,
+                'name' => $request->nama,
                 'username' => $request->nim,
-                'email'    => strtolower(str_replace(' ', '.', $request->nama)) . '@student.itg.ac.id',
+                'email' => strtolower(str_replace(' ', '.', $request->nama)).'@student.itg.ac.id',
                 'password' => Hash::make($password),
-                'role'     => 'mahasiswa',
+                'role' => 'mahasiswa',
                 'is_password_changed' => false,
             ]);
 
             $mahasiswa = Mahasiswa::create([
-                'user_id'    => $user->id,
-                'nim'        => $request->nim,
-                'nama'       => $request->nama,
-                'prodi_id'   => $request->prodi_id,
-                'angkatan'   => $request->angkatan,
-                'kategori'   => $request->kategori,
-                'status'     => 'Aktif',
-                'nomor_sk'   => $request->nomor_sk,
+                'user_id' => $user->id,
+                'nim' => $request->nim,
+                'nama' => $request->nama,
+                'prodi_id' => $request->prodi_id,
+                'angkatan' => $request->angkatan,
+                'kategori' => $request->kategori,
+                'status' => 'Aktif',
+                'nomor_sk' => $request->nomor_sk,
                 'tanggal_sk' => $request->tanggal_sk,
-                'file_sk'    => $filePath,
+                'file_sk' => $filePath,
             ]);
 
             DB::commit();
 
             AuditLog::catat('Tambah', "Tambah mahasiswa: {$request->nama} ({$request->nim})", [
-                'terkait_nim'  => $request->nim,
+                'terkait_nim' => $request->nim,
                 'terkait_nama' => $request->nama,
             ]);
 
             return response()->json([
-                'success'     => true,
-                'mahasiswa'   => ['id' => $mahasiswa->id, 'nim' => $mahasiswa->nim, 'nama' => $mahasiswa->nama],
+                'success' => true,
+                'mahasiswa' => ['id' => $mahasiswa->id, 'nim' => $mahasiswa->nim, 'nama' => $mahasiswa->nama],
                 'credentials' => ['username' => $request->nim, 'password' => $password],
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -252,7 +264,7 @@ class MahasiswaController extends Controller
     {
         $m = Mahasiswa::withDetails()->with(['user.contactHistories'])->findOrFail($id);
 
-        return response()->json(['data' => new \App\Http\Resources\MahasiswaResource($m)]);
+        return response()->json(['data' => new MahasiswaResource($m)]);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
@@ -266,7 +278,7 @@ class MahasiswaController extends Controller
         }
 
         AuditLog::catat('Hapus', "Hapus mahasiswa: {$m->nama} ({$m->nim})", [
-            'terkait_nim'  => $m->nim,
+            'terkait_nim' => $m->nim,
             'terkait_nama' => $m->nama,
         ]);
 
@@ -284,14 +296,14 @@ class MahasiswaController extends Controller
         ]);
 
         $m = Mahasiswa::findOrFail($id);
-        
+
         $oldStatus = $m->status;
         $m->status = $request->status;
-        
+
         if ($request->status === 'Nonaktif') {
             $alasan = $request->alasan_status;
             if ($request->catatan_status) {
-                $alasan .= ' | Catatan: ' . $request->catatan_status;
+                $alasan .= ' | Catatan: '.$request->catatan_status;
             }
             $m->alasan_nonaktif = $alasan;
             $m->tanggal_nonaktif = now();
@@ -303,11 +315,11 @@ class MahasiswaController extends Controller
         $m->save();
 
         AuditLog::catat('Ubah', "Mengubah status mahasiswa {$m->nama} ({$m->nim}) dari {$oldStatus} menjadi {$m->status}", [
-            'terkait_nim'  => $m->nim,
+            'terkait_nim' => $m->nim,
             'terkait_nama' => $m->nama,
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Status mahasiswa berhasil diperbarui.', 'data' => new \App\Http\Resources\MahasiswaResource($m)]);
+        return response()->json(['success' => true, 'message' => 'Status mahasiswa berhasil diperbarui.', 'data' => new MahasiswaResource($m)]);
     }
 
     public function updateSk(Request $request, int $id): JsonResponse
@@ -315,10 +327,10 @@ class MahasiswaController extends Controller
         $m = Mahasiswa::findOrFail($id);
 
         $validated = $request->validate([
-            'nomor_sk'      => 'required|string|max:100',
-            'tanggal_sk'    => 'required|date|before_or_equal:today',
-            'kategori'      => 'required|in:Reguler,Aspirasi',
-            'file_sk'       => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'nomor_sk' => 'required|string|max:100',
+            'tanggal_sk' => 'required|date|before_or_equal:today',
+            'kategori' => 'required|in:Reguler,Aspirasi',
+            'file_sk' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'hapus_file_sk' => 'nullable|boolean',
         ]);
 
@@ -326,7 +338,9 @@ class MahasiswaController extends Controller
 
         if ($request->hasFile('file_sk')) {
             $m->file_sk = $request->file('file_sk')->store("sk_mahasiswa/{$m->nim}", 'public');
-            if ($oldFile) Storage::disk('public')->delete($oldFile);
+            if ($oldFile) {
+                Storage::disk('public')->delete($oldFile);
+            }
         } elseif ($request->boolean('hapus_file_sk') && $oldFile) {
             Storage::disk('public')->delete($oldFile);
             $m->file_sk = null;
@@ -338,14 +352,14 @@ class MahasiswaController extends Controller
         $m->save();
 
         AuditLog::catat('Ubah', "Mengubah data SK Penetapan KIP-K mahasiswa {$m->nama} ({$m->nim})", [
-            'terkait_nim'  => $m->nim,
+            'terkait_nim' => $m->nim,
             'terkait_nama' => $m->nama,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Data SK Penetapan KIP-K berhasil diperbarui.',
-            'data'    => new \App\Http\Resources\MahasiswaResource($m->load('prodi')),
+            'data' => new MahasiswaResource($m->load('prodi')),
         ]);
     }
 
@@ -365,38 +379,41 @@ class MahasiswaController extends Controller
 
         $oldStatus = $m->status;
         $m->status = 'Dicabut';
-        
+
         $alasan = $request->alasan_cabut;
         if ($request->catatan_cabut) {
-            $alasan .= ' | Catatan: ' . $request->catatan_cabut;
+            $alasan .= ' | Catatan: '.$request->catatan_cabut;
         }
         $m->alasan_dicabut = $alasan;
         $m->tanggal_dicabut = now();
         $m->dicabut_oleh = collect(explode(' ', $request->user()->name))->first();
-        
+
         $semesterAktif = Konfigurasi::get('semester_aktif', 'Ganjil');
-        $tahunAjaranAktif = Konfigurasi::get('tahun_akademik_aktif', date('Y') . '/' . (date('Y') + 1));
-        $m->semester_dicabut = $semesterAktif . ' ' . $tahunAjaranAktif;
-        
+        $tahunAjaranAktif = Konfigurasi::get('tahun_akademik_aktif', date('Y').'/'.(date('Y') + 1));
+        $m->semester_dicabut = $semesterAktif.' '.$tahunAjaranAktif;
+
         $m->save();
 
         AuditLog::catat('Ubah', "Mencabut KIP-K mahasiswa {$m->nama} ({$m->nim})", [
-            'terkait_nim'  => $m->nim,
+            'terkait_nim' => $m->nim,
             'terkait_nama' => $m->nama,
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Status KIP-K mahasiswa berhasil dicabut.', 'data' => new \App\Http\Resources\MahasiswaResource($m)]);
-    }    public function getCatatanInternal(Request $request, int $id): JsonResponse
+        return response()->json(['success' => true, 'message' => 'Status KIP-K mahasiswa berhasil dicabut.', 'data' => new MahasiswaResource($m)]);
+    }
+
+    public function getCatatanInternal(Request $request, int $id): JsonResponse
     {
         $tahunAjaran = $request->query('tahun_ajaran');
-        $query = \App\Models\CatatanInternal::where('mahasiswa_id', $id);
-        
+        $query = CatatanInternal::where('mahasiswa_id', $id);
+
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
             $query->where('tahun_ajaran', $tahunAjaran);
         }
-        
+
         $catatan = $query->orderBy('created_at', 'desc')->get();
+
         return response()->json(['success' => true, 'data' => $catatan]);
     }
 
@@ -410,7 +427,7 @@ class MahasiswaController extends Controller
 
         $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $request->tahun_ajaran);
 
-        $catatan = \App\Models\CatatanInternal::create([
+        $catatan = CatatanInternal::create([
             'mahasiswa_id' => $id,
             'tahun_ajaran' => $tahunAjaran,
             'kategori' => $request->kategori,
@@ -426,13 +443,13 @@ class MahasiswaController extends Controller
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
         }
-        $mahasiswas = Mahasiswa::withDetails($tahunAjaran)->with('suratPeringatans')->get()->map(function($m) use ($tahunAjaran) {
+        $mahasiswas = Mahasiswa::withDetails($tahunAjaran)->with('suratPeringatans')->get()->map(function ($m) use ($tahunAjaran) {
             $spList = [];
-            $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
+            $range = TahunAjaranHelper::getDateRange($tahunAjaran);
             foreach ($m->suratPeringatans as $surat) {
                 if ($range && $surat->tanggal_terbit <= $range[1]) {
                     $spList[] = ['level' => $surat->level, 'status' => $surat->status];
-                } elseif (!$range) {
+                } elseif (! $range) {
                     $spList[] = ['level' => $surat->level, 'status' => $surat->status];
                 }
             }
@@ -447,27 +464,28 @@ class MahasiswaController extends Controller
                 'kipkLabel' => $m->kategori === 'Aspirasi' ? 'KIP-K Aspirasi' : 'KIP-K Reguler',
                 'ipk' => $m->ipk_terakhir,
                 'delta' => $m->trend_delta_calc,
-                'semester' => 'Sem ' . \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $tahunAjaran),
+                'semester' => 'Sem '.TahunAjaranHelper::calculateSemester((int) $m->angkatan, $tahunAjaran),
                 'spList' => count($spList) > 0 ? $spList : null,
                 'sp' => $m->sp_aktif,
                 'mkBelumLulus' => $m->mk_belum_lulus,
             ];
         });
+
         return response()->json(['success' => true, 'data' => $mahasiswas]);
     }
 
     public function rekapPrestasi(Request $request): JsonResponse
     {
-        $query = \App\Models\Prestasi::with(['mahasiswa.prodi']);
+        $query = Prestasi::with(['mahasiswa.prodi']);
         $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
-            $query = \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $tahunAjaran);
+            $query = TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $tahunAjaran);
         }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);
         }
-        $prestasis = $query->latest()->get()->map(function($p) {
+        $prestasis = $query->latest()->get()->map(function ($p) {
             return [
                 'id' => $p->id,
                 'mahasiswa_id' => $p->mahasiswa_id,
@@ -489,22 +507,23 @@ class MahasiswaController extends Controller
                 'catatan' => $p->catatan_admin,
             ];
         });
+
         return response()->json(['success' => true, 'data' => $prestasis]);
     }
 
     public function dokumen(Request $request, int $id): JsonResponse
     {
         $mahasiswa = Mahasiswa::findOrFail($id);
-        $q = \App\Models\Dokumen::with(['jenis', 'fieldValues.field'])
+        $q = Dokumen::with(['jenis', 'fieldValues.field'])
             ->where('mahasiswa_id', $id);
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $request->tahun_ajaran);
         $dokumens = $q->get()
             ->map(function ($d) {
                 return [
                     'id' => $d->id,
                     'jenis' => $d->jenis->nama ?? 'Lainnya',
                     'nama_file' => $d->nama_file,
-                    'file_url' => $d->path_file ? url('storage/' . $d->path_file) : null,
+                    'file_url' => $d->path_file ? url('storage/'.$d->path_file) : null,
                     'status' => $d->status,
                     'catatan' => $d->catatan_admin,
                     'tanggal_upload' => $d->created_at->format('d M Y'),
@@ -515,28 +534,28 @@ class MahasiswaController extends Controller
                             'value' => $fv->value,
                             'tipe' => $fv->field->tipe,
                         ];
-                    })
+                    }),
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data' => $dokumens
+            'data' => $dokumens,
         ]);
     }
 
     public function rekapOrganisasi(Request $request): JsonResponse
     {
-        $query = \App\Models\Organisasi::with(['mahasiswa.prodi']);
+        $query = Organisasi::with(['mahasiswa.prodi']);
         $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
-            $query = \App\Helpers\TahunAjaranHelper::applyOverlapFilter($query, 'periode_mulai', 'periode_selesai', $tahunAjaran);
+            $query = TahunAjaranHelper::applyOverlapFilter($query, 'periode_mulai', 'periode_selesai', $tahunAjaran);
         }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);
         }
-        $organisasis = $query->latest()->get()->map(function($o) {
+        $organisasis = $query->latest()->get()->map(function ($o) {
             return [
                 'id' => $o->id,
                 'mahasiswa_id' => $o->mahasiswa_id,
@@ -554,21 +573,22 @@ class MahasiswaController extends Controller
                 'catatan' => $o->catatan_admin,
             ];
         });
+
         return response()->json(['success' => true, 'data' => $organisasis]);
     }
 
     public function rekapPelatihan(Request $request): JsonResponse
     {
-        $query = \App\Models\Pelatihan::with(['mahasiswa.prodi']);
+        $query = Pelatihan::with(['mahasiswa.prodi']);
         $tahunAjaran = $request->tahun_ajaran && $request->tahun_ajaran !== 'Semua' ? $request->tahun_ajaran : null;
         if ($tahunAjaran) {
             $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
-            $query = \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $tahunAjaran);
+            $query = TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $tahunAjaran);
         }
         if ($request->mahasiswa_id) {
             $query->where('mahasiswa_id', $request->mahasiswa_id);
         }
-        $pelatihans = $query->latest()->get()->map(function($p) {
+        $pelatihans = $query->latest()->get()->map(function ($p) {
             return [
                 'id' => $p->id,
                 'mahasiswa_id' => $p->mahasiswa_id,
@@ -588,6 +608,7 @@ class MahasiswaController extends Controller
                 'catatan' => $p->catatan_admin,
             ];
         });
+
         return response()->json(['success' => true, 'data' => $pelatihans]);
     }
 
@@ -597,19 +618,19 @@ class MahasiswaController extends Controller
      */
     public function exportRekap(Request $request)
     {
-        $scope  = strtolower((string) ($request->scope ?? 'all'));
+        $scope = strtolower((string) ($request->scope ?? 'all'));
         $format = strtolower((string) ($request->format ?? 'xlsx')) === 'pdf' ? 'pdf' : 'xlsx';
 
         $definitions = $this->rekapSheetDefinitions($request);
-        $selected    = ($scope === 'all' || !isset($definitions[$scope])) ? array_keys($definitions) : [$scope];
+        $selected = ($scope === 'all' || ! isset($definitions[$scope])) ? array_keys($definitions) : [$scope];
 
         $sheets = [];
         foreach ($selected as $key) {
             $def = $definitions[$key];
             $sheets[] = [
-                'title'   => $def['title'],
+                'title' => $def['title'],
                 'headers' => $def['headers'],
-                'rows'    => array_map($def['map'], $def['data']),
+                'rows' => array_map($def['map'], $def['data']),
             ];
         }
 
@@ -618,11 +639,11 @@ class MahasiswaController extends Controller
             : 'Semua';
 
         if ($scope !== 'all' && isset($definitions[$scope])) {
-            $filename = 'Rekap_' . $definitions[$scope]['slug'] . '_KIP-K_' . $labelTahun;
+            $filename = 'Rekap_'.$definitions[$scope]['slug'].'_KIP-K_'.$labelTahun;
         } else {
-            $filename = 'Data_Akademik_KIP-K_' . $labelTahun;
+            $filename = 'Data_Akademik_KIP-K_'.$labelTahun;
         }
-        $filename = trim(preg_replace('/[^0-9A-Za-z]+/', '-', $filename), '-') . '.' . $format;
+        $filename = trim(preg_replace('/[^0-9A-Za-z]+/', '-', $filename), '-').'.'.$format;
 
         if ($format === 'pdf' && count($sheets) > 1) {
             return PdfGeneratorService::laporanDataAkademik($sheets, $labelTahun);
@@ -636,17 +657,17 @@ class MahasiswaController extends Controller
      */
     private function rekapSheetDefinitions(Request $request): array
     {
-        $formatDelta = fn($v) => $v === null
+        $formatDelta = fn ($v) => $v === null
             ? '-'
-            : (($v > 0 ? '+' : '') . number_format((float) $v, 2));
+            : (($v > 0 ? '+' : '').number_format((float) $v, 2));
 
         return [
             'ipk' => [
-                'title'   => 'Rekap IPK',
-                'slug'    => 'IPK',
+                'title' => 'Rekap IPK',
+                'slug' => 'IPK',
                 'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'IPK', 'Progres IPK', 'Semester', 'SP', 'MK Belum Lulus'],
-                'data'    => $this->rekapAkademik($request)->getData(true)['data'],
-                'map'     => fn($r) => [
+                'data' => $this->rekapAkademik($request)->getData(true)['data'],
+                'map' => fn ($r) => [
                     $r['nim'],
                     $r['nama'],
                     $r['prodi'],
@@ -660,11 +681,11 @@ class MahasiswaController extends Controller
                 ],
             ],
             'prestasi' => [
-                'title'   => 'Rekap Prestasi',
-                'slug'    => 'Prestasi',
+                'title' => 'Rekap Prestasi',
+                'slug' => 'Prestasi',
                 'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'Nama Prestasi', 'Tingkat', 'Pencapaian', 'Penyelenggara', 'Tanggal Mulai', 'Tanggal Selesai', 'Tempat', 'Status'],
-                'data'    => $this->rekapPrestasi($request)->getData(true)['data'],
-                'map'     => fn($r) => [
+                'data' => $this->rekapPrestasi($request)->getData(true)['data'],
+                'map' => fn ($r) => [
                     $r['nim'],
                     $r['nama'],
                     $r['prodi'],
@@ -681,11 +702,11 @@ class MahasiswaController extends Controller
                 ],
             ],
             'organisasi' => [
-                'title'   => 'Rekap Keaktifan Organisasi',
-                'slug'    => 'Organisasi',
+                'title' => 'Rekap Keaktifan Organisasi',
+                'slug' => 'Organisasi',
                 'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'Organisasi', 'Jabatan', 'Periode Mulai', 'Periode Selesai', 'Status'],
-                'data'    => $this->rekapOrganisasi($request)->getData(true)['data'],
-                'map'     => fn($r) => [
+                'data' => $this->rekapOrganisasi($request)->getData(true)['data'],
+                'map' => fn ($r) => [
                     $r['nim'],
                     $r['nama'],
                     $r['prodi'],
@@ -699,11 +720,11 @@ class MahasiswaController extends Controller
                 ],
             ],
             'pelatihan' => [
-                'title'   => 'Rekap Pelatihan',
-                'slug'    => 'Pelatihan',
+                'title' => 'Rekap Pelatihan',
+                'slug' => 'Pelatihan',
                 'headers' => ['NIM', 'Nama', 'Prodi', 'Angkatan', 'Kategori', 'Nama Pelatihan', 'Jenis', 'Penyelenggara', 'Tanggal Mulai', 'Tanggal Selesai', 'Tempat', 'Status'],
-                'data'    => $this->rekapPelatihan($request)->getData(true)['data'],
-                'map'     => fn($r) => [
+                'data' => $this->rekapPelatihan($request)->getData(true)['data'],
+                'map' => fn ($r) => [
                     $r['nim'],
                     $r['nama'],
                     $r['prodi'],

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Helpers\TahunAjaranHelper;
+use App\Services\IPKCalculatorService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Mahasiswa extends Model
 {
@@ -16,7 +19,7 @@ class Mahasiswa extends Model
         'semester_dicabut', 'tanggal_dicabut', 'alasan_dicabut', 'dicabut_oleh',
         'nik', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
         'alamat', 'no_hp',
-        'nama_ayah', 'nama_ibu', 'tel_ayah', 'tel_ibu'
+        'nama_ayah', 'nama_ibu', 'tel_ayah', 'tel_ibu',
     ];
 
     protected $casts = [
@@ -99,13 +102,15 @@ class Mahasiswa extends Model
                 $q->whereRaw('ipk_semestrs.semester <= ((? - mahasiswas.angkatan) * 2) + ?', [$startYear, $termValue]);
             } elseif ($tahunAjaran) {
                 // Fallback format tak dikenal: pertahankan filter tanggal lama.
-                $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
-                if ($range) $q->where('created_at', '<=', $range[1]);
+                $range = TahunAjaranHelper::getDateRange($tahunAjaran);
+                if ($range) {
+                    $q->where('created_at', '<=', $range[1]);
+                }
             }
         };
 
         $query->addSelect([
-            'ipk_calc' => \App\Models\IpkSemestr::select('ipk')
+            'ipk_calc' => IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->hitungAkademik()
                 ->sudahAdaNilai()
@@ -113,7 +118,7 @@ class Mahasiswa extends Model
                 ->orderByDesc('semester')
                 ->limit(1),
 
-            'prev_ipk_calc' => \App\Models\IpkSemestr::select('ipk')
+            'prev_ipk_calc' => IpkSemestr::select('ipk')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->hitungAkademik()
                 ->sudahAdaNilai()
@@ -122,47 +127,47 @@ class Mahasiswa extends Model
                 ->skip(1)
                 ->limit(1),
 
-            'sp_calc' => \App\Models\SuratPeringatan::select('level')
+            'sp_calc' => SuratPeringatan::select('level')
                 ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                 ->whereIn('status', ['Aktif', 'Masa Tenggang'])
-                ->when($tahunAjaran, function($q) use ($tahunAjaran) {
-                     $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaran);
-                     if ($range) {
-                         $q->where('tanggal_terbit', '<=', $range[1]);
-                     }
+                ->when($tahunAjaran, function ($q) use ($tahunAjaran) {
+                    $range = TahunAjaranHelper::getDateRange($tahunAjaran);
+                    if ($range) {
+                        $q->where('tanggal_terbit', '<=', $range[1]);
+                    }
                 })
                 ->orderByDesc('level')
                 ->limit(1),
 
-            'mk_belum_lulus' => \App\Models\MataKuliah::selectRaw('COUNT(*)')
-                ->whereIn('ipk_semester_id', \App\Models\IpkSemestr::select('id')
+            'mk_belum_lulus' => MataKuliah::selectRaw('COUNT(*)')
+                ->whereIn('ipk_semester_id', IpkSemestr::select('id')
                     ->whereColumn('mahasiswa_id', 'mahasiswas.id')
                     ->hitungAkademik()
                     ->when($tahunAjaran, $applyIpkFilter))
                 ->where('lulus', false)
                 // Nilai netral "-"/"T" (belum dinilai) bukan MK belum lulus.
-                ->whereNotIn('nilai_huruf', \App\Services\IPKCalculatorService::NILAI_HURUF_NETRAL),
+                ->whereNotIn('nilai_huruf', IPKCalculatorService::NILAI_HURUF_NETRAL),
         ])
-        ->with('prodi');
+            ->with('prodi');
 
         if ($tahunAjaran) {
             if (preg_match('/^(\d{4})\/\d{4}\s+(Ganjil|Genap)$/', $tahunAjaran, $matches)) {
                 $startYear = (int) $matches[1];
-                
+
                 // Exclude students who haven't entered yet
                 $query->where('angkatan', '<=', $startYear);
-                
+
                 // Exclude students who graduated/were revoked BEFORE this academic year started
                 // A Ganjil semester starts Sep 1 of $startYear. A Genap semester starts Feb 1 of $startYear+1.
-                $startDate = $matches[2] === 'Ganjil' 
-                    ? \Carbon\Carbon::create($startYear, 9, 1) 
-                    : \Carbon\Carbon::create($startYear + 1, 2, 1);
-                    
-                $query->where(function($q) use ($startDate) {
+                $startDate = $matches[2] === 'Ganjil'
+                    ? Carbon::create($startYear, 9, 1)
+                    : Carbon::create($startYear + 1, 2, 1);
+
+                $query->where(function ($q) use ($startDate) {
                     $q->where('status', 'Aktif')
-                      ->orWhereNull('tanggal_nonaktif')
-                      ->orWhere('tanggal_nonaktif', '>=', $startDate)
-                      ->orWhere('tanggal_dicabut', '>=', $startDate);
+                        ->orWhereNull('tanggal_nonaktif')
+                        ->orWhere('tanggal_nonaktif', '>=', $startDate)
+                        ->orWhere('tanggal_dicabut', '>=', $startDate);
                 });
             }
         }
@@ -179,6 +184,7 @@ class Mahasiswa extends Model
     {
         if (array_key_exists('ipk_calc', $this->attributes)) {
             $ipk = $this->attributes['ipk_calc'];
+
             return $ipk !== null ? (float) $ipk : null;
         }
         $last = $this->ipkSemestrs()
@@ -186,12 +192,13 @@ class Mahasiswa extends Model
             ->sudahAdaNilai()
             ->reorder('semester', 'desc')
             ->first();
+
         return $last ? (float) $last->ipk : null;
     }
 
     public function getSemesterAktifAttribute(): int
     {
-        return \App\Helpers\TahunAjaranHelper::calculateSemester((int) $this->angkatan);
+        return TahunAjaranHelper::calculateSemester((int) $this->angkatan);
     }
 
     /** SP aktif tertinggi */
@@ -204,16 +211,22 @@ class Mahasiswa extends Model
             ->whereIn('status', ['Aktif', 'Masa Tenggang'])
             ->orderByDesc('level')
             ->first();
+
         return $sp?->level;
     }
 
     /** Trend Delta */
     public function getTrendDeltaCalcAttribute(): float
     {
-        if (!isset($this->attributes['ipk_calc'])) return 0.0;
+        if (! isset($this->attributes['ipk_calc'])) {
+            return 0.0;
+        }
         $ipk = (float) $this->attributes['ipk_calc'];
         $prev = isset($this->attributes['prev_ipk_calc']) ? (float) $this->attributes['prev_ipk_calc'] : null;
-        if ($prev === null) return 0.0;
+        if ($prev === null) {
+            return 0.0;
+        }
+
         return round($ipk - $prev, 2);
     }
 

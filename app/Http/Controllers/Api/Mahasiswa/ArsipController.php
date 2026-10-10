@@ -2,44 +2,49 @@
 
 namespace App\Http\Controllers\Api\Mahasiswa;
 
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ArsipController extends Controller
 {
     private function getTipe($url)
     {
-        if (!$url) return 'pdf'; // fallback per guardrail
+        if (! $url) {
+            return 'pdf';
+        } // fallback per guardrail
         $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
         if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
             return 'img';
         }
+
         return 'pdf';
     }
 
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa;
-        if (!$m) return response()->json(['success' => false, 'data' => []]);
+        if (! $m) {
+            return response()->json(['success' => false, 'data' => []]);
+        }
 
         $arsip = collect();
 
         // 1. Prestasi
         $prestasis = $m->prestasis()->where('status', 'Disetujui');
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($prestasis, 'created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($prestasis, 'created_at', $request->tahun_ajaran);
         $prestasis = $prestasis->get();
         foreach ($prestasis as $p) {
             if ($p->file_sertifikat) {
                 $arsip->push([
-                    'id' => 'prestasi_' . $p->id,
+                    'id' => 'prestasi_'.$p->id,
                     'source' => 'prestasi',
                     'nama' => $p->nama_prestasi ?: 'Sertifikat Prestasi',
                     'kategori' => 'Sertifikat Prestasi',
                     'tanggal' => $p->tanggal_mulai ? $p->tanggal_mulai->format('d M Y') : ($p->created_at ? $p->created_at->format('d M Y') : ''),
                     'tipe' => $this->getTipe($p->file_sertifikat),
-                    'file_url' => asset('storage/' . $p->file_sertifikat),
+                    'file_url' => asset('storage/'.$p->file_sertifikat),
                     'status' => 'Disetujui',
                     'tingkat' => $p->tingkat,
                     'pencapaian' => $p->pencapaian,
@@ -55,18 +60,18 @@ class ArsipController extends Controller
 
         // 2. Organisasi
         $organisasis = $m->organisasis()->where('status', 'Disetujui');
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($organisasis, 'created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($organisasis, 'created_at', $request->tahun_ajaran);
         $organisasis = $organisasis->get();
         foreach ($organisasis as $o) {
             if ($o->file_sk) {
                 $arsip->push([
-                    'id' => 'organisasi_' . $o->id,
+                    'id' => 'organisasi_'.$o->id,
                     'source' => 'organisasi',
                     'nama' => $o->nama ?: 'SK Organisasi',
                     'kategori' => 'Bukti Keaktifan Organisasi',
                     'tanggal' => $o->periode_mulai ? $o->periode_mulai->format('d M Y') : ($o->created_at ? $o->created_at->format('d M Y') : ''),
                     'tipe' => $this->getTipe($o->file_sk),
-                    'file_url' => asset('storage/' . $o->file_sk),
+                    'file_url' => asset('storage/'.$o->file_sk),
                     'status' => 'Disetujui',
                     'namaOrganisasi' => $o->nama,
                     'jabatan' => $o->jabatan,
@@ -79,18 +84,18 @@ class ArsipController extends Controller
 
         // 3. Pelatihan
         $pelatihans = $m->pelatihans()->where('status', 'Disetujui');
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($pelatihans, 'created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($pelatihans, 'created_at', $request->tahun_ajaran);
         $pelatihans = $pelatihans->get();
         foreach ($pelatihans as $pel) {
             if ($pel->file_sertifikat) {
                 $arsip->push([
-                    'id' => 'pelatihan_' . $pel->id,
+                    'id' => 'pelatihan_'.$pel->id,
                     'source' => 'pelatihan',
                     'nama' => $pel->nama ?: 'Sertifikat Pelatihan',
                     'kategori' => 'Sertifikat Pelatihan',
                     'tanggal' => $pel->tanggal_mulai ? $pel->tanggal_mulai->format('d M Y') : ($pel->created_at ? $pel->created_at->format('d M Y') : ''),
                     'tipe' => $this->getTipe($pel->file_sertifikat),
-                    'file_url' => asset('storage/' . $pel->file_sertifikat),
+                    'file_url' => asset('storage/'.$pel->file_sertifikat),
                     'status' => 'Disetujui',
                     'namaPelatihan' => $pel->nama,
                     'jenis' => $pel->jenis,
@@ -105,7 +110,7 @@ class ArsipController extends Controller
 
         // 4. Dokumen
         $dokumens = $m->dokumens()->where('status', 'Disetujui')->with('jenis');
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($dokumens, 'created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($dokumens, 'created_at', $request->tahun_ajaran);
         $dokumens = $dokumens->get();
         foreach ($dokumens as $d) {
             if ($d->path_file) {
@@ -113,15 +118,15 @@ class ArsipController extends Controller
                 // Otherwise it will fall back to Dokumen Kewajiban.
                 $namaJenis = $d->jenis ? $d->jenis->nama : '';
                 $kat = ($namaJenis === 'SK Penetapan KIP-K') ? 'SK Penetapan KIP-K' : 'Dokumen Kewajiban';
-                
+
                 $arsip->push([
-                    'id' => 'dokumen_' . $d->id,
+                    'id' => 'dokumen_'.$d->id,
                     'source' => 'dokumen',
                     'nama' => $namaJenis ?: 'Dokumen Kewajiban',
                     'kategori' => $kat,
                     'tanggal' => $d->created_at ? $d->created_at->format('d M Y') : '',
                     'tipe' => $this->getTipe($d->path_file),
-                    'file_url' => asset('storage/' . $d->path_file),
+                    'file_url' => asset('storage/'.$d->path_file),
                     'status' => 'Disetujui',
                 ]);
             }
@@ -129,18 +134,18 @@ class ArsipController extends Controller
 
         // 5. IPK Semesters (Treated as Approved)
         $ipkSemesters = $m->ipkSemestrs();
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($ipkSemesters, 'created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($ipkSemesters, 'created_at', $request->tahun_ajaran);
         $ipkSemesters = $ipkSemesters->get();
         foreach ($ipkSemesters as $ipk) {
             if ($ipk->file_khs) {
                 $arsip->push([
-                    'id' => 'ipk_' . $ipk->id,
+                    'id' => 'ipk_'.$ipk->id,
                     'source' => 'ipk',
-                    'nama' => 'KHS Semester ' . $ipk->semester . ' - ' . $ipk->tahun_ajaran,
+                    'nama' => 'KHS Semester '.$ipk->semester.' - '.$ipk->tahun_ajaran,
                     'kategori' => 'Kartu Hasil Studi',
                     'tanggal' => $ipk->created_at ? $ipk->created_at->format('d M Y') : '',
                     'tipe' => $this->getTipe($ipk->file_khs),
-                    'file_url' => asset('storage/' . $ipk->file_khs),
+                    'file_url' => asset('storage/'.$ipk->file_khs),
                     'status' => 'Disetujui',
                 ]);
             }
@@ -148,11 +153,11 @@ class ArsipController extends Controller
 
         // 6. Bebas Tanggungan
         $btQuery = $m->bebasTanggungan()->where('status', 'Disetujui');
-        \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($btQuery, 'created_at', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateMaxFilter($btQuery, 'created_at', $request->tahun_ajaran);
         $bt = $btQuery->first();
         if ($bt) {
             $arsip->push([
-                'id' => 'bt_' . $bt->id,
+                'id' => 'bt_'.$bt->id,
                 'source' => 'bebas_tanggungan',
                 'nama' => 'Surat Keterangan Penyelesaian Studi',
                 'kategori' => 'Surat Surat Penyelesaian',

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Helpers\AturanAkademik;
+use App\Helpers\TahunAjaranHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,10 +13,10 @@ class SuratPeringatanResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'nim' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->user->nim ?? $this->mahasiswa->nim),
-            'nama' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->user->nama ?? $this->mahasiswa->nama),
-            'prodi' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->prodi->nama ?? $this->mahasiswa->prodi_id),
-            'angkatan' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->angkatan),
+            'nim' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->user->nim ?? $this->mahasiswa->nim),
+            'nama' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->user->nama ?? $this->mahasiswa->nama),
+            'prodi' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->prodi->nama ?? $this->mahasiswa->prodi_id),
+            'angkatan' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->angkatan),
             'level' => $this->level,
             'alasan' => $this->deskripsi,
             'tanggalTerbit' => $this->tanggal_terbit ? $this->tanggal_terbit->format('Y-m-d') : null,
@@ -33,51 +34,69 @@ class SuratPeringatanResource extends JsonResource
             // ditulis langsung di frontend, padahal bawaannya 90.
             'masaTenggang' => AturanAkademik::bilangan('masa_tenggang_sp'),
             'masaTenggangAktif' => AturanAkademik::aktif('masa_tenggang_sp'),
+            'tempat' => $this->tempat ?? 'Garut',
+            'penandatanganNama' => $this->penandatangan_nama,
+            'penandatanganNidn' => $this->penandatangan_nidn,
+            'penandatanganJabatan' => $this->penandatangan_jabatan,
         ];
     }
 
-    private function getTahunAjaranFromDate($date) {
-        if (!$date) return null;
+    private function getTahunAjaranFromDate($date)
+    {
+        if (! $date) {
+            return null;
+        }
         $month = (int) $date->format('m');
         $year = (int) $date->format('Y');
-        
+
         if ($month >= 2 && $month <= 8) {
-            return ($year - 1) . '/' . $year . ' Genap';
+            return ($year - 1).'/'.$year.' Genap';
         } elseif ($month == 1) {
-            return ($year - 1) . '/' . $year . ' Ganjil';
+            return ($year - 1).'/'.$year.' Ganjil';
         } else {
-            return $year . '/' . ($year + 1) . ' Ganjil';
+            return $year.'/'.($year + 1).' Ganjil';
         }
     }
 
-    private function getHistoricalStatus($tahunAjaranFilter) {
-        if (!$tahunAjaranFilter || $tahunAjaranFilter === 'Semua') {
+    private function getHistoricalStatus($tahunAjaranFilter)
+    {
+        if (! $tahunAjaranFilter || $tahunAjaranFilter === 'Semua') {
             return $this->status;
         }
 
-        $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaranFilter);
-        if (!$range) return $this->status;
+        $range = TahunAjaranHelper::getDateRange($tahunAjaranFilter);
+        if (! $range) {
+            return $this->status;
+        }
 
         return $this->status;
     }
 
-    private function getHistoricalSisaHari($tahunAjaranFilter) {
-        if (!$tahunAjaranFilter || $tahunAjaranFilter === 'Semua') {
+    private function getHistoricalSisaHari($tahunAjaranFilter)
+    {
+        if (! $tahunAjaranFilter || $tahunAjaranFilter === 'Semua') {
             return $this->sisa_hari;
         }
 
-        $range = \App\Helpers\TahunAjaranHelper::getDateRange($tahunAjaranFilter);
-        if (!$range) return $this->sisa_hari;
+        $range = TahunAjaranHelper::getDateRange($tahunAjaranFilter);
+        if (! $range) {
+            return $this->sisa_hari;
+        }
 
         $endOfAcademicYear = $range[1];
 
-        if (!$this->batas_evaluasi) return 0;
+        if (! $this->batas_evaluasi) {
+            return 0;
+        }
 
         // If the academic year has fully passed the batas evaluasi, remaining days is 0.
-        if ($endOfAcademicYear > $this->batas_evaluasi) return 0;
+        if ($endOfAcademicYear > $this->batas_evaluasi) {
+            return 0;
+        }
 
         // Calculate days remaining from the perspective of the end of that academic year
         $diff = $endOfAcademicYear->diffInDays($this->batas_evaluasi, false);
+
         return (int) max(0, $diff);
     }
 }

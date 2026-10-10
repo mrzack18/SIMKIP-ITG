@@ -13,7 +13,7 @@ class DokumenJenisResource extends JsonResource
         $dokumen = $this->whenLoaded('dokumens') ? $this->dokumens->first() : null;
 
         return [
-            'id' => $dokumen ? (string)$dokumen->id : 'jenis_' . $this->id,
+            'id' => $dokumen ? (string) $dokumen->id : 'jenis_'.$this->id,
             'dokumenJenisId' => $this->id,
             'kode' => $this->kode,
             'nama' => $this->nama,

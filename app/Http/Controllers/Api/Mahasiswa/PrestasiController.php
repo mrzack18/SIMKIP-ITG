@@ -2,41 +2,47 @@
 
 namespace App\Http\Controllers\Api\Mahasiswa;
 
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PrestasiResource;
 use App\Models\Prestasi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PrestasiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa;
-        if (!$m) return response()->json(['data' => []]);
+        if (! $m) {
+            return response()->json(['data' => []]);
+        }
 
         $query = $m->prestasis();
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $request->tahun_ajaran);
+        TahunAjaranHelper::applyDateRangeFilter($query, 'tanggal_mulai', $request->tahun_ajaran);
 
         $data = $query->latest()->get();
+
         return response()->json([
-            'data' => \App\Http\Resources\PrestasiResource::collection($data)
+            'data' => PrestasiResource::collection($data),
         ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'nama_prestasi'     => 'required|string|max:255',
-            'tingkat'           => 'required|in:Internasional,Nasional,Wilayah,Institusi',
-            'pencapaian'        => 'required|string|max:255',
-            'penyelenggara'     => 'required|string|max:255',
-            'tanggal_mulai'     => 'required|date',
-            'tanggal_selesai'   => 'required|date|after_or_equal:tanggal_mulai',
-            'tempat'            => 'required|string|max:255',
-            'deskripsi'         => 'nullable|string',
-            'link_penyelenggara'=> 'nullable|url|max:500',
-            'file_sertifikat'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'file_foto'         => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+            'nama_prestasi' => 'required|string|max:255',
+            'tingkat' => 'required|in:Internasional,Nasional,Wilayah,Institusi',
+            'pencapaian' => 'required|string|max:255',
+            'penyelenggara' => 'required|string|max:255',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'tempat' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'link_penyelenggara' => 'nullable|url|max:500',
+            'file_sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'file_foto' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
         $m = $request->user()->mahasiswa;
@@ -53,13 +59,13 @@ class PrestasiController extends Controller
             'nama_prestasi', 'tingkat', 'pencapaian', 'penyelenggara',
             'tanggal_mulai', 'tanggal_selesai', 'tempat', 'deskripsi', 'link_penyelenggara',
         ]), [
-            'mahasiswa_id'   => $m->id,
-            'file_sertifikat'=> $fileSert,
-            'file_foto'      => $fileFoto,
-            'status'         => 'Menunggu Validasi',
+            'mahasiswa_id' => $m->id,
+            'file_sertifikat' => $fileSert,
+            'file_foto' => $fileFoto,
+            'status' => 'Menunggu Validasi',
         ]));
 
-        return response()->json(['data' => new \App\Http\Resources\PrestasiResource($p)], 201);
+        return response()->json(['data' => new PrestasiResource($p)], 201);
     }
 
     public function update(Request $request, int $id): JsonResponse
@@ -73,12 +79,16 @@ class PrestasiController extends Controller
 
         // Add file update logic if necessary, or just basic fields for now
         if ($request->hasFile('file_sertifikat')) {
-            if ($p->file_sertifikat) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_sertifikat);
+            if ($p->file_sertifikat) {
+                Storage::disk('public')->delete($p->file_sertifikat);
+            }
             $p->file_sertifikat = $request->file('file_sertifikat')->store("uploads/prestasi/{$m->nim}/sertifikat", 'public');
         }
 
         if ($request->hasFile('file_foto')) {
-            if ($p->file_foto) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_foto);
+            if ($p->file_foto) {
+                Storage::disk('public')->delete($p->file_foto);
+            }
             $p->file_foto = $request->file('file_foto')->store("uploads/prestasi/{$m->nim}/foto", 'public');
         }
 
@@ -87,17 +97,21 @@ class PrestasiController extends Controller
             'tanggal_mulai', 'tanggal_selesai', 'tempat', 'deskripsi', 'link_penyelenggara',
         ]));
 
-        return response()->json(['data' => new \App\Http\Resources\PrestasiResource($p)]);
+        return response()->json(['data' => new PrestasiResource($p)]);
     }
 
     public function destroy(Request $request, int $id): JsonResponse
     {
         $m = $request->user()->mahasiswa;
         $p = Prestasi::where('id', $id)->where('mahasiswa_id', $m->id)->firstOrFail();
-        
-        if ($p->file_sertifikat) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_sertifikat);
-        if ($p->file_foto) \Illuminate\Support\Facades\Storage::disk('public')->delete($p->file_foto);
-        
+
+        if ($p->file_sertifikat) {
+            Storage::disk('public')->delete($p->file_sertifikat);
+        }
+        if ($p->file_foto) {
+            Storage::disk('public')->delete($p->file_foto);
+        }
+
         $p->delete();
 
         return response()->json(['message' => 'Prestasi dihapus.']);
@@ -113,12 +127,12 @@ class PrestasiController extends Controller
         }
 
         $p->update([
-            'status'         => 'Menunggu Validasi',
-            'catatan_admin'  => null,
-            'validated_by'   => null,
-            'validated_at'   => null,
+            'status' => 'Menunggu Validasi',
+            'catatan_admin' => null,
+            'validated_by' => null,
+            'validated_at' => null,
         ]);
 
-        return response()->json(['message' => 'Prestasi berhasil diajukan ulang.', 'data' => new \App\Http\Resources\PrestasiResource($p)]);
+        return response()->json(['message' => 'Prestasi berhasil diajukan ulang.', 'data' => new PrestasiResource($p)]);
     }
 }

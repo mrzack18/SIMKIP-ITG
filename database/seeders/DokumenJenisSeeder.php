@@ -14,7 +14,7 @@ class DokumenJenisSeeder extends Seeder
             ['nama' => 'MABIM',          'is_wajib' => true, 'urutan' => 2],
             ['nama' => 'Bela Negara',    'is_wajib' => true, 'urutan' => 3],
             ['nama' => 'Sertifikasi',    'is_wajib' => true, 'urutan' => 4],
-            ['nama' => 'Berita Acara KP','is_wajib' => true, 'urutan' => 5],
+            ['nama' => 'Berita Acara KP', 'is_wajib' => true, 'urutan' => 5],
         ];
 
         foreach ($jenis as $j) {

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Warek;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\LaporanResource;
+use App\Models\BebasTanggungan;
 use App\Models\IpkSemestr;
 use App\Models\Konfigurasi;
 use App\Models\Laporan;
@@ -29,7 +29,7 @@ class DashboardController extends Controller
         if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
             $ta = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaranFilter);
             if (preg_match('/^(\d{4})\/(\d{4})\s+(Ganjil|Genap)$/', $ta, $matches)) {
-                $currentTahun = $matches[1] . '/' . $matches[2];
+                $currentTahun = $matches[1].'/'.$matches[2];
                 $currentSemester = $matches[3];
             }
         }
@@ -64,10 +64,10 @@ class DashboardController extends Controller
         $pendingQuery = Laporan::with('dibuatOleh')
             ->where('status', 'Diajukan')
             ->where('tujuan_warek', true);
-            
+
         if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
             $pendingQuery->where('tahun_akademik', $currentTahun)
-                         ->where('semester', $currentSemester);
+                ->where('semester', $currentSemester);
         }
 
         $pendingReports = $pendingQuery->latest('submitted_at')
@@ -75,23 +75,24 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($l) {
                 $stats = $this->quickStatistics($l);
+
                 return [
-                    'id'      => $l->id,
-                    'judul'   => $l->judul,
-                    'nomor'   => $l->nomor_surat,
+                    'id' => $l->id,
+                    'judul' => $l->judul,
+                    'nomor' => $l->nomor_surat,
                     'tanggal' => $l->tanggal_laporan?->format('d F Y'),
                     'summary' => $this->buildSummaryText($stats),
-                    'by'      => $l->dibuatOleh?->name ?? 'Biro Kemahasiswaan',
+                    'by' => $l->dibuatOleh?->name ?? 'Biro Kemahasiswaan',
                 ];
             });
 
         // --- Approved reports (last 5) ---
         $approvedQuery = Laporan::with('latestReview')
             ->where('status', 'Disetujui');
-            
+
         if ($tahunAjaranFilter && $tahunAjaranFilter !== 'Semua') {
             $approvedQuery->where('tahun_akademik', $currentTahun)
-                          ->where('semester', $currentSemester);
+                ->where('semester', $currentSemester);
         }
 
         $approvedReports = $approvedQuery->latest('tanggal_laporan')
@@ -99,24 +100,24 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($l) {
                 return [
-                    'id'           => $l->id,
-                    'judul'        => $l->judul,
-                    'nomor'        => $l->nomor_surat,
-                    'tanggal'      => $l->tanggal_laporan?->format('d F Y'),
+                    'id' => $l->id,
+                    'judul' => $l->judul,
+                    'nomor' => $l->nomor_surat,
+                    'tanggal' => $l->tanggal_laporan?->format('d F Y'),
                     'approvedDate' => $l->latestReview?->reviewed_at?->format('d F Y'),
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'stats'   => [
-                'totalMahasiswaAktif'        => $totalMahasiswa,
-                'regulerCount'              => $reguler,
-                'aspirasiCount'             => $aspirasi,
+            'stats' => [
+                'totalMahasiswaAktif' => $totalMahasiswa,
+                'regulerCount' => $reguler,
+                'aspirasiCount' => $aspirasi,
                 'laporanDisetujuiSemesterIni' => $laporanDisetujuiSemesterIni,
-                'currentPeriode'            => "{$currentSemester} {$currentTahun}",
+                'currentPeriode' => "{$currentSemester} {$currentTahun}",
             ],
-            'pendingReports'  => $pendingReports,
+            'pendingReports' => $pendingReports,
             'approvedReports' => $approvedReports,
         ]);
     }
@@ -127,13 +128,13 @@ class DashboardController extends Controller
     private function buildSummaryText(array $stats): string
     {
         $totalMhs = $stats['totalMahasiswa'];
-        $avgIpk   = $stats['rataIpk'];
-        $spAktif  = $stats['spAktif'];
+        $avgIpk = $stats['rataIpk'];
+        $spAktif = $stats['spAktif'];
 
         $parts = [];
         $parts[] = "{$totalMhs} mahasiswa";
         if ($avgIpk !== null) {
-            $parts[] = 'rata-rata IPK ' . number_format($avgIpk, 2);
+            $parts[] = 'rata-rata IPK '.number_format($avgIpk, 2);
         }
         if ($spAktif > 0) {
             $parts[] = "{$spAktif} SP aktif";
@@ -158,11 +159,15 @@ class DashboardController extends Controller
             $mQuery->where('angkatan', $l->angkatan);
         } elseif ($l->cakupan === 'prodi') {
             $prodi = Prodi::where('nama', $l->prodi)->first();
-            if ($prodi) $mQuery->where('prodi_id', $prodi->id);
+            if ($prodi) {
+                $mQuery->where('prodi_id', $prodi->id);
+            }
         } elseif ($l->cakupan === 'keduanya') {
             $mQuery->where('angkatan', $l->angkatan);
             $prodi = Prodi::where('nama', $l->prodi)->first();
-            if ($prodi) $mQuery->where('prodi_id', $prodi->id);
+            if ($prodi) {
+                $mQuery->where('prodi_id', $prodi->id);
+            }
         }
 
         $mIds = $mQuery->pluck('id')->toArray();
@@ -171,9 +176,9 @@ class DashboardController extends Controller
             ->sudahAdaNilai()
             ->get()
             ->groupBy('mahasiswa_id')
-            ->map(fn($rows) => $rows->sortByDesc('semester')->first()?->ipk)
-            ->filter(fn($v) => $v !== null)
-            ->map(fn($v) => (float) $v);
+            ->map(fn ($rows) => $rows->sortByDesc('semester')->first()?->ipk)
+            ->filter(fn ($v) => $v !== null)
+            ->map(fn ($v) => (float) $v);
 
         $rataIpk = $latestIpks->count() > 0 ? round($latestIpks->avg(), 2) : null;
 
@@ -183,11 +188,11 @@ class DashboardController extends Controller
 
         // Distribusi IPK buckets
         $ipkBuckets = [
-            ['range' => '< 2.5',    'jml' => $latestIpks->filter(fn($v) => $v < 2.5)->count()],
-            ['range' => '2.5–2.9',  'jml' => $latestIpks->filter(fn($v) => $v >= 2.5 && $v < 3.0)->count()],
-            ['range' => '3.0–3.4',  'jml' => $latestIpks->filter(fn($v) => $v >= 3.0 && $v < 3.5)->count()],
-            ['range' => '3.5–3.9',  'jml' => $latestIpks->filter(fn($v) => $v >= 3.5 && $v < 4.0)->count()],
-            ['range' => '4.0',      'jml' => $latestIpks->filter(fn($v) => $v == 4.0)->count()],
+            ['range' => '< 2.5',    'jml' => $latestIpks->filter(fn ($v) => $v < 2.5)->count()],
+            ['range' => '2.5–2.9',  'jml' => $latestIpks->filter(fn ($v) => $v >= 2.5 && $v < 3.0)->count()],
+            ['range' => '3.0–3.4',  'jml' => $latestIpks->filter(fn ($v) => $v >= 3.0 && $v < 3.5)->count()],
+            ['range' => '3.5–3.9',  'jml' => $latestIpks->filter(fn ($v) => $v >= 3.5 && $v < 4.0)->count()],
+            ['range' => '4.0',      'jml' => $latestIpks->filter(fn ($v) => $v == 4.0)->count()],
         ];
 
         // Sample mahasiswa (top 8 sorted by IPK desc) for "Sample" table
@@ -208,27 +213,27 @@ class DashboardController extends Controller
             ->orderByDesc('ipk_calc')
             ->limit(8)
             ->get()
-            ->map(fn($m) => [
-                'nim'      => $m->nim,
-                'nama'     => $m->nama,
-                'prodi'    => $this->prodiShortName($m->prodi?->nama ?? ''),
-                'ipk'      => $m->ipk_calc !== null ? (float) $m->ipk_calc : null,
-                'status'   => $m->sp_calc ? "SP" : 'Aktif',
+            ->map(fn ($m) => [
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'prodi' => $this->prodiShortName($m->prodi?->nama ?? ''),
+                'ipk' => $m->ipk_calc !== null ? (float) $m->ipk_calc : null,
+                'status' => $m->sp_calc ? 'SP' : 'Aktif',
                 'kategori' => $m->kategori,
             ]);
 
         // Bebas tanggungan (Surat Penyelesaian count) for the period
-        $bebas = \App\Models\BebasTanggungan::whereIn('mahasiswa_id', $mIds)
+        $bebas = BebasTanggungan::whereIn('mahasiswa_id', $mIds)
             ->where('status', 'Disetujui')
             ->count();
 
         return [
             'totalMahasiswa' => count($mIds),
-            'rataIpk'        => $rataIpk,
-            'spAktif'        => $spAktif,
-            'bebas'          => $bebas,
-            'distribusiIPK'  => $ipkBuckets,
-            'mahasiswaSample'=> $samples,
+            'rataIpk' => $rataIpk,
+            'spAktif' => $spAktif,
+            'bebas' => $bebas,
+            'distribusiIPK' => $ipkBuckets,
+            'mahasiswaSample' => $samples,
         ];
     }
 

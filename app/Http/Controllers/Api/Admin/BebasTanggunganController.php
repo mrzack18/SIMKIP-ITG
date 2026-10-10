@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BebasTanggunganResource;
 use App\Models\AuditLog;
 use App\Models\BebasTanggungan;
 use App\Models\Notification;
 use App\Services\BebasTanggunganService;
-use App\Http\Resources\BebasTanggunganResource;
+use App\Services\PdfGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BebasTanggunganController extends Controller
 {
@@ -17,62 +20,61 @@ class BebasTanggunganController extends Controller
     {
         $baseQuery = BebasTanggungan::with([
             'mahasiswa.prodi',
-            'mahasiswa.suratPeringatans' => fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']),
+            'mahasiswa.suratPeringatans' => fn ($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']),
             'mahasiswa.ipkSemestrs',
             'mahasiswa.dokumens.jenis',
         ]);
-        
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($baseQuery, 'bebas_tanggungans.created_at', $request->tahun_ajaran);
+
+        TahunAjaranHelper::applyDateRangeFilter($baseQuery, 'bebas_tanggungans.created_at', $request->tahun_ajaran);
 
         if ($request->status && $request->status !== 'Semua') {
             $statusMap = [
-                'menunggu'    => ['Menunggu', 'Diproses'],
+                'menunggu' => ['Menunggu', 'Diproses'],
                 'diterbitkan' => ['Disetujui'],
-                'ditolak'     => ['Ditolak'],
+                'ditolak' => ['Ditolak'],
             ];
             $dbStatus = $statusMap[$request->status] ?? [$request->status];
             $baseQuery->whereIn('status', $dbStatus);
         }
 
         if ($s = $request->search) {
-            $baseQuery->whereHas('mahasiswa', fn($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
+            $baseQuery->whereHas('mahasiswa', fn ($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
         }
 
         if ($request->prodi && $request->prodi !== 'Semua Prodi') {
-            $baseQuery->whereHas('mahasiswa.prodi', fn($q) => $q->where('nama', $request->prodi));
+            $baseQuery->whereHas('mahasiswa.prodi', fn ($q) => $q->where('nama', $request->prodi));
         }
 
         if ($request->angkatan && $request->angkatan !== 'Semua Angkatan') {
-            $baseQuery->whereHas('mahasiswa', fn($q) => $q->where('angkatan', $request->angkatan));
+            $baseQuery->whereHas('mahasiswa', fn ($q) => $q->where('angkatan', $request->angkatan));
         }
 
         $limit = (int) ($request->limit ?? 10);
-        $page  = (int) ($request->page ?? 1);
+        $page = (int) ($request->page ?? 1);
         $total = $baseQuery->count();
-        $data  = $baseQuery->latest()->skip(($page - 1) * $limit)->take($limit)->get();
+        $data = $baseQuery->latest()->skip(($page - 1) * $limit)->take($limit)->get();
 
         // Per-status counts (filtered by tahun_ajaran to match displayed data)
         $tahunAjaranQuery = BebasTanggungan::query();
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($tahunAjaranQuery, 'bebas_tanggungans.created_at', $request->tahun_ajaran);
-        $countMenunggu    = (clone $tahunAjaranQuery)->whereIn('status', ['Menunggu', 'Diproses'])->count();
+        TahunAjaranHelper::applyDateRangeFilter($tahunAjaranQuery, 'bebas_tanggungans.created_at', $request->tahun_ajaran);
+        $countMenunggu = (clone $tahunAjaranQuery)->whereIn('status', ['Menunggu', 'Diproses'])->count();
         $countDiterbitkan = (clone $tahunAjaranQuery)->where('status', 'Disetujui')->count();
-        $countDitolak     = (clone $tahunAjaranQuery)->where('status', 'Ditolak')->count();
+        $countDitolak = (clone $tahunAjaranQuery)->where('status', 'Ditolak')->count();
 
         return response()->json([
-            'success'      => true,
-            'data'         => BebasTanggunganResource::collection($data),
-            'total'        => $total,
-            'page'         => $page,
-            'limit'        => $limit,
-            'total_pages'  => (int) ceil($total / max(1, $limit)),
-            'counts'       => [
-                'menunggu'    => $countMenunggu,
+            'success' => true,
+            'data' => BebasTanggunganResource::collection($data),
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'total_pages' => (int) ceil($total / max(1, $limit)),
+            'counts' => [
+                'menunggu' => $countMenunggu,
                 'diterbitkan' => $countDiterbitkan,
-                'ditolak'     => $countDitolak,
+                'ditolak' => $countDitolak,
             ],
         ]);
     }
-
 
     public function show(int $id): JsonResponse
     {
@@ -81,57 +83,55 @@ class BebasTanggunganController extends Controller
             'histories.reviewedBy',
         ])->findOrFail($id);
 
-        $m        = $b->mahasiswa;
+        $m = $b->mahasiswa;
         $checklist = BebasTanggunganService::getChecklist($m);
 
         $rejectionHistory = $b->histories
             ->where('status', 'Ditolak')
             ->sortBy('created_at')
             ->values()
-            ->map(fn($h) => [
-                'tgl'    => $h->created_at->format('d M Y'),
-                'catatan'=> $h->catatan,
-                'oleh'   => $h->reviewedBy?->name ?? 'Sistem',
+            ->map(fn ($h) => [
+                'tgl' => $h->created_at->format('d M Y'),
+                'catatan' => $h->catatan,
+                'oleh' => $h->reviewedBy?->name ?? 'Sistem',
             ]);
 
         $statusMap = [
-            'Menunggu'  => 'menunggu',
-            'Diproses'  => 'menunggu',
+            'Menunggu' => 'menunggu',
+            'Diproses' => 'menunggu',
             'Disetujui' => 'diterbitkan',
-            'Ditolak'   => 'ditolak',
+            'Ditolak' => 'ditolak',
         ];
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
             'permohonan' => [
-                'id'            => $b->id,
-                'status'        => $statusMap[$b->status] ?? 'menunggu',
+                'id' => $b->id,
+                'status' => $statusMap[$b->status] ?? 'menunggu',
                 'tanggalAjukan' => $b->tanggal_ajukan?->format('d M Y'),
                 'tanggalTerbit' => $b->tanggal_terbit?->format('d M Y'),
-                'nomorSurat'    => $b->nomor_surat,
-                'catatanAdmin'  => $b->catatan_admin,
-                'tahunAjaran'   => $b->created_at ? self::getTahunAjaranFromDate($b->created_at) : null,
+                'nomorSurat' => $b->nomor_surat,
+                'catatanAdmin' => $b->catatan_admin,
+                'tahunAjaran' => $b->created_at ? self::getTahunAjaranFromDate($b->created_at) : null,
             ],
-            'mahasiswa'  => [
-                'id'       => $m->id,
-                'nim'      => $m->nim,
-                'nama'     => $m->nama,
-                'prodi'    => $m->prodi?->nama,
+            'mahasiswa' => [
+                'id' => $m->id,
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'prodi' => $m->prodi?->nama,
                 'angkatan' => $m->angkatan,
                 'semester' => $m->semester_aktif,
             ],
-            'checklist'         => $checklist['checklist'],
-            'dokumen'           => $checklist['dokumen'],
-            'sksDitempuh'       => $checklist['sks_ditempuh'],
-            'sksMinimum'        => $checklist['sks_minimum'],
-            'ipkTerakhir'       => $checklist['ipk_terakhir'],
-            'ipkMinimum'        => $checklist['ipk_minimum'],
-            'canApply'          => $checklist['can_apply'],
-            'rejectionHistory'  => $rejectionHistory,
+            'checklist' => $checklist['checklist'],
+            'dokumen' => $checklist['dokumen'],
+            'sksDitempuh' => $checklist['sks_ditempuh'],
+            'sksMinimum' => $checklist['sks_minimum'],
+            'ipkTerakhir' => $checklist['ipk_terakhir'],
+            'ipkMinimum' => $checklist['ipk_minimum'],
+            'canApply' => $checklist['can_apply'],
+            'rejectionHistory' => $rejectionHistory,
         ]);
     }
-
-
 
     public function approve(Request $request, int $id): JsonResponse
     {
@@ -141,20 +141,20 @@ class BebasTanggunganController extends Controller
             return response()->json(['success' => false, 'message' => 'Permohonan sudah diproses.'], 422);
         }
 
-        $nomor = 'SKPS/KIP-K/ITG/' . strtoupper(now()->format('m')) . '/' . now()->year . '/' . str_pad($id, 3, '0', STR_PAD_LEFT);
+        $nomor = 'SKPS/KIP-K/ITG/'.strtoupper(now()->format('m')).'/'.now()->year.'/'.str_pad($id, 3, '0', STR_PAD_LEFT);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($b, $nomor) {
+        DB::transaction(function () use ($b, $nomor) {
             $b->update([
-                'status'        => 'Disetujui',
-                'reviewed_by'   => auth()->id(),
-                'reviewed_at'   => now(),
-                'nomor_surat'   => $nomor,
-                'tanggal_terbit'=> now()->toDateString(),
+                'status' => 'Disetujui',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'nomor_surat' => $nomor,
+                'tanggal_terbit' => now()->toDateString(),
             ]);
 
             $b->histories()->create([
-                'status'      => 'Disetujui',
-                'catatan'     => "Surat diterbitkan dengan nomor {$nomor}",
+                'status' => 'Disetujui',
+                'catatan' => "Surat diterbitkan dengan nomor {$nomor}",
                 'reviewed_by' => auth()->id(),
             ]);
 
@@ -181,22 +181,22 @@ class BebasTanggunganController extends Controller
         $request->validate(['alasan' => 'required|string|min:10']);
 
         $b = BebasTanggungan::with('mahasiswa.user')->findOrFail($id);
-        
+
         if ($b->status === 'Disetujui' || $b->status === 'Ditolak') {
             return response()->json(['success' => false, 'message' => 'Permohonan sudah diproses.'], 422);
         }
-        
-        \Illuminate\Support\Facades\DB::transaction(function () use ($b, $request) {
+
+        DB::transaction(function () use ($b, $request) {
             $b->update([
-                'status'       => 'Ditolak',
-                'reviewed_by'  => auth()->id(),
-                'reviewed_at'  => now(),
-                'catatan_admin'=> $request->alasan,
+                'status' => 'Ditolak',
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'catatan_admin' => $request->alasan,
             ]);
 
             $b->histories()->create([
-                'status'      => 'Ditolak',
-                'catatan'     => $request->alasan,
+                'status' => 'Ditolak',
+                'catatan' => $request->alasan,
                 'reviewed_by' => auth()->id(),
             ]);
         });
@@ -218,20 +218,23 @@ class BebasTanggunganController extends Controller
         if ($b->status !== 'Disetujui') {
             return response()->json(['success' => false, 'message' => 'Surat belum diterbitkan.'], 403);
         }
-        return \App\Services\PdfGeneratorService::suratBebasTanggungan($id);
+
+        return PdfGeneratorService::suratBebasTanggungan($id);
     }
 
     private static function getTahunAjaranFromDate($date): ?string
     {
-        if (!$date) return null;
+        if (! $date) {
+            return null;
+        }
         $month = (int) $date->format('m');
         $year = (int) $date->format('Y');
         if ($month >= 2 && $month <= 8) {
-            return ($year - 1) . '/' . $year . ' Genap';
+            return ($year - 1).'/'.$year.' Genap';
         } elseif ($month == 1) {
-            return ($year - 1) . '/' . $year . ' Ganjil';
+            return ($year - 1).'/'.$year.' Ganjil';
         } else {
-            return $year . '/' . ($year + 1) . ' Ganjil';
+            return $year.'/'.($year + 1).' Ganjil';
         }
     }
 }

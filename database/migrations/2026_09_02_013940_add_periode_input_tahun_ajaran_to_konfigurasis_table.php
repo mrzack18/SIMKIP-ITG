@@ -8,12 +8,12 @@ return new class extends Migration
     public function up(): void
     {
         $exists = DB::table('konfigurasis')->where('key', 'periode_input_tahun_ajaran')->exists();
-        if (!$exists) {
+        if (! $exists) {
             DB::table('konfigurasis')->insert([
-                'key'   => 'periode_input_tahun_ajaran',
+                'key' => 'periode_input_tahun_ajaran',
                 'label' => 'TA Periode Input Nilai',
                 'value' => null,
-                'tipe'  => 'text',
+                'tipe' => 'text',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

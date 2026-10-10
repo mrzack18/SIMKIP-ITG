@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\SuratPeringatan;
 use App\Models\Mahasiswa;
+use App\Models\SuratPeringatan;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -15,7 +15,7 @@ class SuratPeringatanFactory extends Factory
     {
         $status = $this->faker->randomElement(['Aktif', 'Selesai', 'Masa Tenggang']);
         $terbit = $this->faker->dateTimeBetween('-1 year', 'now');
-        
+
         $batas = clone $terbit;
         if ($status === 'Aktif') {
             $batas->modify('+6 months');

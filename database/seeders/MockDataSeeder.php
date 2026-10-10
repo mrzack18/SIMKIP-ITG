@@ -2,18 +2,17 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Prodi;
-use App\Models\Mahasiswa;
+use App\Models\BebasTanggungan;
+use App\Models\Dokumen;
 use App\Models\IpkSemestr;
+use App\Models\Mahasiswa;
 use App\Models\MataKuliah;
-use App\Models\Prestasi;
 use App\Models\Organisasi;
 use App\Models\Pelatihan;
-use App\Models\Dokumen;
+use App\Models\Prestasi;
+use App\Models\Prodi;
 use App\Models\SuratPeringatan;
-use App\Models\BebasTanggungan;
+use Illuminate\Database\Seeder;
 
 class MockDataSeeder extends Seeder
 {
@@ -29,7 +28,7 @@ class MockDataSeeder extends Seeder
         // Mahasiswa Lulus / Bebas Tanggungan
         $mhsLulus = Mahasiswa::factory()->create([
             'status' => 'Lulus',
-            'prodi_id' => $prodis->random()->id
+            'prodi_id' => $prodis->random()->id,
         ]);
         BebasTanggungan::factory()->create(['mahasiswa_id' => $mhsLulus->id, 'status' => 'Disetujui']);
 
@@ -40,7 +39,7 @@ class MockDataSeeder extends Seeder
             'semester_dicabut' => 'Ganjil 2025/2026',
             'tanggal_dicabut' => '2026-02-10',
             'alasan_dicabut' => 'IPK di Bawah Standar',
-            'dicabut_oleh' => 'Admin Pusat'
+            'dicabut_oleh' => 'Admin Pusat',
         ]);
 
         // Mahasiswa Nonaktif
@@ -48,13 +47,13 @@ class MockDataSeeder extends Seeder
             'status' => 'Nonaktif',
             'prodi_id' => $prodis->random()->id,
             'alasan_nonaktif' => 'Cuti Akademik',
-            'tanggal_nonaktif' => '2026-01-15'
+            'tanggal_nonaktif' => '2026-01-15',
         ]);
 
         // --- 2. MAHASISWA AKTIF BANYAK ---
         $mahasiswas = Mahasiswa::factory()->count(25)->create([
             'status' => 'Aktif',
-            'prodi_id' => fn() => $prodis->random()->id
+            'prodi_id' => fn () => $prodis->random()->id,
         ]);
 
         foreach ($mahasiswas as $index => $mhs) {
@@ -69,7 +68,7 @@ class MockDataSeeder extends Seeder
 
                     // Mata Kuliah per semester
                     MataKuliah::factory()->count(rand(4, 6))->create([
-                        'ipk_semester_id' => $ipk->id
+                        'ipk_semester_id' => $ipk->id,
                     ]);
                 }
             }
@@ -88,7 +87,7 @@ class MockDataSeeder extends Seeder
             // Dokumen (sebagian besar menunggu untuk test queue admin)
             Dokumen::factory()->count(rand(2, 5))->create([
                 'mahasiswa_id' => $mhs->id,
-                'status' => rand(0, 2) === 0 ? 'Disetujui' : (rand(0, 2) === 1 ? 'Ditolak' : 'Menunggu')
+                'status' => rand(0, 2) === 0 ? 'Disetujui' : (rand(0, 2) === 1 ? 'Ditolak' : 'Menunggu'),
             ]);
 
             // C. SURAT PERINGATAN (Skenario Khusus)

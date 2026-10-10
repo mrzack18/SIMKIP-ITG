@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\MataKuliah;
 use App\Models\IpkSemestr;
 use App\Models\Mahasiswa;
+use App\Models\MataKuliah;
 use App\Models\NilaiMutu;
 use Illuminate\Support\Facades\Cache;
 
@@ -39,11 +39,11 @@ class IPKCalculatorService
         $nilai = strtoupper(trim($nilaiHuruf));
 
         return match ($nilai) {
-            '-'      => 'MK Belum Diambil',
-            'T'      => 'Dosen Belum Menilai',
+            '-' => 'MK Belum Diambil',
+            'T' => 'Dosen Belum Menilai',
             'D', 'E' => 'Belum Lulus',
-            ''       => 'Belum Dinilai',
-            default  => 'Lulus',
+            '' => 'Belum Dinilai',
+            default => 'Lulus',
         };
     }
 
@@ -53,18 +53,18 @@ class IPKCalculatorService
         $nilai = strtoupper(trim($nilaiHuruf));
 
         return match ($nilai) {
-            '-'      => 'belum_diambil',
-            'T'      => 'belum_dinilai',
+            '-' => 'belum_diambil',
+            'T' => 'belum_dinilai',
             'D', 'E' => 'belum_lulus',
-            ''       => 'kosong',
-            default  => 'lulus',
+            '' => 'kosong',
+            default => 'lulus',
         };
     }
 
     private static function getNilaiMutuMap(): array
     {
         return Cache::remember('nilai_mutu_map', 3600, function () {
-            return NilaiMutu::all()->keyBy(fn($n) => strtoupper($n->huruf))->toArray();
+            return NilaiMutu::all()->keyBy(fn ($n) => strtoupper($n->huruf))->toArray();
         });
     }
 
@@ -72,6 +72,7 @@ class IPKCalculatorService
     {
         $map = self::getNilaiMutuMap();
         $key = strtoupper($nilaiHuruf);
+
         return isset($map[$key]) ? (float) $map[$key]['poin'] : 0.0;
     }
 
@@ -79,17 +80,19 @@ class IPKCalculatorService
     {
         $map = self::getNilaiMutuMap();
         $key = strtoupper($nilaiHuruf);
+
         return isset($map[$key]) ? (bool) $map[$key]['lulus'] : false;
     }
 
     /**
      * Hitung IPS dari array mata kuliah
-     * @param array $mks [['sks' => 3, 'nilai_huruf' => 'A'], ...]
+     *
+     * @param  array  $mks  [['sks' => 3, 'nilai_huruf' => 'A'], ...]
      */
     public static function hitungIPS(array $mks): float
     {
         $totalBobot = 0.0;
-        $totalSKS   = 0;
+        $totalSKS = 0;
 
         foreach ($mks as $mk) {
             if (self::isNilaiNetral((string) $mk['nilai_huruf'])) {
@@ -97,10 +100,12 @@ class IPKCalculatorService
             }
             $mutu = self::nilaiMutu($mk['nilai_huruf']);
             $totalBobot += $mutu * $mk['sks'];
-            $totalSKS   += $mk['sks'];
+            $totalSKS += $mk['sks'];
         }
 
-        if ($totalSKS === 0) return 0.0;
+        if ($totalSKS === 0) {
+            return 0.0;
+        }
 
         return round($totalBobot / $totalSKS, 2);
     }
@@ -116,12 +121,12 @@ class IPKCalculatorService
             $alasan = isset($mk['alasan_perubahan']) ? trim((string) $mk['alasan_perubahan']) : '';
 
             return [
-                'kode'        => $mk['kode'],
-                'nama'        => $mk['nama'],
-                'sks'         => (int) $mk['sks'],
+                'kode' => $mk['kode'],
+                'nama' => $mk['nama'],
+                'sks' => (int) $mk['sks'],
                 'nilai_huruf' => strtoupper($mk['nilai_huruf']),
-                'nilai_mutu'  => self::nilaiMutu($mk['nilai_huruf']),
-                'lulus'       => self::isLulus($mk['nilai_huruf']),
+                'nilai_mutu' => self::nilaiMutu($mk['nilai_huruf']),
+                'lulus' => self::isLulus($mk['nilai_huruf']),
                 'alasan_perubahan' => $alasan !== '' ? $alasan : null,
             ];
         }, $mks);
@@ -132,13 +137,13 @@ class IPKCalculatorService
      */
     public static function getUniqueCoursesUpToSemester(int $mahasiswaId, int $maxSemester): array
     {
-        $allMKs = MataKuliah::whereHas('ipkSemestr', function($q) use ($mahasiswaId, $maxSemester) {
+        $allMKs = MataKuliah::whereHas('ipkSemestr', function ($q) use ($mahasiswaId, $maxSemester) {
             $q->where('mahasiswa_id', $mahasiswaId)->where('semester', '<=', $maxSemester);
         })
-        ->join('ipk_semestrs', 'mata_kuliahs.ipk_semester_id', '=', 'ipk_semestrs.id')
-        ->select('mata_kuliahs.*', 'ipk_semestrs.semester as semester')
-        ->orderBy('ipk_semestrs.semester', 'asc')
-        ->get();
+            ->join('ipk_semestrs', 'mata_kuliahs.ipk_semester_id', '=', 'ipk_semestrs.id')
+            ->select('mata_kuliahs.*', 'ipk_semestrs.semester as semester')
+            ->orderBy('ipk_semestrs.semester', 'asc')
+            ->get();
 
         $uniqueMks = [];
         foreach ($allMKs as $mk) {
@@ -255,26 +260,27 @@ class IPKCalculatorService
         // Get unique courses up to the latest semester (using an arbitrarily large maxSemester)
         $uniqueMks = self::getUniqueCoursesUpToSemester($mahasiswaId, 999);
         $carryOver = [];
-        
+
         foreach ($uniqueMks as $mk) {
             // Nilai netral ("-"/"T" = belum dinilai) bukan mata kuliah gagal.
             if (self::isNilaiNetral((string) $mk->nilai_huruf)) {
                 continue;
             }
 
-            if (!self::isLulus($mk->nilai_huruf)) {
+            if (! self::isLulus($mk->nilai_huruf)) {
                 $carryOver[] = [
                     'kode' => $mk->kode,
                     'nama' => $mk->nama,
                     'sks' => $mk->sks,
                     'nilaiHuruf' => $mk->nilai_huruf,
-                    'semesterAwal' => "Semester " . $mk->semester,
+                    'semesterAwal' => 'Semester '.$mk->semester,
                 ];
             }
         }
-        
+
         // Sort by semester ascending
-        usort($carryOver, fn($a, $b) => $a['semesterAwal'] <=> $b['semesterAwal']);
+        usort($carryOver, fn ($a, $b) => $a['semesterAwal'] <=> $b['semesterAwal']);
+
         return $carryOver;
     }
 }

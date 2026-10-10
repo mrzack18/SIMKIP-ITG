@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Exceptions\LsipdException;
 use App\Helpers\TahunAjaranHelper;
+use App\Models\IpkSemestr;
 use App\Models\Mahasiswa;
 use App\Models\MataKuliah;
-use App\Models\IpkSemestr;
 use App\Models\Prodi;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -27,12 +27,12 @@ class LsipdSyncService
         $items = LsipdClientService::getMahasiswaList();
 
         $stats = [
-            'inserted'       => 0,
-            'updated'        => 0,
-            'unchanged'      => 0,
-            'skipped'        => 0,
-            'total'          => count($items),
-            'prodi_missing'  => 0,
+            'inserted' => 0,
+            'updated' => 0,
+            'unchanged' => 0,
+            'skipped' => 0,
+            'total' => count($items),
+            'prodi_missing' => 0,
         ];
 
         $total = count($items);
@@ -44,6 +44,7 @@ class LsipdSyncService
                 if ($onProgress) {
                     $onProgress($stats, $index + 1, $total);
                 }
+
                 continue;
             }
 
@@ -58,7 +59,7 @@ class LsipdSyncService
                 $stats[$result]++;
             } catch (\Throwable $e) {
                 Log::warning('LSIPD sync mahasiswa dilewati', [
-                    'nim'    => $nim,
+                    'nim' => $nim,
                     'reason' => $e->getMessage(),
                 ]);
                 $stats['skipped']++;
@@ -144,13 +145,14 @@ class LsipdSyncService
                 if (! $data) {
                     Log::info('LSIPD syncTranskrip dilewati (data kosong)', ['nim' => $mahasiswa->nim]);
                     $stats['failed']++;
+
                     continue;
                 }
                 self::writeTranskrip($mahasiswa, $data);
                 $stats['success']++;
             } catch (\Throwable $e) {
                 Log::warning('LSIPD syncTranskrip gagal', [
-                    'nim'    => $mahasiswa->nim,
+                    'nim' => $mahasiswa->nim,
                     'reason' => $e->getMessage(),
                 ]);
                 $stats['failed']++;
@@ -189,9 +191,9 @@ class LsipdSyncService
                 ->value('ipk');
 
             return [
-                'semester_inserted'     => $semesterInserted,
-                'mata_kuliah_inserted'  => $mkInserted,
-                'last_ipk'              => $lastIpk !== null ? (float) $lastIpk : null,
+                'semester_inserted' => $semesterInserted,
+                'mata_kuliah_inserted' => $mkInserted,
+                'last_ipk' => $lastIpk !== null ? (float) $lastIpk : null,
             ];
         });
     }
@@ -209,9 +211,10 @@ class LsipdSyncService
             $prodiId = self::resolveProdiId((string) $item['prodi_kode']);
             if (! $prodiId) {
                 Log::warning('LSIPD: prodi tidak dikenali, lewati insert/update', [
-                    'nim'        => $nim,
+                    'nim' => $nim,
                     'prodi_kode' => $item['prodi_kode'],
                 ]);
+
                 return 'skipped';
             }
         }
@@ -222,13 +225,16 @@ class LsipdSyncService
             $existing->fill($payload);
             if ($existing->isDirty()) {
                 $existing->save();
+
                 return 'updated';
             }
+
             return 'unchanged';
         }
 
         if (! $prodiId) {
             Log::warning('LSIPD: tidak bisa create Mahasiswa baru tanpa prodi_id', ['nim' => $nim]);
+
             return 'skipped';
         }
 
@@ -236,17 +242,17 @@ class LsipdSyncService
         $user = self::findOrCreateUser($nim, $nama, (string) ($payload['no_hp'] ?? null));
 
         Mahasiswa::create($payload + [
-            'user_id'    => $user->id,
-            'nim'        => $nim,
-            'kategori'   => $payload['kategori'] ?? 'Reguler',
-            'status'     => $payload['status'] ?? 'Aktif',
-            'prodi_id'   => $prodiId,
-            'nomor_sk'   => 'LSIPD-SYNC',
+            'user_id' => $user->id,
+            'nim' => $nim,
+            'kategori' => $payload['kategori'] ?? 'Reguler',
+            'status' => $payload['status'] ?? 'Aktif',
+            'prodi_id' => $prodiId,
+            'nomor_sk' => 'LSIPD-SYNC',
             'tanggal_sk' => Carbon::now()->toDateString(),
         ]);
 
         Log::info('LSIPD: Mahasiswa baru diimpor', [
-            'nim'  => $nim,
+            'nim' => $nim,
             'nama' => $nama,
             'user' => $user->username,
         ]);
@@ -264,24 +270,25 @@ class LsipdSyncService
         $email = self::generateEmail($nim, $nama);
         $existingEmail = User::where('email', $email)->first();
         if ($existingEmail) {
-            $email = $nim . '@student.itg.ac.id';
+            $email = $nim.'@student.itg.ac.id';
         }
 
         return User::create([
-            'name'                 => $nama ?: 'Mahasiswa ' . $nim,
-            'username'             => $nim,
-            'email'                => $email,
-            'password'             => Hash::make('kip' . $nim . '2026'),
-            'role'                 => 'mahasiswa',
-            'is_password_changed'  => false,
-            'no_hp'                => $noHp,
+            'name' => $nama ?: 'Mahasiswa '.$nim,
+            'username' => $nim,
+            'email' => $email,
+            'password' => Hash::make('kip'.$nim.'2026'),
+            'role' => 'mahasiswa',
+            'is_password_changed' => false,
+            'no_hp' => $noHp,
         ]);
     }
 
     private static function generateEmail(string $nim, string $nama): string
     {
         $slug = strtolower(trim(preg_replace('/\s+/', '.', $nama) ?? '', '.'));
-        return ($slug !== '' ? $slug : $nim) . '@student.itg.ac.id';
+
+        return ($slug !== '' ? $slug : $nim).'@student.itg.ac.id';
     }
 
     /**
@@ -339,7 +346,7 @@ class LsipdSyncService
             return $byNama->id;
         }
 
-        $kandidat = Prodi::whereRaw('LOWER(nama) LIKE ?', ['%' . strtolower($normalized) . '%'])
+        $kandidat = Prodi::whereRaw('LOWER(nama) LIKE ?', ['%'.strtolower($normalized).'%'])
             ->orWhereRaw('LOWER(?) LIKE CONCAT("%", LOWER(nama), "%")', [$normalized])
             ->first();
 
@@ -385,6 +392,7 @@ class LsipdSyncService
         if (! empty($ipk->catatan_admin)) {
             return true;
         }
+
         return in_array($ipk->status, ['Menunggu', 'Diajukan'], true);
     }
 
@@ -408,8 +416,8 @@ class LsipdSyncService
                 // "Semester 1", "Semester 2", dst — bukan tahun ajaran. Upstream
                 // tidak mengirim TA sama sekali, jadi diturunkan dari angkatan.
                 'tahun_ajaran' => self::tahunAjaranUntuk($mahasiswa, $semester),
-                'ips'          => isset($row['ips']) ? (float) $row['ips'] : null,
-                'ipk'          => isset($row['ipk']) ? (float) $row['ipk'] : null,
+                'ips' => isset($row['ips']) ? (float) $row['ips'] : null,
+                'ipk' => isset($row['ipk']) ? (float) $row['ipk'] : null,
             ];
 
             // Status hanya di-set saat baris baru, atau saat baris lama tidak punya
@@ -429,7 +437,7 @@ class LsipdSyncService
             } else {
                 IpkSemestr::create($atribut + [
                     'mahasiswa_id' => $mahasiswa->id,
-                    'semester'     => $semester,
+                    'semester' => $semester,
                 ]);
             }
             $count++;
@@ -464,17 +472,17 @@ class LsipdSyncService
             } else {
                 $ipkSemester = IpkSemestr::create([
                     'mahasiswa_id' => $mahasiswa->id,
-                    'semester'     => $semester,
+                    'semester' => $semester,
                     // Sama seperti upsertProgresAkademik(): transkrip juga tidak
                     // membawa TA, jadi diturunkan dari angkatan. Dulu diisi ''.
                     'tahun_ajaran' => self::tahunAjaranUntuk($mahasiswa, $semester),
                     // NULL = belum ada nilai. Bila upstream mengirim ipk/ips,
                     // upsertProgresAkademik() sudah membuat baris ini lebih dulu
                     // sehingga cabang create ini tidak dijalankan.
-                    'ips'          => null,
-                    'ipk'          => null,
+                    'ips' => null,
+                    'ipk' => null,
                     // Bukan 'Disetujui' — lihat penjelasan di upsertProgresAkademik().
-                    'status'       => 'Draft',
+                    'status' => 'Draft',
                 ]);
             }
 
@@ -494,9 +502,9 @@ class LsipdSyncService
                 }
 
                 $mapped[] = [
-                    'kode'        => strtoupper((string) ($mk['kdmk'] ?? '')),
-                    'nama'        => (string) ($mk['nakmk'] ?? ''),
-                    'sks'         => (int) ($mk['sksmk'] ?? 0),
+                    'kode' => strtoupper((string) ($mk['kdmk'] ?? '')),
+                    'nama' => (string) ($mk['nakmk'] ?? ''),
+                    'sks' => (int) ($mk['sksmk'] ?? 0),
                     'nilai_huruf' => $huruf,
                 ];
             }

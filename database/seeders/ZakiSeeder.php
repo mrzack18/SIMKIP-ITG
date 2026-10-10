@@ -2,34 +2,34 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Mahasiswa;
-use App\Models\Prodi;
-use App\Models\IpkSemestr;
-use App\Models\MataKuliah;
 use App\Models\Dokumen;
 use App\Models\DokumenJenis;
-use App\Models\SuratPeringatan;
-use App\Models\Prestasi;
+use App\Models\IpkSemestr;
+use App\Models\Mahasiswa;
+use App\Models\MataKuliah;
 use App\Models\Organisasi;
 use App\Models\Pelatihan;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Prestasi;
+use App\Models\Prodi;
+use App\Models\SuratPeringatan;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class ZakiSeeder extends Seeder
 {
     public function run()
     {
         $nim = '2307094';
-        
+
         $prodi = Prodi::where('nama', 'like', '%Informasi%')->first();
-        if (!$prodi) {
+        if (! $prodi) {
             $prodi = Prodi::create(['nama' => 'Sistem Informasi', 'kode' => 'SI']);
         }
 
         $user = User::where('username', $nim)->first();
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'name' => 'Zaki Muhamad',
                 'username' => $nim,
@@ -41,7 +41,7 @@ class ZakiSeeder extends Seeder
         }
 
         $mhs = Mahasiswa::where('nim', $nim)->first();
-        if (!$mhs) {
+        if (! $mhs) {
             $mhs = Mahasiswa::create([
                 'user_id' => $user->id,
                 'prodi_id' => $prodi->id,
@@ -78,7 +78,7 @@ class ZakiSeeder extends Seeder
             $year = (int) substr($data['ta'], 0, 4);
             $isGanjil = strpos($data['ta'], 'Ganjil') !== false;
             // KHS is usually uploaded at the END of the semester
-            $createdAt = $isGanjil 
+            $createdAt = $isGanjil
                 ? Carbon::create($year + 1, 1, 15) // January next year
                 : Carbon::create($year + 1, 8, 15); // August
 
@@ -173,14 +173,22 @@ class ZakiSeeder extends Seeder
 
         // Dokumen
         $jDok = DokumenJenis::whereIn('nama', ['PKKMB', 'Bela Negara', 'MABIM', 'Sertifikasi Kompetensi'])->get();
-        
+
         foreach ($jDok as $j) {
             $date = Carbon::now();
-            if ($j->nama == 'PKKMB') $date = Carbon::create(2023, 9, 10);
-            if ($j->nama == 'Bela Negara') $date = Carbon::create(2023, 9, 15);
-            if ($j->nama == 'MABIM') $date = Carbon::create(2024, 2, 10);
-            if ($j->nama == 'Sertifikasi Kompetensi') $date = Carbon::create(2025, 8, 20); // Akan muncul di Sem 5
-            
+            if ($j->nama == 'PKKMB') {
+                $date = Carbon::create(2023, 9, 10);
+            }
+            if ($j->nama == 'Bela Negara') {
+                $date = Carbon::create(2023, 9, 15);
+            }
+            if ($j->nama == 'MABIM') {
+                $date = Carbon::create(2024, 2, 10);
+            }
+            if ($j->nama == 'Sertifikasi Kompetensi') {
+                $date = Carbon::create(2025, 8, 20);
+            } // Akan muncul di Sem 5
+
             Dokumen::create([
                 'mahasiswa_id' => $mhs->id,
                 'dokumen_jenis_id' => $j->id,
@@ -192,6 +200,6 @@ class ZakiSeeder extends Seeder
             ]);
         }
 
-        $this->command->info("Success creating comprehensive dummy data for Zaki Muhamad!");
+        $this->command->info('Success creating comprehensive dummy data for Zaki Muhamad!');
     }
 }

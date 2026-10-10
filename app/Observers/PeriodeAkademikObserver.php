@@ -46,7 +46,7 @@ class PeriodeAkademikObserver
             [
                 'value' => $masihAdaYangAktif ? '1' : '0',
                 'label' => 'Periode Input Aktif',
-                'tipe'  => 'boolean',
+                'tipe' => 'boolean',
             ]
         );
     }

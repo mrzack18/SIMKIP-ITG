@@ -1,12 +1,16 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
+
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Mahasiswa;
 use App\Models\Notification;
-use App\Models\Prestasi;
 use App\Models\Organisasi;
 use App\Models\Pelatihan;
+use App\Models\Prestasi;
+use App\Services\IPKCalculatorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,49 +19,49 @@ class DataAkademikController extends Controller
     /** List semua IPK mahasiswa (tab IPK di DataAkademik) */
     public function indexIPK(Request $request): JsonResponse
     {
-        $query = Mahasiswa::with(['prodi','ipkSemestrs.mataKuliahs'])->where('status','Aktif');
+        $query = Mahasiswa::with(['prodi', 'ipkSemestrs.mataKuliahs'])->where('status', 'Aktif');
         if ($s = $request->search) {
-            $query->where(fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
+            $query->where(fn ($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
         }
         if ($request->prodi && $request->prodi !== 'Semua') {
-            $query->whereHas('prodi', fn($q) => $q->where('nama',$request->prodi)->orWhere('kode',$request->prodi));
+            $query->whereHas('prodi', fn ($q) => $q->where('nama', $request->prodi)->orWhere('kode', $request->prodi));
         }
 
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
-        $data  = $query->skip(($page-1)*$limit)->take($limit)->get();
+        $data = $query->skip(($page - 1) * $limit)->take($limit)->get();
 
         return response()->json([
-            'success'     => true,
-            'data'        => $data->map(function($m) {
+            'success' => true,
+            'data' => $data->map(function ($m) {
                 // IPK terakhir hanya dari baris yang benar-benar sudah dinilai:
                 // mahasiswa baru (semua MK "-"/"T") tidak boleh tampil ber-IPK 0.
                 $terakhir = $m->ipkSemestrs
-                    ->filter(fn($s) => $s->ipk !== null && $s->mataKuliahs->contains(
-                        fn($mk) => ! \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf)
+                    ->filter(fn ($s) => $s->ipk !== null && $s->mataKuliahs->contains(
+                        fn ($mk) => ! IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf)
                     ))
                     ->sortByDesc('semester')
                     ->first();
 
                 return [
-                    'id'       => $m->id,
-                    'nim'      => $m->nim,
-                    'nama'     => $m->nama,
-                    'prodi'    => $m->prodi?->nama,
+                    'id' => $m->id,
+                    'nim' => $m->nim,
+                    'nama' => $m->nama,
+                    'prodi' => $m->prodi?->nama,
                     'angkatan' => $m->angkatan,
                     // Semester berjalan dihitung dari angkatan, bukan jumlah baris
                     // transkrip (LSIPD mengirim seluruh 8 semester sekaligus).
-                    'semester' => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
+                    'semester' => TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                     'ipk_terakhir' => $terakhir ? (float) $terakhir->ipk : null,
-                    'ipk_history'  => $m->ipkSemestrs->map(fn($s) => [
+                    'ipk_history' => $m->ipkSemestrs->map(fn ($s) => [
                         'semester' => $s->semester,
                         'ipk' => $s->ipk !== null ? (float) $s->ipk : null,
                     ]),
                 ];
             }),
             'total' => $total, 'page' => $page, 'limit' => $limit,
-            'total_pages' => (int) ceil($total/$limit),
+            'total_pages' => (int) ceil($total / $limit),
         ]);
     }
 
@@ -65,22 +69,22 @@ class DataAkademikController extends Controller
     public function validatePrestasi(Request $request, int $id): JsonResponse
     {
         $request->validate([
-            'aksi'         => 'required|in:Disetujui,Ditolak',
-            'catatan_admin'=> 'nullable|string',
+            'aksi' => 'required|in:Disetujui,Ditolak',
+            'catatan_admin' => 'nullable|string',
         ]);
 
         $p = Prestasi::with('mahasiswa.user')->findOrFail($id);
         $p->update([
-            'status'       => $request->aksi === 'Disetujui' ? 'Disetujui' : 'Ditolak',
-            'catatan_admin'=> $request->catatan_admin,
+            'status' => $request->aksi === 'Disetujui' ? 'Disetujui' : 'Ditolak',
+            'catatan_admin' => $request->catatan_admin,
             'validated_by' => auth()->id(),
             'validated_at' => now(),
         ]);
 
         Notification::kirim(
             $p->mahasiswa->user_id,
-            "Prestasi \"{$p->nama_prestasi}\" " . $request->aksi,
-            "Prestasi Anda telah {$request->aksi}" . ($request->catatan_admin ? ". Catatan: {$request->catatan_admin}" : '.'),
+            "Prestasi \"{$p->nama_prestasi}\" ".$request->aksi,
+            "Prestasi Anda telah {$request->aksi}".($request->catatan_admin ? ". Catatan: {$request->catatan_admin}" : '.'),
             $request->aksi === 'Disetujui' ? 'success' : 'error',
             '/mahasiswa/prestasi'
         );
@@ -101,6 +105,7 @@ class DataAkademikController extends Controller
             'validated_by' => auth()->id(), 'validated_at' => now()]);
         Notification::kirim($o->mahasiswa->user_id, "Organisasi \"{$o->nama}\" {$request->aksi}",
             "Data organisasi Anda telah {$request->aksi}.", $request->aksi === 'Disetujui' ? 'success' : 'error', '/mahasiswa/organisasi');
+
         return response()->json(['success' => true, 'message' => "Organisasi {$request->aksi}."]);
     }
 
@@ -113,6 +118,7 @@ class DataAkademikController extends Controller
             'validated_by' => auth()->id(), 'validated_at' => now()]);
         Notification::kirim($p->mahasiswa->user_id, "Pelatihan \"{$p->nama}\" {$request->aksi}",
             "Data pelatihan Anda telah {$request->aksi}.", $request->aksi === 'Disetujui' ? 'success' : 'error', '/mahasiswa/pelatihan');
+
         return response()->json(['success' => true, 'message' => "Pelatihan {$request->aksi}."]);
     }
 
@@ -120,16 +126,19 @@ class DataAkademikController extends Controller
     public function indexPrestasi(Request $request): JsonResponse
     {
         $query = Prestasi::with('mahasiswa.prodi');
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
-        if ($s = $request->search) {
-            $query->whereHas('mahasiswa', fn($q) => $q->where('nim','like',"%$s%")->orWhere('nama','like',"%$s%"));
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
         }
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        if ($s = $request->search) {
+            $query->whereHas('mahasiswa', fn ($q) => $q->where('nim', 'like', "%$s%")->orWhere('nama', 'like', "%$s%"));
+        }
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
+
         return response()->json([
-            'success' => true, 'data' => $query->latest()->skip(($page-1)*$limit)->take($limit)->get(),
-            'total' => $total, 'page' => $page, 'limit' => $limit, 'total_pages' => (int) ceil($total/$limit),
+            'success' => true, 'data' => $query->latest()->skip(($page - 1) * $limit)->take($limit)->get(),
+            'total' => $total, 'page' => $page, 'limit' => $limit, 'total_pages' => (int) ceil($total / $limit),
         ]);
     }
 
@@ -137,13 +146,16 @@ class DataAkademikController extends Controller
     public function indexOrganisasi(Request $request): JsonResponse
     {
         $query = Organisasi::with('mahasiswa.prodi');
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
+        }
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
+
         return response()->json([
-            'success' => true, 'data' => $query->latest()->skip(($page-1)*$limit)->take($limit)->get(),
-            'total' => $total, 'page' => $page, 'limit' => $limit, 'total_pages' => (int) ceil($total/$limit),
+            'success' => true, 'data' => $query->latest()->skip(($page - 1) * $limit)->take($limit)->get(),
+            'total' => $total, 'page' => $page, 'limit' => $limit, 'total_pages' => (int) ceil($total / $limit),
         ]);
     }
 
@@ -151,14 +163,19 @@ class DataAkademikController extends Controller
     public function indexPelatihan(Request $request): JsonResponse
     {
         $query = Pelatihan::with('mahasiswa.prodi');
-        if ($request->jenis && $request->jenis !== 'Semua') $query->where('jenis', $request->jenis);
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        if ($request->jenis && $request->jenis !== 'Semua') {
+            $query->where('jenis', $request->jenis);
+        }
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
+        }
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $total = $query->count();
+
         return response()->json([
-            'success' => true, 'data' => $query->latest()->skip(($page-1)*$limit)->take($limit)->get(),
-            'total' => $total, 'page' => $page, 'limit' => $limit, 'total_pages' => (int) ceil($total/$limit),
+            'success' => true, 'data' => $query->latest()->skip(($page - 1) * $limit)->take($limit)->get(),
+            'total' => $total, 'page' => $page, 'limit' => $limit, 'total_pages' => (int) ceil($total / $limit),
         ]);
     }
 }

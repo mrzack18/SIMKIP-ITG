@@ -13,7 +13,7 @@ class BebasTanggunganHistory extends Model
         'bebas_tanggungan_id',
         'status',
         'catatan',
-        'reviewed_by'
+        'reviewed_by',
     ];
 
     public function bebasTanggungan()

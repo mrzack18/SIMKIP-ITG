@@ -12,16 +12,18 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class GenericArrayExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithTitle
+class GenericArrayExport implements FromArray, ShouldAutoSize, WithHeadings, WithStyles, WithTitle
 {
     protected array $headers;
+
     protected array $rows;
+
     protected string $sheetTitle;
 
     public function __construct(array $headers, array $rows, string $sheetTitle = 'Data')
     {
-        $this->headers    = $headers;
-        $this->rows       = $rows;
+        $this->headers = $headers;
+        $this->rows = $rows;
         $this->sheetTitle = $sheetTitle;
     }
 
@@ -72,9 +74,10 @@ class GenericArrayExport implements FromArray, WithHeadings, WithStyles, ShouldA
         $col = '';
         while ($index > 0) {
             $index--;
-            $col = chr(65 + ($index % 26)) . $col;
+            $col = chr(65 + ($index % 26)).$col;
             $index = intdiv($index, 26);
         }
+
         return $col;
     }
 }

@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Services\IPKCalculatorService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class IpkSemestr extends Model
 {
@@ -20,17 +21,21 @@ class IpkSemestr extends Model
      * 'Menunggu'  : diajukan mahasiswa, sedang mengantre validasi pengelola.
      * 'Ditolak'   : ditolak pengelola, perlu diperbaiki mahasiswa.
      */
-    public const STATUS_MENUNGGU  = 'Menunggu';
+    public const STATUS_MENUNGGU = 'Menunggu';
+
     public const STATUS_DISETUJUI = 'Disetujui';
-    public const STATUS_DRAFT     = 'Draft';
-    public const STATUS_DITOLAK   = 'Ditolak';
+
+    public const STATUS_DRAFT = 'Draft';
+
+    public const STATUS_DITOLAK = 'Ditolak';
 
     protected $fillable = ['mahasiswa_id', 'semester', 'tahun_ajaran', 'ipk', 'ips', 'file_khs', 'status', 'catatan_admin', 'validated_by', 'validated_at'];
+
     protected $casts = ['ipk' => 'decimal:2', 'ips' => 'decimal:2', 'validated_at' => 'datetime'];
 
     public function validatedBy()
     {
-        return $this->belongsTo(\App\Models\User::class, 'validated_by');
+        return $this->belongsTo(User::class, 'validated_by');
     }
 
     /**
@@ -69,7 +74,7 @@ class IpkSemestr extends Model
     {
         return $query->whereNotNull('ipk_semestrs.ipk')
             ->whereHas('mataKuliahs', fn ($q) => $q
-                ->whereNotIn('nilai_huruf', \App\Services\IPKCalculatorService::NILAI_HURUF_NETRAL));
+                ->whereNotIn('nilai_huruf', IPKCalculatorService::NILAI_HURUF_NETRAL));
     }
 
     public function mahasiswa()

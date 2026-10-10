@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Mahasiswa;
-use App\Models\SuratPeringatan;
 
 class SPValidationService
 {
@@ -35,11 +34,16 @@ class SPValidationService
         }
 
         // SP3 hanya boleh diterbitkan jika mahasiswa sudah memiliki SP1 dan SP2
-        if ($level === 'SP3' && (!in_array('SP1', $receivedLevels) || !in_array('SP2', $receivedLevels))) {
+        if ($level === 'SP3' && (! in_array('SP1', $receivedLevels) || ! in_array('SP2', $receivedLevels))) {
             $missing = [];
-            if (!in_array('SP1', $receivedLevels)) $missing[] = 'SP1';
-            if (!in_array('SP2', $receivedLevels)) $missing[] = 'SP2';
-            return 'SP3 hanya dapat diterbitkan setelah mahasiswa memiliki SP1 dan SP2. Belum terpenuhi: ' . implode(' dan ', $missing) . '.';
+            if (! in_array('SP1', $receivedLevels)) {
+                $missing[] = 'SP1';
+            }
+            if (! in_array('SP2', $receivedLevels)) {
+                $missing[] = 'SP2';
+            }
+
+            return 'SP3 hanya dapat diterbitkan setelah mahasiswa memiliki SP1 dan SP2. Belum terpenuhi: '.implode(' dan ', $missing).'.';
         }
 
         return null; // Valid

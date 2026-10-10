@@ -14,7 +14,7 @@ class ProdiFactory extends Factory
         return [
             'kode' => $this->faker->unique()->numerify('PRD###'),
             'nama' => $this->faker->randomElement([
-                'Teknik Informatika', 'Sistem Informasi', 'Teknik Industri', 'Teknik Sipil', 'Arsitektur'
+                'Teknik Informatika', 'Sistem Informasi', 'Teknik Industri', 'Teknik Sipil', 'Arsitektur',
             ]),
             'is_aktif' => true,
         ];

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\MataKuliah;
 use App\Models\IpkSemestr;
+use App\Models\MataKuliah;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class MataKuliahFactory extends Factory

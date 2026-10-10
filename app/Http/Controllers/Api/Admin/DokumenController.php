@@ -1,9 +1,16 @@
 <?php
+
 namespace App\Http\Controllers\Api\Admin;
+
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
+use App\Http\Resources\DokumenQueueResource;
 use App\Models\Dokumen;
-use App\Models\Notification;
+use App\Models\DokumenJenis;
+use App\Models\IpkSemestr;
+use App\Models\Organisasi;
+use App\Models\Pelatihan;
+use App\Models\Prestasi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,8 +18,8 @@ class DokumenController extends Controller
 {
     public function queue(Request $request): JsonResponse
     {
-        $limit = (int)($request->limit ?? 10);
-        $page  = (int)($request->page ?? 1);
+        $limit = (int) ($request->limit ?? 10);
+        $page = (int) ($request->page ?? 1);
         $status = $request->status;
         $search = $request->search;
         $jenisFilter = $request->jenis;
@@ -21,12 +28,14 @@ class DokumenController extends Controller
 
         // 1. Dokumens (exclude KHS — KHS dilacak via IpkSemestr agar tidak duplikat di queue)
         $dokQuery = Dokumen::with(['mahasiswa.prodi', 'jenis.fields', 'fieldValues.field'])
-            ->whereHas('jenis', fn($q) => $q->where('nama', '!=', 'KHS'));
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($dokQuery, 'dokumens.created_at', $request->tahun_ajaran);
-        if ($status && $status !== 'Semua') $dokQuery->where('status', $status);
-        $doks = $dokQuery->get()->map(function($d) {
+            ->whereHas('jenis', fn ($q) => $q->where('nama', '!=', 'KHS'));
+        TahunAjaranHelper::applyDateRangeFilter($dokQuery, 'dokumens.created_at', $request->tahun_ajaran);
+        if ($status && $status !== 'Semua') {
+            $dokQuery->where('status', $status);
+        }
+        $doks = $dokQuery->get()->map(function ($d) {
             return [
-                'id' => 'doc_' . $d->id,
+                'id' => 'doc_'.$d->id,
                 'mahasiswas_id' => $d->mahasiswa_id,
                 'nim' => $d->mahasiswa->nim,
                 'nama' => $d->mahasiswa->nama,
@@ -41,8 +50,8 @@ class DokumenController extends Controller
         $items = $items->concat($doks);
 
         // 2. Prestasis
-        $presQuery = \App\Models\Prestasi::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($presQuery, 'prestasis.created_at', $request->tahun_ajaran);
+        $presQuery = Prestasi::with(['mahasiswa.prodi']);
+        TahunAjaranHelper::applyDateRangeFilter($presQuery, 'prestasis.created_at', $request->tahun_ajaran);
         if ($status && $status !== 'Semua') {
             if ($status === 'Menunggu') {
                 $presQuery->whereIn('status', ['Menunggu Validasi', 'Menunggu']);
@@ -50,9 +59,9 @@ class DokumenController extends Controller
                 $presQuery->where('status', $status);
             }
         }
-        $pres = $presQuery->get()->map(function($p) {
+        $pres = $presQuery->get()->map(function ($p) {
             return [
-                'id' => 'prestasi_' . $p->id,
+                'id' => 'prestasi_'.$p->id,
                 'mahasiswas_id' => $p->mahasiswa_id,
                 'nim' => $p->mahasiswa->nim,
                 'nama' => $p->mahasiswa->nama,
@@ -67,12 +76,14 @@ class DokumenController extends Controller
         $items = $items->concat($pres);
 
         // 3. Organisasis
-        $orgQuery = \App\Models\Organisasi::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($orgQuery, 'organisasis.created_at', $request->tahun_ajaran);
-        if ($status && $status !== 'Semua') $orgQuery->where('status', $status);
-        $orgs = $orgQuery->get()->map(function($o) {
+        $orgQuery = Organisasi::with(['mahasiswa.prodi']);
+        TahunAjaranHelper::applyDateRangeFilter($orgQuery, 'organisasis.created_at', $request->tahun_ajaran);
+        if ($status && $status !== 'Semua') {
+            $orgQuery->where('status', $status);
+        }
+        $orgs = $orgQuery->get()->map(function ($o) {
             return [
-                'id' => 'organisasi_' . $o->id,
+                'id' => 'organisasi_'.$o->id,
                 'mahasiswas_id' => $o->mahasiswa_id,
                 'nim' => $o->mahasiswa->nim,
                 'nama' => $o->mahasiswa->nama,
@@ -87,12 +98,14 @@ class DokumenController extends Controller
         $items = $items->concat($orgs);
 
         // 4. Pelatihans
-        $pelQuery = \App\Models\Pelatihan::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyDateRangeFilter($pelQuery, 'pelatihans.created_at', $request->tahun_ajaran);
-        if ($status && $status !== 'Semua') $pelQuery->where('status', $status);
-        $pels = $pelQuery->get()->map(function($p) {
+        $pelQuery = Pelatihan::with(['mahasiswa.prodi']);
+        TahunAjaranHelper::applyDateRangeFilter($pelQuery, 'pelatihans.created_at', $request->tahun_ajaran);
+        if ($status && $status !== 'Semua') {
+            $pelQuery->where('status', $status);
+        }
+        $pels = $pelQuery->get()->map(function ($p) {
             return [
-                'id' => 'pelatihan_' . $p->id,
+                'id' => 'pelatihan_'.$p->id,
                 'mahasiswas_id' => $p->mahasiswa_id,
                 'nim' => $p->mahasiswa->nim,
                 'nama' => $p->mahasiswa->nama,
@@ -108,12 +121,14 @@ class DokumenController extends Controller
 
         // 5. IpkSemestr (Evaluasi Akademik / KHS)
         // Filter langsung pada kolom tahun_ajaran (bukan created_at) agar sync dengan TA semesternya.
-        $ipkQuery = \App\Models\IpkSemestr::with(['mahasiswa.prodi']);
-        \App\Helpers\TahunAjaranHelper::applyTahunAjaranFilter($ipkQuery, 'ipk_semestrs.tahun_ajaran', $request->tahun_ajaran);
-        if ($status && $status !== 'Semua') $ipkQuery->where('status', $status);
-        $ipks = $ipkQuery->get()->map(function($i) {
+        $ipkQuery = IpkSemestr::with(['mahasiswa.prodi']);
+        TahunAjaranHelper::applyTahunAjaranFilter($ipkQuery, 'ipk_semestrs.tahun_ajaran', $request->tahun_ajaran);
+        if ($status && $status !== 'Semua') {
+            $ipkQuery->where('status', $status);
+        }
+        $ipks = $ipkQuery->get()->map(function ($i) {
             return [
-                'id' => 'ipk_' . $i->id,
+                'id' => 'ipk_'.$i->id,
                 'mahasiswas_id' => $i->mahasiswa_id,
                 'nim' => $i->mahasiswa->nim,
                 'nama' => $i->mahasiswa->nama,
@@ -130,12 +145,12 @@ class DokumenController extends Controller
         // Filter search & jenis
         if ($search) {
             $search = strtolower($search);
-            $items = $items->filter(function($i) use ($search) {
+            $items = $items->filter(function ($i) use ($search) {
                 return str_contains(strtolower($i['nama']), $search) || str_contains(strtolower($i['nim']), $search);
             });
         }
         if ($jenisFilter && $jenisFilter !== 'Semua') {
-            $items = $items->filter(function($i) use ($jenisFilter) {
+            $items = $items->filter(function ($i) use ($jenisFilter) {
                 return str_contains(strtolower($i['jenis']), strtolower($jenisFilter));
             });
         }
@@ -148,7 +163,7 @@ class DokumenController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => \App\Http\Resources\DokumenQueueResource::collection($paginated),
+            'data' => DokumenQueueResource::collection($paginated),
             'total' => $total,
             'page' => $page,
             'limit' => $limit,
@@ -160,11 +175,13 @@ class DokumenController extends Controller
     {
         $request->validate([
             'status' => 'required|in:Disetujui,Ditolak',
-            'catatan_admin' => 'nullable|string'
+            'catatan_admin' => 'nullable|string',
         ]);
 
         $parts = explode('_', $id);
-        if (count($parts) !== 2) return response()->json(['message' => 'Invalid ID format'], 400);
+        if (count($parts) !== 2) {
+            return response()->json(['message' => 'Invalid ID format'], 400);
+        }
 
         $type = $parts[0];
         $realId = $parts[1];
@@ -183,7 +200,7 @@ class DokumenController extends Controller
                 $semester = $meta['semester'] ?? null;
                 $ta = $meta['tahun_ajaran'] ?? null;
                 if ($semester !== null && $ta !== null) {
-                    \App\Models\IpkSemestr::where('mahasiswa_id', $dok->mahasiswa_id)
+                    IpkSemestr::where('mahasiswa_id', $dok->mahasiswa_id)
                         ->where('semester', $semester)
                         ->where('tahun_ajaran', $ta)
                         ->update([
@@ -197,30 +214,33 @@ class DokumenController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'prestasi') {
-            $pres = \App\Models\Prestasi::findOrFail($realId);
+            $pres = Prestasi::findOrFail($realId);
             $pres->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'organisasi') {
-            $org = \App\Models\Organisasi::findOrFail($realId);
+            $org = Organisasi::findOrFail($realId);
             $org->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'pelatihan') {
-            $pel = \App\Models\Pelatihan::findOrFail($realId);
+            $pel = Pelatihan::findOrFail($realId);
             $pel->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
+
             return response()->json(['success' => true, 'message' => 'Tervalidasi']);
         } elseif ($type === 'ipk') {
-            $ipk = \App\Models\IpkSemestr::with('mahasiswa')->findOrFail($realId);
+            $ipk = IpkSemestr::with('mahasiswa')->findOrFail($realId);
             $ipk->update(['status' => $status, 'catatan_admin' => $catatan, 'validated_by' => $adminId, 'validated_at' => now()]);
 
             // Sinkronkan ke Dokumen KHS (jenis='KHS') yang matching (mahasiswa, semester, tahun_ajaran)
             // agar konsisten bila dokumen KHS pernah diupload terpisah.
-            $jenisKHS = \App\Models\DokumenJenis::where('nama', 'KHS')->first();
+            $jenisKHS = DokumenJenis::where('nama', 'KHS')->first();
             if ($jenisKHS) {
-                \App\Models\Dokumen::where('mahasiswa_id', $ipk->mahasiswa_id)
+                Dokumen::where('mahasiswa_id', $ipk->mahasiswa_id)
                     ->where('dokumen_jenis_id', $jenisKHS->id)
                     ->where(function ($q) use ($ipk) {
                         $q->whereNull('metadata')
-                          ->orWhereRaw("JSON_EXTRACT(metadata, '$.semester') = ?", [$ipk->semester]);
+                            ->orWhereRaw("JSON_EXTRACT(metadata, '$.semester') = ?", [$ipk->semester]);
                     })
                     ->update([
                         'status' => $status,
@@ -242,21 +262,22 @@ class DokumenController extends Controller
         $user = auth()->user();
 
         $allowed = match ($user->role) {
-            'admin'     => true,
-            'warek'     => true,
+            'admin' => true,
+            'warek' => true,
             'mahasiswa' => false,
-            'prodi'     => $user->prodi_id === $dok->mahasiswa->prodi_id,
-            default     => false,
+            'prodi' => $user->prodi_id === $dok->mahasiswa->prodi_id,
+            default => false,
         };
 
         if (! $allowed) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berhak mengakses file ini.'], 403);
         }
 
-        $path = storage_path('app/public/' . $dok->path_file);
+        $path = storage_path('app/public/'.$dok->path_file);
         if (! file_exists($path)) {
             return response()->json(['success' => false, 'message' => 'File tidak ditemukan.'], 404);
         }
+
         return response()->file($path);
     }
 }

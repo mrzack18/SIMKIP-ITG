@@ -103,6 +103,13 @@ export default function TerbitkanSP() {
   const [catatan, setCatatan]     = useState("");
   const [tahunAjaran, setTahunAjaran] = useState("Semua");
 
+  // Data surat sesuai template
+  const [nomorSurat, setNomorSurat] = useState("");
+  const [tempat, setTempat] = useState("Garut");
+  const [penandatanganNama, setPenandatanganNama] = useState("Encep Jianul Hayat S.T, M.T");
+  const [penandatanganNidn, setPenandatanganNidn] = useState("0420067402");
+  const [penandatanganJabatan, setPenandatanganJabatan] = useState("Biro Kemahasiswaan dan Ketenaga kerjaan Hubungan Masyarakat");
+
   // Masa tenggang dari konfigurasi (tab Regulasi), untuk mengisi "Batas Evaluasi".
   const [masaTenggang, setMasaTenggang] = useState(90);
   const [masaTenggangAktif, setMasaTenggangAktif] = useState(true);
@@ -230,14 +237,19 @@ export default function TerbitkanSP() {
     setSubmitError("");
     try {
       const spData = await terbitkanSP({
-        mahasiswa_id:      selected.id,
-        level:             jenisP === "Cuti Tanpa Izin" ? "SP3" : spLevel,
-        jenis_pelanggaran: jenisP,
+        mahasiswa_id:           selected.id,
+        level:                  jenisP === "Cuti Tanpa Izin" ? "SP3" : spLevel,
+        jenis_pelanggaran:      jenisP,
         deskripsi,
-        tanggal_terbit:    tanggalTerbit,
-        batas_evaluasi:    batasEvaluasi || null,
-        catatan:           catatan || null,
-        tahun_ajaran:      tahunAjaran,
+        tanggal_terbit:         tanggalTerbit,
+        batas_evaluasi:         batasEvaluasi || null,
+        catatan:                catatan || null,
+        tahun_ajaran:           tahunAjaran,
+        nomor_surat:            nomorSurat || null,
+        tempat:                 tempat || "Garut",
+        penandatangan_nama:     penandatanganNama || null,
+        penandatangan_nidn:     penandatanganNidn || null,
+        penandatangan_jabatan:  penandatanganJabatan || null,
       } as any);
       console.log("[TerbitkanSP] SP berhasil dibuat:", spData);
       setCreatedId(spData?.id ?? null);
@@ -497,6 +509,39 @@ export default function TerbitkanSP() {
             <label className="block text-sm font-500 text-gray-700 mb-1.5">Catatan Tambahan <span className="text-gray-400 text-xs">(opsional)</span></label>
             <textarea value={catatan} onChange={(e) => setCatatan(e.target.value)} rows={2}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 resize-none" />
+          </div>
+
+          {/* Data Surat Sesuai Template */}
+          <div className="pt-4 border-t border-gray-100">
+            <h3 className="text-sm font-600 text-gray-800 mb-3">Data Surat (Sesuai Template)</h3>
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2.5 sm:gap-3 min-w-0">
+              <div className="min-[420px]:col-span-2">
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Nomor Surat <span className="text-gray-400 text-xs">(opsional)</span></label>
+                <input type="text" value={nomorSurat} onChange={(e) => setNomorSurat(e.target.value)}
+                  placeholder="Kosongkan untuk auto-generate: 001/SP/KIP-K/ITG/X/2026"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0" />
+              </div>
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Tempat <span className="text-gray-400 text-xs">(opsional)</span></label>
+                <input type="text" value={tempat} onChange={(e) => setTempat(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0" />
+              </div>
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Nama Penandatangan <span className="text-gray-400 text-xs">(opsional)</span></label>
+                <input type="text" value={penandatanganNama} onChange={(e) => setPenandatanganNama(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0" />
+              </div>
+              <div>
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">NIDN <span className="text-gray-400 text-xs">(opsional)</span></label>
+                <input type="text" value={penandatanganNidn} onChange={(e) => setPenandatanganNidn(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0" />
+              </div>
+              <div className="min-[420px]:col-span-2">
+                <label className="block text-sm font-500 text-gray-700 mb-1.5">Jabatan <span className="text-gray-400 text-xs">(opsional)</span></label>
+                <input type="text" value={penandatanganJabatan} onChange={(e) => setPenandatanganJabatan(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#263F93]/20 min-w-0" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

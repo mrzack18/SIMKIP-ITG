@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Konfigurasi extends Model
 {
     use HasFactory;
 
     protected $table = 'konfigurasis';
+
     protected $fillable = ['key', 'value', 'label', 'tipe'];
 
     public static function get(string $key, mixed $default = null): mixed
     {
         $config = static::where('key', $key)->first();
+
         return $config ? $config->value : $default;
     }
 

@@ -5,7 +5,7 @@ namespace App\Exports;
 use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class DataAkademikExport implements WithMultipleSheets, Export
+class DataAkademikExport implements Export, WithMultipleSheets
 {
     /**
      * @var array<int, array{title: string, headers: array, rows: array}>
@@ -20,7 +20,7 @@ class DataAkademikExport implements WithMultipleSheets, Export
     public function sheets(): array
     {
         return array_values(array_map(
-            fn($sheet) => new GenericArrayExport(
+            fn ($sheet) => new GenericArrayExport(
                 $sheet['headers'],
                 $sheet['rows'],
                 $sheet['title']

@@ -93,6 +93,14 @@ export interface SuratPeringatan {
   batasEvaluasi: string | null;
   status: SPStatus;
   sisa: number;
+  nomorSurat?: string | null;
+  tempat?: string | null;
+  penandatanganNama?: string | null;
+  penandatanganNidn?: string | null;
+  penandatanganJabatan?: string | null;
+  masaTenggang?: number;
+  masaTenggangAktif?: boolean;
+  tahunAjaran?: string | null;
 }
 
 // IPK

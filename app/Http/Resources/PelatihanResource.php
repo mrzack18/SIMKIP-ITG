@@ -12,11 +12,11 @@ class PelatihanResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'nim' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->nim),
-            'mahasiswaNama' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->nama),
-            'prodi' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->prodi->nama ?? ''),
-            'angkatan' => $this->whenLoaded('mahasiswa', fn() => (int) $this->mahasiswa->angkatan),
-            'kipk' => $this->whenLoaded('mahasiswa', fn() => $this->mahasiswa->kategori),
+            'nim' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->nim),
+            'mahasiswaNama' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->nama),
+            'prodi' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->prodi->nama ?? ''),
+            'angkatan' => $this->whenLoaded('mahasiswa', fn () => (int) $this->mahasiswa->angkatan),
+            'kipk' => $this->whenLoaded('mahasiswa', fn () => $this->mahasiswa->kategori),
             'nama' => $this->nama,
             'jenis' => $this->jenis,
             'penyelenggara' => $this->penyelenggara,

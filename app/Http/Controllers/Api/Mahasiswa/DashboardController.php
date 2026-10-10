@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api\Mahasiswa;
 
-use App\Http\Controllers\Controller;
 use App\Helpers\AturanAkademik;
-use App\Models\Konfigurasi;
-use App\Models\DokumenJenis;
+use App\Helpers\PeriodeInputHelper;
 use App\Helpers\TahunAjaranHelper;
+use App\Http\Controllers\Controller;
+use App\Models\DokumenJenis;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ class DashboardController extends Controller
     public function index(Request $request): JsonResponse
     {
         $m = $request->user()->mahasiswa()->with([
-            'prodi', 'ipkSemestrs'
+            'prodi', 'ipkSemestrs',
         ])->first();
 
         if (! $m) {
@@ -24,7 +24,7 @@ class DashboardController extends Controller
 
         $tahunAjaran = $request->tahun_ajaran;
         $tahunAjaranLabel = $tahunAjaran && $tahunAjaran !== 'Semua' ? $tahunAjaran : null;
-        
+
         $range = TahunAjaranHelper::getDateRange($tahunAjaranLabel);
         $endDate = $range ? $range[1] : null;
 
@@ -35,43 +35,44 @@ class DashboardController extends Controller
             $ipkBase = $m->ipkSemestrs()->where('semester', '<=', $semesterTujuan);
         }
 
-        $ipkList     = $ipkBase->get()->sortBy('semester')->values();
+        $ipkList = $ipkBase->get()->sortBy('semester')->values();
         // Hanya baris yang sudah bernilai. Baris transkrip masa depan (semua
         // "-"/"T") tidak boleh dianggap IPK 0 / semester terakhir.
-        $ipkBernilai = $ipkList->filter(fn($s) => $s->ipk !== null)->values();
+        $ipkBernilai = $ipkList->filter(fn ($s) => $s->ipk !== null)->values();
         $ipkTerakhir = $ipkBernilai->count() > 0 ? (float) $ipkBernilai->last()->ipk : null;
-        $ipkPrev     = $ipkBernilai->count() > 1 ? (float) $ipkBernilai->slice(-2, 1)->first()->ipk : null;
-        
+        $ipkPrev = $ipkBernilai->count() > 1 ? (float) $ipkBernilai->slice(-2, 1)->first()->ipk : null;
+
         // 1. Surat Peringatan Time Travel
         $spQuery = $m->suratPeringatans()->whereIn('status', ['Aktif', 'Masa Tenggang']);
         if ($endDate) {
             $spQuery->where('tanggal_terbit', '<=', $endDate);
         }
         $spAktif = $spQuery->orderByDesc('level')->first();
-        
+
         // Null = ambang IPK sedang dinonaktifkan di tab Regulasi.
-        $ipkMin      = AturanAkademik::angkaJikaAktif('ipk_minimum');
+        $ipkMin = AturanAkademik::angkaJikaAktif('ipk_minimum');
         $maxSemester = AturanAkademik::bilanganJikaAktif('max_semester');
 
         // 2. Dokumen status Time Travel
         $dokumenJenis = DokumenJenis::where('is_wajib', true)->get();
-        $dokWajib     = $dokumenJenis->count();
-        
+        $dokWajib = $dokumenJenis->count();
+
         $dokumenQuery = $m->dokumens();
         if ($endDate) {
             $dokumenQuery->where('created_at', '<=', $endDate);
         }
         $dokumensFiltered = $dokumenQuery->get();
-        
+
         $dokDisetujui = $dokumensFiltered->where('status', 'Disetujui')->unique('dokumen_jenis_id')->count();
 
         $dokumenStatusList = $dokumenJenis->map(function ($jenis) use ($dokumensFiltered) {
             $uploaded = $dokumensFiltered->where('dokumen_jenis_id', $jenis->id)->sortByDesc('created_at')->first();
+
             return [
                 'id_jenis' => $jenis->id,
-                'nama'     => $jenis->nama,
-                'status'   => $uploaded ? $uploaded->status : 'Belum Diunggah',
-                'pesan'    => $uploaded ? ($uploaded->catatan_admin ?? $uploaded->keterangan) : null,
+                'nama' => $jenis->nama,
+                'status' => $uploaded ? $uploaded->status : 'Belum Diunggah',
+                'pesan' => $uploaded ? ($uploaded->catatan_admin ?? $uploaded->keterangan) : null,
             ];
         })->values();
 
@@ -79,24 +80,24 @@ class DashboardController extends Controller
         $prestasiQuery = $m->prestasis();
         $organisasiQuery = $m->organisasis();
         $pelatihanQuery = $m->pelatihans();
-        
+
         if ($endDate) {
             $prestasiQuery->where('tanggal_mulai', '<=', $endDate);
             $organisasiQuery->where('periode_mulai', '<=', $endDate);
             $pelatihanQuery->where('tanggal_mulai', '<=', $endDate);
         }
-        
-        $totalPrestasi   = $prestasiQuery->count();
+
+        $totalPrestasi = $prestasiQuery->count();
         $totalOrganisasi = $organisasiQuery->count();
-        $totalPelatihan  = $pelatihanQuery->count();
+        $totalPelatihan = $pelatihanQuery->count();
 
         // Periode input dari tabel periode_akademiks. Dashboard ini tidak terikat
         // satu tahun ajaran tertentu, jadi "aktif" berarti ADA periode yang sedang
         // dibuka, dan batas waktunya diambil yang paling longgar (terakhir) supaya
         // tidak menyesatkan saat ada beberapa TA yang dibuka bersamaan.
-        $periodesAktif = \App\Helpers\PeriodeInputHelper::semuaAktif();
-        $periodeAktif  = $periodesAktif->isNotEmpty();
-        $periodeTutup  = $periodesAktif->max(fn ($p) => $p->tanggal_tutup);
+        $periodesAktif = PeriodeInputHelper::semuaAktif();
+        $periodeAktif = $periodesAktif->isNotEmpty();
+        $periodeTutup = $periodesAktif->max(fn ($p) => $p->tanggal_tutup);
 
         // Semester berjalan dihitung dari angkatan + kalender akademik.
         // Dulu diambil dari max(semester) baris transkrip — keliru karena LSIPD
@@ -120,37 +121,37 @@ class DashboardController extends Controller
         $bebasTanggungan = $bebasTanggunganQuery->first();
 
         return response()->json([
-            'success'   => true,
+            'success' => true,
             'tahun_ajaran_filter' => $tahunAjaranLabel,
             'mahasiswa' => [
-                'id'       => $m->id,
-                'nim'      => $m->nim,
-                'nama'     => $m->nama,
-                'prodi'    => $m->prodi?->nama,
+                'id' => $m->id,
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'prodi' => $m->prodi?->nama,
                 'angkatan' => $m->angkatan,
                 'kategori' => $m->kategori,
-                'status'   => $m->status,
+                'status' => $m->status,
             ],
             'akademik' => [
                 'ipk_terakhir' => $ipkTerakhir,
-                'ipk_delta'    => $ipkPrev !== null ? round($ipkTerakhir - $ipkPrev, 2) : null,
-                'semester'     => $displayedSemester,
+                'ipk_delta' => $ipkPrev !== null ? round($ipkTerakhir - $ipkPrev, 2) : null,
+                'semester' => $displayedSemester,
                 // null saat aturan IPK Minimum dinonaktifkan — frontend memakai
                 // ini sebagai syarat menggambar garis ambang di grafik, dan
                 // Recharts dengan y={null} perilakunya tidak terdefinisi.
-                'ipk_minimum'  => $ipkMin,
+                'ipk_minimum' => $ipkMin,
                 'ipk_minimum_aktif' => $ipkMin !== null,
                 // Jangan kirim null: tipenya string di dashboardService.ts.
-                'status_ipk'   => $ipkMin === null
+                'status_ipk' => $ipkMin === null
                     ? 'Tidak Dinilai'
                     : ($ipkTerakhir === null
                         ? 'Belum Ada Nilai'
                         : ($ipkTerakhir >= $ipkMin ? 'Aman' : 'Di Bawah Standar')),
                 // Dipakai grafik sebagai penyebut "semester X dari N".
                 'max_semester' => $maxSemester,
-                'sp_aktif'     => $spAktif ? [
-                    'level'     => $spAktif->level,
-                    'status'   => $spAktif->status,
+                'sp_aktif' => $spAktif ? [
+                    'level' => $spAktif->level,
+                    'status' => $spAktif->status,
                     'deskripsi' => $spAktif->deskripsi,
                 ] : null,
             ],
@@ -159,30 +160,30 @@ class DashboardController extends Controller
             // disusun di satu tempat.
             'peringatan' => $this->susunPeringatan($m, $maxSemester, $spAktif),
             'dokumen' => [
-                'total_wajib'     => $dokWajib,
+                'total_wajib' => $dokWajib,
                 'total_disetujui' => $dokDisetujui,
-                'lengkap'         => $dokDisetujui >= $dokWajib,
-                'list_status'     => $dokumenStatusList,
+                'lengkap' => $dokDisetujui >= $dokWajib,
+                'list_status' => $dokumenStatusList,
             ],
             'kegiatan' => [
-                'prestasi'   => $totalPrestasi,
+                'prestasi' => $totalPrestasi,
                 'organisasi' => $totalOrganisasi,
-                'pelatihan'  => $totalPelatihan,
+                'pelatihan' => $totalPelatihan,
             ],
             'periode' => [
-                'aktif'       => $periodeAktif,
+                'aktif' => $periodeAktif,
                 'batas_waktu' => $periodeTutup?->format('Y-m-d'),
                 // Daftar TA yang periodenya sedang dibuka — bisa lebih dari satu.
                 'periodes_aktif' => $periodesAktif->map(fn ($p) => [
                     'tahun_ajaran' => "{$p->tahun_akademik} {$p->semester}",
-                    'buka'         => $p->tanggal_buka?->format('Y-m-d'),
-                    'tutup'        => $p->tanggal_tutup?->format('Y-m-d'),
+                    'buka' => $p->tanggal_buka?->format('Y-m-d'),
+                    'tutup' => $p->tanggal_tutup?->format('Y-m-d'),
                 ])->values(),
             ],
             'bebas_tanggungan' => $bebasTanggungan ? ['status' => $bebasTanggungan->status] : null,
             // Hanya semester yang sudah bernilai — semester depan (transkrip
             // LSIPD masih "-"/"T") tidak digambar sebagai titik 0.
-            'ipk_chart' => $ipkBernilai->map(fn($s) => [
+            'ipk_chart' => $ipkBernilai->map(fn ($s) => [
                 'semester' => $s->semester,
                 'ipk' => (float) $s->ipk,
             ]),
@@ -207,11 +208,11 @@ class DashboardController extends Controller
             $semesterBerjalan = $m->semester_aktif;
             if ($semesterBerjalan > $maxSemester) {
                 $peringatan[] = [
-                    'kode'  => 'max_semester',
+                    'kode' => 'max_semester',
                     'level' => 'peringatan',
                     'judul' => 'Melewati batas semester studi',
                     'pesan' => "Semester berjalan Anda yang ke-{$semesterBerjalan} sudah melewati batas "
-                        . "{$maxSemester} semester untuk penerima KIP-K. Segera konsultasikan dengan pengelola.",
+                        ."{$maxSemester} semester untuk penerima KIP-K. Segera konsultasikan dengan pengelola.",
                 ];
             }
         }
@@ -220,11 +221,11 @@ class DashboardController extends Controller
         // dipakai di sini karena ia menjepit nilai negatif ke 0.
         if ($spAktif && $spAktif->lewat_batas) {
             $peringatan[] = [
-                'kode'  => 'sp_lewat_batas',
+                'kode' => 'sp_lewat_batas',
                 'level' => 'peringatan',
                 'judul' => 'Batas evaluasi SP terlewat',
                 'pesan' => "Batas evaluasi SP {$spAktif->level} Anda sudah terlewat. "
-                    . 'Segera hubungi pengelola KIP-K.',
+                    .'Segera hubungi pengelola KIP-K.',
             ];
         }
 

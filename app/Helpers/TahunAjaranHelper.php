@@ -2,7 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\Konfigurasi;
 use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
 
 class TahunAjaranHelper
 {
@@ -11,7 +13,9 @@ class TahunAjaranHelper
      */
     public static function getDateRange(?string $tahunAjaran): ?array
     {
-        if (!$tahunAjaran || $tahunAjaran === 'Semua') return null;
+        if (! $tahunAjaran || $tahunAjaran === 'Semua') {
+            return null;
+        }
 
         // Normalize format
         $tahunAjaran = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
@@ -24,12 +28,12 @@ class TahunAjaranHelper
             if ($semester === 'Ganjil') {
                 return [
                     Carbon::create($year1, 9, 1)->startOfDay(),
-                    Carbon::create($year2, 1, 31)->endOfDay()
+                    Carbon::create($year2, 1, 31)->endOfDay(),
                 ];
             } else {
                 return [
                     Carbon::create($year2, 2, 1)->startOfDay(),
-                    Carbon::create($year2, 8, 31)->endOfDay()
+                    Carbon::create($year2, 8, 31)->endOfDay(),
                 ];
             }
         }
@@ -43,6 +47,7 @@ class TahunAjaranHelper
         if ($range) {
             $query->whereBetween($columnName, [$range[0], $range[1]]);
         }
+
         return $query;
     }
 
@@ -53,6 +58,7 @@ class TahunAjaranHelper
             // Only filter up to the END of the academic year
             $query->where($columnName, '<=', $range[1]);
         }
+
         return $query;
     }
 
@@ -65,8 +71,9 @@ class TahunAjaranHelper
         $range = self::getDateRange($tahunAjaran);
         if ($range) {
             $query->where($startCol, '<=', $range[1])
-                  ->where($endCol, '>=', $range[0]);
+                ->where($endCol, '>=', $range[0]);
         }
+
         return $query;
     }
 
@@ -79,11 +86,13 @@ class TahunAjaranHelper
      *   - "2025/2026-1"         (tanpa prefix "Tahun ")
      *   - "2025/2026 Ganjil"    (normalized format)
      *
-     * @param  \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder|\Illuminate\Database\Eloquent\Builder  $query
      */
     public static function applyTahunAjaranFilter($query, string $columnName, ?string $tahunAjaran)
     {
-        if (!$tahunAjaran || $tahunAjaran === 'Semua') return $query;
+        if (! $tahunAjaran || $tahunAjaran === 'Semua') {
+            return $query;
+        }
 
         // Normalisasi ke format readable "2025/2026 Ganjil"
         $normalized = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
@@ -111,9 +120,9 @@ class TahunAjaranHelper
      */
     public static function calculateSemester(int $angkatan, ?string $tahunAjaran = null): int
     {
-        if (!$tahunAjaran || $tahunAjaran === 'Semua') {
-            $thn = \App\Models\Konfigurasi::get('tahun_akademik_aktif');
-            $sem = \App\Models\Konfigurasi::get('semester_aktif');
+        if (! $tahunAjaran || $tahunAjaran === 'Semua') {
+            $thn = Konfigurasi::get('tahun_akademik_aktif');
+            $sem = Konfigurasi::get('semester_aktif');
             if ($thn && $sem) {
                 $tahunAjaran = "$thn $sem";
             } else {
@@ -123,25 +132,28 @@ class TahunAjaranHelper
                 // ajaran boleh dibuka bersamaan — tidak ada satu TA yang bisa
                 // dianggap "yang berlaku". Jadi langsung pakai kalender berjalan.
                 $month = (int) date('n');
-                $year  = (int) date('Y');
+                $year = (int) date('Y');
                 if ($month >= 8) {
-                    $tahunAjaran = "$year/" . ($year + 1) . ' Ganjil';
+                    $tahunAjaran = "$year/".($year + 1).' Ganjil';
                 } elseif ($month >= 2) {
-                    $tahunAjaran = ($year - 1) . "/$year Genap";
+                    $tahunAjaran = ($year - 1)."/$year Genap";
                 } else {
-                    $tahunAjaran = ($year - 1) . "/$year Ganjil";
+                    $tahunAjaran = ($year - 1)."/$year Ganjil";
                 }
             }
         }
-        
-        if (!$tahunAjaran) return 0;
+
+        if (! $tahunAjaran) {
+            return 0;
+        }
 
         $ta = str_replace(['Tahun ', '-1', '-2'], ['', ' Ganjil', ' Genap'], $tahunAjaran);
         if (preg_match('/^(\d{4})\/\d{4}\s+(Ganjil|Genap)$/', $ta, $matches)) {
             $startYear = (int) $matches[1];
             $termValue = $matches[2] === 'Genap' ? 2 : 1;
-            
+
             $sem = (($startYear - $angkatan) * 2) + $termValue;
+
             return max(0, $sem);
         }
 
@@ -172,8 +184,8 @@ class TahunAjaranHelper
         }
 
         $tahunAwal = $angkatan + intdiv($semester - 1, 2);
-        $label     = ($semester % 2 === 1) ? 'Ganjil' : 'Genap';
+        $label = ($semester % 2 === 1) ? 'Ganjil' : 'Genap';
 
-        return $tahunAwal . '/' . ($tahunAwal + 1) . ' ' . $label;
+        return $tahunAwal.'/'.($tahunAwal + 1).' '.$label;
     }
 }

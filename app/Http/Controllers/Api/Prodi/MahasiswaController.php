@@ -2,9 +2,17 @@
 
 namespace App\Http\Controllers\Api\Prodi;
 
+use App\Helpers\TahunAjaranHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MahasiswaResource;
+use App\Http\Resources\OrganisasiResource;
+use App\Http\Resources\PelatihanResource;
+use App\Http\Resources\PrestasiResource;
+use App\Models\DokumenJenis;
 use App\Models\Mahasiswa;
 use App\Services\BebasTanggunganService;
+use App\Services\ExcelExportService;
+use App\Services\IPKCalculatorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,9 +26,9 @@ class MahasiswaController extends Controller
     public function index(Request $request): JsonResponse
     {
         $prodiId = $this->getProdiId($request);
-        \Log::info("PRODI DEBUG", ['user_id' => $request->user()->id ?? null, 'role' => $request->user()->role ?? null, 'prodi_id' => $prodiId]);
+        \Log::info('PRODI DEBUG', ['user_id' => $request->user()->id ?? null, 'role' => $request->user()->role ?? null, 'prodi_id' => $prodiId]);
 
-        if (!$prodiId) {
+        if (! $prodiId) {
             return response()->json(['success' => false, 'message' => 'Prodi tidak ditemukan untuk user ini.'], 403);
         }
 
@@ -29,7 +37,7 @@ class MahasiswaController extends Controller
 
         if ($request->search) {
             $q = $request->search;
-            $query->where(fn($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
+            $query->where(fn ($qb) => $qb->where('nim', 'like', "%$q%")->orWhere('nama', 'like', "%$q%"));
         }
         if ($request->angkatan && $request->angkatan !== 'Semua') {
             $query->where('angkatan', $request->angkatan);
@@ -52,9 +60,9 @@ class MahasiswaController extends Controller
         // Apply SP Filter
         if ($request->spFilter && $request->spFilter !== 'Semua') {
             if ($request->spFilter === 'Tanpa SP') {
-                $query->whereDoesntHave('suratPeringatans', fn($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']));
+                $query->whereDoesntHave('suratPeringatans', fn ($q) => $q->whereIn('status', ['Aktif', 'Masa Tenggang']));
             } else {
-                $query->whereHas('suratPeringatans', fn($q) => $q->where('level', $request->spFilter)->whereIn('status', ['Aktif', 'Masa Tenggang']));
+                $query->whereHas('suratPeringatans', fn ($q) => $q->where('level', $request->spFilter)->whereIn('status', ['Aktif', 'Masa Tenggang']));
             }
         }
 
@@ -62,7 +70,7 @@ class MahasiswaController extends Controller
         if ($request->ipkFilter && $request->ipkFilter !== 'Semua') {
             if ($request->ipkFilter === 'Di Bawah Standar (< 3.0)') {
                 $query->having('ipk_calc', '<', 3.0);
-            } else if ($request->ipkFilter === 'Di Atas Standar (≥ 3.0)') {
+            } elseif ($request->ipkFilter === 'Di Atas Standar (≥ 3.0)') {
                 $query->having('ipk_calc', '>=', 3.0);
             }
         }
@@ -70,34 +78,45 @@ class MahasiswaController extends Controller
         // Sorting — Prodi uses NIM A-Z as default
         if ($request->sortBy) {
             switch ($request->sortBy) {
-                case 'NIM (A-Z)':          $query->orderBy('nim'); break;
-                case 'NIM (Z-A)':          $query->orderByDesc('nim'); break;
-                case 'Nama (A-Z)':         $query->orderBy('nama'); break;
-                case 'Nama (Z-A)':         $query->orderByDesc('nama'); break;
-                case 'IPK (Tertinggi)':    $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
-                case 'IPK (Terendah)':     $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
-                case 'IPK Tertinggi → Terendah': $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
-                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc'); break;
-                case 'Nama A–Z':           $query->orderBy('nama'); break;
-                case 'Angkatan Terbaru':   $query->orderByDesc('angkatan'); break;
-                default:                   $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc'); break;
+                case 'NIM (A-Z)':          $query->orderBy('nim');
+                    break;
+                case 'NIM (Z-A)':          $query->orderByDesc('nim');
+                    break;
+                case 'Nama (A-Z)':         $query->orderBy('nama');
+                    break;
+                case 'Nama (Z-A)':         $query->orderByDesc('nama');
+                    break;
+                case 'IPK (Tertinggi)':    $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
+                    break;
+                case 'IPK (Terendah)':     $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc');
+                    break;
+                case 'IPK Tertinggi → Terendah': $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
+                    break;
+                case 'IPK Terendah → Tertinggi': $query->orderByRaw('ipk_calc IS NULL')->orderBy('ipk_calc');
+                    break;
+                case 'Nama A–Z':           $query->orderBy('nama');
+                    break;
+                case 'Angkatan Terbaru':   $query->orderByDesc('angkatan');
+                    break;
+                default:                   $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
+                    break;
             }
         } else {
             $query->orderByRaw('ipk_calc IS NULL')->orderByDesc('ipk_calc');
         }
 
         $limit = (int) ($request->limit ?? 10);
-        $page  = (int) ($request->page ?? 1);
+        $page = (int) ($request->page ?? 1);
 
         $total = $query->count();
-        $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
+        $data = $query->skip(($page - 1) * $limit)->take($limit)->get();
 
         return response()->json([
-            'data'        => \App\Http\Resources\MahasiswaResource::collection($data),
-            'total'       => $total,
-            'page'        => $page,
-            'limit'       => $limit,
-            'totalPages'  => (int) ceil($total / $limit),
+            'data' => MahasiswaResource::collection($data),
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'totalPages' => (int) ceil($total / $limit),
         ]);
     }
 
@@ -108,7 +127,7 @@ class MahasiswaController extends Controller
             ->where('prodi_id', $prodiId)
             ->findOrFail($id);
 
-        return response()->json(['data' => new \App\Http\Resources\MahasiswaResource($m)]);
+        return response()->json(['data' => new MahasiswaResource($m)]);
     }
 
     /**
@@ -122,13 +141,13 @@ class MahasiswaController extends Controller
         $m = Mahasiswa::with([
             'prodi',
             'user.contactHistories',
-            'ipkSemestrs' => fn($q) => $q->with('mataKuliahs'),
-            'dokumens' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $ta)->with('jenis'),
-            'suratPeringatans' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'surat_peringatans.tanggal_terbit', $ta)->orderByDesc('tanggal_terbit'),
-            'prestasis' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'prestasis.tanggal_mulai', $ta),
-            'organisasis' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'organisasis.periode_mulai', $ta),
-            'pelatihans' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'pelatihans.tanggal_mulai', $ta),
-            'bebasTanggungan' => fn($q) => \App\Helpers\TahunAjaranHelper::applyDateMaxFilter($q, 'bebas_tanggungans.tanggal_ajukan', $ta),
+            'ipkSemestrs' => fn ($q) => $q->with('mataKuliahs'),
+            'dokumens' => fn ($q) => TahunAjaranHelper::applyDateMaxFilter($q, 'dokumens.created_at', $ta)->with('jenis'),
+            'suratPeringatans' => fn ($q) => TahunAjaranHelper::applyDateMaxFilter($q, 'surat_peringatans.tanggal_terbit', $ta)->orderByDesc('tanggal_terbit'),
+            'prestasis' => fn ($q) => TahunAjaranHelper::applyDateMaxFilter($q, 'prestasis.tanggal_mulai', $ta),
+            'organisasis' => fn ($q) => TahunAjaranHelper::applyDateMaxFilter($q, 'organisasis.periode_mulai', $ta),
+            'pelatihans' => fn ($q) => TahunAjaranHelper::applyDateMaxFilter($q, 'pelatihans.tanggal_mulai', $ta),
+            'bebasTanggungan' => fn ($q) => TahunAjaranHelper::applyDateMaxFilter($q, 'bebas_tanggungans.tanggal_ajukan', $ta),
         ])
             ->where('prodi_id', $prodiId)
             ->findOrFail($id);
@@ -138,41 +157,40 @@ class MahasiswaController extends Controller
         // kosong) & buang baris tanpa nilai (ips NULL). Baris dengan IPS asli
         // 0 (semua nilai E) tetap ditampilkan.
         $ipkList = $m->ipkSemestrs;
-        $semesterTujuan = \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan, $ta);
-        $ipkList = $ipkList->filter(fn($s) => (int) $s->semester <= $semesterTujuan)->values();
-        $m->setRelation('ipkSemestrs', $ipkList->filter(fn($s) => $s->ips !== null)->values());
-
+        $semesterTujuan = TahunAjaranHelper::calculateSemester((int) $m->angkatan, $ta);
+        $ipkList = $ipkList->filter(fn ($s) => (int) $s->semester <= $semesterTujuan)->values();
+        $m->setRelation('ipkSemestrs', $ipkList->filter(fn ($s) => $s->ips !== null)->values());
 
         // Compute IPK stats
         $ipkHistory = $m->ipkSemestrs;
-        $ipkValues = $ipkHistory->pluck('ipk')->filter(fn($x) => $x !== null)->map(fn($x) => (float) $x);
+        $ipkValues = $ipkHistory->pluck('ipk')->filter(fn ($x) => $x !== null)->map(fn ($x) => (float) $x);
         $ipkHighest = $ipkValues->count() > 0 ? $ipkValues->max() : null;
-        $ipkLowest  = $ipkValues->count() > 0 ? $ipkValues->min() : null;
-        $ipkAvg     = $ipkValues->count() > 0 ? round($ipkValues->avg(), 2) : null;
-        $ipkMaxSem  = $ipkValues->count() > 0 ? (int) $ipkHistory->sortByDesc('ipk')->first()->semester : null;
-        $ipkMinSem  = $ipkValues->count() > 0 ? (int) $ipkHistory->sortBy('ipk')->first()->semester : null;
+        $ipkLowest = $ipkValues->count() > 0 ? $ipkValues->min() : null;
+        $ipkAvg = $ipkValues->count() > 0 ? round($ipkValues->avg(), 2) : null;
+        $ipkMaxSem = $ipkValues->count() > 0 ? (int) $ipkHistory->sortByDesc('ipk')->first()->semester : null;
+        $ipkMinSem = $ipkValues->count() > 0 ? (int) $ipkHistory->sortBy('ipk')->first()->semester : null;
         $ipkTerakhir = ($lastSem = $ipkHistory->sortByDesc('semester')->first()) && $lastSem->ipk !== null
             ? (float) $lastSem->ipk
             : null;
 
         // MK yang belum lulus (aggregate status perbaikan: lulus di semester lain atau belum)
-        $mkBelumLulus = $ipkHistory->flatMap(fn($s) => $s->mataKuliahs->where('lulus', false))
-            ->filter(fn($mk) => ! \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
+        $mkBelumLulus = $ipkHistory->flatMap(fn ($s) => $s->mataKuliahs->where('lulus', false))
+            ->filter(fn ($mk) => ! IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
             ->groupBy('kode')
-            ->map(fn($group) => [
+            ->map(fn ($group) => [
                 'kode' => $group->first()->kode,
                 'nama' => $group->first()->nama,
-                'sks'  => (int) $group->first()->sks,
+                'sks' => (int) $group->first()->sks,
                 'nilai' => $group->first()->nilai_huruf ?? '-',
                 'semesterAwal' => (int) $group->min('ipk_semester.semester'),
-                'lulusDiSem'   => null,
+                'lulusDiSem' => null,
                 'statusPerbaikan' => 'belum',
             ])
             ->values();
 
         // Detect MK yang sudah diperbaiki (muncul di semester lain dengan lulus = true)
         foreach ($mkBelumLulus as &$mk) {
-            $repaired = $ipkHistory->flatMap(fn($s) => $s->mataKuliahs)
+            $repaired = $ipkHistory->flatMap(fn ($s) => $s->mataKuliahs)
                 ->where('kode', $mk['kode'])
                 ->where('lulus', true)
                 ->first();
@@ -187,7 +205,7 @@ class MahasiswaController extends Controller
         }
 
         // Dokumen Kewajiban: list all wajib + the student's upload status
-        $dokumenWajib = \App\Models\DokumenJenis::where('is_wajib', true)
+        $dokumenWajib = DokumenJenis::where('is_wajib', true)
             ->orderBy('urutan')
             ->get()
             ->map(function ($j) use ($m) {
@@ -195,22 +213,23 @@ class MahasiswaController extends Controller
                 $status = 'Belum Diunggah';
                 if ($dok) {
                     $status = match ($dok->status) {
-                        'Disetujui'    => 'Disetujui',
-                        'Ditolak'      => 'Ditolak',
-                        'Menunggu'     => 'Menunggu',
+                        'Disetujui' => 'Disetujui',
+                        'Ditolak' => 'Ditolak',
+                        'Menunggu' => 'Menunggu',
                         'Menunggu Validasi' => 'Menunggu Validasi',
-                        default        => 'Belum Diunggah',
+                        default => 'Belum Diunggah',
                     };
                 }
+
                 return [
-                    'id'          => $j->id,
-                    'nama'        => $j->nama,
-                    'status'      => $status,
-                    'tanggal'     => $dok?->created_at?->format('d M Y'),
-                    'catatan'     => $dok?->catatan_admin,
-                    'deskripsi'   => $j->deskripsi,
-                    'tipe'        => $j->is_wajib ? 'Dokumen Wajib' : 'Dokumen Pendukung',
-                    'fileUrl'     => $dok?->path_file ? url('storage/' . $dok->path_file) : null,
+                    'id' => $j->id,
+                    'nama' => $j->nama,
+                    'status' => $status,
+                    'tanggal' => $dok?->created_at?->format('d M Y'),
+                    'catatan' => $dok?->catatan_admin,
+                    'deskripsi' => $j->deskripsi,
+                    'tipe' => $j->is_wajib ? 'Dokumen Wajib' : 'Dokumen Pendukung',
+                    'fileUrl' => $dok?->path_file ? url('storage/'.$dok->path_file) : null,
                 ];
             });
 
@@ -220,156 +239,162 @@ class MahasiswaController extends Controller
         $checklist = BebasTanggunganService::getChecklist($m);
 
         // IPK Chart data
-        $ipkChart = $ipkHistory->sortBy('semester')->values()->map(fn($s) => [
+        $ipkChart = $ipkHistory->sortBy('semester')->values()->map(fn ($s) => [
             'semester' => (int) $s->semester,
-            'ipk'      => $s->ipk !== null ? (float) $s->ipk : null,
+            'ipk' => $s->ipk !== null ? (float) $s->ipk : null,
         ]);
 
         // Prestasi, Organisasi, Pelatihan already via MahasiswaResource-like map
-        $mapFiles = fn($path) => $path ? url('storage/' . $path) : null;
+        $mapFiles = fn ($path) => $path ? url('storage/'.$path) : null;
 
-        $prestasi = \App\Http\Resources\PrestasiResource::collection($m->prestasis);
-        $organisasi = \App\Http\Resources\OrganisasiResource::collection($m->organisasis);
-        $pelatihan = \App\Http\Resources\PelatihanResource::collection($m->pelatihans);
+        $prestasi = PrestasiResource::collection($m->prestasis);
+        $organisasi = OrganisasiResource::collection($m->organisasis);
+        $pelatihan = PelatihanResource::collection($m->pelatihans);
 
-        $sp = $m->suratPeringatans->map(fn($sp) => [
-            'id'              => $sp->id,
-            'level'           => $sp->level,
-            'nomorSurat'      => $sp->nomor_surat,
-            'tanggal'         => $sp->tanggal_terbit?->translatedFormat('d F Y'),
-            'tanggalRaw'      => $sp->tanggal_terbit?->format('Y-m-d'),
-            'alasan'          => $sp->deskripsi,
-            'batasEvaluasi'   => $sp->batas_evaluasi?->translatedFormat('d F Y'),
-            'status'          => $sp->status,
-            'sisaHari'        => $sp->sisa_hari,
-            'jenisPelanggaran'=> $sp->jenis_pelanggaran,
-            'catatan'         => $sp->catatan,
+        $sp = $m->suratPeringatans->map(fn ($sp) => [
+            'id' => $sp->id,
+            'level' => $sp->level,
+            'nomorSurat' => $sp->nomor_surat,
+            'tanggal' => $sp->tanggal_terbit?->translatedFormat('d F Y'),
+            'tanggalRaw' => $sp->tanggal_terbit?->format('Y-m-d'),
+            'alasan' => $sp->deskripsi,
+            'batasEvaluasi' => $sp->batas_evaluasi?->translatedFormat('d F Y'),
+            'status' => $sp->status,
+            'sisaHari' => $sp->sisa_hari,
+            'jenisPelanggaran' => $sp->jenis_pelanggaran,
+            'catatan' => $sp->catatan,
             'diterbitkanOleh' => $sp->diterbitkan_oleh,
-            'createdAt'       => $sp->created_at?->format('Y-m-d'),
+            'createdAt' => $sp->created_at?->format('Y-m-d'),
         ])->values();
 
         $bebas = $m->bebasTanggungan ? [
-            'id'         => $m->bebasTanggungan->id,
-                'status'     => $m->bebasTanggungan->status,
-                'tanggal'    => $m->bebasTanggungan->created_at?->format('d M Y'),
-            ] : null;
+            'id' => $m->bebasTanggungan->id,
+            'status' => $m->bebasTanggungan->status,
+            'tanggal' => $m->bebasTanggungan->created_at?->format('d M Y'),
+        ] : null;
 
-        $contactHistories = $m->user?->contactHistories?->map(fn($c) => [
-            'nomor'  => $c->no_hp,
-            'sem'    => $c->keterangan,
-            'aktif'  => true,
+        $contactHistories = $m->user?->contactHistories?->map(fn ($c) => [
+            'nomor' => $c->no_hp,
+            'sem' => $c->keterangan,
+            'aktif' => true,
             'status' => 'Aktif',
-            'tanggal'=> $c->created_at?->format('d M Y'),
+            'tanggal' => $c->created_at?->format('d M Y'),
         ]) ?? [];
 
         return response()->json([
             'success' => true,
             'mahasiswa' => [
-                'id'              => $m->id,
-                'nim'             => $m->nim,
-                'nama'            => $m->nama,
-                'prodi'           => $m->prodi?->nama,
-                'prodiId'         => $m->prodi_id,
-                'angkatan'        => (int) $m->angkatan,
-                'kategori'        => $m->kategori,
-                'status'          => $m->status,
-                'semester'        => \App\Helpers\TahunAjaranHelper::calculateSemester((int) $m->angkatan),
+                'id' => $m->id,
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'prodi' => $m->prodi?->nama,
+                'prodiId' => $m->prodi_id,
+                'angkatan' => (int) $m->angkatan,
+                'kategori' => $m->kategori,
+                'status' => $m->status,
+                'semester' => TahunAjaranHelper::calculateSemester((int) $m->angkatan),
                 'semesterDicabut' => $m->status === 'Dicabut' ? $m->semester_dicabut : null,
-                'tanggalDicabut'  => $m->status === 'Dicabut' && $m->tanggal_dicabut ? $m->tanggal_dicabut->format('d M Y') : null,
-                'alasanDicabut'   => $m->status === 'Dicabut' ? $m->alasan_dicabut : null,
-                'tempatLahir'     => $m->tempat_lahir,
-                'tanggalLahir'    => $m->tanggal_lahir?->format('d M Y'),
-                'jenisKelamin'    => $m->jenis_kelamin,
-                'alamat'          => $m->alamat,
-                'namaAyah'        => $m->nama_ayah,
-                'namaIbu'         => $m->nama_ibu,
-                'telAyah'         => $m->tel_ayah,
-                'telIbu'          => $m->tel_ibu,
-                'nik'             => $m->nik,
-                'nisn'            => $m->nisn,
-                'email'           => $m->user?->email,
-                'noHp'            => $m->user?->no_hp,
-                'fotoProfil'      => $m->user?->foto_profil ? url('storage/' . $m->user->foto_profil) : null,
-                'contactHistories'=> $contactHistories,
-                'ipkTerakhir'     => $ipkTerakhir,
-                'ipkTertinggi'    => $ipkHighest,
-                'ipkTerendah'     => $ipkLowest,
-                'ipkRataRata'     => $ipkAvg,
+                'tanggalDicabut' => $m->status === 'Dicabut' && $m->tanggal_dicabut ? $m->tanggal_dicabut->format('d M Y') : null,
+                'alasanDicabut' => $m->status === 'Dicabut' ? $m->alasan_dicabut : null,
+                'tempatLahir' => $m->tempat_lahir,
+                'tanggalLahir' => $m->tanggal_lahir?->format('d M Y'),
+                'jenisKelamin' => $m->jenis_kelamin,
+                'alamat' => $m->alamat,
+                'namaAyah' => $m->nama_ayah,
+                'namaIbu' => $m->nama_ibu,
+                'telAyah' => $m->tel_ayah,
+                'telIbu' => $m->tel_ibu,
+                'nik' => $m->nik,
+                'nisn' => $m->nisn,
+                'email' => $m->user?->email,
+                'noHp' => $m->user?->no_hp,
+                'fotoProfil' => $m->user?->foto_profil ? url('storage/'.$m->user->foto_profil) : null,
+                'contactHistories' => $contactHistories,
+                'ipkTerakhir' => $ipkTerakhir,
+                'ipkTertinggi' => $ipkHighest,
+                'ipkTerendah' => $ipkLowest,
+                'ipkRataRata' => $ipkAvg,
                 'ipkSemTertinggi' => $ipkMaxSem,
-                'ipkSemTerendah'  => $ipkMinSem,
-                'spAktif'         => $sp->whereIn('status', ['Aktif', 'Masa Tenggang'])->sortByDesc('level')->first(),
+                'ipkSemTerendah' => $ipkMinSem,
+                'spAktif' => $sp->whereIn('status', ['Aktif', 'Masa Tenggang'])->sortByDesc('level')->first(),
             ],
-            'ipk_history' => $ipkHistory->sortBy('semester')->values()->map(fn($s) => [
-                'semester'  => (int) $s->semester,
-                'tahun'     => $s->tahun_ajaran,
-                'ips'       => $s->ips !== null ? (float) $s->ips : null,
-                'ipk'       => $s->ipk !== null ? (float) $s->ipk : null,
+            'ipk_history' => $ipkHistory->sortBy('semester')->values()->map(fn ($s) => [
+                'semester' => (int) $s->semester,
+                'tahun' => $s->tahun_ajaran,
+                'ips' => $s->ips !== null ? (float) $s->ips : null,
+                'ipk' => $s->ipk !== null ? (float) $s->ipk : null,
                 'mkBelumLulus' => $s->mataKuliahs
                     ->where('lulus', false)
-                    ->reject(fn($mk) => \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
+                    ->reject(fn ($mk) => IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf))
                     ->count(),
-                'mataKuliah' => $s->mataKuliahs->map(fn($mk) => [
-                    'kode'       => $mk->kode,
-                    'nama'       => $mk->nama,
-                    'sks'        => (int) $mk->sks,
+                'mataKuliah' => $s->mataKuliahs->map(fn ($mk) => [
+                    'kode' => $mk->kode,
+                    'nama' => $mk->nama,
+                    'sks' => (int) $mk->sks,
                     'nilaiHuruf' => $mk->nilai_huruf,
-                    'nilaiMutu'  => (float) $mk->nilai_mutu,
-                    'lulus'      => (bool) $mk->lulus,
+                    'nilaiMutu' => (float) $mk->nilai_mutu,
+                    'lulus' => (bool) $mk->lulus,
                     // Label status dari aturan tunggal IPKCalculatorService, supaya
                     // "Belum Lulus" tetap hanya untuk D/E dan "-"/"T" punya label sendiri.
-                    'status'     => \App\Services\IPKCalculatorService::statusMk((string) $mk->nilai_huruf),
-                    'statusKode' => \App\Services\IPKCalculatorService::statusMkKode((string) $mk->nilai_huruf),
-                    'netral'     => \App\Services\IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf),
+                    'status' => IPKCalculatorService::statusMk((string) $mk->nilai_huruf),
+                    'statusKode' => IPKCalculatorService::statusMkKode((string) $mk->nilai_huruf),
+                    'netral' => IPKCalculatorService::isNilaiNetral((string) $mk->nilai_huruf),
                 ])->values(),
             ]),
-            'ipk_chart'      => $ipkChart,
+            'ipk_chart' => $ipkChart,
             'mk_belum_lulus' => $mkBelumLulus,
             'dokumen_kewajiban' => $dokumenWajib->values(),
-            'dokumen_summary'   => [
+            'dokumen_summary' => [
                 'total_wajib' => $dokumenWajib->count(),
                 'total_disetujui' => $dokumenDisetujui,
-                'lengkap'     => $dokumenDisetujui === $dokumenWajib->count(),
+                'lengkap' => $dokumenDisetujui === $dokumenWajib->count(),
             ],
-            'syarat_penyelesaian' => collect($checklist['checklist'])->map(fn($c) => [
-                'nama'      => $c['syarat'],
+            'syarat_penyelesaian' => collect($checklist['checklist'])->map(fn ($c) => [
+                'nama' => $c['syarat'],
                 'terpenuhi' => (bool) $c['terpenuhi'],
-                'keterangan'=> $c['keterangan'],
+                'keterangan' => $c['keterangan'],
             ])->values(),
             'checklist_meta' => [
                 'ipk_minimum' => $checklist['ipk_minimum'],
                 'ipk_terakhir' => $checklist['ipk_terakhir'],
                 'sks_ditempuh' => $checklist['sks_ditempuh'],
-                'sks_minimum'  => $checklist['sks_minimum'],
-                'can_apply'    => (bool) $checklist['can_apply'],
+                'sks_minimum' => $checklist['sks_minimum'],
+                'can_apply' => (bool) $checklist['can_apply'],
             ],
             'bebas_tanggungan' => $bebas,
-            'prestasi'  => $prestasi,
-            'organisasi'=> $organisasi,
+            'prestasi' => $prestasi,
+            'organisasi' => $organisasi,
             'pelatihan' => $pelatihan,
-            'sp'        => $sp,
+            'sp' => $sp,
         ]);
     }
 
     public function ekspor(Request $request): JsonResponse
     {
         $prodiId = $this->getProdiId($request);
-        $query   = Mahasiswa::with(['prodi', 'ipkSemestrs', 'dokumens.jenis', 'suratPeringatans'])
+        $query = Mahasiswa::with(['prodi', 'ipkSemestrs', 'dokumens.jenis', 'suratPeringatans'])
             ->where('prodi_id', $prodiId);
 
-        if ($request->angkatan && $request->angkatan !== 'Semua') $query->where('angkatan', $request->angkatan);
-        if ($request->kategori && $request->kategori !== 'Semua') $query->where('kategori', $request->kategori);
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
+        if ($request->angkatan && $request->angkatan !== 'Semua') {
+            $query->where('angkatan', $request->angkatan);
+        }
+        if ($request->kategori && $request->kategori !== 'Semua') {
+            $query->where('kategori', $request->kategori);
+        }
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
+        }
 
-        $data = $query->get()->map(fn($m) => [
-            'nim'       => $m->nim,
-            'nama'      => $m->nama,
-            'angkatan'  => $m->angkatan,
-            'kategori'  => $m->kategori,
-            'status'    => $m->status,
-            'ipk'       => $m->ipk_terakhir,
-            'semester'  => $m->semester_aktif,
-            'sp'        => $m->sp_aktif ?? '-',
-            'ipk_per_semester' => $m->ipkSemestrs->map(fn($s) => [
+        $data = $query->get()->map(fn ($m) => [
+            'nim' => $m->nim,
+            'nama' => $m->nama,
+            'angkatan' => $m->angkatan,
+            'kategori' => $m->kategori,
+            'status' => $m->status,
+            'ipk' => $m->ipk_terakhir,
+            'semester' => $m->semester_aktif,
+            'sp' => $m->sp_aktif ?? '-',
+            'ipk_per_semester' => $m->ipkSemestrs->map(fn ($s) => [
                 'sem' => $s->semester,
                 'ipk' => $s->ipk !== null ? (float) $s->ipk : null,
             ]),
@@ -384,43 +409,50 @@ class MahasiswaController extends Controller
     public function eksporPreview(Request $request): JsonResponse
     {
         $prodiId = $this->getProdiId($request);
-        $query   = Mahasiswa::with(['ipkSemestrs', 'dokumens.jenis', 'suratPeringatans'])
+        $query = Mahasiswa::with(['ipkSemestrs', 'dokumens.jenis', 'suratPeringatans'])
             ->where('prodi_id', $prodiId);
 
-        if ($request->angkatan && $request->angkatan !== 'Semua') $query->where('angkatan', $request->angkatan);
-        if ($request->kategori && $request->kategori !== 'Semua') $query->where('kategori', $request->kategori);
-        if ($request->status && $request->status !== 'Semua') $query->where('status', $request->status);
+        if ($request->angkatan && $request->angkatan !== 'Semua') {
+            $query->where('angkatan', $request->angkatan);
+        }
+        if ($request->kategori && $request->kategori !== 'Semua') {
+            $query->where('kategori', $request->kategori);
+        }
+        if ($request->status && $request->status !== 'Semua') {
+            $query->where('status', $request->status);
+        }
 
         $rows = $query->orderBy('nim')->take(50)->get()->map(function ($m) {
-            $ipk   = $m->ipk_terakhir;
-            $sem   = $m->semester_aktif;
-            $sp    = $m->sp_aktif;
-            $jenis = \App\Models\DokumenJenis::where('is_wajib', true)->count();
+            $ipk = $m->ipk_terakhir;
+            $sem = $m->semester_aktif;
+            $sp = $m->sp_aktif;
+            $jenis = DokumenJenis::where('is_wajib', true)->count();
             $diset = $m->dokumens->where('status', 'Disetujui')
-                ->whereIn('dokumen_jenis_id', \App\Models\DokumenJenis::where('is_wajib', true)->pluck('id'))
+                ->whereIn('dokumen_jenis_id', DokumenJenis::where('is_wajib', true)->pluck('id'))
                 ->unique('dokumen_jenis_id')->count();
+
             return [
-                'nim'             => $m->nim,
-                'nama'            => $m->nama,
-                'angkatan'        => (int) $m->angkatan,
-                'kategori'        => $m->kategori,
-                'ipkTerakhir'     => $ipk !== null ? (float) $ipk : null,
-                'semester'        => (int) $sem,
-                'sp'              => $sp ? (int) filter_var($sp, FILTER_SANITIZE_NUMBER_INT) : 0,
-                'dokumenLengkap'  => "{$diset}/{$jenis}",
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'angkatan' => (int) $m->angkatan,
+                'kategori' => $m->kategori,
+                'ipkTerakhir' => $ipk !== null ? (float) $ipk : null,
+                'semester' => (int) $sem,
+                'sp' => $sp ? (int) filter_var($sp, FILTER_SANITIZE_NUMBER_INT) : 0,
+                'dokumenLengkap' => "{$diset}/{$jenis}",
             ];
         })->values();
 
-        $ipkRows = $rows->pluck('ipkTerakhir')->filter(fn($v) => $v !== null);
+        $ipkRows = $rows->pluck('ipkTerakhir')->filter(fn ($v) => $v !== null);
         $summary = [
-            'totalMahasiswa'   => $rows->count(),
-            'rataIpk'          => $ipkRows->count() > 0 ? round($ipkRows->avg(), 2) : null,
-            'mahasiswaDenganSp'=> $rows->where('sp', '>', 0)->count(),
+            'totalMahasiswa' => $rows->count(),
+            'rataIpk' => $ipkRows->count() > 0 ? round($ipkRows->avg(), 2) : null,
+            'mahasiswaDenganSp' => $rows->where('sp', '>', 0)->count(),
         ];
 
         return response()->json([
             'success' => true,
-            'data'    => $rows,
+            'data' => $rows,
             'summary' => $summary,
         ]);
     }
@@ -440,6 +472,6 @@ class MahasiswaController extends Controller
             'format' => $request->format ?? 'xlsx',
         ];
 
-        return \App\Services\ExcelExportService::exportMahasiswaProdi($prodiId, $filters);
+        return ExcelExportService::exportMahasiswaProdi($prodiId, $filters);
     }
 }

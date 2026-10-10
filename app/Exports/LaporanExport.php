@@ -3,18 +3,19 @@
 namespace App\Exports;
 
 use App\Models\Mahasiswa;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
+class LaporanExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected array $filters;
 
@@ -23,10 +24,10 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithSt
         $this->filters = $filters;
     }
 
-    public function collection(): \Illuminate\Support\Collection
+    public function collection(): Collection
     {
         return Mahasiswa::with(['prodi', 'ipkSemestrs', 'suratPeringatans', 'dokumens'])
-            ->when(! empty($this->filters['prodi_id']), fn($q) => $q->where('prodi_id', $this->filters['prodi_id']))
+            ->when(! empty($this->filters['prodi_id']), fn ($q) => $q->where('prodi_id', $this->filters['prodi_id']))
             ->orderBy('angkatan')->orderBy('nim')
             ->get();
     }
@@ -39,10 +40,10 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithSt
     public function map($m): array
     {
         $ipkSemesters = $m->ipkSemestrs->sortBy('semester')->values();
-        $ipkTerakhirRow = $ipkSemesters->filter(fn($s) => $s->ipk !== null)->last();
-        $ipkTerakhir   = $ipkTerakhirRow ? (float) $ipkTerakhirRow->ipk : null;
-        $spAktif      = $m->suratPeringatans->whereIn('status', ['Aktif', 'Masa Tenggang'])->sortByDesc('level')->first();
-        $dokSetujui   = $m->dokumens->where('status', 'Disetujui')->unique('dokumen_jenis_id')->count();
+        $ipkTerakhirRow = $ipkSemesters->filter(fn ($s) => $s->ipk !== null)->last();
+        $ipkTerakhir = $ipkTerakhirRow ? (float) $ipkTerakhirRow->ipk : null;
+        $spAktif = $m->suratPeringatans->whereIn('status', ['Aktif', 'Masa Tenggang'])->sortByDesc('level')->first();
+        $dokSetujui = $m->dokumens->where('status', 'Disetujui')->unique('dokumen_jenis_id')->count();
 
         return [
             $m->nim,
@@ -82,6 +83,7 @@ class LaporanExport implements FromCollection, WithHeadings, WithMapping, WithSt
         }
 
         $sheet->freezePane('A2');
+
         return [];
     }
 

@@ -22,9 +22,9 @@ class AturanAkademik
 {
     /** Ambang yang bisa dikonfigurasi beserta nilai bawakannya. */
     private const RULES = [
-        'ipk_minimum'       => ['default' => '3.00', 'label' => 'IPK Minimum'],
-        'masa_tenggang_sp'  => ['default' => '90',   'label' => 'Masa Tenggang SP'],
-        'max_semester'      => ['default' => '8',    'label' => 'Batas Semester Studi'],
+        'ipk_minimum' => ['default' => '3.00', 'label' => 'IPK Minimum'],
+        'masa_tenggang_sp' => ['default' => '90',   'label' => 'Masa Tenggang SP'],
+        'max_semester' => ['default' => '8',    'label' => 'Batas Semester Studi'],
         'sks_minimum_lulus' => ['default' => '144',  'label' => 'Total SKS Kelulusan'],
     ];
 

@@ -81,8 +81,8 @@ class SuperAdminSeeder extends Seeder
             $user = User::firstOrCreate(['username' => $data['nim']], [
                 'name' => $data['nama'],
                 'username' => $data['nim'],
-                'email' => strtolower(str_replace(' ', '.', $data['nama'])) . '@student.itg.ac.id',
-                'password' => Hash::make('kip' . $data['nim'] . '2026'),
+                'email' => strtolower(str_replace(' ', '.', $data['nama'])).'@student.itg.ac.id',
+                'password' => Hash::make('kip'.$data['nim'].'2026'),
                 'role' => 'mahasiswa',
                 'is_password_changed' => false,
             ]);
@@ -95,8 +95,8 @@ class SuperAdminSeeder extends Seeder
                 'angkatan' => $data['angkatan'],
                 'kategori' => $data['kategori'],
                 'status' => 'Aktif',
-                'nomor_sk' => 'SK/KIP-K/ITG/' . $data['angkatan'] . '/' . $data['nim'],
-                'tanggal_sk' => $data['angkatan'] . '-09-01',
+                'nomor_sk' => 'SK/KIP-K/ITG/'.$data['angkatan'].'/'.$data['nim'],
+                'tanggal_sk' => $data['angkatan'].'-09-01',
             ]);
         }
     }

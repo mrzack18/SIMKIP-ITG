@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\AturanAkademik;
+use App\Models\DokumenJenis;
 use App\Models\Mahasiswa;
 
 class BebasTanggunganService
@@ -30,7 +31,7 @@ class BebasTanggunganService
         $sksDitempuh = $mahasiswa->ipkSemestrs()
             ->with('mataKuliahs')
             ->get()
-            ->flatMap(fn($s) => $s->mataKuliahs)
+            ->flatMap(fn ($s) => $s->mataKuliahs)
             ->where('lulus', true)
             ->sum('sks');
         $sksOk = $sksMin === null || $sksDitempuh >= $sksMin;
@@ -39,11 +40,11 @@ class BebasTanggunganService
         $mkBelumLulus = $mahasiswa->ipkSemestrs()
             ->with('mataKuliahs')
             ->get()
-            ->flatMap(fn($s) => $s->mataKuliahs)
+            ->flatMap(fn ($s) => $s->mataKuliahs)
             ->where('lulus', false)
             ->count();
 
-        $allDokumenOk = collect($dokumenChecklist)->every(fn($d) => $d['status'] === 'Disetujui');
+        $allDokumenOk = collect($dokumenChecklist)->every(fn ($d) => $d['status'] === 'Disetujui');
 
         return [
             'checklist' => [
@@ -100,13 +101,13 @@ class BebasTanggunganService
             'ipk_minimum_aktif' => $ipkMin !== null,
             // Rumus ini tidak berubah: $ipkOk dan $sksOk sudah bernilai true saat
             // aturannya dinonaktifkan, jadi tidak ada yang terblokir karenanya.
-            'can_apply' => $allDokumenOk && $ipkOk && !$spAktif && $sksOk && $mkBelumLulus === 0,
+            'can_apply' => $allDokumenOk && $ipkOk && ! $spAktif && $sksOk && $mkBelumLulus === 0,
         ];
     }
 
     private static function cekDokumen(Mahasiswa $mahasiswa): array
     {
-        $jenisWajib = \App\Models\DokumenJenis::where('is_wajib', true)->orderBy('urutan')->get();
+        $jenisWajib = DokumenJenis::where('is_wajib', true)->orderBy('urutan')->get();
         $result = [];
 
         foreach ($jenisWajib as $jenis) {

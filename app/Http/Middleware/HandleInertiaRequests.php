@@ -39,7 +39,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ?: [
                     'id' => 999,
-                    'name' => 'Mock User (' . ucfirst($mockRole) . ')',
+                    'name' => 'Mock User ('.ucfirst($mockRole).')',
                     'username' => 'mock_user',
                     'role' => $mockRole,
                 ],

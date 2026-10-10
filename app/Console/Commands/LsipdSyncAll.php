@@ -29,8 +29,8 @@ class LsipdSyncAll extends Command
         }
 
         $progress->update([
-            'status'     => 'running',
-            'phase'      => 'biodata',
+            'status' => 'running',
+            'phase' => 'biodata',
             'started_at' => now(),
         ]);
 
@@ -38,14 +38,14 @@ class LsipdSyncAll extends Command
             // Fase 1: sinkronisasi biodata mahasiswa.
             $stats = LsipdSyncService::syncAllMahasiswa(function (array $stats, int $processed, int $total) use ($progress) {
                 $progress->update([
-                    'phase'     => 'biodata',
+                    'phase' => 'biodata',
                     'processed' => $processed,
-                    'total'     => $total,
-                    'inserted'  => $stats['inserted'],
-                    'updated'   => $stats['updated'],
+                    'total' => $total,
+                    'inserted' => $stats['inserted'],
+                    'updated' => $stats['updated'],
                     'unchanged' => $stats['unchanged'],
-                    'skipped'   => $stats['skipped'],
-                    'message'   => $total > 0
+                    'skipped' => $stats['skipped'],
+                    'message' => $total > 0
                         ? "Menyinkronkan biodata {$processed} dari {$total} mahasiswa..."
                         : 'Menunggu data dari LSIPD...',
                 ]);
@@ -54,27 +54,27 @@ class LsipdSyncAll extends Command
             // Fase 2: sinkronisasi transkrip (mata kuliah, IPS, IPK, semester).
             $trStats = LsipdSyncService::syncAllTranskrip(function (array $s, Mahasiswa $mhs) use ($progress) {
                 $progress->update([
-                    'phase'             => 'transkrip',
-                    'processed'         => $s['total'],
-                    'total'             => $s['total'],
+                    'phase' => 'transkrip',
+                    'processed' => $s['total'],
+                    'total' => $s['total'],
                     'transkrip_success' => $s['success'],
-                    'transkrip_failed'  => $s['failed'],
-                    'message'           => "Menyinkronkan transkrip {$s['total']} mahasiswa... ({$mhs->nim})",
+                    'transkrip_failed' => $s['failed'],
+                    'message' => "Menyinkronkan transkrip {$s['total']} mahasiswa... ({$mhs->nim})",
                 ]);
             });
 
             $progress->update([
-                'status'            => 'success',
-                'processed'         => $stats['total'],
-                'total'             => $stats['total'],
-                'inserted'          => $stats['inserted'],
-                'updated'           => $stats['updated'],
-                'unchanged'         => $stats['unchanged'],
-                'skipped'           => $stats['skipped'],
+                'status' => 'success',
+                'processed' => $stats['total'],
+                'total' => $stats['total'],
+                'inserted' => $stats['inserted'],
+                'updated' => $stats['updated'],
+                'unchanged' => $stats['unchanged'],
+                'skipped' => $stats['skipped'],
                 'transkrip_success' => $trStats['success'],
-                'transkrip_failed'  => $trStats['failed'],
-                'finished_at'       => now(),
-                'message'           => sprintf(
+                'transkrip_failed' => $trStats['failed'],
+                'finished_at' => now(),
+                'message' => sprintf(
                     'Sinkron selesai: %d baru, %d diperbarui, %d tidak berubah, %d dilewati. Transkrip: %d berhasil, %d gagal.',
                     $stats['inserted'], $stats['updated'], $stats['unchanged'], $stats['skipped'],
                     $trStats['success'], $trStats['failed'],
@@ -92,9 +92,9 @@ class LsipdSyncAll extends Command
             Log::error('LSIPD background sync error', ['error' => $e->getMessage()]);
 
             $progress->update([
-                'status'      => 'failed',
+                'status' => 'failed',
                 'finished_at' => now(),
-                'message'     => 'Terjadi kesalahan: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
             ]);
 
             return self::FAILURE;

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class BebasTanggungan extends Model
 {
@@ -20,7 +20,18 @@ class BebasTanggungan extends Model
         'tanggal_terbit' => 'date',
     ];
 
-    public function mahasiswa() { return $this->belongsTo(Mahasiswa::class); }
-    public function reviewedBy() { return $this->belongsTo(User::class, 'reviewed_by'); }
-    public function histories() { return $this->hasMany(BebasTanggunganHistory::class)->latest(); }
+    public function mahasiswa()
+    {
+        return $this->belongsTo(Mahasiswa::class);
+    }
+
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(BebasTanggunganHistory::class)->latest();
+    }
 }

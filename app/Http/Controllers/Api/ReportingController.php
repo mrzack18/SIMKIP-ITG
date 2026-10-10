@@ -33,31 +33,31 @@ class ReportingController extends Controller
      */
     private const TYPES = [
         'prestasi' => [
-            'judul'      => 'Laporan Prestasi Mahasiswa',
+            'judul' => 'Laporan Prestasi Mahasiswa',
             'dateFilter' => 'range',
-            'startCol'   => 'tanggal_mulai',
-            'statuses'   => ['Menunggu Validasi', 'Disetujui', 'Ditolak'],
-            'extraKey'   => 'tingkat',
+            'startCol' => 'tanggal_mulai',
+            'statuses' => ['Menunggu Validasi', 'Disetujui', 'Ditolak'],
+            'extraKey' => 'tingkat',
             'extraLabel' => 'Tingkat',
-            'extras'     => ['Internasional', 'Nasional', 'Wilayah', 'Institusi'],
+            'extras' => ['Internasional', 'Nasional', 'Wilayah', 'Institusi'],
         ],
         'organisasi' => [
-            'judul'      => 'Laporan Keaktifan Organisasi Mahasiswa',
+            'judul' => 'Laporan Keaktifan Organisasi Mahasiswa',
             'dateFilter' => 'overlap',
-            'startCol'   => 'periode_mulai',
-            'statuses'   => ['Menunggu', 'Disetujui', 'Ditolak'],
-            'extraKey'   => 'jenis',
+            'startCol' => 'periode_mulai',
+            'statuses' => ['Menunggu', 'Disetujui', 'Ditolak'],
+            'extraKey' => 'jenis',
             'extraLabel' => 'Jenis',
-            'extras'     => ['Organisasi', 'Kepanitiaan', 'Kegiatan'],
+            'extras' => ['Organisasi', 'Kepanitiaan', 'Kegiatan'],
         ],
         'pelatihan' => [
-            'judul'      => 'Laporan Pelatihan Mahasiswa',
+            'judul' => 'Laporan Pelatihan Mahasiswa',
             'dateFilter' => 'range',
-            'startCol'   => 'tanggal_mulai',
-            'statuses'   => ['Menunggu', 'Disetujui', 'Ditolak'],
-            'extraKey'   => 'jenis',
+            'startCol' => 'tanggal_mulai',
+            'statuses' => ['Menunggu', 'Disetujui', 'Ditolak'],
+            'extraKey' => 'jenis',
             'extraLabel' => 'Jenis',
-            'extras'     => ['Akademik', 'Non-Akademik'],
+            'extras' => ['Akademik', 'Non-Akademik'],
         ],
     ];
 
@@ -73,14 +73,14 @@ class ReportingController extends Controller
             ->values();
 
         return response()->json([
-            'success'   => true,
-            'data'      => $rows,
-            'total'     => $rows->count(),
-            'judul'     => $config['judul'],
-            'filter'    => $this->describeFilters($request, $config),
-            'options'   => [
+            'success' => true,
+            'data' => $rows,
+            'total' => $rows->count(),
+            'judul' => $config['judul'],
+            'filter' => $this->describeFilters($request, $config),
+            'options' => [
                 'status' => $config['statuses'],
-                'extra'  => $config['extras'],
+                'extra' => $config['extras'],
             ],
         ]);
     }
@@ -114,7 +114,7 @@ class ReportingController extends Controller
         $config = self::TYPES[$type];
 
         $query = match ($type) {
-            'prestasi'  => Prestasi::with(['mahasiswa.prodi']),
+            'prestasi' => Prestasi::with(['mahasiswa.prodi']),
             'organisasi' => Organisasi::with(['mahasiswa.prodi']),
             'pelatihan' => Pelatihan::with(['mahasiswa.prodi']),
         };
@@ -124,7 +124,9 @@ class ReportingController extends Controller
         $prodiId = null;
         if ($request->user()->role === 'prodi') {
             $prodiId = (int) ($request->user()->prodi_id ?? 0);
-            if (!$prodiId) abort(403, 'Prodi tidak ditemukan untuk user ini.');
+            if (! $prodiId) {
+                abort(403, 'Prodi tidak ditemukan untuk user ini.');
+            }
         } elseif ($request->filled('prodi_id') && $request->prodi_id !== 'Semua') {
             $prodiId = (int) $request->prodi_id;
         }
@@ -199,41 +201,41 @@ class ReportingController extends Controller
         $m = $item->mahasiswa;
 
         $base = [
-            'id'       => $item->id,
-            'nim'      => $m?->nim,
-            'nama'     => $m?->nama,
-            'prodi'    => $m?->prodi?->nama,
+            'id' => $item->id,
+            'nim' => $m?->nim,
+            'nama' => $m?->nama,
+            'prodi' => $m?->prodi?->nama,
             'angkatan' => $m?->angkatan,
-            'status'   => $item->status,
+            'status' => $item->status,
             // Bentuk lengkap (termasuk berkas & catatan) untuk modal detail,
             // persis seperti yang dipakai halaman Detail Mahasiswa.
-            'detail'   => $this->mapDetail($item, $type),
+            'detail' => $this->mapDetail($item, $type),
         ];
 
         return match ($type) {
             'prestasi' => $base + [
-                'namaPrestasi'   => $item->nama_prestasi,
-                'tingkat'        => $item->tingkat,
-                'pencapaian'     => $item->pencapaian,
-                'penyelenggara'  => $item->penyelenggara,
-                'tanggalMulai'   => $item->tanggal_mulai?->format('d M Y'),
+                'namaPrestasi' => $item->nama_prestasi,
+                'tingkat' => $item->tingkat,
+                'pencapaian' => $item->pencapaian,
+                'penyelenggara' => $item->penyelenggara,
+                'tanggalMulai' => $item->tanggal_mulai?->format('d M Y'),
                 'tanggalSelesai' => $item->tanggal_selesai?->format('d M Y'),
-                'tempat'         => $item->tempat,
+                'tempat' => $item->tempat,
             ],
             'organisasi' => $base + [
-                'organisasi'     => $item->nama,
-                'jenis'          => $item->jenis,
-                'jabatan'        => $item->jabatan,
-                'periodeMulai'   => $item->periode_mulai?->format('d M Y'),
+                'organisasi' => $item->nama,
+                'jenis' => $item->jenis,
+                'jabatan' => $item->jabatan,
+                'periodeMulai' => $item->periode_mulai?->format('d M Y'),
                 'periodeSelesai' => $item->periode_selesai?->format('d M Y'),
             ],
             'pelatihan' => $base + [
-                'namaPelatihan'  => $item->nama,
-                'jenis'          => $item->jenis,
-                'penyelenggara'  => $item->penyelenggara,
-                'tanggalMulai'   => $item->tanggal_mulai?->format('d M Y'),
+                'namaPelatihan' => $item->nama,
+                'jenis' => $item->jenis,
+                'penyelenggara' => $item->penyelenggara,
+                'tanggalMulai' => $item->tanggal_mulai?->format('d M Y'),
                 'tanggalSelesai' => $item->tanggal_selesai?->format('d M Y'),
-                'tempat'         => $item->tempat,
+                'tempat' => $item->tempat,
             ],
         };
     }
@@ -246,9 +248,9 @@ class ReportingController extends Controller
     private function mapDetail($item, string $type): array
     {
         return match ($type) {
-            'prestasi'   => (new PrestasiResource($item))->resolve(),
+            'prestasi' => (new PrestasiResource($item))->resolve(),
             'organisasi' => (new OrganisasiResource($item))->resolve(),
-            'pelatihan'  => (new PelatihanResource($item))->resolve(),
+            'pelatihan' => (new PelatihanResource($item))->resolve(),
         };
     }
 
@@ -298,6 +300,7 @@ class ReportingController extends Controller
     private function resolveType(string $type): array
     {
         abort_unless(isset(self::TYPES[$type]), 404, 'Jenis laporan tidak dikenal.');
+
         return self::TYPES[$type];
     }
 

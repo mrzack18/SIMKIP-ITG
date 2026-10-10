@@ -1,11 +1,12 @@
 <?php
+
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Mahasiswa;
 use App\Models\BebasTanggungan;
+use App\Models\Mahasiswa;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class BebasTanggunganTest extends TestCase
 {
@@ -34,7 +35,7 @@ class BebasTanggunganTest extends TestCase
         $bt = BebasTanggungan::create([
             'mahasiswa_id' => $mhsUser->mahasiswa->id,
             'tanggal_ajukan' => now(),
-            'status' => 'Menunggu'
+            'status' => 'Menunggu',
         ]);
 
         // First reject

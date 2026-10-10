@@ -29,20 +29,21 @@ class LsipdSyncController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => [
+                'data' => [
                     'configured' => (bool) config('services.lsipd.username'),
-                    'base_url'   => config('services.lsipd.base_url'),
-                    'token_ok'   => $token !== null,
+                    'base_url' => config('services.lsipd.base_url'),
+                    'token_ok' => $token !== null,
                 ],
             ]);
         } catch (LsipdException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-                'data'    => ['configured' => (bool) config('services.lsipd.username')],
+                'data' => ['configured' => (bool) config('services.lsipd.username')],
             ], $e->httpStatus && $e->httpStatus >= 400 && $e->httpStatus < 600 ? $e->httpStatus : 503);
         } catch (\Throwable $e) {
             Log::error('LSIPD status check failed', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Tidak dapat menghubungi LSIPD.',
@@ -61,14 +62,14 @@ class LsipdSyncController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Sinkronisasi masih berjalan. Silakan tunggu hingga selesai.',
-                'data'    => ['run_id' => $running->id],
+                'data' => ['run_id' => $running->id],
             ], 409);
         }
 
         $runId = (string) Str::uuid();
 
         LsipdSyncProgress::create([
-            'id'     => $runId,
+            'id' => $runId,
             'status' => 'pending',
         ]);
 
@@ -78,7 +79,7 @@ class LsipdSyncController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => ['run_id' => $runId],
+            'data' => ['run_id' => $runId],
             'message' => 'Sinkronisasi dimulai.',
         ]);
     }
@@ -96,28 +97,28 @@ class LsipdSyncController extends Controller
         if (! $progress) {
             return response()->json([
                 'success' => true,
-                'data'    => null,
+                'data' => null,
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'id'               => $progress->id,
-                'status'           => $progress->status,
-                'phase'            => $progress->phase,
-                'total'            => (int) $progress->total,
-                'processed'        => (int) $progress->processed,
-                'percent'          => (int) $progress->percent,
-                'inserted'         => (int) $progress->inserted,
-                'updated'          => (int) $progress->updated,
-                'unchanged'        => (int) $progress->unchanged,
-                'skipped'          => (int) $progress->skipped,
-                'transkrip_success'=> (int) $progress->transkrip_success,
+            'data' => [
+                'id' => $progress->id,
+                'status' => $progress->status,
+                'phase' => $progress->phase,
+                'total' => (int) $progress->total,
+                'processed' => (int) $progress->processed,
+                'percent' => (int) $progress->percent,
+                'inserted' => (int) $progress->inserted,
+                'updated' => (int) $progress->updated,
+                'unchanged' => (int) $progress->unchanged,
+                'skipped' => (int) $progress->skipped,
+                'transkrip_success' => (int) $progress->transkrip_success,
                 'transkrip_failed' => (int) $progress->transkrip_failed,
-                'message'          => $progress->message,
-                'started_at'       => $progress->started_at?->toISOString(),
-                'finished_at'      => $progress->finished_at?->toISOString(),
+                'message' => $progress->message,
+                'started_at' => $progress->started_at?->toISOString(),
+                'finished_at' => $progress->finished_at?->toISOString(),
             ],
         ]);
     }
@@ -125,7 +126,7 @@ class LsipdSyncController extends Controller
     private function runInBackground(string $runId): void
     {
         $artisan = base_path('artisan');
-        $php     = PHP_BINARY ?: 'php';
+        $php = PHP_BINARY ?: 'php';
 
         $command = sprintf(
             'nohup %s %s lsipd:sync-all %s > /dev/null 2>&1 &',
@@ -151,7 +152,7 @@ class LsipdSyncController extends Controller
     public function syncMahasiswaBatch(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'nims'   => 'required|array|min:1|max:200',
+            'nims' => 'required|array|min:1|max:200',
             'nims.*' => 'required|string|max:30',
         ]);
 
@@ -181,7 +182,7 @@ class LsipdSyncController extends Controller
         return response()->json([
             'success' => $berhasil > 0,
             'message' => sprintf('%d dari %d biodata mahasiswa berhasil disinkronkan.', $berhasil, count($hasil)),
-            'data'    => ['hasil' => $hasil, 'berhasil' => $berhasil, 'total' => count($hasil)],
+            'data' => ['hasil' => $hasil, 'berhasil' => $berhasil, 'total' => count($hasil)],
         ]);
     }
 
@@ -195,7 +196,7 @@ class LsipdSyncController extends Controller
     public function syncTranskripBatch(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'nims'   => 'required|array|min:1|max:50',
+            'nims' => 'required|array|min:1|max:50',
             'nims.*' => 'required|string|max:30',
         ]);
 
@@ -206,12 +207,12 @@ class LsipdSyncController extends Controller
                 $r = LsipdSyncService::syncTranskrip($nim);
 
                 $hasil[] = [
-                    'nim'      => $nim,
-                    'success'  => true,
+                    'nim' => $nim,
+                    'success' => true,
                     'semester' => $r['semester_inserted'],
-                    'mk'       => $r['mata_kuliah_inserted'],
+                    'mk' => $r['mata_kuliah_inserted'],
                     'last_ipk' => $r['last_ipk'],
-                    'message'  => sprintf('%d semester, %d mata kuliah.', $r['semester_inserted'], $r['mata_kuliah_inserted']),
+                    'message' => sprintf('%d semester, %d mata kuliah.', $r['semester_inserted'], $r['mata_kuliah_inserted']),
                 ];
             } catch (LsipdException $e) {
                 $hasil[] = ['nim' => $nim, 'success' => false, 'semester' => 0, 'mk' => 0, 'last_ipk' => null, 'message' => $e->getMessage()];
@@ -230,7 +231,7 @@ class LsipdSyncController extends Controller
         return response()->json([
             'success' => $berhasil > 0,
             'message' => sprintf('%d dari %d transkrip mahasiswa berhasil disinkronkan.', $berhasil, count($hasil)),
-            'data'    => ['hasil' => $hasil, 'berhasil' => $berhasil, 'total' => count($hasil)],
+            'data' => ['hasil' => $hasil, 'berhasil' => $berhasil, 'total' => count($hasil)],
         ]);
     }
 
@@ -268,23 +269,23 @@ class LsipdSyncController extends Controller
         $query->orderBy('nama', $sort);
 
         $limit = (int) ($request->input('limit', 10));
-        $page  = (int) ($request->input('page', 1));
+        $page = (int) ($request->input('page', 1));
         $total = $query->count();
-        $data  = $query->skip(($page - 1) * $limit)->take($limit)->get();
+        $data = $query->skip(($page - 1) * $limit)->take($limit)->get();
 
         return response()->json([
             'success' => true,
-            'data'    => $data->map(fn ($m) => [
-                'id'       => $m->id,
-                'nim'      => $m->nim,
-                'nama'     => $m->nama,
-                'prodi'    => $m->prodi?->nama ?? '',
+            'data' => $data->map(fn ($m) => [
+                'id' => $m->id,
+                'nim' => $m->nim,
+                'nama' => $m->nama,
+                'prodi' => $m->prodi?->nama ?? '',
                 'angkatan' => (int) $m->angkatan,
-                'status'   => $m->status,
+                'status' => $m->status,
             ]),
-            'total'      => $total,
-            'page'       => $page,
-            'limit'      => $limit,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
             'totalPages' => (int) ceil($total / max($limit, 1)),
             'filter_options' => [
                 'angkatans' => Mahasiswa::query()
@@ -312,13 +313,14 @@ class LsipdSyncController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => $mahasiswa,
+                'data' => $mahasiswa,
                 'message' => "Biodata {$mahasiswa->nama} berhasil diperbarui.",
             ]);
         } catch (LsipdException $e) {
             return $this->errorResponse($e, "Gagal sinkronisasi NIM {$nim}.");
         } catch (\Throwable $e) {
             Log::error('LSIPD syncMahasiswa error', ['nim' => $nim, 'error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat sinkronisasi mahasiswa.',
@@ -341,7 +343,7 @@ class LsipdSyncController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => $result,
+                'data' => $result,
                 'message' => sprintf(
                     'Sinkronisasi transkrip selesai: %d semester, %d mata kuliah. IPK terakhir: %s.',
                     $result['semester_inserted'],
@@ -353,6 +355,7 @@ class LsipdSyncController extends Controller
             return $this->errorResponse($e, "Gagal sinkronisasi transkrip NIM {$nim}.");
         } catch (\Throwable $e) {
             Log::error('LSIPD syncTranskrip error', ['nim' => $nim, 'error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat sinkronisasi transkrip.',
@@ -397,7 +400,7 @@ class LsipdSyncController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => ['deleted' => $total],
+                'data' => ['deleted' => $total],
                 'message' => "{$total} mahasiswa beserta seluruh data terkait dan akun loginnya telah dihapus.",
             ]);
         });
@@ -421,6 +424,7 @@ class LsipdSyncController extends Controller
             $daftar = LsipdClientService::getMahasiswaList();
         } catch (\Throwable $e) {
             Log::warning('LSIPD belumTersinkron gagal', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Tidak dapat mengambil daftar mahasiswa dari LSIPD. Periksa koneksi/konfigurasi API.',
@@ -441,9 +445,9 @@ class LsipdSyncController extends Controller
                 continue;
             }
             $belum[] = [
-                'nim'      => $nim,
-                'nama'     => (string) ($item['nama'] ?? ''),
-                'prodi'    => (string) ($item['prodi_kode'] ?? ''),
+                'nim' => $nim,
+                'nama' => (string) ($item['nama'] ?? ''),
+                'prodi' => (string) ($item['prodi_kode'] ?? ''),
                 'angkatan' => (int) ($item['angkatan'] ?? 0),
             ];
         }
@@ -453,14 +457,14 @@ class LsipdSyncController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $belum,
-            'total'   => count($belum),
+            'data' => $belum,
+            'total' => count($belum),
             'total_lsipd' => count($daftar),
             'total_lokal' => $nimLokal->count(),
             'filter_options' => [
                 'angkatans' => collect($belum)->pluck('angkatan')
                     ->filter()->unique()->sortDesc()->values()->all(),
-                'prodis'    => collect($belum)->pluck('prodi')
+                'prodis' => collect($belum)->pluck('prodi')
                     ->filter()->unique()->sort()->values()->all(),
             ],
         ]);
@@ -489,14 +493,14 @@ class LsipdSyncController extends Controller
         }
 
         $mahasiswaId = $mahasiswa->id;
-        $nama        = $mahasiswa->nama;
-        $userId      = $mahasiswa->user_id;
+        $nama = $mahasiswa->nama;
+        $userId = $mahasiswa->user_id;
 
         return DB::transaction(function () use ($nim, $nama, $mahasiswaId, $userId) {
             // Hitung dulu untuk laporan, sebelum datanya ikut terhapus.
             $rincian = [
                 'semester' => IpkSemestr::where('mahasiswa_id', $mahasiswaId)->count(),
-                'dokumen'  => Dokumen::where('mahasiswa_id', $mahasiswaId)->count(),
+                'dokumen' => Dokumen::where('mahasiswa_id', $mahasiswaId)->count(),
             ];
 
             if ($userId) {
@@ -516,7 +520,7 @@ class LsipdSyncController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => ['nim' => $nim, 'nama' => $nama, 'rincian' => $rincian],
+                'data' => ['nim' => $nim, 'nama' => $nama, 'rincian' => $rincian],
                 'message' => "Data {$nama} (NIM {$nim}) beserta seluruh data terkait dan akun loginnya telah dihapus.",
             ]);
         });
@@ -530,7 +534,7 @@ class LsipdSyncController extends Controller
 
         Log::warning('LSIPD error', [
             'message' => $e->getMessage(),
-            'status'  => $status,
+            'status' => $status,
             'context' => $e->context,
         ]);
 

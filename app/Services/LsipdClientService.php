@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Exceptions\LsipdException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 class LsipdClientService
 {
     private const CACHE_KEY = 'lsipd:token';
+
     private const TRANSIENT_ERROR_CODES = [502, 503, 504];
 
     public static function login(): string
@@ -97,10 +101,10 @@ class LsipdClientService
 
         if (! $response->successful()) {
             Log::warning('LSIPD request gagal', [
-                'method'   => $method,
-                'path'     => $path,
-                'status'   => $response->status(),
-                'body'     => $response->json(),
+                'method' => $method,
+                'path' => $path,
+                'status' => $response->status(),
+                'body' => $response->json(),
             ]);
 
             throw new LsipdException(
@@ -113,29 +117,29 @@ class LsipdClientService
         return $response->json() ?? [];
     }
 
-    private static function dispatch(\Illuminate\Http\Client\PendingRequest $http, string $method, string $path, array $payload): \Illuminate\Http\Client\Response
+    private static function dispatch(PendingRequest $http, string $method, string $path, array $payload): Response
     {
         return match (strtoupper($method)) {
-            'GET'    => $http->get($path, $payload),
-            'POST'   => $http->post($path, $payload),
-            'PUT'    => $http->put($path, $payload),
-            'PATCH'  => $http->patch($path, $payload),
+            'GET' => $http->get($path, $payload),
+            'POST' => $http->post($path, $payload),
+            'PUT' => $http->put($path, $payload),
+            'PATCH' => $http->patch($path, $payload),
             'DELETE' => $http->delete($path, $payload),
-            default  => throw new LsipdException("Method tidak didukung: {$method}"),
+            default => throw new LsipdException("Method tidak didukung: {$method}"),
         };
     }
 
-    private static function authHttp(string $token): \Illuminate\Http\Client\PendingRequest
+    private static function authHttp(string $token): PendingRequest
     {
         return self::rawHttp()->withToken($token)->acceptJson();
     }
 
-    private static function rawHttp(): \Illuminate\Http\Client\PendingRequest
+    private static function rawHttp(): PendingRequest
     {
-        return Http::baseUrl(rtrim((string) config('services.lsipd.base_url'), '/') . '/')
+        return Http::baseUrl(rtrim((string) config('services.lsipd.base_url'), '/').'/')
             ->timeout((int) config('services.lsipd.timeout', 30))
             ->withHeaders(['X-Client' => 'simkip-itg'])
-            ->retry(2, 500, fn ($exception, $request) => $exception instanceof \Illuminate\Http\Client\ConnectionException)
+            ->retry(2, 500, fn ($exception, $request) => $exception instanceof ConnectionException)
             ->acceptJson();
     }
 }
