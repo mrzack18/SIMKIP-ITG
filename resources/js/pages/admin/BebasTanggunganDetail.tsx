@@ -7,20 +7,20 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
-  Download,
   Printer,
+  FileText,
   BarChart,
   Folder,
   Clock,
   Loader2,
 } from "lucide-react";
-import logoItg from "@/imports/logo_itg.jpg";
 import {
   getBebasTanggunganDetail,
   approveBebasTanggungan,
   rejectBebasTanggungan,
+  downloadBTPdf,
+  previewBTPdf,
 } from "@/services/bebasTanggunganService";
-import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { BebasTanggunganDetailResponse } from "@/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,127 +58,9 @@ function Section({ title, icon, ok, children }: CollapsibleSection) {
   );
 }
 
-// FormalSurat renders a preview of the official letter
-function FormalSurat({ data, signature }: { data: BebasTanggunganDetailResponse; signature: SignatureConfig | null }) {
-  const { mahasiswa, permohonan, dokumen, ipkTerakhir } = data;
-  const docsApproved = dokumen.filter((d) => d.status === "Disetujui");
-  const sig = signature ?? {
-    pengelola_nama: "Encep Jianul Hayat, S.T., M.T.",
-    pengelola_nip: "197804202006041001",
-    warek_nama: "Dr. Rina Kurniawati, S.E., M.Si.",
-    warek_nip: "198203152008012002",
-  };
-
-  return (
-    <div className="border-2 border-[#263F93] rounded-xl p-1 min-w-0">
-      <div className="border border-[#263F93] rounded-lg p-3 sm:p-6 font-serif text-gray-800 text-xs leading-relaxed min-w-0">
-        {/* Kop surat */}
-        <div className="flex items-center gap-2.5 sm:gap-4 border-b-2 border-[#263F93] pb-3 sm:pb-4 mb-4 sm:mb-6 min-w-0">
-          <img src={logoItg} alt="ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
-          <div className="flex-1 text-center min-w-0">
-            <p className="font-bold text-[10px] sm:text-xs leading-snug">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET DAN TEKNOLOGI</p>
-            <p className="font-bold text-xs sm:text-sm leading-snug">INSTITUT TEKNOLOGI GARUT</p>
-            <p className="text-[10px] sm:text-xs text-gray-500 leading-snug">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
-            <p className="text-[10px] sm:text-xs text-gray-400 leading-snug break-words">Telp. (0262) 540895 · www.itg.ac.id · info@itg.ac.id</p>
-          </div>
-        </div>
-
-        {/* Judul */}
-        <div className="text-center mb-4 sm:mb-5 min-w-0">
-          <p className="font-bold text-xs sm:text-sm underline uppercase tracking-wide leading-snug">
-            Surat Keterangan Penyelesaian Studi Mahasiswa KIP-K
-          </p>
-        </div>
-
-        {/* Nomor surat */}
-        <div className="mb-4 space-y-1 min-w-0">
-          {[
-            ["Nomor", permohonan.nomorSurat ?? "—"],
-            ["Lampiran", "—"],
-            ["Perihal", "Surat Keterangan Penyelesaian Studi Mahasiswa KIP-K"],
-          ].map(([k, v]) => (
-            <div key={k} className="grid grid-cols-[4.5rem_0.5rem_1fr] sm:grid-cols-[5rem_0.5rem_1fr] gap-x-2 text-xs min-w-0">
-              <span className="text-gray-600">{k}</span>
-              <span>:</span>
-              <span className={`break-words min-w-0 ${k !== "Lampiran" ? "font-600" : ""}`}>{v}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Kepada */}
-        <div className="mb-4 text-xs space-y-0.5 min-w-0">
-          <p>Kepada Yth.</p>
-          <p className="font-600 break-words">{mahasiswa.nama}</p>
-          <p className="break-words">NIM: {mahasiswa.nim}</p>
-          <p className="break-words">Program Studi {mahasiswa.prodi ?? "—"}</p>
-          <p className="italic mt-1">di Tempat</p>
-        </div>
-
-        <p className="mb-3 text-xs">Dengan hormat,</p>
-
-        <p className="text-xs leading-relaxed mb-3 text-justify">
-          Yang bertanda tangan di bawah ini, Pengelola KIP-K Institut Teknologi Garut, menerangkan dengan sesungguhnya bahwa:
-        </p>
-
-        <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 mb-3 space-y-1 min-w-0">
-          {[
-            ["Nama", mahasiswa.nama],
-            ["NIM", mahasiswa.nim],
-            ["Program Studi", mahasiswa.prodi ?? "—"],
-            ["Angkatan", String(mahasiswa.angkatan)],
-            ["Tahun Ajaran", permohonan.tahunAjaran ?? "—"],
-            ["Semester", String(mahasiswa.semester)],
-          ].map(([k, v]) => (
-            <div key={k} className="grid grid-cols-[4.5rem_0.5rem_1fr] sm:grid-cols-[5rem_0.5rem_1fr] gap-x-2 text-xs min-w-0">
-              <span className="text-gray-500">{k}</span>
-              <span>:</span>
-              <span className="font-600 break-words min-w-0">{v}</span>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-xs leading-relaxed mb-2 text-justify">
-          Telah <strong>menyelesaikan seluruh kewajiban sebagai penerima Kartu Indonesia Pintar Kuliah (KIP-K)</strong> di
-          Institut Teknologi Garut, yang meliputi:
-        </p>
-        <ol className="list-decimal list-inside space-y-0.5 pl-2 text-xs mb-3 min-w-0">
-          {docsApproved.map((d) => (
-            <li key={d.jenis_id} className="break-words">
-              {d.nama} — diverifikasi {d.tanggal_upload ?? "—"}
-            </li>
-          ))}
-          <li className="break-words">Indeks Prestasi Kumulatif (IPK) {ipkTerakhir.toFixed(2)} — memenuhi standar minimum KIP-K (≥ 3,00)</li>
-          <li>Tidak memiliki riwayat Surat Peringatan aktif</li>
-        </ol>
-        <p className="text-xs leading-relaxed text-justify">
-          Demikian surat keterangan ini diterbitkan untuk dapat digunakan sebagaimana mestinya.
-        </p>
-
-        {/* TTD */}
-        <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-3 sm:gap-6 text-[11px] sm:text-xs text-center min-w-0">
-          <div className="min-w-0">
-            <p className="break-words">Garut, {permohonan.tanggalTerbit ?? permohonan.tanggalAjukan ?? "—"}</p>
-            <p className="mt-0.5">Pengelola KIP-K,</p>
-            <div className="h-10 sm:h-14 my-1" />
-            <p className="font-bold underline break-words">{sig.pengelola_nama}</p>
-            <p className="text-gray-500 break-words">NIP. {sig.pengelola_nip}</p>
-          </div>
-          <div className="min-w-0">
-            <p>Mengetahui,</p>
-            <p className="mt-0.5">Wakil Rektor,</p>
-            <div className="h-10 sm:h-14 my-1" />
-            <p className="font-bold underline break-words">{sig.warek_nama}</p>
-            <p className="text-gray-500 break-words">NIP. {sig.warek_nip}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Page
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 
 export default function BebasTanggunganDetail() {
   const { id } = useParams<{ id: string }>();
@@ -189,8 +71,6 @@ export default function BebasTanggunganDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [signature, setSignature] = useState<SignatureConfig | null>(null);
-  
 
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
@@ -227,15 +107,6 @@ export default function BebasTanggunganDetail() {
     fetchDetail();
   }, [fetchDetail]);
 
-  // Load signature config from BE for formal letter preview
-  useEffect(() => {
-    getKonfigurasiAll()
-      .then((res) => {
-        if (res?.data?.signature) setSignature(res.data.signature);
-      })
-      .catch(() => { /* fallback ke default di render */ });
-  }, []);
-
   const handleApprove = async () => {
     if (!data || isSubmitting) return;
     setIsSubmitting(true);
@@ -268,31 +139,29 @@ export default function BebasTanggunganDetail() {
     }
   };
 
-  const handleDownloadPdf = async () => {
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handlePreview = async () => {
+    if (!data) return;
+    setPdfError(null);
     try {
-      const token = localStorage.getItem("simkip_token");
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'}/bebas-tanggungan/${data?.permohonan.id}/pdf`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "X-Requested-With": "XMLHttpRequest",
-            Accept: "application/pdf",
-          },
-        }
-      );
-      if (!res.ok) throw new Error("Download failed");
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `SKPS_KIP-K_${data?.mahasiswa.nim}_${data?.mahasiswa.nama}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await previewBTPdf(data.permohonan.id);
     } catch (err: any) {
-      alert(err.message || "Gagal mengunduh PDF.");
+      setPdfError(err.message || "Gagal memuat PDF.");
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!data || downloadingPdf) return;
+    setDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      await downloadBTPdf(data.permohonan.id);
+    } catch (err: any) {
+      setPdfError(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -564,7 +433,7 @@ export default function BebasTanggunganDetail() {
         </div>
       )}
 
-      {/* Formal surat — shown when diterbitkan */}
+      {/* Surat Penyelesaian — shown when diterbitkan */}
       {currentStatus === "diterbitkan" && (
         <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] overflow-hidden min-w-0">
           <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
@@ -572,27 +441,27 @@ export default function BebasTanggunganDetail() {
               <CheckCircle size={15} className="text-[#059669] flex-shrink-0" /> <span className="truncate">Surat Penyelesaian Telah Diterbitkan</span>
             </h3>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <a
-                href={`/api/bebas-tanggungan/${permohonan.id}/pdf?token=${localStorage.getItem("simkip_token") || ""}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+              <button
+                onClick={handlePreview}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 border border-[#263F93] text-[#263F93] rounded-lg text-xs hover:bg-blue-50 whitespace-nowrap"
               >
-                <Download size={12} /> Unduh PDF
-              </a>
+                <FileText size={12} /> Pertinjau
+              </button>
               <button
                 onClick={handleDownloadPdf}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+                disabled={downloadingPdf}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Printer size={12} /> Cetak
+                {downloadingPdf ? <Loader2 size={12} className="animate-spin" /> : <Printer size={12} />}
+                {downloadingPdf ? "Mengunduh..." : "Download PDF"}
               </button>
             </div>
           </div>
-          <div className="p-3 sm:p-5 min-w-0">
-            <div className="overflow-x-auto min-w-0">
-              <FormalSurat data={data} signature={signature} />
+          {pdfError && (
+            <div className="px-3 sm:px-4 py-2 text-xs text-red-600 bg-red-50 border-t border-red-100 min-w-0">
+              {pdfError}
             </div>
-          </div>
+          )}
         </div>
       )}
 

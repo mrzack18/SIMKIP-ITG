@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             MahasiswaBatchSeeder::class, // 125 batch students: 5 prodi × 5 angkatan × 3 mahasiswa
             BebasTanggunganSeeder::class, // Permohonan bebas tanggungan TA 2022 & 2023 (menunggu/diterima/ditolak)
             BebasTanggunganTestSeeder::class, // 7 akun test BT: masing-masing kekurangan 1 syarat
+            MahasiswaSelesaiSeeder::class, // 1 mahasiswa lengkap: bisa ajukan + sudah Disetujui (test PDF)
         ]);
     }
 }

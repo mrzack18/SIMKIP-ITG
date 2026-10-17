@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, Clock, AlertTriangle, FileText, Download, User, CheckCircle2, ChevronRight, Loader2, Send, XCircle } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, FileText, Printer, User, CheckCircle2, ChevronRight, Loader2, Send, XCircle } from "lucide-react";
 import { api } from "@/services/api";
+import { previewBTPdf, downloadBTPdf } from "@/services/bebasTanggunganService";
 import { useAuth } from "@/context/AuthContext";
 
 type AppState = "belum" | "menunggu" | "diterbitkan" | "ditolak";
@@ -88,24 +89,28 @@ export default function BebasTanggungan() {
     }
   };
 
-  const handleDownloadPdf = async () => {
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handlePreview = async () => {
+    setPdfError(null);
     try {
-      const token = localStorage.getItem("simkip_token");
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'}/bebas-tanggungan/pdf`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "X-Requested-With": "XMLHttpRequest",
-            Accept: "application/pdf",
-          },
-        }
-      );
-      if (!res.ok) throw new Error('Download failed');
-      const blob = await res.blob();
-      window.open(URL.createObjectURL(blob), '_blank');
+      await previewBTPdf();
     } catch (err: any) {
-      alert(err.message || "Gagal mengunduh surat (Status belum diterbitkan atau Error Jaringan).");
+      setPdfError(err.message || "Gagal memuat PDF.");
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (downloadingPdf) return;
+    setDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      await downloadBTPdf();
+    } catch (err: any) {
+      setPdfError(err.message || "Gagal mengunduh surat.");
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -236,19 +241,32 @@ export default function BebasTanggungan() {
           
           <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-4 sm:p-6 text-center min-w-0">
             <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Download size={28} className="text-[#263F93]" />
+              <FileText size={28} className="text-[#263F93]" />
             </div>
-            <h3 className="font-display font-700 text-base sm:text-lg text-gray-900 mb-1">Unduh Surat Keterangan</h3>
+            <h3 className="font-display font-700 text-base sm:text-lg text-gray-900 mb-1">Surat Keterangan Penyelesaian Studi</h3>
             <p className="text-gray-500 text-xs sm:text-sm mb-5 break-words">
-              Surat Keterangan Penyelesaian Studi Anda telah ditandatangani secara digital dan siap untuk diunduh.
+              Surat Keterangan Penyelesaian Studi Anda telah ditandatangani dan siap untuk ditinjau atau diunduh.
             </p>
-            <button
-              onClick={handleDownloadPdf}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-700 text-white mx-auto w-full sm:w-auto whitespace-nowrap"
-              style={{ background: "#263F93" }}
-            >
-              <Download size={16} /> Download PDF Surat
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 min-w-0">
+              <button
+                onClick={handlePreview}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-700 border border-[#263F93] text-[#263F93] hover:bg-blue-50 whitespace-nowrap w-full sm:w-auto"
+              >
+                <FileText size={16} /> Pertinjau
+              </button>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-700 text-white whitespace-nowrap w-full sm:w-auto disabled:opacity-50"
+                style={{ background: "#263F93" }}
+              >
+                {downloadingPdf ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                {downloadingPdf ? "Mengunduh..." : "Download PDF"}
+              </button>
+            </div>
+            {pdfError && (
+              <p className="text-xs text-red-600 mt-3 break-words">{pdfError}</p>
+            )}
           </div>
         </div>
       )}

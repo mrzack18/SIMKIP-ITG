@@ -69,7 +69,7 @@ class PdfGeneratorService
             'logoPath' => $logoPath,
         ];
 
-        $pdf = Pdf::loadView('pdf.surat_bebas_tanggungan', $data)
+        $pdf = Pdf::loadView('bt.pdf', $data)
             ->setPaper('a4', 'portrait')
             ->setOptions([
                 'dpi' => 150,
