@@ -208,7 +208,7 @@ class PdfGeneratorService
     /**
      * Ambil logo ITG sebagai base64 data URI agar DomPDF bisa render tanpa remote
      */
-    private static function getLogoBase64(): string
+    public static function getLogoBase64(): string
     {
         // Cek apakah ada logo yang di-upload di storage
         $storageLogo = storage_path('app/public/logo_itg.png');
@@ -224,6 +224,15 @@ class PdfGeneratorService
         if (file_exists($publicLogo)) {
             $mime = mime_content_type($publicLogo);
             $b64 = base64_encode(file_get_contents($publicLogo));
+
+            return "data:{$mime};base64,{$b64}";
+        }
+
+        // Fallback: logo bawaan di public/images
+        $imagesLogo = public_path('images/logo_itg.jpg');
+        if (file_exists($imagesLogo)) {
+            $mime = mime_content_type($imagesLogo);
+            $b64 = base64_encode(file_get_contents($imagesLogo));
 
             return "data:{$mime};base64,{$b64}";
         }

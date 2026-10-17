@@ -2,7 +2,7 @@
  * Surat Peringatan Service
  */
 import type { SuratPeringatan, ApiResponse, PaginatedResponse } from "@/types";
-import { api } from "./api";
+import { api, API_BASE_URL } from "./api";
 
 export interface SPFilter {
   search?: string;
@@ -64,4 +64,65 @@ export async function terbitkanSP(
   const res = await api.post<{ success: boolean; sp: { id: number; level: string } }>("/sp", payload);
   if (!res.success) throw new Error("Gagal menerbitkan SP.");
   return res.sp;
+}
+
+async function fetchSPPdf(id: number): Promise<{ blob: Blob; filename: string }> {
+  const token = localStorage.getItem("simkip_token");
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  headers["X-Requested-With"] = "XMLHttpRequest";
+  headers["Accept"] = "application/pdf";
+
+  const response = await fetch(`${API_BASE_URL}/sp/${id}/download`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Gagal memuat PDF (HTTP ${response.status})`);
+  }
+
+  const blob = await response.blob();
+
+  const disposition = response.headers.get("Content-Disposition");
+  let filename = `Surat-Peringatan-${id}.pdf`;
+  if (disposition) {
+    const match = disposition.match(/filename="?([^";\s]+)"?/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+
+  return { blob, filename };
+}
+
+export async function downloadSPPdf(id: number): Promise<void> {
+  const { blob, filename } = await fetchSPPdf(id);
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+/** Buka PDF asli (sama seperti hasil download) di tab baru pakai viewer browser. */
+export async function previewSPPdf(id: number): Promise<void> {
+  const win = window.open("about:blank", "_blank");
+  try {
+    const { blob } = await fetchSPPdf(id);
+    const url = window.URL.createObjectURL(blob);
+    if (win) {
+      win.location.href = url;
+    } else {
+      window.open(url, "_blank");
+    }
+  } catch (err) {
+    win?.close();
+    throw err;
+  }
 }

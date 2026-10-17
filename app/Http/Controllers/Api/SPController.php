@@ -60,4 +60,13 @@ class SPController extends Controller
             default => abort(403),
         };
     }
+
+    public function downloadPdf(Request $req, int $id)
+    {
+        if (!in_array($req->user()->role, ['admin', 'mahasiswa', 'warek', 'prodi'])) {
+            abort(403);
+        }
+
+        return app(AdminSP::class)->downloadPdf($id);
+    }
 }

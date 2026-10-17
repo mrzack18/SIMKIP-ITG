@@ -10,9 +10,12 @@ use App\Models\JenisPelanggaran;
 use App\Models\Mahasiswa;
 use App\Models\Notification;
 use App\Models\SuratPeringatan;
+use App\Services\PdfGeneratorService;
 use App\Services\SPValidationService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SPController extends Controller
 {
@@ -177,5 +180,42 @@ class SPController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Status SP diperbarui.']);
+    }
+
+    public function downloadPdf(int $id): StreamedResponse
+    {
+        $sp = SuratPeringatan::with(['mahasiswa.prodi', 'mahasiswa.user'])->findOrFail($id);
+        $mahasiswa = $sp->mahasiswa;
+
+        $tanggalTerbit = $sp->tanggal_terbit;
+        $tahunAjaran = null;
+        if ($tanggalTerbit) {
+            $month = (int) $tanggalTerbit->format('m');
+            $year = (int) $tanggalTerbit->format('Y');
+            if ($month >= 2 && $month <= 8) {
+                $tahunAjaran = ($year - 1).'/'.$year.' Genap';
+            } elseif ($month == 1) {
+                $tahunAjaran = ($year - 1).'/'.$year.' Ganjil';
+            } else {
+                $tahunAjaran = $year.'/'.($year + 1).' Ganjil';
+            }
+        }
+
+        $pdf = Pdf::loadView('sp.pdf', [
+            'sp' => $sp,
+            'mahasiswa' => $mahasiswa,
+            'tahunAjaran' => $tahunAjaran,
+            'logoPath' => PdfGeneratorService::getLogoBase64(),
+        ])->setPaper('a4')->setOptions([
+            'defaultFont' => 'Times New Roman',
+        ]);
+
+        $filename = 'Surat-Peringatan-'.$sp->level.'-'.$mahasiswa->nim.'-'.$sp->id.'.pdf';
+
+        return response()->streamDownload(
+            fn () => print($pdf->output()),
+            $filename,
+            ['Content-Type' => 'application/pdf']
+        );
     }
 }

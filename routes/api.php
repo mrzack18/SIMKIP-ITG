@@ -184,6 +184,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sp', [SPController::class, 'index']);
     Route::post('/sp', [SPController::class, 'store']);
     Route::get('/sp/{id}', [SPController::class, 'show']);
+    Route::get('/sp/{id}/download', [SPController::class, 'downloadPdf']);
     Route::patch('/sp/{id}/status', [SPController::class, 'updateStatus']);
     Route::get('/mahasiswa/{nim}/sp', [SPController::class, 'history']);
     Route::get('/mahasiswa/{nim}/bebas-tanggungan', [MahasiswaController::class, 'bebasTanggungan']);

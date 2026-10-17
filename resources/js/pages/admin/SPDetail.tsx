@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronUp, FileText, Loader2, XCircle,
 } from "lucide-react";
 import logoItg from "@/imports/logo_itg.jpg";
-import { getSPDetail, updateSPStatus, type SPDetailResponse } from "@/services/spService";
+import { getSPDetail, updateSPStatus, downloadSPPdf, previewSPPdf, type SPDetailResponse } from "@/services/spService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { SuratPeringatan } from "@/types";
 import { TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
@@ -72,12 +72,38 @@ export default function SPDetail() {
 
   const [expandedTimeline, setExpandedTimeline] = useState<number | null>(null);
   const [showMarkDone, setShowMarkDone]         = useState(false);
-  const [showSuratModal, setShowSuratModal]     = useState(false);
 
   // Mark done form
   const [markDoneCatatan, setMarkDoneCatatan]   = useState("");
   const [markDoneLoading, setMarkDoneLoading]   = useState(false);
   const [markDoneError, setMarkDoneError]       = useState<string | null>(null);
+
+  // Download PDF
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [downloadPdfError, setDownloadPdfError] = useState<string | null>(null);
+
+  const handleDownloadPdf = async () => {
+    if (isNaN(spId) || downloadingPdf) return;
+    setDownloadingPdf(true);
+    setDownloadPdfError(null);
+    try {
+      await downloadSPPdf(spId);
+    } catch (err: any) {
+      setDownloadPdfError(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    if (isNaN(spId)) return;
+    setDownloadPdfError(null);
+    try {
+      await previewSPPdf(spId);
+    } catch (err: any) {
+      setDownloadPdfError(err.message || "Gagal memuat PDF.");
+    }
+  };
 
   const fetchDetail = useCallback(async () => {
     if (isNaN(spId)) { setNotFound(true); setLoading(false); return; }
@@ -376,17 +402,26 @@ export default function SPDetail() {
             <AlertTriangle size={15} className="flex-shrink-0" /> Eskalasi ke {sp.level === "SP1" ? "SP2" : "SP3"}
           </Link>
           <button
-            onClick={() => setShowSuratModal(true)}
+            onClick={handlePreview}
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-[#263F93] text-[#263F93] hover:bg-blue-50 transition-colors whitespace-nowrap"
           >
-            <FileText size={15} className="flex-shrink-0" /> Lihat Surat Resmi
+            <FileText size={15} className="flex-shrink-0" /> Pertinjau
           </button>
           <button
-            onClick={() => window.print()}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-500 border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Printer size={15} className="flex-shrink-0" /> Cetak Surat Peringatan
+            {downloadingPdf ? (
+              <Loader2 size={15} className="animate-spin flex-shrink-0" />
+            ) : (
+              <Printer size={15} className="flex-shrink-0" />
+            )}
+            {downloadingPdf ? "Mengunduh..." : "Download PDF"}
           </button>
+          {downloadPdfError && (
+            <p className="col-span-full text-xs text-red-600 text-center">{downloadPdfError}</p>
+          )}
         </div>
       )}
 
@@ -439,104 +474,6 @@ export default function SPDetail() {
               >
                 {markDoneLoading && <Loader2 size={14} className="animate-spin" />}
                 Ya, Tandai Selesai
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Surat Resmi Modal ─────────────────────────────────────────── */}
-      {showSuratModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col min-w-0">
-            <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-3.5 sm:py-4 border-b border-gray-100 flex-shrink-0 min-w-0">
-              <h3 className="font-600 text-xs sm:text-sm text-gray-800 truncate">Surat Peringatan Resmi</h3>
-              <button
-                onClick={() => setShowSuratModal(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 text-lg leading-none flex-shrink-0"
-              >✕</button>
-            </div>
-
-            <div className="overflow-y-auto flex-1 p-3 sm:p-6 min-w-0">
-              <div className="border-2 border-[#263F93] rounded-xl p-1 min-w-0">
-                <div className="border border-[#263F93] rounded-lg p-3 sm:p-6 min-w-0">
-                  {/* Kop surat */}
-                  <div className="flex items-center gap-2.5 sm:gap-4 border-b-2 border-[#263F93] pb-3 sm:pb-4 mb-4 sm:mb-6 min-w-0">
-                    <img src={logoItg} alt="Logo ITG" className="h-11 w-11 sm:h-16 sm:w-16 object-contain flex-shrink-0" />
-                    <div className="flex-1 text-center min-w-0">
-                      <p className="text-[10px] sm:text-xs font-semibold leading-snug">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET DAN TEKNOLOGI</p>
-                      <p className="font-bold text-xs sm:text-sm uppercase tracking-wide leading-snug">INSTITUT TEKNOLOGI GARUT</p>
-                      <p className="text-[10px] sm:text-xs text-gray-600 leading-snug">Jl. Mayor Syamsu No. 1, Jayaraga, Garut 44151</p>
-                      <p className="text-[10px] sm:text-xs text-gray-600 leading-snug">Telp. (0262) 2800433 | www.itg.ac.id</p>
-                    </div>
-                  </div>
-
-                  {/* Metadata grid */}
-                  <div className="grid grid-cols-[96px_8px_1fr] sm:grid-cols-[120px_8px_1fr] gap-y-1 text-xs sm:text-sm mb-4 sm:mb-6 min-w-0">
-                    <span>Nomor</span><span>:</span><span className="break-words min-w-0">{nSurat}</span>
-                    <span>Tanggal</span><span>:</span><span className="break-words min-w-0">{formatTanggal(sp.tanggalTerbit)}</span>
-                    <span>Tahun Ajaran</span><span>:</span><span className="break-words min-w-0">{sp.tahunAjaran ?? "—"}</span>
-                    <span>Perihal</span><span>:</span>
-                    <span className="font-semibold break-words min-w-0">
-                      Surat Peringatan {sp.level.replace("SP", "")} — {(sp.alasan ?? "").split(" ").slice(0, 6).join(" ")}...
-                    </span>
-                  </div>
-
-                  {/* Kepada */}
-                  <div className="mb-4 sm:mb-6 text-xs sm:text-sm min-w-0">
-                    <p>Kepada Yth,</p>
-                    <p className="font-semibold break-words">{sp.nama ?? "—"}</p>
-                    <p className="break-words">NIM: {sp.nim ?? "—"} | {sp.prodi ?? "—"}</p>
-                  </div>
-
-                  <div className="text-xs sm:text-sm mb-4"><p>Dengan hormat,</p></div>
-
-                  <div className="text-xs sm:text-sm space-y-3 leading-relaxed mb-6 sm:mb-8 min-w-0">
-                    <p>
-                      Berdasarkan evaluasi dan ketentuan yang berlaku, dengan ini diberikan <strong>Surat Peringatan {sp.level?.replace('SP','')}</strong> kepada:
-                    </p>
-                    <div className="ml-4 space-y-1">
-                      <p>Nama : <strong>{sp.nama ?? "—"}</strong></p>
-                      <p>NIM : <strong>{sp.nim ?? "—"}</strong></p>
-                      <p>Program Studi : <strong>{sp.prodi ?? "—"}</strong></p>
-                    </div>
-                    <p>
-                      Atas pelanggaran: <strong>{sp.alasan ?? "—"}</strong>.
-                    </p>
-                    <SPBodyText level={sp.level} alasan={sp.alasan ?? "—"} batasEvaluasi={sp.batasEvaluasi} />
-                    <p>
-                      Demikian surat peringatan ini kami sampaikan. Besar harapan kami agar Saudara dapat segera
-                      menindaklanjuti hal ini demi kelangsungan studi Saudara sebagai penerima manfaat KIP-K.
-                    </p>
-                  </div>
-
-                  {/* Signatures - 1 penandatangan sesuai template */}
-                  <div className="flex justify-end mt-6 sm:mt-8 text-[11px] sm:text-sm min-w-0">
-                    <div className="min-w-0 text-center">
-                      <p className="break-words">{(sp as any).tempat ?? "Garut"}, {formatTanggal(sp.tanggalTerbit)}</p>
-                      <p className="font-medium">{(sp as any).penandatanganJabatan || "Biro Kemahasiswaan dan Ketenaga kerjaan Hubungan Masyarakat"}</p>
-                      <div className="h-10 sm:h-16" />
-                      <p className="font-bold underline break-words">{(sp as any).penandatanganNama || extra.diterbitkanOleh || "Encep Jianul Hayat S.T, M.T"}</p>
-                      <p className="text-[10px] sm:text-xs text-gray-500 break-words">NIDN. {(sp as any).penandatanganNidn || "0420067402"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-3 sm:px-4 py-3.5 sm:py-4 border-t border-gray-100 flex flex-col-reverse min-[420px]:flex-row min-[420px]:justify-end gap-2 sm:gap-3 flex-shrink-0">
-              <button
-                onClick={() => setShowSuratModal(false)}
-                className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"
-              >
-                Tutup
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-lg text-sm text-white flex items-center justify-center gap-2"
-                style={{ background: "#263F93" }}
-              >
-                <Printer size={14} /> Cetak
               </button>
             </div>
           </div>
