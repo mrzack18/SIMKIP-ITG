@@ -3,7 +3,7 @@
  */
 import type { Laporan } from "@/types";
 import type { PaginatedResponse } from "@/types";
-import { api } from "./api";
+import { api, API_BASE_URL } from "./api";
 
 function normalizePagination<T>(raw: any): PaginatedResponse<T> {
   return {
@@ -88,10 +88,14 @@ export interface LaporanPreviewStatistics {
   nama_sp: string[];
   total_prestasi: number;
   nama_prestasi: string[];
+  jenis: LaporanJenis;
+  columns: Record<string, string>;
+  rows: Record<string, string | number>[];
+  total_rows: number;
 }
 
-export async function getPreviewStatistics(cakupan: string, angkatan?: string, prodi?: string): Promise<LaporanPreviewStatistics> {
-  const params = new URLSearchParams({ cakupan });
+export async function getPreviewStatistics(cakupan: string, angkatan?: string, prodi?: string, jenis: LaporanJenis = "akademik"): Promise<LaporanPreviewStatistics> {
+  const params = new URLSearchParams({ cakupan, jenis });
   if (angkatan) params.append('angkatan', angkatan);
   if (prodi) params.append('prodi', prodi);
   const res = await api.get<LaporanPreviewStatistics>(`/laporan/preview-statistics?${params.toString()}`);
@@ -107,6 +111,8 @@ export async function getLaporanById(id: number): Promise<{
   return { laporan: res.data, statistics: res.data.statistics };
 }
 
+export type LaporanJenis = "akademik" | "organisasi" | "prestasi";
+
 export interface CreateLaporanPayload {
   judul: string;
   tahunAkademik: string;
@@ -114,6 +120,7 @@ export interface CreateLaporanPayload {
   tanggalLaporan: string;
   catatanLaporan?: string;
   cakupan?: string;
+  jenis?: LaporanJenis;
   angkatan?: string;
   prodi?: string;
   tujuanWarek?: boolean;
@@ -128,6 +135,7 @@ export async function createLaporan(payload: CreateLaporanPayload): Promise<Lapo
     tanggal_laporan: payload.tanggalLaporan,
     catatan_laporan: payload.catatanLaporan,
     cakupan: payload.cakupan,
+    jenis: payload.jenis,
     angkatan: payload.angkatan,
     prodi: payload.prodi,
     tujuan_warek: payload.tujuanWarek,
@@ -164,4 +172,47 @@ export async function approveLaporan(id: number): Promise<void> {
 
 export async function rejectLaporan(id: number, catatan: string): Promise<void> {
   await api.patch(`/laporan/${id}/return`, { catatan });
+}
+
+async function fetchLaporanPdf(id: number): Promise<{ blob: Blob; filename: string }> {
+  const token = localStorage.getItem("simkip_token");
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  headers["X-Requested-With"] = "XMLHttpRequest";
+  headers["Accept"] = "application/pdf";
+
+  const response = await fetch(`${API_BASE_URL}/laporan/${id}/pdf`, { method: "GET", headers });
+  if (!response.ok) throw new Error(`Gagal memuat PDF (HTTP ${response.status})`);
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition");
+  let filename = `Laporan_${id}.pdf`;
+  const match = disposition?.match(/filename="?([^";\s]+)"?/);
+  if (match?.[1]) filename = match[1];
+  return { blob, filename };
+}
+
+export async function downloadLaporanPdf(id: number): Promise<void> {
+  const { blob, filename } = await fetchLaporanPdf(id);
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+export async function previewLaporanPdf(id: number): Promise<void> {
+  const win = window.open("about:blank", "_blank");
+  try {
+    const { blob } = await fetchLaporanPdf(id);
+    const url = window.URL.createObjectURL(blob);
+    if (win) win.location.href = url;
+    else window.open(url, "_blank");
+  } catch (err) {
+    win?.close();
+    throw err;
+  }
 }

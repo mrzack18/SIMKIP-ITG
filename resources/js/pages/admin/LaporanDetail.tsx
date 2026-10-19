@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { ChevronLeft, Download, Printer, CheckCircle, QrCode, Clock, AlertCircle, Loader2 } from "lucide-react";
-import { getLaporanById, type LaporanStatistics } from "@/services/laporanService";
+import { ChevronLeft, FileText, Printer, CheckCircle, QrCode, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { getLaporanById, downloadLaporanPdf, previewLaporanPdf, type LaporanStatistics } from "@/services/laporanService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
 import type { Laporan } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -56,6 +56,32 @@ export default function LaporanDetail() {
       })
       .catch(() => { /* fallback */ });
   }, []);
+
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handlePreview = async () => {
+    if (!id) return;
+    setPdfError(null);
+    try {
+      await previewLaporanPdf(Number(id));
+    } catch (err: any) {
+      setPdfError(err.message || "Gagal memuat PDF.");
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!id || downloadingPdf) return;
+    setDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      await downloadLaporanPdf(Number(id));
+    } catch (err: any) {
+      setPdfError(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const currentStatus = optimisticStatus ?? laporan?.status ?? "Draft";
   const isApproved = currentStatus === "Disetujui";
@@ -173,6 +199,8 @@ export default function LaporanDetail() {
                 <span className="font-mono break-all min-w-0">{laporan.nomorSurat || "—"}</span>
                 <span className="text-gray-600">Tanggal</span><span>:</span>
                 <span className="break-words min-w-0">{formatDateLong(laporan.submittedAt || laporan.tanggalLaporan)}</span>
+                <span className="text-gray-600">Jenis Data</span><span>:</span>
+                <span className="break-words min-w-0">{({ akademik: "Data Akademik", organisasi: "Data Organisasi", prestasi: "Data Prestasi" } as Record<string, string>)[laporan.jenis ?? "akademik"]}</span>
                 <span className="text-gray-600">Perihal</span><span>:</span>
                 <span className="font-semibold break-words min-w-0">{laporan.judul}</span>
                 <span className="text-gray-600">Kepada Yth.</span><span>:</span>
@@ -262,15 +290,7 @@ export default function LaporanDetail() {
                     <tbody className="divide-y divide-[#E2E8F0]">
                       <tr>
                         <td colSpan={8} className="px-3 py-6 text-center text-gray-400 text-xs">
-                          Tabel detail tersedia di versi PDF.
-                          <a
-                            href={`/api/laporan/${laporan.id}/pdf`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ml-2 text-[#263F93] underline whitespace-nowrap"
-                          >
-                            Unduh PDF
-                          </a>
+                          Tabel detail tersedia di versi PDF (tombol di bawah).
                         </td>
                       </tr>
                     </tbody>
@@ -332,23 +352,21 @@ export default function LaporanDetail() {
             </span>
             <div className="hidden sm:block sm:flex-1" />
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-              <a
-                href={`/api/laporan/${laporan.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap"
+              <button
+                onClick={handlePreview}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-[#263F93] text-[#263F93] rounded-lg text-sm hover:bg-blue-50 whitespace-nowrap"
               >
-                <Printer size={14} /> Cetak
-              </a>
-              <a
-                href={`/api/laporan/${laporan.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white whitespace-nowrap"
+                <FileText size={14} /> Pertinjau
+              </button>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-500 text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: "#263F93" }}
               >
-                <Download size={14} /> Download PDF
-              </a>
+                {downloadingPdf ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                {downloadingPdf ? "Mengunduh..." : "Download PDF"}
+              </button>
             </div>
           </>
         ) : isPending ? (
@@ -357,14 +375,12 @@ export default function LaporanDetail() {
               <Clock size={14} className="flex-shrink-0" /> Menunggu persetujuan Warek III
             </span>
             <div className="hidden sm:block sm:flex-1" />
-            <a
-              href={`/api/laporan/${laporan.id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 w-full sm:w-auto whitespace-nowrap"
+            <button
+              onClick={handlePreview}
+              className="flex items-center justify-center gap-2 px-4 py-2 border border-[#263F93] text-[#263F93] rounded-lg text-sm hover:bg-blue-50 w-full sm:w-auto whitespace-nowrap"
             >
-              <Printer size={14} /> Cetak
-            </a>
+              <FileText size={14} /> Pertinjau
+            </button>
           </>
         ) : (
           <>
@@ -372,15 +388,16 @@ export default function LaporanDetail() {
               {currentStatus === "Draft" ? "Laporan masih draf. Ajukan untuk review Warek III." : "Status: " + currentStatus}
             </span>
             <div className="hidden sm:block sm:flex-1" />
-            <a
-              href={`/api/laporan/${laporan.id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 w-full sm:w-auto whitespace-nowrap"
+            <button
+              onClick={handlePreview}
+              className="flex items-center justify-center gap-2 px-4 py-2 border border-[#263F93] text-[#263F93] rounded-lg text-sm hover:bg-blue-50 w-full sm:w-auto whitespace-nowrap"
             >
-              <Printer size={14} /> Cetak
-            </a>
+              <FileText size={14} /> Pertinjau
+            </button>
           </>
+        )}
+        {pdfError && (
+          <p className="col-span-full text-xs text-red-600 text-center w-full">{pdfError}</p>
         )}
       </div>
 

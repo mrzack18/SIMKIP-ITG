@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Plus, Download, FileText, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
-import { getLaporanList, type LaporanFilter } from "@/services/laporanService"
+import { Plus, Download, FileText, Clock, CheckCircle, AlertCircle, Loader2, Printer } from "lucide-react"
+import { getLaporanList, previewLaporanPdf, downloadLaporanPdf, type LaporanFilter } from "@/services/laporanService"
 import { getKonfigurasiAll } from "@/services/konfigurasiService"
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService"
 import type { Laporan } from "@/types"
@@ -42,6 +42,12 @@ const cakupanBadgeStyle: Record<string, string> = {
   keduanya: "bg-teal-50 text-teal-700 border border-teal-200",
 }
 
+const JENIS_LABEL: Record<string, string> = {
+  akademik: "Data Akademik",
+  organisasi: "Data Organisasi",
+  prestasi: "Data Prestasi",
+}
+
 const CAKUPAN_MAP: Record<string, string> = {
   "Semua": "",
   "Seluruh Mahasiswa": "semua",
@@ -77,6 +83,31 @@ export default function LaporanList() {
   const [statusFilter, setStatusFilter] = useState("")
   const [cakupanFilter, setCakupanFilter] = useState("")
   const [page, setPage] = useState(1)
+
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [previewingId, setPreviewingId] = useState<number | null>(null);
+
+  const handlePreviewPdf = async (id: number) => {
+    setPreviewingId(id);
+    try {
+      await previewLaporanPdf(id);
+    } catch (err: any) {
+      alert(err.message || "Gagal memuat PDF.");
+    } finally {
+      setPreviewingId(null);
+    }
+  };
+
+  const handleDownloadPdf = async (id: number) => {
+    setDownloadingId(id);
+    try {
+      await downloadLaporanPdf(id);
+    } catch (err: any) {
+      alert(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const [tahunList, setTahunList] = useState<string[]>([""])
 
@@ -334,6 +365,9 @@ export default function LaporanList() {
 
                     {l.cakupan && (
                       <div className="flex items-center gap-2 flex-wrap mb-2 min-w-0">
+                        <span className="px-2 py-0.5 rounded text-xs font-500 bg-[#263F93]/10 text-[#263F93] whitespace-nowrap">
+                          {JENIS_LABEL[l.jenis ?? "akademik"] ?? "Data Akademik"}
+                        </span>
                         <span className={`px-2 py-0.5 rounded text-xs font-500 break-words ${cakupanBadgeStyle[l.cakupan] ?? "bg-gray-100 text-gray-600"}`}>
                           Cakupan:{" "}
                           {l.angkatan || l.prodi
@@ -369,17 +403,23 @@ export default function LaporanList() {
                     >
                       Lihat Detail
                     </Link>
-                    {l.status === "Disetujui" && (
-                      <a
-                        href={`/api/laporan/${l.id}/pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-colors whitespace-nowrap"
-                        style={{ background: "#059669" }}
-                      >
-                        <Download size={12} /> PDF
-                      </a>
-                    )}
+                    <button
+                      onClick={() => handlePreviewPdf(l.id)}
+                      disabled={previewingId === l.id}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-[#263F93] text-[#263F93] hover:bg-blue-50 transition-colors whitespace-nowrap disabled:opacity-50"
+                    >
+                      {previewingId === l.id ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                      {previewingId === l.id ? "Loading..." : "Pertinjau"}
+                    </button>
+                    <button
+                      onClick={() => handleDownloadPdf(l.id)}
+                      disabled={downloadingId === l.id}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-white transition-colors whitespace-nowrap disabled:opacity-50"
+                      style={{ background: "#059669" }}
+                    >
+                      {downloadingId === l.id ? <Loader2 size={12} className="animate-spin" /> : <Printer size={12} />}
+                      {downloadingId === l.id ? "Loading..." : "PDF"}
+                    </button>
                   </div>
                 </div>
               </div>

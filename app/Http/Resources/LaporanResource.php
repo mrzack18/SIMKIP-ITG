@@ -19,6 +19,7 @@ class LaporanResource extends JsonResource
             'tanggalLaporan' => $this->tanggal_laporan?->format('Y-m-d'),
             'catatan' => $this->catatan_laporan,
             'cakupan' => $this->cakupan,
+            'jenis' => $this->jenis,
             'angkatan' => $this->angkatan,
             'prodi' => $this->prodi,
             'tujuanProdi' => (bool) $this->tujuan_prodi,

@@ -13,6 +13,7 @@ use App\Models\Prestasi;
 use App\Models\Prodi;
 use App\Models\SuratPeringatan;
 use App\Models\User;
+use App\Services\LaporanRekapService;
 use App\Services\PdfGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class LaporanController extends Controller
             'tanggal_laporan' => 'required|date',
             'catatan_laporan' => 'nullable|string',
             'cakupan' => 'nullable|string|in:semua,angkatan,prodi,keduanya',
+            'jenis' => 'nullable|string|in:'.implode(',', LaporanRekapService::JENIS),
             'angkatan' => 'nullable|string',
             'prodi' => 'nullable|string',
             'tujuan_warek' => 'boolean',
@@ -88,6 +90,7 @@ class LaporanController extends Controller
             'tanggal_laporan' => $request->tanggal_laporan,
             'catatan_laporan' => $request->catatan_laporan,
             'cakupan' => $request->cakupan ?? 'semua',
+            'jenis' => $request->jenis ?? 'akademik',
             'angkatan' => $request->angkatan,
             'prodi' => $request->prodi,
             'tujuan_warek' => $request->tujuan_warek ?? true,
@@ -117,6 +120,7 @@ class LaporanController extends Controller
     {
         $request->validate([
             'cakupan' => 'required|in:semua,angkatan,prodi,keduanya',
+            'jenis' => 'nullable|string|in:'.implode(',', LaporanRekapService::JENIS),
             'angkatan' => 'nullable|string',
             'prodi' => 'nullable|string',
         ]);
@@ -124,6 +128,13 @@ class LaporanController extends Controller
         $cakupan = $request->cakupan;
         $angkatan = $request->angkatan;
         $prodiNama = $request->prodi;
+        $jenis = $request->jenis ?? 'akademik';
+
+        // Baris rekap sesuai jenis. Preview hanya menampilkan 20 baris pertama.
+        $semuaBaris = LaporanRekapService::rows(
+            $jenis,
+            LaporanRekapService::mahasiswaQuery($cakupan, $angkatan, $prodiNama)->get(),
+        );
 
         $mQuery = Mahasiswa::query();
 
@@ -235,10 +246,14 @@ class LaporanController extends Controller
             ->where('status', 'Disetujui')
             ->get();
         $totalPrestasi = $prestasiList->unique('mahasiswa_id')->count(); // How many unique students have achievements
-        $namaPrestasi = $prestasiList->map(fn ($p) => $p->mahasiswa->nama.' - '.$p->nama_kompetisi)->unique()->values();
+        $namaPrestasi = $prestasiList->map(fn ($p) => $p->mahasiswa->nama.' - '.$p->nama_prestasi)->unique()->values();
 
         return response()->json([
             'success' => true,
+            'jenis' => $jenis,
+            'columns' => LaporanRekapService::columns($jenis),
+            'rows' => array_slice($semuaBaris, 0, 20),
+            'total_rows' => count($semuaBaris),
             'total_mahasiswa' => $totalMahasiswa,
             'total_reguler' => $totalReguler,
             'total_aspirasi' => $totalAspirasi,
@@ -353,6 +368,7 @@ class LaporanController extends Controller
             'tanggal_laporan' => 'sometimes|required|date',
             'catatan_laporan' => 'nullable|string',
             'cakupan' => 'nullable|string|in:semua,angkatan,prodi,keduanya',
+            'jenis' => 'sometimes|string|in:'.implode(',', LaporanRekapService::JENIS),
             'angkatan' => 'nullable|string',
             'prodi' => 'nullable|string',
             'tujuan_warek' => 'boolean',
@@ -361,7 +377,7 @@ class LaporanController extends Controller
 
         $data = $request->only([
             'judul', 'tahun_akademik', 'semester', 'tanggal_laporan', 'catatan_laporan',
-            'cakupan', 'angkatan', 'prodi', 'tujuan_warek', 'tujuan_prodi',
+            'cakupan', 'jenis', 'angkatan', 'prodi', 'tujuan_warek', 'tujuan_prodi',
         ]);
 
         if (isset($data['semester']) && isset($data['tahun_akademik'])) {
@@ -398,11 +414,6 @@ class LaporanController extends Controller
 
     public function downloadPdf(int $id)
     {
-        $l = Laporan::findOrFail($id);
-        if ($l->status === 'Draft' || $l->status === 'Dikembalikan') {
-            return response()->json(['success' => false, 'message' => 'Laporan belum diajukan atau dikembalikan.'], 403);
-        }
-
         return PdfGeneratorService::laporanKipK($id);
     }
 }

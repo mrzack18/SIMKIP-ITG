@@ -119,22 +119,35 @@ class PdfGeneratorService
      */
     public static function laporanKipK(int $laporanId): Response
     {
+        ini_set('memory_limit', '512M');
+
         $laporan = Laporan::with(['dibuatOleh', 'reviews.warek'])->findOrFail($laporanId);
 
+        $jenis = $laporan->jenis ?? 'akademik';
+        $mahasiswa = LaporanRekapService::mahasiswaQuery($laporan->cakupan, $laporan->angkatan, $laporan->prodi)->get();
+
         $logoPath = self::getLogoBase64();
+        $warekNama = Konfigurasi::get('warek_nama', 'Dr. Rina Kurniawati, S.E., M.Si.');
+        $warekNip  = Konfigurasi::get('warek_nip', '198203152008012002');
 
         $data = [
             'laporan' => $laporan,
+            'jenisLabel' => LaporanRekapService::label($jenis),
+            'columns' => LaporanRekapService::columns($jenis),
+            'rows' => LaporanRekapService::rows($jenis, $mahasiswa),
             'logoPath' => $logoPath,
             'dicetak_at' => now()->format('d F Y H:i'),
+            'warek_nama' => $warekNama,
+            'warek_nip'  => $warekNip,
         ];
 
         $pdf = Pdf::loadView('pdf.laporan', $data)
             ->setPaper('a4', 'portrait')
             ->setOptions([
-                'dpi' => 150,
+                'dpi' => 96,
                 'defaultFont' => 'Times New Roman',
                 'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
             ]);
 
         $safeNomor = str_replace(['/', '\\'], '-', $laporan->nomor_surat);

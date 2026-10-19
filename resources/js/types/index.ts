@@ -347,6 +347,7 @@ export interface Laporan {
   catatanWarek?: string | null;
   nomorSurat?: string | null;
   cakupan?: string | null;
+  jenis?: "akademik" | "organisasi" | "prestasi" | null;
   angkatan?: string | null;
   prodi?: string | null;
   tujuanProdi?: boolean;

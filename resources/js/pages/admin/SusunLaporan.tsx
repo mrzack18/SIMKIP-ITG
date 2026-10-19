@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { ChevronLeft, ChevronRight, Check, Download, Info, Loader2, AlertTriangle, RefreshCw, Database, Users, Activity, FileText, Award } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Download, Info, Loader2, AlertTriangle } from "lucide-react";
 import { createLaporan, submitLaporan, getPreviewStatistics, type LaporanPreviewStatistics } from "@/services/laporanService";
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
@@ -17,6 +17,19 @@ const STEPS = [
 ];
 
 type Cakupan = "semua" | "angkatan" | "prodi" | "keduanya";
+type Jenis = "akademik" | "organisasi" | "prestasi";
+
+const LABEL_JENIS: Record<Jenis, string> = {
+  akademik: "Data Akademik",
+  organisasi: "Data Organisasi",
+  prestasi: "Data Prestasi",
+};
+
+const JENIS_OPTIONS: { value: Jenis; label: string; desc: string }[] = [
+  { value: "akademik", label: "Akademik", desc: "IPK, SP, dan keterangan akademik per mahasiswa" },
+  { value: "organisasi", label: "Organisasi", desc: "Keaktifan dan jabatan organisasi mahasiswa" },
+  { value: "prestasi", label: "Prestasi", desc: "Prestasi yang sudah disetujui per mahasiswa" },
+];
 
 export default function SusunLaporan() {
   const navigate = useNavigate();
@@ -42,6 +55,7 @@ export default function SusunLaporan() {
     tanggalLaporan: "2026-08-19",
     catatan: "",
     cakupan: "semua" as Cakupan,
+    jenis: "akademik" as Jenis,
     angkatan: "2022",
     prodi: "Teknik Informatika",
   });
@@ -74,12 +88,6 @@ export default function SusunLaporan() {
       .catch(() => {});
     return () => { active = false; };
   }, []);
-  // Load dashboard-level preview stats on mount
-  useEffect(() => {
-    getPreviewStatistics('semua').then(setDashboardStats).catch(() => {});
-  }, []);
-
-
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -88,20 +96,6 @@ export default function SusunLaporan() {
   const [preview, setPreview] = useState<LaporanPreviewStatistics | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
-  const [dashboardStats, setDashboardStats] = useState<LaporanPreviewStatistics | null>(null);
-
-  const [toastMsg, setToastMsg] = useState("");
-  const [syncing, setSyncing] = useState(false);
-
-  const handleTarikSIA = () => {
-    setSyncing(true);
-    setToastMsg("Sedang menarik data dari SIA...");
-    setTimeout(() => {
-      setSyncing(false);
-      setToastMsg("Data Mahasiswa, Nilai, dan Prestasi berhasil disinkronkan dari SIA ITG.");
-      setTimeout(() => setToastMsg(""), 3500);
-    }, 1500);
-  };
 
   const set = (k: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -130,6 +124,7 @@ export default function SusunLaporan() {
       form.cakupan,
       form.cakupan === "semua" ? undefined : form.angkatan,
       form.cakupan === "semua" ? undefined : form.prodi,
+      form.jenis,
     )
       .then(setPreview)
       .catch((err: any) => {
@@ -162,6 +157,7 @@ export default function SusunLaporan() {
         tanggalLaporan: form.tanggalLaporan,
         catatanLaporan: form.catatan || undefined,
         cakupan: form.cakupan,
+        jenis: form.jenis,
         angkatan: form.cakupan === "semua" ? undefined : form.angkatan,
         prodi: form.cakupan === "semua" ? undefined : form.prodi,
         tujuanWarek: tujuanWarek,
@@ -186,6 +182,7 @@ export default function SusunLaporan() {
         tanggalLaporan: form.tanggalLaporan,
         catatanLaporan: form.catatan || undefined,
         cakupan: form.cakupan,
+        jenis: form.jenis,
         angkatan: form.cakupan === "semua" ? undefined : form.angkatan,
         prodi: form.cakupan === "semua" ? undefined : form.prodi,
         tujuanWarek: tujuanWarek,
@@ -264,54 +261,6 @@ export default function SusunLaporan() {
         </div>
       </div>
 
-      {/* Central Reporting Hub Header Section */}
-      <div className="bg-gradient-to-br from-[#263F93] to-blue-800 rounded-2xl shadow-lg p-4 sm:p-6 text-white relative overflow-hidden border border-blue-700/50 min-w-0">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <Database size={120} />
-        </div>
-        <div className="relative z-10 min-w-0">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 sm:gap-3 mb-5 sm:mb-6 min-w-0">
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold mb-1 flex items-center gap-2 leading-tight">
-                <Database size={24} className="text-blue-300 flex-shrink-0" /> <span>Pusat Generasi Laporan Terintegrasi</span>
-              </h1>
-              <p className="text-blue-200 text-xs sm:text-sm">Integrasi data otomatis dengan Sistem Informasi Akademik (SIA) ITG.</p>
-            </div>
-            <button
-              onClick={handleTarikSIA}
-              disabled={syncing}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm disabled:opacity-50 w-full sm:w-auto whitespace-nowrap shrink-0"
-            >
-              <RefreshCw size={16} className={syncing ? "animate-spin" : ""} />
-              Tarik Data Mahasiswa (SIA)
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 min-w-0">
-            <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
-              <Users size={24} className="text-green-300 mb-2" />
-              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.total_mahasiswa ?? preview?.total_mahasiswa ?? 0} <span className="text-base sm:text-lg text-blue-200 font-normal">/ {(dashboardStats?.total_sp ?? preview?.total_sp ?? 0)}</span></div>
-              <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Total Mhs / SP Aktif</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
-              <Activity size={24} className="text-yellow-300 mb-2" />
-              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.rata_ipk ?? preview?.rata_ipk ?? "—"}</div>
-              <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Rata-rata IPK</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
-              <FileText size={24} className="text-red-300 mb-2" />
-              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.total_sp ?? preview?.total_sp ?? 0}</div>
-              <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Mhs Bermasalah</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl p-3 sm:p-4 flex flex-col items-center text-center min-w-0">
-              <Award size={24} className="text-purple-300 mb-2" />
-              <div className="text-lg sm:text-xl font-bold break-words">{dashboardStats?.total_prestasi ?? preview?.total_prestasi ?? 0}</div>
-              <div className="text-[10px] sm:text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Mhs Berprestasi</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── STEP 1: Informasi Laporan ── */}
       {step === 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 space-y-3 sm:space-y-4 min-w-0">
@@ -373,6 +322,34 @@ export default function SusunLaporan() {
                 placeholder="Ringkasan kondisi mahasiswa KIP-K semester ini..."
                 className="w-full px-3 py-2.5 border border-[#E2E8F0] rounded-lg text-sm focus:outline-none resize-none"
               />
+            </div>
+          </div>
+
+          {/* Jenis Data Laporan */}
+          <div className="border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-3 min-w-0">
+            <h3 className="font-600 text-gray-800 text-sm">Jenis Data Laporan</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {JENIS_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex flex-col gap-1 p-3 rounded-lg border cursor-pointer min-w-0 ${
+                    form.jenis === opt.value ? "border-[#263F93] bg-blue-50" : "border-[#E2E8F0] hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 text-sm font-600 text-gray-800">
+                    <input
+                      type="radio"
+                      name="jenis"
+                      value={opt.value}
+                      checked={form.jenis === opt.value}
+                      onChange={set("jenis")}
+                      className="accent-[#263F93]"
+                    />
+                    {opt.label}
+                  </span>
+                  <span className="text-xs text-gray-500 break-words">{opt.desc}</span>
+                </label>
+              ))}
             </div>
           </div>
 
@@ -450,7 +427,7 @@ export default function SusunLaporan() {
         <div className="space-y-4 min-w-0">
           <div className="bg-white rounded-xl shadow-sm border border-[#E2E8F0] p-3 sm:p-4 min-w-0">
             <h2 className="font-600 text-gray-800 text-xs sm:text-sm mb-1">Review Data Mahasiswa</h2>
-            <p className="text-xs text-gray-400 mb-4 break-words">Cakupan: {cakupanLabel}</p>
+            <p className="text-xs text-gray-400 mb-4 break-words">{LABEL_JENIS[form.jenis]} · Cakupan: {cakupanLabel}</p>
 
             {previewLoading ? (
               <div className="flex items-center justify-center py-16 px-4 text-gray-400 text-sm text-center">
@@ -509,7 +486,7 @@ export default function SusunLaporan() {
                   <table className="w-full min-w-[640px] text-xs">
                     <thead>
                       <tr className="bg-gray-50 border-b border-[#E2E8F0]">
-                        {["NIM", "Nama", "Prodi", "Angkatan", "IPK", "SP", "Status"].map((h) => (
+                        {Object.values(preview.columns).map((h) => (
                           <th
                             key={h}
                             className="text-left px-3 py-2 font-600 text-gray-500 uppercase tracking-wide whitespace-nowrap"
@@ -520,36 +497,33 @@ export default function SusunLaporan() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {preview.mahasiswa.length === 0 ? (
+                      {preview.rows.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-8 text-gray-500 bg-gray-50/50">
-                            Tidak ada mahasiswa ditemukan untuk kriteria ini.
+                          <td colSpan={Object.keys(preview.columns).length} className="text-center py-8 text-gray-500 bg-gray-50/50">
+                            Tidak ada data {LABEL_JENIS[form.jenis].toLowerCase()} untuk kriteria ini.
                           </td>
                         </tr>
                       ) : (
-                        preview.mahasiswa.map((m) => (
-                          <tr key={m.id} className="hover:bg-gray-50/50 border-b border-[#E2E8F0] last:border-0">
-                            <td className="px-3 py-2.5 font-500 text-gray-800 font-mono whitespace-nowrap">{m.nim}</td>
-                            <td className="px-3 py-2.5 break-words min-w-[120px]">{m.nama}</td>
-                            <td className="px-3 py-2.5 break-words min-w-[100px]">{m.prodi}</td>
-                            <td className="px-3 py-2.5 whitespace-nowrap">{m.angkatan}</td>
-                            <td className="px-3 py-2.5 font-600 whitespace-nowrap">{m.ipk ? m.ipk.toFixed(2) : "—"}</td>
-                            <td className="px-3 py-2.5">
-                              {m.sp ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-600 bg-red-100 text-red-700 whitespace-nowrap">
-                                  {m.sp}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">—</span>
-                              )}
-                            </td>
+                        preview.rows.map((row, i) => (
+                          <tr key={i} className="hover:bg-gray-50/50 border-b border-[#E2E8F0] last:border-0">
+                            {Object.keys(preview.columns).map((key) => (
+                              <td key={key} className="px-3 py-2.5 break-words min-w-[100px]">
+                                {key === "sp" && row[key] !== "Tidak ada" ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-600 bg-red-100 text-red-700 whitespace-nowrap">
+                                    {row[key]}
+                                  </span>
+                                ) : (
+                                  row[key] ?? "—"
+                                )}
+                              </td>
+                            ))}
                           </tr>
                         ))
                       )}
                     </tbody>
                   </table>
                   <p className="text-xs text-gray-400 mt-2 text-center">
-                    Menampilkan {Math.min(preview.mahasiswa.length, 20)} dari {preview.total_mahasiswa} mahasiswa
+                    Menampilkan {Math.min(preview.rows.length, 20)} dari {preview.total_rows} baris {LABEL_JENIS[form.jenis].toLowerCase()}
                   </p>
                 </div>
               </>
@@ -684,30 +658,24 @@ export default function SusunLaporan() {
                 )}
 
                 {/* Sample data table */}
-                {preview && preview.mahasiswa.length > 0 && (
+                {preview && preview.rows.length > 0 && (
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-gray-600 uppercase mb-1">III. Sampel Data Mahasiswa</p>
+                    <p className="text-xs font-bold text-gray-600 uppercase mb-1">III. Sampel {LABEL_JENIS[form.jenis]}</p>
                     <div className="overflow-x-auto">
                     <table className="w-full min-w-[520px] text-xs border border-[#E2E8F0]">
                       <thead>
                         <tr style={{ background: "#F8FAFC" }}>
-                          {["NIM", "Nama", "Prodi", "Angkatan", "IPK", "SP"].map((h) => (
+                          {Object.values(preview.columns).map((h) => (
                             <th key={h} className="border border-[#E2E8F0] px-2 py-1.5 text-left font-semibold whitespace-nowrap">{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {preview.mahasiswa.slice(0, 5).map((m) => (
-                          <tr key={m.id}>
-                            <td className="border border-[#E2E8F0] px-2 py-1.5 font-mono whitespace-nowrap">{m.nim}</td>
-                            <td className="border border-[#E2E8F0] px-2 py-1.5 break-words min-w-[100px]">{m.nama}</td>
-                            <td className="border border-[#E2E8F0] px-2 py-1.5 break-words min-w-[90px]">{m.prodi.replace("Teknik ", "T.")}</td>
-                            <td className="border border-[#E2E8F0] px-2 py-1.5 whitespace-nowrap">{m.angkatan}</td>
-                            <td className="border border-[#E2E8F0] px-2 py-1.5 font-bold whitespace-nowrap"
-                              style={{ color: m.ipk === null || m.ipk === undefined ? "#94A3B8" : m.ipk >= 3.0 ? "#059669" : "#DC2626" }}>
-                              {m.ipk !== null && m.ipk !== undefined ? Number(m.ipk).toFixed(2) : "—"}
-                            </td>
-                            <td className="border border-[#E2E8F0] px-2 py-1.5 whitespace-nowrap">{m.sp || "—"}</td>
+                        {preview.rows.slice(0, 5).map((row, i) => (
+                          <tr key={i}>
+                            {Object.keys(preview.columns).map((key) => (
+                              <td key={key} className="border border-[#E2E8F0] px-2 py-1.5 break-words min-w-[90px]">{row[key] ?? "—"}</td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
@@ -831,18 +799,6 @@ export default function SusunLaporan() {
           </div>
         )}
       </div>
-
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 bg-gray-900 text-white px-3 sm:px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 min-w-0">
-          {syncing ? (
-            <Loader2 size={18} className="animate-spin text-blue-400 flex-shrink-0" />
-          ) : (
-            <Check size={18} className="text-green-400 flex-shrink-0" />
-          )}
-          <p className="text-xs sm:text-sm font-medium break-words min-w-0">{toastMsg}</p>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FileText, CheckCircle, Clock, RotateCcw, Download } from "lucide-react";
+import { FileText, CheckCircle, Clock, RotateCcw, Download, Printer, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
+import { previewLaporanPdf, downloadLaporanPdf } from "@/services/laporanService";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 type LStatus = "Menunggu" | "Disetujui" | "Dikembalikan";
 
@@ -35,6 +36,30 @@ export default function WarekLaporanList() {
   const [counts, setCounts] = useState<Record<LStatus, number>>({ Menunggu: 0, Disetujui: 0, Dikembalikan: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [previewingId, setPreviewingId] = useState<number | null>(null);
+
+  const handlePreviewPdf = async (id: number) => {
+    setPreviewingId(id);
+    try {
+      await previewLaporanPdf(id);
+    } catch (err: any) {
+      alert(err.message || "Gagal memuat PDF.");
+    } finally {
+      setPreviewingId(null);
+    }
+  };
+
+  const handleDownloadPdf = async (id: number) => {
+    setDownloadingId(id);
+    try {
+      await downloadLaporanPdf(id);
+    } catch (err: any) {
+      alert(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // Fetch counts for all tabs once
   useEffect(() => {
@@ -160,11 +185,24 @@ export default function WarekLaporanList() {
                     </Link>
                   )}
                   {r.status === "Disetujui" && (
-                    <a href={`${import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"}/laporan/${r.id}/pdf`}
-                       target="_blank" rel="noopener noreferrer"
-                       className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap">
-                      <Download size={14} /> Unduh PDF
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePreviewPdf(r.id)}
+                        disabled={previewingId === r.id}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#263F93] text-[#263F93] text-sm hover:bg-blue-50 whitespace-nowrap disabled:opacity-50"
+                      >
+                        {previewingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                        {previewingId === r.id ? "Loading..." : "Pertinjau"}
+                      </button>
+                      <button
+                        onClick={() => handleDownloadPdf(r.id)}
+                        disabled={downloadingId === r.id}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap disabled:opacity-50"
+                      >
+                        {downloadingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                        {downloadingId === r.id ? "Loading..." : "PDF"}
+                      </button>
+                    </div>
                   )}
                   {r.status === "Dikembalikan" && (
                     <Link to={`/warek/laporan/${r.id}`} className="px-4 py-2 rounded-lg text-sm border border-orange-200 text-orange-700 hover:bg-orange-50 text-center whitespace-nowrap">

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle, FileText, Printer, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import logoItg from "@/imports/logo_itg.jpg";
 import { api, API_BASE_URL } from "@/services/api";
+import { downloadLaporanPdf, previewLaporanPdf } from "@/services/laporanService";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 
 interface LaporanDetailData {
@@ -92,25 +93,29 @@ export default function ProdiLaporanDetail() {
     ? new Date(l.tanggalLaporan).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
     : "-";
 
-  const handleDownloadPdf = async () => {
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handlePreview = async () => {
+    if (!l?.id) return;
+    setPdfError(null);
     try {
-      const token = localStorage.getItem("simkip_token");
-      const res = await fetch(`${API_BASE_URL}/laporan/${l.id}/pdf`, {
-        headers: token ? { Authorization: `Bearer ${token}`, "X-Requested-With": "XMLHttpRequest" } : { "X-Requested-With": "XMLHttpRequest" },
-      });
-      if (!res.ok) throw new Error("Gagal mengunduh PDF");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Laporan_${l.nomorSurat?.replace(/\//g, "_") ?? l.id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
-      alert("Gagal mengunduh PDF laporan.");
+      await previewLaporanPdf(l.id);
+    } catch (err: any) {
+      setPdfError(err.message || "Gagal memuat PDF.");
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!l?.id || downloadingPdf) return;
+    setDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      await downloadLaporanPdf(l.id);
+    } catch (err: any) {
+      setPdfError(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -227,11 +232,22 @@ export default function ProdiLaporanDetail() {
         <Link to="/prodi/laporan" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-500 text-gray-600 hover:bg-gray-50 whitespace-nowrap">
           <ArrowLeft size={14} /> Kembali
         </Link>
+        <button onClick={handlePreview}
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#263F93] text-[#263F93] text-sm hover:bg-blue-50 whitespace-nowrap">
+          <FileText size={14} /> Pertinjau
+        </button>
         <button onClick={handleDownloadPdf}
-          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-500 text-white bg-[#263F93] hover:bg-[#1e3276] whitespace-nowrap">
-          <Download size={14} /> Download PDF
+          disabled={downloadingPdf}
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-500 text-white bg-[#263F93] hover:bg-[#1e3276] whitespace-nowrap disabled:opacity-50">
+          {downloadingPdf ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+          {downloadingPdf ? "Mengunduh..." : "Download PDF"}
         </button>
       </div>
+      {pdfError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 text-center mb-4">
+          {pdfError}
+        </div>
+      )}
     </div>
   );
 }
