@@ -315,11 +315,6 @@ export function TabRiwayatAkademik({
   // Statistik hanya dari semester yang sudah punya IPK; semester transkrip
   // masa depan (masih "-"/"T") tidak dihitung sebagai nilai 0.
   const denganIpk = semesterDetails.filter((s): s is SemesterDetail & { ipk: number } => s.ipk !== null)
-  const highest = denganIpk.length > 0 ? denganIpk.reduce((a, b) => (a.ipk > b.ipk ? a : b)) : null
-  const lowest = denganIpk.length > 0 ? denganIpk.reduce((a, b) => (a.ipk < b.ipk ? a : b)) : null
-  const avg = denganIpk.length > 0
-    ? denganIpk.reduce((s, h) => s + h.ipk, 0) / denganIpk.length
-    : null
 
   // MK yang benar-benar belum lulus (D/E). Nilai netral "-" dan "T" dikecualikan:
   // "-" berarti MK belum diambil, "T" berarti dosen belum menilai — keduanya
@@ -342,37 +337,6 @@ export function TabRiwayatAkademik({
 
   return (
     <div className="space-y-3 sm:space-y-4 min-w-0">
-      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2.5 sm:gap-3">
-        {[
-          {
-            label: "IPK Tertinggi",
-            value: highest ? highest.ipk.toFixed(2) : "—",
-            sub: highest ? `di Sem ${highest.semester}` : "belum ada nilai",
-          },
-          {
-            label: "IPK Terendah",
-            value: lowest ? lowest.ipk.toFixed(2) : "—",
-            sub: lowest ? `di Sem ${lowest.semester}` : "belum ada nilai",
-          },
-          {
-            label: "IPK Rata-rata",
-            value: avg !== null ? avg.toFixed(2) : "—",
-            sub: `dari ${denganIpk.length} semester`,
-          },
-        ].map(({ label, value, sub }) => (
-          <div
-            key={label}
-            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-center min-w-0"
-          >
-            <div className="text-lg sm:text-xl font-bold text-gray-900">{value}</div>
-            <div className="text-xs font-semibold text-gray-700 mt-0.5">
-              {label}
-            </div>
-            <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
-          </div>
-        ))}
-      </div>
-
       <div className="min-w-0">
         <h4 className="text-sm font-semibold text-gray-700 mb-3">
           Grafik Progres IPK
@@ -381,7 +345,7 @@ export function TabRiwayatAkademik({
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
-            margin={{ top: 10, right: 12, bottom: 5, left: -12 }}
+            margin={{ top: 22, right: 12, bottom: 5, left: -12 }}
           >
             <defs>
               <linearGradient id="ipkGrad" x1="0" y1="0" x2="0" y2="1">
@@ -422,11 +386,26 @@ export function TabRiwayatAkademik({
             <Area
               type="monotone"
               dataKey="ipk"
+              isAnimationActive={false}
               stroke="#263F93"
               strokeWidth={2.5}
               fill="url(#ipkGrad)"
               dot={{ fill: "#263F93", r: 4, strokeWidth: 0 }}
               activeDot={{ r: 6, strokeWidth: 0 }}
+              label={({ x, y, value }: { x?: number; y?: number; value?: number | null }) =>
+                value === null || value === undefined ? null : (
+                  <text
+                    x={x}
+                    y={(y ?? 0) - 9}
+                    textAnchor="middle"
+                    fontSize={11}
+                    fontWeight={600}
+                    fill="#1F2937"
+                  >
+                    {Number(value).toFixed(2)}
+                  </text>
+                )
+              }
             />
             <Legend content={<CustomLegend />} />
           </AreaChart>
