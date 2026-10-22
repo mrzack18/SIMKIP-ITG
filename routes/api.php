@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\PelatihanController;
 use App\Http\Controllers\Api\PrestasiController;
 use App\Http\Controllers\Api\Prodi\MahasiswaController as ProdiMahasiswa;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\PublicStatsController;
 use App\Http\Controllers\Api\ReportingController;
 use App\Http\Controllers\Api\SPController;
 use App\Models\Mahasiswa;
@@ -30,6 +31,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login'])
     ->middleware('throttle:5,1');
+Route::get('/public-stats', [PublicStatsController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
 

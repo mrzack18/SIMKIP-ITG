@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { login } from "@/services/authService";
-import { MOCK_USERS, ROLE_LABELS } from "@/data/mockUsers";
+import { api } from "@/services/api";
 import logoItg from "@/imports/logo_itg.jpg";
+
+interface LoginStats {
+  mahasiswa_aktif: number;
+  dokumen_tervalidasi: number;
+  program_studi: number;
+  angkatan: string | null;
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,6 +22,23 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [remember, setRemember] = useState(false);
+  const [stats, setStats] = useState<LoginStats | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    api.get<{ stats: LoginStats }>("/public-stats")
+      .then(({ stats: fetchedStats }) => {
+        if (mounted) setStats(fetchedStats);
+      })
+      .catch(() => {
+        // The login form remains usable if the public stats request fails.
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +52,6 @@ export default function Login() {
       setError(err instanceof Error ? err.message : "Login gagal. Silakan coba lagi.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleQuickLogin = (key: string) => {
-    const mockData = MOCK_USERS[key];
-    if (mockData) {
-      setUsername(mockData.realUsername || key);
-      setPassword(mockData.password || "kip2026");
     }
   };
 
@@ -84,10 +100,10 @@ export default function Login() {
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Mahasiswa Aktif", value: "167" },
-              { label: "Dokumen Tervalidasi", value: "1.2K+" },
-              { label: "Program Studi", value: "5" },
-              { label: "Angkatan", value: "2022–2026" },
+              { label: "Mahasiswa Aktif", value: stats ? stats.mahasiswa_aktif : "—" },
+              { label: "Dokumen Tervalidasi", value: stats ? stats.dokumen_tervalidasi : "—" },
+              { label: "Program Studi", value: stats ? stats.program_studi : "—" },
+              { label: "Angkatan", value: stats?.angkatan ?? "—" },
             ].map(({ label, value }) => (
               <div key={label} className="bg-white/10 rounded-xl p-3">
                 <div className="font-display font-700 text-[#D4A72C] text-xl">{value}</div>
@@ -188,23 +204,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          {/* Demo shortcuts */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-xs font-600 text-blue-700 mb-2">Demo — Klik untuk login cepat:</p>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(MOCK_USERS).map(([key, mockData]) => (
-                <button
-                  key={key}
-                  onClick={() => handleQuickLogin(key)}
-                  className="text-xs px-2 py-1 bg-white border border-blue-200 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  {ROLE_LABELS[mockData.user.role]}
-                </button>
-              ))}
-              <span className="text-xs text-blue-400 self-center">+ akan diisi otomatis</span>
-            </div>
-          </div>
 
           <p className="text-center text-xs text-gray-400 mt-6">
             © 2026 Institut Teknologi Garut
