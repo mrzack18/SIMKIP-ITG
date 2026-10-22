@@ -37,7 +37,8 @@
 /bootstrap/cache/*.php
 
 # Local database dumps and backups
-/database/backups/
+/database/backups/*
+!/database/backups/simkip_itg_20261020_062541.sql
 
 # Root project uses npm; keep package-lock.json as the dependency lockfile.
 /pnpm-lock.yaml
