@@ -18,7 +18,7 @@ class LsipdSyncService
 {
     /**
      * Sinkronkan biodata seluruh mahasiswa KIP-K dari LSIPD.
-     * Mahasiswa baru akan otomatis dibuatkan User record (default password kip{nim}2026).
+     * Mahasiswa baru akan otomatis dibuatkan User record (default password itg@garut).
      *
      * @return array{inserted:int, updated:int, skipped:int, total:int, prodi_missing:int}
      */
@@ -277,7 +277,7 @@ class LsipdSyncService
             'name' => $nama ?: 'Mahasiswa '.$nim,
             'username' => $nim,
             'email' => $email,
-            'password' => Hash::make('kip'.$nim.'2026'),
+            'password' => Hash::make('itg@garut'),
             'role' => 'mahasiswa',
             'is_password_changed' => false,
             'no_hp' => $noHp,
