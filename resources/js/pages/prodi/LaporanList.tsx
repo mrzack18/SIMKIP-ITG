@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { FileText, CheckCircle, Search } from "lucide-react";
+import { FileText, CheckCircle, Search, Printer, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
+import { previewLaporanPdf, downloadLaporanPdf } from "@/services/laporanService";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
 function formatTanggal(tanggal?: string | null) {
   if (!tanggal) return "-";
@@ -42,6 +42,30 @@ export default function ProdiLaporanList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [previewingId, setPreviewingId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  const handlePreview = async (id: number) => {
+    setPreviewingId(id);
+    try {
+      await previewLaporanPdf(id);
+    } catch (err: any) {
+      alert(err.message || "Gagal memuat PDF.");
+    } finally {
+      setPreviewingId(null);
+    }
+  };
+
+  const handleDownload = async (id: number) => {
+    setDownloadingId(id);
+    try {
+      await downloadLaporanPdf(id);
+    } catch (err: any) {
+      alert(err.message || "Gagal mengunduh PDF.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -117,12 +141,18 @@ export default function ProdiLaporanList() {
                 <p className="text-xs text-gray-400 font-mono break-all">{r.nomorSurat}</p>
                 <p className="text-xs text-gray-500 mt-1 break-words">{r.periode} · Diterima: {formatTanggal(r.tanggalLaporan)}</p>
               </div>
-              <div className="flex flex-col gap-2 flex-shrink-0 w-full min-[480px]:w-auto">
-                <Link to={`/prodi/laporan/${r.id}`}
-                  className="px-4 py-2 rounded-lg text-sm font-500 text-[#263F93] border border-[#263F93]/30 hover:bg-blue-50 text-center transition-colors whitespace-nowrap">
-                  Lihat Detail
-                </Link>
-              </div>
+               <div className="flex flex-wrap gap-2 flex-shrink-0 w-full min-[480px]:w-auto">
+                 <button onClick={() => handlePreview(r.id)} disabled={previewingId === r.id}
+                   className="flex-1 min-[480px]:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-500 text-[#263F93] border border-[#263F93]/30 hover:bg-blue-50 transition-colors whitespace-nowrap disabled:opacity-50">
+                   {previewingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                   {previewingId === r.id ? "Loading..." : "Pratinjau"}
+                 </button>
+                 <button onClick={() => handleDownload(r.id)} disabled={downloadingId === r.id}
+                   className="flex-1 min-[480px]:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-500 text-white bg-[#263F93] hover:bg-[#1e3276] transition-colors whitespace-nowrap disabled:opacity-50">
+                   {downloadingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <Printer size={14} />}
+                   {downloadingId === r.id ? "Loading..." : "Download PDF"}
+                 </button>
+               </div>
             </div>
           </div>
         ))}

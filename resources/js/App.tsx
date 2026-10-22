@@ -16,7 +16,6 @@ import BebasTanggunganList from "./pages/admin/BebasTanggunganList";
 import BebasTanggunganDetail from "./pages/admin/BebasTanggunganDetail";
 import LaporanList from "./pages/admin/LaporanList";
 import SusunLaporan from "./pages/admin/SusunLaporan";
-import LaporanDetail from "./pages/admin/LaporanDetail";
 import Reporting from "./pages/reporting/Reporting";
 import Konfigurasi from "./pages/admin/Konfigurasi";
 import LsipdSync from "./pages/lsipd/LsipdSync";
@@ -36,11 +35,9 @@ import ProdiDashboard from "./pages/prodi/Dashboard";
 import ProdiMahasiswaList from "./pages/prodi/MahasiswaList";
 import ProdiMahasiswaDetail from "./pages/prodi/MahasiswaDetail";
 import ProdiLaporanList from "./pages/prodi/LaporanList";
-import ProdiLaporanDetail from "./pages/prodi/LaporanDetail";
 import EksporLaporan from "./pages/prodi/EksporLaporan";
 import WarekDashboard from "./pages/warek/Dashboard";
 import WarekLaporanList from "./pages/warek/LaporanList";
-import WarekLaporanDetail from "./pages/warek/LaporanDetail";
 import WarekMahasiswaList from "./pages/warek/MahasiswaList";
 import WarekMahasiswaDetail from "./pages/warek/MahasiswaDetail";
 import Placeholder from "./pages/Placeholder";
@@ -94,7 +91,6 @@ export default function App() {
             <Route path="bebas-tanggungan/:id" element={<BebasTanggunganDetail />} />
             <Route path="laporan" element={<LaporanList />} />
             <Route path="laporan/baru" element={<SusunLaporan />} />
-            <Route path="laporan/:id" element={<LaporanDetail />} />
             <Route path="reporting" element={<Reporting />} />
             <Route path="konfigurasi" element={<Konfigurasi role="admin" />} />
             <Route path="audit" element={<AuditLog />} />
@@ -121,7 +117,6 @@ export default function App() {
             <Route path="mahasiswa" element={<ProdiMahasiswaList />} />
             <Route path="mahasiswa/:nim" element={<ProdiMahasiswaDetail />} />
             <Route path="laporan" element={<ProdiLaporanList />} />
-            <Route path="laporan/:id" element={<ProdiLaporanDetail />} />
             <Route path="reporting" element={<Reporting />} />
             <Route path="ekspor" element={<EksporLaporan />} />
             <Route path="profil" element={<Profil role="prodi" />} />
@@ -131,7 +126,6 @@ export default function App() {
           <Route path="/warek" element={<LayoutWrapper role="warek" />}>
             <Route index element={<WarekDashboard />} />
             <Route path="laporan" element={<WarekLaporanList />} />
-            <Route path="laporan/:id" element={<WarekLaporanDetail />} />
             <Route path="mahasiswa" element={<WarekMahasiswaList />} />
             <Route path="mahasiswa/:nim" element={<WarekMahasiswaDetail />} />
             <Route path="profil" element={<Profil role="warek" />} />

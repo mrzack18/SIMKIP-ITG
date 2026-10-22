@@ -116,7 +116,7 @@ class LaporanController extends Controller
                 'Laporan Disetujui',
                 "Laporan \"{$l->judul}\" telah disetujui oleh Warek.",
                 'success',
-                '/admin/laporan/'.$l->id
+                 '/admin/laporan'
             );
         });
 
@@ -151,7 +151,7 @@ class LaporanController extends Controller
                 'Laporan Dikembalikan',
                 "Laporan \"{$l->judul}\" dikembalikan oleh Warek. Catatan: {$request->catatan}",
                 'warning',
-                '/admin/laporan/'.$l->id
+                 '/admin/laporan'
             );
         });
 

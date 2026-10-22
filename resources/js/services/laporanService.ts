@@ -47,23 +47,6 @@ export async function getLaporanList(filter: LaporanFilter = {}): Promise<Pagina
   return normalizePagination<Laporan>(res);
 }
 
-export interface LaporanStatistics {
-  totalMahasiswa: number;
-  kipk: {
-    reguler: { total: number; persen: number };
-    aspirasi: { total: number; persen: number };
-  };
-  rataIpk: number | null;
-  distribusiAngkatan: { angkatan: string; total: number }[];
-  ipkTrend: { semester: string; ipk: number }[];
-}
-
-export interface LaporanDetailResponse {
-  success: boolean;
-  data: Laporan;
-  statistics: LaporanStatistics;
-}
-
 export interface LaporanPreviewStatistics {
   success: boolean;
   total_mahasiswa: number;
@@ -100,15 +83,6 @@ export async function getPreviewStatistics(cakupan: string, angkatan?: string, p
   if (prodi) params.append('prodi', prodi);
   const res = await api.get<LaporanPreviewStatistics>(`/laporan/preview-statistics?${params.toString()}`);
   return res;
-}
-
-export async function getLaporanById(id: number): Promise<{
-  laporan: Laporan | null;
-  statistics: LaporanStatistics | null;
-}> {
-  const res = await api.get<LaporanDetailResponse>(`/laporan/${id}`);
-  if (!res.data) return { laporan: null, statistics: null };
-  return { laporan: res.data, statistics: res.data.statistics };
 }
 
 export type LaporanJenis = "akademik" | "organisasi" | "prestasi";
@@ -209,8 +183,11 @@ export async function previewLaporanPdf(id: number): Promise<void> {
   try {
     const { blob } = await fetchLaporanPdf(id);
     const url = window.URL.createObjectURL(blob);
-    if (win) win.location.href = url;
-    else window.open(url, "_blank");
+    if (!win) {
+      window.URL.revokeObjectURL(url);
+      throw new Error("Popup preview diblokir browser. Izinkan popup untuk membuka PDF.");
+    }
+    win.location.href = url;
   } catch (err) {
     win?.close();
     throw err;

@@ -150,7 +150,8 @@ class PdfGeneratorService
                 'isRemoteEnabled' => false,
             ]);
 
-        $safeNomor = str_replace(['/', '\\'], '-', $laporan->nomor_surat);
+        // Draft reports do not have a generated letter number yet.
+        $safeNomor = str_replace(['/', '\\'], '-', $laporan->nomor_surat ?: 'DRAFT-'.$laporan->id);
         $filename = "Laporan_KIP-K_{$safeNomor}.pdf";
 
         return $pdf->download($filename);

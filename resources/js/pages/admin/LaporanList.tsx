@@ -397,12 +397,6 @@ export default function LaporanList() {
                   </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                    <Link
-                      to={`/admin/laporan/${l.id}`}
-                      className="flex-1 sm:flex-none text-center px-3 py-1.5 text-xs border border-[#263F93]/30 rounded-lg text-[#263F93] hover:bg-blue-50 transition-colors whitespace-nowrap"
-                    >
-                      Lihat Detail
-                    </Link>
                     <button
                       onClick={() => handlePreviewPdf(l.id)}
                       disabled={previewingId === l.id}

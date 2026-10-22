@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FileText, CheckCircle, Clock, RotateCcw, Download, Printer, Loader2 } from "lucide-react";
+import { FileText, CheckCircle, Clock, RotateCcw, Printer, Loader2, X } from "lucide-react";
 import { api } from "@/services/api";
 import { previewLaporanPdf, downloadLaporanPdf } from "@/services/laporanService";
 import { getCurrentTahunAjaran,  TahunAjaranFilter } from "@/components/ui/TahunAjaranFilter";
@@ -38,6 +37,11 @@ export default function WarekLaporanList() {
   const [error, setError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [previewingId, setPreviewingId] = useState<number | null>(null);
+  const [actingId, setActingId] = useState<number | null>(null);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [returningId, setReturningId] = useState<number | null>(null);
+  const [returnNote, setReturnNote] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handlePreviewPdf = async (id: number) => {
     setPreviewingId(id);
@@ -58,6 +62,38 @@ export default function WarekLaporanList() {
       alert(err.message || "Gagal mengunduh PDF.");
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleApprove = async (id: number) => {
+    setActingId(id);
+    setActionError(null);
+    try {
+      await api.patch(`/laporan/${id}/approve`, {});
+      setData((items) => items.filter((item) => item.id !== id));
+      setCounts((current) => ({ ...current, Menunggu: Math.max(0, current.Menunggu - 1), Disetujui: current.Disetujui + 1 }));
+      setApprovingId(null);
+    } catch (err: any) {
+      setActionError(err.message || "Gagal menyetujui laporan.");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleReturn = async () => {
+    if (!returningId || returnNote.trim().length < 10) return;
+    setActingId(returningId);
+    setActionError(null);
+    try {
+      await api.patch(`/laporan/${returningId}/return`, { catatan: returnNote.trim() });
+      setData((items) => items.filter((item) => item.id !== returningId));
+      setCounts((current) => ({ ...current, Menunggu: Math.max(0, current.Menunggu - 1), Dikembalikan: current.Dikembalikan + 1 }));
+      setReturningId(null);
+      setReturnNote("");
+    } catch (err: any) {
+      setActionError(err.message || "Gagal mengembalikan laporan.");
+    } finally {
+      setActingId(null);
     }
   };
 
@@ -124,6 +160,8 @@ export default function WarekLaporanList() {
         </div>
       </div>
 
+      {actionError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{actionError}</div>}
+
       {/* Filters and Tabs */}
       <div className="flex flex-wrap items-center gap-4 min-w-0">
 
@@ -179,10 +217,17 @@ export default function WarekLaporanList() {
                 </div>
                 <div className="flex flex-col gap-2 flex-shrink-0 w-full min-[480px]:w-auto">
                   {r.status === "Menunggu" && (
-                    <Link to={`/warek/laporan/${r.id}`}
-                      className="px-4 py-2 rounded-lg text-sm font-500 text-white bg-green-600 hover:bg-green-700 text-center whitespace-nowrap">
-                      Review Detail
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button onClick={() => handlePreviewPdf(r.id)} disabled={previewingId === r.id || actingId === r.id} className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#263F93] text-[#263F93] text-sm hover:bg-blue-50 whitespace-nowrap disabled:opacity-50">
+                        {previewingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} Pratinjau
+                      </button>
+                      <button onClick={() => { setReturningId(r.id); setReturnNote(""); }} disabled={actingId === r.id} className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-orange-300 text-orange-700 text-sm hover:bg-orange-50 whitespace-nowrap disabled:opacity-50">
+                        <RotateCcw size={14} /> Kembalikan
+                      </button>
+                      <button onClick={() => setApprovingId(r.id)} disabled={actingId === r.id} className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white bg-green-600 hover:bg-green-700 text-sm whitespace-nowrap disabled:opacity-50">
+                        {actingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />} Setujui
+                      </button>
+                    </div>
                   )}
                   {r.status === "Disetujui" && (
                     <div className="flex items-center gap-2">
@@ -205,9 +250,7 @@ export default function WarekLaporanList() {
                     </div>
                   )}
                   {r.status === "Dikembalikan" && (
-                    <Link to={`/warek/laporan/${r.id}`} className="px-4 py-2 rounded-lg text-sm border border-orange-200 text-orange-700 hover:bg-orange-50 text-center whitespace-nowrap">
-                      Lihat Detail
-                    </Link>
+                    <span className="px-4 py-2 rounded-lg text-sm border border-orange-200 text-orange-700 text-center whitespace-nowrap">Menunggu revisi Admin</span>
                   )}
                 </div>
               </div>
@@ -215,6 +258,46 @@ export default function WarekLaporanList() {
           );
         })}
       </div>
+
+      {returningId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="font-700 text-gray-800">Kembalikan untuk Revisi</h2>
+              <button onClick={() => setReturningId(null)} aria-label="Tutup" className="p-1 rounded-lg text-gray-400 hover:bg-gray-100"><X size={18} /></button>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">Berikan catatan revisi untuk Admin:</p>
+            <textarea value={returnNote} onChange={(e) => setReturnNote(e.target.value)} rows={4} placeholder="Tuliskan bagian yang perlu diperbaiki..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none resize-none mb-4" />
+            <div className="flex gap-2">
+              <button onClick={() => setReturningId(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600">Batal</button>
+              <button onClick={handleReturn} disabled={returnNote.trim().length < 10 || actingId === returningId} className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white bg-orange-500 disabled:opacity-40">
+                {actingId === returningId ? "Memproses..." : "Kirim Revisi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {approvingId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="font-700 text-gray-800">Konfirmasi Persetujuan</h2>
+              <button onClick={() => setApprovingId(null)} aria-label="Tutup" className="p-1 rounded-lg text-gray-400 hover:bg-gray-100"><X size={18} /></button>
+            </div>
+            <div className="rounded-xl bg-green-50 border border-green-200 p-3 mb-5 text-sm text-green-800">
+              Laporan yang disetujui akan menjadi dokumen final dan ditandatangani secara digital.
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setApprovingId(null)} disabled={actingId === approvingId} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 disabled:opacity-40">Batal</button>
+              <button onClick={() => handleApprove(approvingId)} disabled={actingId === approvingId} className="flex-1 py-2.5 rounded-xl text-sm font-700 text-white bg-green-600 hover:bg-green-700 disabled:opacity-40 flex items-center justify-center gap-2">
+                {actingId === approvingId && <Loader2 size={14} className="animate-spin" />}
+                {actingId === approvingId ? "Memproses..." : "Setujui Laporan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

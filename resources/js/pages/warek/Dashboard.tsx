@@ -190,7 +190,7 @@ export default function WarekDashboard() {
                 <p className="text-xs text-gray-400 mt-0.5 break-words">{r.nomor} · Diajukan: {r.tanggal}</p>
                 <p className="text-xs text-gray-500 mt-0.5 break-words">{r.summary}</p>
               </div>
-              <Link to={`/warek/laporan/${r.id}`}
+              <Link to="/warek/laporan"
                 className="w-full min-[480px]:w-auto flex items-center justify-center px-4 py-2 rounded-lg text-sm font-500 text-white bg-green-600 hover:bg-green-700 whitespace-nowrap">
                 Review & Approve
               </Link>

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { ChevronLeft, ChevronRight, Check, Download, Info, Loader2, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Info, Loader2, AlertTriangle } from "lucide-react";
 import { createLaporan, submitLaporan, getPreviewStatistics, type LaporanPreviewStatistics } from "@/services/laporanService";
 import { getMahasiswaFilterOptions } from "@/services/mahasiswaService";
 import { getKonfigurasiAll, type SignatureConfig } from "@/services/konfigurasiService";
@@ -13,7 +13,6 @@ import { getCurrentTahunAjaran, parseTahunAjaran } from "@/components/ui/TahunAj
 const STEPS = [
   { label: "Informasi Laporan", num: 1 },
   { label: "Review Data", num: 2 },
-  { label: "Preview & Kirim", num: 3 },
 ];
 
 type Cakupan = "semua" | "angkatan" | "prodi" | "keduanya";
@@ -164,7 +163,7 @@ export default function SusunLaporan() {
         tujuanProdi: tujuanProdi,
       };
       const created = await createLaporan(payload);
-      navigate(`/admin/laporan/${created.id}`);
+       navigate("/admin/laporan");
     } catch (err: any) {
       setError(err?.message ?? "Gagal menyimpan laporan");
       setSaving(false);
@@ -190,7 +189,7 @@ export default function SusunLaporan() {
       };
       const created = await createLaporan(payload);
       await submitLaporan(created.id);
-      navigate(`/admin/laporan/${created.id}`);
+       navigate("/admin/laporan");
     } catch (err: any) {
       setError(err?.message ?? "Gagal mengirim laporan");
       setSubmitting(false);
@@ -530,9 +529,6 @@ export default function SusunLaporan() {
             ) : null}
           </div>
 
-          <button className="flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm text-gray-600 hover:bg-gray-50 whitespace-nowrap">
-            <Download size={14} className="flex-shrink-0" /> Export Preview ke Excel
-          </button>
         </div>
       )}
 
@@ -767,7 +763,7 @@ export default function SusunLaporan() {
           </Link>
         )}
 
-        {step < 2 ? (
+        {step < 1 ? (
           <button
             onClick={goNext}
             disabled={step === 0 && !step1Valid}
