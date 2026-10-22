@@ -42,6 +42,7 @@
 # Production schema is the only migration tracked for deployment.
 /database/migrations/*.php
 !/database/migrations/2026_10_22_000000_create_production_schema.php
+/database/factories/
 
 # Root project uses npm; keep package-lock.json as the dependency lockfile.
 /pnpm-lock.yaml
