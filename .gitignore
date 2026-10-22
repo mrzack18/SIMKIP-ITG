@@ -1,10 +1,11 @@
 *.log
+*.tmp
+*.temp
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
 .phpactor.json
-.phpunit.result.cache
 /.codex
 /.cursor/
 /.idea
@@ -14,14 +15,44 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+/public/build/
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/vendor/
+
+# Laravel runtime files
 /storage/*.key
-/storage/pail
-/vendor
+/storage/pail/
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/bootstrap/cache/*.php
+
+# Local database dumps and backups
+/database/backups/
+
+# Root project uses npm; keep package-lock.json as the dependency lockfile.
+/pnpm-lock.yaml
+
+# UIUX prototype uses pnpm; do not keep a second lockfile or source archive.
+/UIUX/package-lock.json
+/UIUX/src.zip
+
+# Local/editor and operating-system files
+.phpunit.result.cache
+/.phpunit.cache/
+/.freebuff/
+*.swp
+*.swo
+Thumbs.db
 _ide_helper.php
 Homestead.json
 Homestead.yaml
-Thumbs.db
