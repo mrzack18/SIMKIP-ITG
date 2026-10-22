@@ -43,8 +43,29 @@
 /pnpm-lock.yaml
 
 # UIUX prototype uses pnpm; do not keep a second lockfile or source archive.
-/UIUX/package-lock.json
-/UIUX/src.zip
+/UIUX/
+
+# Non-runtime project material
+/UML/
+/ss/
+/laporan/
+/docs/
+/resources/js/imports/*.md
+/resources/js/imports/pasted_text/
+/resources/js/imports/image.png
+/resources/js/imports/image-1.png
+/HLR_*.md
+/Roadmap_*.md
+/SRS_*.md
+/analisis_*.md
+/discovery_*.md
+/final_acceptance_*.md
+/implementation_plan_*.md
+/plan-*.md
+/plan_backend.md
+/dokumen.md
+/wawancara*
+/scan_admin.sh
 
 # Local/editor and operating-system files
 .phpunit.result.cache
