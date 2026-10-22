@@ -14,7 +14,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class ProductionSeeder extends Seeder
+class DatabaseSeeder extends Seeder
 {
     /**
      * Seeder akun awal dan data referensi untuk production.
@@ -22,7 +22,7 @@ class ProductionSeeder extends Seeder
      * Membuat 5 akun: admin, warek3, prodi, mahasiswa, dan lsipd.
      * Password default semua akun: "password" (wajib diganti saat login pertama).
      *
-     * Jalankan: php artisan db:seed --class=ProductionSeeder --force
+     * Jalankan: php artisan db:seed --class=DatabaseSeeder --force
      */
     public function run(): void
     {
