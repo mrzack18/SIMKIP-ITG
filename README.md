@@ -128,22 +128,6 @@ Script `setup` otomatis: install -> copy `.env` -> `key:generate` -> `migrate --
 
 Server Vite di `http://localhost:5173`, API di `http://localhost:8000/api`.
 
-### Docker
-
-```bash
-docker compose up --build
-```
-
-| Service | URL |
-|---------|-----|
-| Nginx (app) | `http://localhost:8000` |
-| Node (Vite) | `http://localhost:5174` |
-| MySQL | `localhost:3308` |
-
-Konfigurasi Docker:
-- Database: `simokip`, user: `simokip`, password: `root`
-- Seed: `docker compose exec app php artisan db:seed --force`
-
 ---
 
 ## Akun Demo (Seeder)
@@ -311,14 +295,6 @@ routes/
   auth.php        # Breeze auth routes
   console.php     # Artisan commands
 
-docker/
-  php/Dockerfile
-  nginx/default.conf
-
-docs/
-  lsiped-api-spec.md
-  lsiped-api-spec.json
-  lsiped-api-spec.pdf
 ```
 
 ---
@@ -362,14 +338,6 @@ docs/
 - **Ekspor** — `MahasiswaExport` mendukung opsi sertakan IPK per semester & status dokumen wajib; `LaporanExport` untuk laporan; ditulis via DOMPDF saat diminta PDF
 - **Audit trail** — `AuditLog::catat()` dipanggil pada login, validasi, perubahan status, penerbitan SP, dan aktivitas penting lainnya
 - **Bebas Tanggungan checklist** — 5 syarat kelayakan: dokumen wajib lengkap & disetujui, IPK >= 3.0, bebas SP aktif/masa tenggang, SKS >= 144, tanpa mata kuliah gagal
-
----
-
-## Dokumentasi Tambahan
-
-- [LSI PED API Specification](docs/lsiped-api-spec.md) — spesifikasi API lengkap
-- [SRS Sistem Monitoring KIP Kuliah](SRS_Sistem_Monitoring_KIP_Kuliah_ITG.md) — Software Requirements Specification
-- [HLR Sistem Monitoring KIP Kuliah](HLR_Sistem_Monitoring_KIP_Kuliah_ITG.md) — High Level Design
 
 ---
 
